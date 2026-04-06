@@ -1699,11 +1699,7 @@ function formatFecha(val){if(!val)return'—';const d=new Date(val+'T12:00:00');
 function estadoLabel(e){const m={Hecha:'✓ Hecha','No-show':'👻 No-show',Reprogramada:'🔄 Reprogram.',Cancelada:'✕ Cancelada',Programada:'📅 Programada'};return m[e]||e||'';}
 function contrastColor(hex){const r=parseInt(hex.slice(1,3),16);const g=parseInt(hex.slice(3,5),16);const b=parseInt(hex.slice(5,7),16);return(r*299+g*587+b*114)/1000>128?'#1A1B2E':'#FFFFFF';}
 function darken(hex){return hex.replace(/^#/,'').replace(/../g,c=>Math.max(0,parseInt(c,16)-30).toString(16).padStart(2,'0')).replace(/^/,'#');}
-<!-- =====================================================
-     CAMBIO 3: Añadir al final del bloque <script>, 
-     justo antes del cierre </script>
-     ===================================================== -->
-<script>
+
 // ═══════════════════════════════════════════════════════════════
 //  ADMIN — solo para abraham.garcia.blanco@gmail.com
 // ═══════════════════════════════════════════════════════════════
