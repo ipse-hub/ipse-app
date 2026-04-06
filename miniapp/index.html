@@ -1,0 +1,1515 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="IPSE Agenda">
+<meta name="theme-color" content="#10069F">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%2310069F'/%3E%3Crect x='20' y='18' width='60' height='12' rx='6' fill='%2300B5E2'/%3E%3Crect x='20' y='72' width='60' height='12' rx='6' fill='%2300B5E2'/%3E%3Crect x='42' y='30' width='16' height='42' rx='5' fill='%2300B5E2'/%3E%3Ccircle cx='74' cy='24' r='9' fill='%2397D700'/%3E%3C/svg%3E">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%2310069F'/%3E%3Crect x='20' y='18' width='60' height='12' rx='6' fill='%2300B5E2'/%3E%3Crect x='20' y='72' width='60' height='12' rx='6' fill='%2300B5E2'/%3E%3Crect x='42' y='30' width='16' height='42' rx='5' fill='%2300B5E2'/%3E%3Ccircle cx='74' cy='24' r='9' fill='%2397D700'/%3E%3C/svg%3E">
+<title>IPSE — Agenda</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --azul:    #10069F;
+    --cyan:    #00B5E2;
+    --rojo:    #DA291C;
+    --verde:   #97D700;
+    --bg:      #F4F5F9;
+    --surface: #FFFFFF;
+    --border:  #E2E4EE;
+    --text:    #1A1B2E;
+    --muted:   #6B7280;
+    --shadow:  0 2px 8px rgba(16,6,159,.08);
+    --radius:  10px;
+    --c0: #10069F; --c1: #00B5E2; --c2: #DA291C;
+    --c3: #97D700; --c4: #F59E0B; --c5: #8B5CF6;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    min-height: 100dvh;
+    font-size: 14px;
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .topbar {
+    background: var(--azul);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 24px;
+    height: 56px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 12px rgba(16,6,159,.3);
+  }
+  .topbar-logo { font-size: 17px; font-weight: 600; letter-spacing: -.3px; display: flex; align-items: center; gap: 10px; }
+  .topbar-logo span { color: var(--cyan); }
+  .topbar-user { display: flex; align-items: center; gap: 10px; font-size: 13px; opacity: .85; }
+  .avatar { width: 30px; height: 30px; border-radius: 50%; background: var(--cyan); color: var(--azul); font-weight: 700; font-size: 12px; display: flex; align-items: center; justify-content: center; }
+  .main { max-width: 1100px; margin: 0 auto; padding: 24px 20px; }
+  .week-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 16px; box-shadow: var(--shadow); }
+  .week-nav button { background: none; border: 1px solid var(--border); border-radius: 6px; padding: 6px 14px; cursor: pointer; font-family: inherit; font-size: 13px; color: var(--azul); font-weight: 500; transition: all .15s; }
+  .week-nav button:hover { background: var(--azul); color: #fff; border-color: var(--azul); }
+  .week-nav button.btn-hoy { background: var(--azul); color: #fff; border-color: var(--azul); padding: 6px 18px; }
+  .week-label { font-size: 15px; font-weight: 600; color: var(--text); }
+  .view-toggle { display: flex; gap: 2px; background: var(--border); border-radius: 8px; padding: 2px; }
+  .view-toggle button { border: none; background: none; border-radius: 6px; padding: 5px 13px; font-size: 12px; font-weight: 600; color: var(--muted); cursor: pointer; transition: all .15s; }
+  .view-toggle button.active { background: var(--azul); color: #fff; box-shadow: 0 1px 4px rgba(16,6,159,.2); }
+  .month-grid { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; }
+  .month-header { display: grid; grid-template-columns: repeat(7, 1fr); background: var(--azul); }
+  .month-header-cell { padding: 8px 0; text-align: center; font-size: 11px; font-weight: 700; color: rgba(255,255,255,.85); letter-spacing: .05em; text-transform: uppercase; }
+  .month-body { display: grid; grid-template-columns: repeat(7, 1fr); }
+  .month-day { min-height: 100px; border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); padding: 4px; cursor: pointer; transition: background .1s; overflow: hidden; }
+  .month-day:nth-child(7n) { border-right: none; }
+  .month-day:hover { background: rgba(16,6,159,.03); }
+  .month-day.otro-mes { background: #fafafa; }
+  .month-day.otro-mes .month-day-num { color: #ccc; }
+  .month-day.es-hoy .month-day-num { background: var(--azul); color: #fff; border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; }
+  .month-day-num { font-size: 12px; font-weight: 700; color: var(--text); margin-bottom: 3px; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; }
+  .month-cita { display: flex; align-items: center; gap: 4px; border-radius: 4px; padding: 1px 5px; margin-bottom: 2px; font-size: 11px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; color: #fff; }
+  .month-cita-hora { font-size: 10px; opacity: .85; flex-shrink: 0; }
+  .month-mas { font-size: 10px; color: var(--muted); font-weight: 600; padding: 1px 5px; cursor: pointer; }
+  .month-mas:hover { color: var(--azul); }
+  .leyenda { display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
+  .leyenda-item { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 500; color: var(--muted); }
+  .leyenda-dot { width: 10px; height: 10px; border-radius: 50%; }
+  .week-grid { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow); }
+  .grid-header { display: grid; grid-template-columns: 56px repeat(6, 1fr); background: var(--azul); color: #fff; }
+  .grid-header-cell { padding: 10px 8px; text-align: center; font-size: 12px; font-weight: 500; border-right: 1px solid rgba(255,255,255,.1); }
+  .grid-header-cell.hoy-col { background: rgba(0,181,226,.25); }
+  .grid-header-cell .dia-num { font-size: 18px; font-weight: 700; display: block; line-height: 1.2; }
+  .grid-body { display: grid; grid-template-columns: 56px repeat(6, 1fr); max-height: calc(100vh - 260px); overflow-y: auto; }
+  .time-col { border-right: 1px solid var(--border); }
+  .time-slot { height: 48px; display: flex; align-items: flex-start; padding: 4px 6px 0; font-size: 10px; font-family: 'DM Mono', monospace; color: var(--muted); border-bottom: 1px solid var(--border); }
+  .day-col { border-right: 1px solid var(--border); position: relative; cursor: pointer; }
+  .day-col:hover { background: rgba(16,6,159,.02); }
+  .day-col.hoy-col { background: rgba(0,181,226,.04); }
+  .day-slot { height: 48px; border-bottom: 1px solid var(--border); position: relative; }
+  .day-slot:last-child { border-bottom: none; }
+  .day-slot:hover { background: rgba(16,6,159,.04); }
+  .cita { position: absolute; left: 2px; right: 2px; border-radius: 5px; padding: 3px 6px; font-size: 11px; font-weight: 500; overflow: hidden; cursor: pointer; z-index: 2; transition: opacity .1s, transform .1s; border-left: 3px solid transparent; box-shadow: 0 1px 4px rgba(0,0,0,.15); }
+  .cita:hover { opacity: .9; transform: scale(1.01); }
+  .cita-nombre { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .cita-servicio { opacity: .8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 10px; }
+  .cita-estado { display: inline-block; font-size: 9px; padding: 0 4px; border-radius: 3px; background: rgba(255,255,255,.25); margin-top: 1px; font-weight: 600; text-transform: uppercase; letter-spacing: .3px; }
+  .cita.ajena { opacity: .5; cursor: default; }
+  .cita.ajena:hover { opacity: .5; transform: none; }
+  .cita.dragging { opacity: .35 !important; transform: scale(.97) !important; box-shadow: none !important; }
+  .cita[draggable="true"] { cursor: grab; }
+  .cita[draggable="true"]:active { cursor: grabbing; }
+  .day-slot.drag-over { background: rgba(16,6,159,.12) !important; outline: 2px dashed var(--azul); outline-offset: -2px; }
+  .btn-nueva { position: fixed; bottom: 28px; right: 28px; background: var(--azul); color: #fff; border: none; border-radius: 28px; padding: 14px 22px; font-family: inherit; font-size: 14px; font-weight: 600; cursor: pointer; box-shadow: 0 4px 18px rgba(16,6,159,.35); display: flex; align-items: center; gap: 8px; transition: all .2s; z-index: 50; }
+  .btn-nueva:hover { background: #0b0580; transform: translateY(-1px); box-shadow: 0 6px 22px rgba(16,6,159,.45); }
+  .btn-nueva svg { width: 18px; height: 18px; }
+  .overlay { display: none; position: fixed; inset: 0; background: rgba(26,27,46,.5); z-index: 200; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(2px); }
+  .overlay.visible { display: flex; }
+  .modal { background: var(--surface); border-radius: 14px; padding: 28px; width: 100%; max-width: 480px; box-shadow: 0 20px 60px rgba(0,0,0,.2); animation: modalIn .2s ease; }
+  @keyframes modalIn { from { opacity: 0; transform: scale(.96) translateY(8px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+  .modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 22px; }
+  .modal-title { font-size: 17px; font-weight: 700; color: var(--azul); }
+  .modal-close { background: none; border: none; cursor: pointer; color: var(--muted); font-size: 20px; line-height: 1; padding: 4px; border-radius: 4px; transition: all .15s; }
+  .modal-close:hover { background: var(--bg); color: var(--text); }
+  .form-group { margin-bottom: 16px; }
+  .form-label { display: block; font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 6px; }
+  .form-control { width: 100%; border: 1.5px solid var(--border); border-radius: 8px; padding: 9px 12px; font-family: inherit; font-size: 14px; color: var(--text); background: var(--bg); transition: border-color .15s; outline: none; }
+  .form-control:focus { border-color: var(--azul); background: #fff; }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .pac-wrap { position: relative; }
+  .pac-input { width: 100%; border: 1.5px solid var(--border); border-radius: 8px; padding: 9px 12px; font-family: inherit; font-size: 14px; color: var(--text); background: var(--bg); transition: border-color .15s; outline: none; }
+  .pac-input:focus { border-color: var(--azul); background: #fff; }
+  .pac-input.seleccionado { border-color: var(--verde); background: #f7ffe8; }
+  .pac-lista { position: absolute; top: calc(100% + 4px); left: 0; right: 0; background: #fff; border: 1.5px solid var(--azul); border-radius: 8px; max-height: 200px; overflow-y: auto; z-index: 9999; box-shadow: 0 4px 16px rgba(16,6,159,.12); display: none; }
+  .pac-lista.visible { display: block; }
+  .pac-item { padding: 9px 12px; cursor: pointer; font-size: 14px; border-bottom: 1px solid var(--border); }
+  .pac-item:last-child { border-bottom: none; }
+  .pac-item:hover, .pac-item.activo { background: var(--bg); color: var(--azul); font-weight: 500; }
+  .pac-item em { font-style: normal; color: var(--azul); font-weight: 600; }
+  .pac-vacio { padding: 10px 12px; color: var(--muted); font-size: 13px; font-style: italic; }
+  .bono-aviso { margin-top: 6px; padding: 8px 10px; border-radius: 6px; font-size: 12px; font-weight: 500; display: none; }
+  .bono-aviso.ok   { background: #f0fff0; color: #2d7a2d; border: 1px solid #97D700; }
+  .bono-aviso.warn { background: #fff3f3; color: #c0392b; border: 1px solid #DA291C; }
+  .reprog-panel { background: #fffbf0; border: 1.5px solid #F59E0B; border-radius: 8px; padding: 14px; margin-top: 4px; display: none; }
+  .reprog-panel.visible { display: block; }
+  .reprog-panel .reprog-titulo { font-size: 12px; font-weight: 700; color: #7c4a00; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 10px; }
+  .recur-toggle { display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 13px; color: var(--muted); font-weight: 500; margin-bottom: 4px; user-select: none; }
+  .recur-toggle input[type=checkbox] { width: 15px; height: 15px; accent-color: var(--azul); cursor: pointer; }
+  .recur-panel { background: var(--bg); border: 1.5px solid var(--border); border-radius: 8px; padding: 12px 14px; margin-top: 8px; display: none; }
+  .recur-panel.visible { display: block; }
+  .recur-preview { margin-top: 10px; font-size: 12px; color: var(--muted); line-height: 1.7; }
+  .recur-preview strong { color: var(--azul); }
+  .estado-btns { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .estado-btn { border: 1.5px solid var(--border); border-radius: 8px; padding: 8px 6px; text-align: center; font-family: inherit; font-size: 11px; font-weight: 600; cursor: pointer; background: var(--bg); color: var(--muted); transition: all .15s; }
+  .estado-btn:hover { border-color: var(--azul); color: var(--azul); }
+  .estado-btn.active-Hecha        { background: var(--verde); border-color: var(--verde); color: #2d4a00; }
+  .estado-btn.active-No-show      { background: var(--rojo); border-color: var(--rojo); color: #fff; }
+  .estado-btn.active-Reprogramada { background: #F59E0B; border-color: #F59E0B; color: #7c4a00; }
+  .estado-btn.active-Cancelada    { background: #E5E7EB; border-color: #9CA3AF; color: #374151; }
+  .estado-btn.active-Programada   { background: var(--cyan); border-color: var(--cyan); color: #003a52; }
+  .info-panel { background: var(--bg); border-radius: 8px; padding: 12px 14px; margin-bottom: 16px; border-left: 4px solid var(--azul); }
+  .info-panel .info-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+  .info-panel .info-label { font-size: 11px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .4px; }
+  .info-panel .info-val { font-size: 13px; font-weight: 500; }
+  .modal-footer { display: flex; justify-content: flex-end; gap: 10px; margin-top: 22px; padding-top: 18px; border-top: 1px solid var(--border); }
+  .btn { padding: 9px 20px; border-radius: 8px; font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer; border: none; transition: all .15s; }
+  .btn-primary { background: var(--azul); color: #fff; }
+  .btn-primary:hover { background: #0b0580; }
+  .btn-secondary { background: var(--bg); color: var(--muted); border: 1.5px solid var(--border); }
+  .btn-secondary:hover { border-color: var(--azul); color: var(--azul); }
+  .btn-danger { background: #FEE2E2; color: var(--rojo); }
+  .btn-danger:hover { background: var(--rojo); color: #fff; }
+  .btn-editar-pac { background: none; border: 1px solid var(--border); border-radius: 5px; padding: 2px 7px; font-size: 11px; font-weight: 600; color: var(--azul); cursor: pointer; transition: all .15s; margin-left: 6px; white-space: nowrap; }
+  .btn-editar-pac:hover { background: var(--azul); color: #fff; border-color: var(--azul); }
+  .estado-app { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 60vh; gap: 16px; color: var(--muted); }
+  .spinner { width: 36px; height: 36px; border: 3px solid var(--border); border-top-color: var(--azul); border-radius: 50%; animation: spin .7s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .toast { position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--text); color: #fff; padding: 10px 20px; border-radius: 8px; font-size: 13px; font-weight: 500; opacity: 0; pointer-events: none; transition: all .25s; z-index: 999; white-space: nowrap; }
+  .toast.visible { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .toast.ok  { background: #1a3a00; }
+  .toast.err { background: #7f1d1d; }
+  .acceso-denegado { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 40px; text-align: center; }
+  .acceso-denegado h2 { font-size: 20px; color: var(--rojo); }
+  .acceso-denegado p  { color: var(--muted); font-size: 14px; max-width: 320px; }
+  @media (max-width: 700px) {
+    .main { padding: 16px 10px; }
+    .grid-body { max-height: calc(100vh - 300px); }
+    .btn-nueva { bottom: 16px; right: 16px; padding: 12px 16px; font-size: 13px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- PANTALLA DE LOGIN -->
+<div id="pantalla-login" style="display:none">
+  <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;background:var(--bg);">
+    <div style="background:var(--surface);border-radius:16px;padding:40px 36px;width:100%;max-width:380px;box-shadow:0 8px 32px rgba(16,6,159,.12);text-align:center;">
+      <div style="width:56px;height:56px;background:var(--azul);border-radius:14px;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;font-size:24px;">📅</div>
+      <div style="font-size:20px;font-weight:700;color:var(--azul);margin-bottom:6px;">IPSE · Agenda</div>
+      <div style="font-size:13px;color:var(--muted);margin-bottom:28px;">Introduce tu email para acceder</div>
+      <input type="email" id="login-email" class="form-control" placeholder="tu@email.com"
+        style="text-align:center;margin-bottom:12px;font-size:15px;"
+        onkeydown="if(event.key==='Enter') loginEntrar()">
+      <div id="login-error" style="color:var(--rojo);font-size:12px;margin-bottom:10px;min-height:18px;"></div>
+      <button onclick="loginEntrar()" class="btn btn-primary" style="width:100%;padding:11px;font-size:14px;">Entrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOPBAR -->
+<div class="topbar" id="topbar" style="display:none">
+  <div class="topbar-logo">IPSE <span>·</span> Agenda</div>
+  <div class="topbar-user">
+    <button onclick="recargarAgenda()" style="background:rgba(255,255,255,.15);border:none;color:#fff;border-radius:6px;padding:5px 10px;cursor:pointer;font-size:12px;font-family:inherit;font-weight:500;">↺ Recargar</button>
+    <button onclick="abrirModalPaciente()" style="background:rgba(0,181,226,.25);border:none;color:#fff;border-radius:6px;padding:5px 10px;cursor:pointer;font-size:12px;font-family:inherit;font-weight:500;">+ Paciente</button>
+    <button onclick="abrirModalBono()" style="background:rgba(151,215,0,.25);border:none;color:#fff;border-radius:6px;padding:5px 10px;cursor:pointer;font-size:12px;font-family:inherit;font-weight:500;">+ Bono</button>
+    <span id="topbar-nombre">—</span>
+    <div class="avatar" id="topbar-avatar">–</div>
+  </div>
+</div>
+
+<div class="estado-app" id="estado-cargando">
+  <div class="spinner"></div>
+  <p>Verificando acceso…</p>
+</div>
+
+<div id="contenido-principal" style="display:none">
+  <div class="main">
+    <div class="week-nav">
+      <div style="display:flex;gap:8px;align-items:center">
+        <button onclick="cambiarPeriodo(-1)">← Anterior</button>
+        <button class="btn-hoy" onclick="irHoy()">Hoy</button>
+        <button onclick="cambiarPeriodo(1)">Siguiente →</button>
+      </div>
+      <span class="week-label" id="week-label">—</span>
+      <div class="view-toggle">
+        <button id="btn-vista-dia"    onclick="cambiarVista('dia')">Día</button>
+        <button id="btn-vista-semana" class="active" onclick="cambiarVista('semana')">Semana</button>
+        <button id="btn-vista-mes"    onclick="cambiarVista('mes')">Mes</button>
+      </div>
+    </div>
+    <div class="leyenda" id="leyenda"></div>
+    <div class="week-grid" id="grid-dia" style="display:none">
+      <div class="grid-header" id="grid-dia-header"></div>
+      <div class="grid-body"   id="grid-dia-body"></div>
+    </div>
+    <div class="week-grid" id="grid-semana">
+      <div class="grid-header" id="grid-header"></div>
+      <div class="grid-body"   id="grid-body"></div>
+    </div>
+    <div id="grid-mes" style="display:none">
+      <div class="month-grid">
+        <div class="month-header" id="month-header"></div>
+        <div class="month-body"   id="month-body"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<button class="btn-nueva" id="btn-nueva" style="display:none" onclick="abrirModalNueva()">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+  Nueva cita
+</button>
+<button class="btn-nueva" id="btn-multicita" style="display:none;bottom:80px;background:var(--cyan,#00B5E2)" onclick="abrirModalMultiCita()">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+  Varias citas
+</button>
+
+<!-- MODAL NUEVO PACIENTE -->
+<div class="overlay" id="modal-paciente">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">Nuevo paciente</span>
+      <button class="modal-close" onclick="cerrarModal('modal-paciente')">✕</button>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Nombre *</label>
+        <input type="text" id="mp-nombre" class="form-control" placeholder="Nombre" oninput="comprobarPacienteSimilar()">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Apellidos</label>
+        <input type="text" id="mp-apellidos" class="form-control" placeholder="Apellidos" oninput="comprobarPacienteSimilar()">
+      </div>
+    </div>
+    <div id="mp-aviso-similar" style="display:none;background:#fff3cd;border:1px solid #f0c040;border-radius:6px;padding:10px 12px;margin-bottom:10px;font-size:13px;color:#7a5c00;">
+      <strong>⚠️ Posible duplicado</strong> — ya existe un paciente con nombre similar:
+      <div id="mp-aviso-lista" style="margin-top:6px;line-height:1.7"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Tutor 1</label><input type="text" id="mp-tutor1" class="form-control" placeholder="Nombre tutor"></div>
+      <div class="form-group"><label class="form-label">Teléfono</label><input type="tel" id="mp-tel" class="form-control" placeholder="600 000 000"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Tutor 2</label><input type="text" id="mp-tutor2" class="form-control" placeholder="Nombre tutor 2"></div>
+      <div class="form-group"><label class="form-label">Teléfono 2</label><input type="tel" id="mp-tel2" class="form-control" placeholder=""></div>
+    </div>
+    <div class="form-group"><label class="form-label">Email</label><input type="email" id="mp-email" class="form-control" placeholder="email@ejemplo.com"></div>
+    <div class="form-group">
+      <label class="form-label">Terapeuta principal</label>
+      <select id="mp-terapeuta" class="form-control"></select>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">¿Beca?</label><select id="mp-beca" class="form-control"><option value="No">No</option><option value="Sí">Sí</option></select></div>
+      <div class="form-group"><label class="form-label">Consentimiento</label><select id="mp-consent" class="form-control"><option value="Pendiente">Pendiente</option><option value="Firmado">Firmado</option></select></div>
+    </div>
+    <div class="form-group"><label class="form-label">Notas</label><input type="text" id="mp-notas" class="form-control" placeholder="Observaciones"></div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="cerrarModal('modal-paciente')">Cancelar</button>
+      <button class="btn btn-primary" id="btn-guardar-paciente" onclick="guardarNuevoPaciente()">Crear paciente</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL EDITAR PACIENTE -->
+<div class="overlay" id="modal-editar-paciente">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">✏️ Editar paciente</span>
+      <button class="modal-close" onclick="cerrarModal('modal-editar-paciente')">✕</button>
+    </div>
+    <div style="font-size:11px;color:var(--muted);margin-bottom:16px;background:var(--bg);border-radius:6px;padding:7px 10px;">
+      <span id="ep-id-label" style="font-family:'DM Mono',monospace;font-weight:600;color:var(--azul)"></span>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Nombre *</label>
+        <input type="text" id="ep-nombre" class="form-control" placeholder="Nombre">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Apellidos</label>
+        <input type="text" id="ep-apellidos" class="form-control" placeholder="Apellidos">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Alias <span style="font-weight:400;text-transform:none;font-size:11px">(nombre corto en agenda)</span></label>
+      <input type="text" id="ep-alias" class="form-control" placeholder="Ej: Juanito">
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Tutor 1</label><input type="text" id="ep-tutor1" class="form-control" placeholder="Nombre tutor"></div>
+      <div class="form-group"><label class="form-label">Teléfono</label><input type="tel" id="ep-tel" class="form-control" placeholder="600 000 000"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Tutor 2</label><input type="text" id="ep-tutor2" class="form-control" placeholder="Nombre tutor 2"></div>
+      <div class="form-group"><label class="form-label">Teléfono 2</label><input type="tel" id="ep-tel2" class="form-control" placeholder=""></div>
+    </div>
+    <div class="form-group"><label class="form-label">Email</label><input type="email" id="ep-email" class="form-control" placeholder="email@ejemplo.com"></div>
+    <div class="form-group"><label class="form-label">Notas</label><textarea id="ep-notas" class="form-control" rows="2" placeholder="Observaciones" style="resize:vertical"></textarea></div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="cerrarModal('modal-editar-paciente')">Cancelar</button>
+      <button class="btn btn-primary" id="btn-guardar-edicion-paciente" onclick="guardarEdicionPaciente()">Guardar cambios</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL VARIAS CITAS -->
+<div class="overlay" id="modal-multicita">
+  <div class="modal" style="max-width:520px">
+    <div class="modal-header">
+      <span class="modal-title">📋 Programar varias citas</span>
+      <button class="modal-close" onclick="cerrarModal('modal-multicita')">✕</button>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Paciente *</label>
+      <div class="pac-wrap" id="pac-wrap-multi">
+        <input type="text" id="mm-paciente-txt" class="pac-input" placeholder="Escribe nombre o alias…" autocomplete="off" oninput="pacFiltrar('multi')" onfocus="pacAbrir('multi')" onblur="pacBlur('multi')">
+        <input type="hidden" id="mm-paciente">
+        <div class="pac-lista" id="pac-lista-multi"></div>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Servicio *</label><select id="mm-servicio" class="form-control"></select></div>
+      <div class="form-group"><label class="form-label">Financiación</label><select id="mm-tipofin" class="form-control" onchange="onMultiTipoFinChange()"><option value="SUELTA">Suelta</option><option value="BONO">Bono</option><option value="BECA">Beca</option><option value="ADECCO">ADECCO</option></select></div>
+    </div>
+    <div id="mm-bono-aviso" style="display:none;margin-bottom:10px"></div>
+    <div style="margin-bottom:8px;font-size:12px;font-weight:600;color:var(--azul);text-transform:uppercase;letter-spacing:.5px">Fechas y horas</div>
+    <div id="mm-lista-fechas" style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px;max-height:240px;overflow-y:auto"></div>
+    <div style="display:flex;gap:8px;align-items:flex-end;margin-bottom:12px">
+      <div class="form-group" style="margin-bottom:0;flex:1"><label class="form-label">Fecha</label><input type="date" id="mm-nueva-fecha" class="form-control"></div>
+      <div class="form-group" style="margin-bottom:0;width:110px"><label class="form-label">Hora</label><input type="time" id="mm-nueva-hora" class="form-control" step="300"></div>
+      <button class="btn btn-secondary" onclick="mmAnadirFecha()" style="white-space:nowrap;padding:8px 14px;font-size:13px">+ Añadir</button>
+    </div>
+    <div id="mm-resumen" style="display:none;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-size:12px;color:var(--muted);margin-bottom:4px"></div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="cerrarModal('modal-multicita')">Cancelar</button>
+      <button class="btn btn-primary" id="btn-crear-multicita" onclick="guardarMultiCita()">Crear citas</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL NUEVO BONO -->
+<div class="overlay" id="modal-bono">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">Nuevo bono</span>
+      <button class="modal-close" onclick="cerrarModal('modal-bono')">✕</button>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Paciente *</label>
+      <div class="pac-wrap" id="pac-wrap-bono">
+        <input type="text" id="mb-paciente-txt" class="pac-input" placeholder="Escribe nombre o alias…" autocomplete="off" oninput="pacFiltrar('bono')" onfocus="pacAbrir('bono')" onblur="pacBlur('bono')">
+        <input type="hidden" id="mb-paciente">
+        <div class="pac-lista" id="pac-lista-bono"></div>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Tipo de bono</label><input type="text" id="mb-tipo" class="form-control" placeholder="Ej: Sesión individual"></div>
+      <div class="form-group"><label class="form-label">Nº sesiones *</label><input type="number" id="mb-sesiones" class="form-control" placeholder="4" min="1"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Importe total (€) *</label><input type="number" id="mb-importe" class="form-control" placeholder="200" step="0.01" min="0"></div>
+      <div class="form-group"><label class="form-label">Fecha compra</label><input type="date" id="mb-fecha-compra" class="form-control"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Fecha caducidad</label><input type="date" id="mb-fecha-cad" class="form-control"></div>
+      <div class="form-group"><label class="form-label">¿Cobrado?</label><select id="mb-cobrado" class="form-control"><option value="No">No</option><option value="Sí">Sí</option></select></div>
+    </div>
+    <div class="form-group"><label class="form-label">Notas</label><input type="text" id="mb-notas" class="form-control" placeholder="Observaciones"></div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="cerrarModal('modal-bono')">Cancelar</button>
+      <button class="btn btn-primary" id="btn-guardar-bono" onclick="guardarNuevoBono()">Crear bono</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL NUEVA CITA -->
+<div class="overlay" id="modal-nueva">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">Nueva cita</span>
+      <button class="modal-close" onclick="cerrarModal('modal-nueva')">✕</button>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Fecha</label><input type="date" id="n-fecha" class="form-control"></div>
+      <div class="form-group"><label class="form-label">Hora</label><input type="time" id="n-hora" class="form-control" step="300"></div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Paciente</label>
+      <div class="pac-wrap" id="pac-wrap-cita">
+        <input type="text" id="n-paciente-txt" class="pac-input" placeholder="Escribe nombre o alias…" autocomplete="off" oninput="pacFiltrar('cita')" onfocus="pacAbrir('cita')" onblur="pacBlur('cita')">
+        <input type="hidden" id="n-paciente">
+        <div class="pac-lista" id="pac-lista-cita"></div>
+      </div>
+    </div>
+    <div class="form-group"><label class="form-label">Servicio</label><select id="n-servicio" class="form-control"></select></div>
+    <div class="form-group">
+      <label class="form-label">Financiación</label>
+      <select id="n-tipofin" class="form-control" onchange="onTipoFinChange()">
+        <option value="SUELTA">Privado (sesión suelta)</option>
+        <option value="BONO">Bono</option>
+        <option value="BECA">Beca</option>
+        <option value="ADECCO">ADECCO</option>
+      </select>
+      <div class="bono-aviso" id="n-bono-aviso"></div>
+    </div>
+    <div class="form-group"><label class="form-label">Notas</label><input type="text" id="n-notas" class="form-control" placeholder="Opcional"></div>
+    <div class="form-group" style="margin-bottom:8px">
+      <label class="recur-toggle">
+        <input type="checkbox" id="n-recur-check" onchange="onRecurChange()">
+        Repetir esta cita
+      </label>
+      <div class="recur-panel" id="n-recur-panel">
+        <div class="form-row">
+          <div class="form-group" style="margin-bottom:8px">
+            <label class="form-label">Cada (días)</label>
+            <select id="n-recur-cada" class="form-control" onchange="actualizarPreviewRecur()">
+              <option value="7">7 días — semanal</option>
+              <option value="14">14 días — quincenal</option>
+              <option value="21">21 días — cada 3 sem.</option>
+              <option value="28">28 días — mensual</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin-bottom:8px">
+            <label class="form-label">Hasta fecha</label>
+            <input type="date" id="n-recur-hasta" class="form-control" oninput="actualizarPreviewRecur()">
+          </div>
+        </div>
+        <div class="form-group" style="margin-bottom:0">
+          <label class="form-label">Festivos extra <span style="font-weight:400;text-transform:none;font-size:11px">(dd/mm/yyyy separados por coma)</span></label>
+          <input type="text" id="n-recur-festivos" class="form-control" placeholder="Agosto excluido automáticamente · Añade fechas extra" oninput="actualizarPreviewRecur()">
+        </div>
+        <div class="recur-preview" id="n-recur-preview"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="cerrarModal('modal-nueva')">Cancelar</button>
+      <button class="btn btn-primary" id="btn-crear-cita" onclick="guardarNuevaCita()">Crear cita</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL VER/EDITAR CITA -->
+<div class="overlay" id="modal-cita">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="mc-titulo">Cita</span>
+      <button class="modal-close" onclick="cerrarModal('modal-cita')">✕</button>
+    </div>
+    <div class="info-panel" id="mc-info">
+      <div class="info-row">
+        <span class="info-label">Paciente</span>
+        <span style="display:flex;align-items:center;gap:4px">
+          <span class="info-val" id="mc-paciente">—</span>
+          <button class="btn-editar-pac" id="mc-btn-editar-pac" onclick="abrirModalEditarPacienteDesde()" title="Editar datos del paciente">✏️ Editar</button>
+        </span>
+      </div>
+      <div class="info-row"><span class="info-label">Servicio</span><span class="info-val" id="mc-servicio">—</span></div>
+      <div class="info-row"><span class="info-label">Terapeuta</span><span class="info-val" id="mc-terapeuta">—</span></div>
+      <div class="info-row" style="margin-bottom:0"><span class="info-label">Fecha / Hora</span><span class="info-val" id="mc-fechahora">—</span></div>
+    </div>
+    <div id="mc-seccion-estado">
+      <div class="form-group">
+        <label class="form-label">Estado</label>
+        <div class="estado-btns" id="mc-estado-btns">
+          <button class="estado-btn" data-estado="Programada"   onclick="selEstado('Programada')">📅 Programada</button>
+          <button class="estado-btn" data-estado="Hecha"        onclick="selEstado('Hecha')">✅ Hecha</button>
+          <button class="estado-btn" data-estado="No-show"      onclick="selEstado('No-show')">👻 No-show</button>
+          <button class="estado-btn" data-estado="Reprogramada" onclick="selEstado('Reprogramada')">🔄 Reprogram.</button>
+          <button class="estado-btn" data-estado="Cancelada"    onclick="selEstado('Cancelada')" style="grid-column:span 4">❌ Cancelada</button>
+        </div>
+      </div>
+      <div id="mc-cobro-panel" style="display:none;background:#f0f7f0;border:1px solid #97D700;border-radius:8px;padding:12px;margin-bottom:8px;">
+        <div style="font-size:12px;font-weight:600;color:#4a6a00;margin-bottom:8px;">💶 Cobro en consulta</div>
+        <div class="form-row" style="margin-bottom:0">
+          <div class="form-group" style="margin-bottom:0"><label class="form-label">¿Cobrado?</label><select id="mc-cobrado" class="form-control"><option value="No">No — pendiente</option><option value="Sí">Sí — cobrado ahora</option></select></div>
+          <div class="form-group" style="margin-bottom:0"><label class="form-label">Método</label><select id="mc-metodo-cobro" class="form-control"><option value="Efectivo">Efectivo</option><option value="Bizum">Bizum</option><option value="Transferencia">Transferencia</option></select></div>
+        </div>
+      </div>
+      <div class="form-group"><label class="form-label">Notas</label><input type="text" id="mc-notas" class="form-control" placeholder="Opcional"></div>
+      <div class="reprog-panel" id="mc-reprog-panel">
+        <div class="reprog-titulo">🔄 Nueva fecha para la cita</div>
+        <div class="form-row">
+          <div class="form-group" style="margin-bottom:0"><label class="form-label">Nueva fecha *</label><input type="date" id="mc-reprog-fecha" class="form-control"></div>
+          <div class="form-group" style="margin-bottom:0"><label class="form-label">Hora</label><input type="time" id="mc-reprog-hora" class="form-control" step="300"></div>
+        </div>
+      </div>
+      <div class="reprog-panel" id="mc-repetir-panel" style="display:none;border-color:var(--verde,#97D700)">
+        <div class="reprog-titulo" style="color:var(--verde,#5a8200)">🔁 Repetir esta cita</div>
+        <div class="form-row">
+          <div class="form-group" style="margin-bottom:0"><label class="form-label">Cada</label><select id="mc-rep-cada" class="form-control" onchange="actualizarPreviewRepetir()"><option value="7">7 días — semanal</option><option value="14">14 días — quincenal</option><option value="21">21 días — cada 3 sem.</option><option value="28">28 días — mensual</option></select></div>
+          <div class="form-group" style="margin-bottom:0"><label class="form-label">Hasta fecha</label><input type="date" id="mc-rep-hasta" class="form-control" oninput="actualizarPreviewRepetir()"></div>
+        </div>
+        <div style="margin-top:6px;font-size:11px;color:var(--muted)">ℹ️ Agosto excluido automáticamente.</div>
+        <div class="recur-preview" id="mc-rep-preview" style="margin-top:8px"></div>
+        <div style="margin-top:10px;display:flex;gap:8px">
+          <button class="btn btn-secondary" style="flex:1;font-size:13px" onclick="cerrarPanelRepetir()">Cancelar</button>
+          <button class="btn btn-primary" style="flex:2;font-size:13px;background:var(--verde);border-color:var(--verde);color:#fff" id="mc-btn-confirmar-repetir" onclick="confirmarRepetirCita()">Crear repeticiones</button>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="cerrarModal('modal-cita')">Cerrar</button>
+        <button class="btn btn-secondary" id="mc-btn-repetir" onclick="togglePanelRepetir()" style="background:var(--verde);border-color:var(--verde);color:#fff;display:none">🔁 Repetir</button>
+        <button class="btn btn-secondary" id="mc-btn-eliminar" onclick="eliminarCita()" style="background:#fff;border-color:#DA291C;color:#DA291C;display:none">🗑 Eliminar</button>
+        <button class="btn btn-primary" id="mc-btn-guardar" onclick="guardarEstadoCita()">Guardar</button>
+      </div>
+    </div>
+    <div id="mc-solo-lectura" style="display:none">
+      <p style="color:var(--muted);font-size:13px;margin-top:8px">Esta cita pertenece a otra terapeuta. Solo puedes ver la información.</p>
+      <div class="modal-footer"><button class="btn btn-secondary" onclick="cerrarModal('modal-cita')">Cerrar</button></div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+//  SUPABASE — acceso directo desde el navegador
+// ═══════════════════════════════════════════════════════════════
+const SUPA_URL = 'https://vlplebjqhufbzfncrawf.supabase.co';
+const SUPA_KEY = 'sb_publishable_Qt604gEH_lfx89HkPElvcA_OGwbKeDO';
+
+async function supaGet(tabla, params) {
+  const url = `${SUPA_URL}/rest/v1/${tabla}${params ? '?' + params : ''}`;
+  const r = await fetch(url, { headers: { 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY } });
+  if (!r.ok) throw new Error('Error ' + r.status + ' al leer ' + tabla);
+  return r.json();
+}
+
+async function supaPost(tabla, datos) {
+  const r = await fetch(`${SUPA_URL}/rest/v1/${tabla}`, {
+    method: 'POST',
+    headers: { 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY, 'Content-Type': 'application/json', 'Prefer': 'return=representation' },
+    body: JSON.stringify(datos),
+  });
+  if (!r.ok) { const t = await r.text(); throw new Error('Error al insertar: ' + t); }
+  return r.json();
+}
+
+async function supaPatch(tabla, filtro, datos) {
+  const r = await fetch(`${SUPA_URL}/rest/v1/${tabla}?${filtro}`, {
+    method: 'PATCH',
+    headers: { 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY, 'Content-Type': 'application/json', 'Prefer': 'return=representation' },
+    body: JSON.stringify(datos),
+  });
+  if (!r.ok) { const t = await r.text(); throw new Error('Error al actualizar: ' + t); }
+  return r.json();
+}
+
+async function supaDelete(tabla, filtro) {
+  const r = await fetch(`${SUPA_URL}/rest/v1/${tabla}?${filtro}`, {
+    method: 'DELETE',
+    headers: { 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY },
+  });
+  if (!r.ok) throw new Error('Error al eliminar');
+}
+
+async function generarId(tabla, campo, prefijo) {
+  const rows = await supaGet(tabla, `select=${campo}&order=${campo}.desc&limit=1`);
+  if (!rows || !rows.length) return prefijo + '001';
+  const num = parseInt((rows[0][campo] || '').replace(prefijo, '')) || 0;
+  return prefijo + String(num + 1).padStart(3, '0');
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  ESTADO GLOBAL
+// ═══════════════════════════════════════════════════════════════
+let G = {
+  miId: '', miNombre: '', email: '',
+  citas: [], terapeutas: [], pacientes: [], servicios: [],
+  lunes: null, diaActual: null, vista: 'semana',
+  colores: {}, citaActual: null, estadoSel: 'Programada',
+  pacienteEditandoId: null, dragCita: null,
+};
+
+const HORAS_INICIO = 8;
+const HORAS_FIN    = 21;
+const PALETTE = ['#10069F','#00B5E2','#DA291C','#97D700','#F59E0B','#8B5CF6'];
+const DIAS_ES  = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+const MESES_ES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+
+// ═══════════════════════════════════════════════════════════════
+//  LOGIN
+// ═══════════════════════════════════════════════════════════════
+function loginEntrar() {
+  const email = document.getElementById('login-email').value.trim().toLowerCase();
+  if (!email) { document.getElementById('login-error').textContent = 'Introduce tu email.'; return; }
+  G.email = email;
+  sessionStorage.setItem('ipse_email', email);
+  document.getElementById('login-error').textContent = '';
+  document.getElementById('pantalla-login').style.display = 'none';
+  document.getElementById('estado-cargando').style.display = 'flex';
+  iniciarApp();
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  const saved = sessionStorage.getItem('ipse_email');
+  if (saved) { G.email = saved; iniciarApp(); }
+  else { document.getElementById('estado-cargando').style.display = 'none'; document.getElementById('pantalla-login').style.display = 'block'; }
+});
+
+// ═══════════════════════════════════════════════════════════════
+//  INICIALIZACIÓN
+// ═══════════════════════════════════════════════════════════════
+async function iniciarApp() {
+  try {
+    const terRows = await supaGet('terapeutas', `email=eq.${encodeURIComponent(G.email)}&activa=eq.Sí`);
+    if (!terRows || !terRows.length) throw new Error('Acceso no autorizado para: ' + G.email);
+    const ter = terRows[0];
+    G.miId     = ter.id_terapeuta;
+    G.miNombre = ter.nombre;
+
+    const [terapeutas, pacientesRaw, servicios] = await Promise.all([
+      supaGet('terapeutas', 'activa=eq.Sí&order=id_terapeuta.asc'),
+      supaGet('pacientes',  'order=nombre.asc'),
+      supaGet('servicios',  'order=id_servicio.asc'),
+    ]);
+
+    G.terapeutas = terapeutas.map(t => ({
+      ID_Terapeuta: t.id_terapeuta, Nombre: t.nombre,
+      Activa: t.activa, Pct_Com: t.pct_com, Email: t.email,
+    }));
+    G.pacientes = pacientesRaw.map(p => ({
+      ID_Paciente: p.id_paciente,
+      Nombre: ((p.nombre||'') + ' ' + (p.apellidos||'')).trim(),
+      Alias: p.alias || '',
+    }));
+    G.servicios = servicios.map(s => ({
+      ID_Servicio: s.id_servicio, Servicio: s.servicio,
+      Precio: s.precio, DuraciónMin: s.duracion_min, Activo: s.activo,
+    }));
+
+    G.terapeutas.forEach((t, i) => { G.colores[t.ID_Terapeuta] = PALETTE[i % PALETTE.length]; });
+
+    document.getElementById('topbar-nombre').textContent = G.miNombre;
+    document.getElementById('topbar-avatar').textContent = G.miNombre.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+    document.getElementById('estado-cargando').style.display     = 'none';
+    document.getElementById('topbar').style.display              = 'flex';
+    document.getElementById('contenido-principal').style.display = 'block';
+    document.getElementById('btn-nueva').style.display           = 'flex';
+    document.getElementById('btn-multicita').style.display       = 'flex';
+
+    G.lunes = lunesDeHoy();
+    await cargarSemana();
+  } catch (err) {
+    document.getElementById('estado-cargando').style.display = 'none';
+    document.getElementById('pantalla-login').style.display  = 'block';
+    document.getElementById('login-error').textContent = err.message || 'Acceso no autorizado.';
+    G.email = ''; sessionStorage.removeItem('ipse_email');
+  }
+}
+
+function mapearCitas(rows) {
+  const pacMap = {}, terMap = {}, srvMap = {};
+  G.pacientes.forEach(p  => { pacMap[p.ID_Paciente]  = p.Alias || p.Nombre; });
+  G.terapeutas.forEach(t => { terMap[t.ID_Terapeuta] = t.Nombre; });
+  G.servicios.forEach(s  => { srvMap[s.ID_Servicio]  = s.Servicio; });
+  return rows.map(r => ({
+    ID_Cita:         r.id_cita,
+    Fecha:           r.fecha,
+    Hora:            r.hora ? r.hora.slice(0,5) : '',
+    ID_Terapeuta:    r.id_terapeuta,
+    ID_Paciente:     r.id_paciente,
+    ID_Servicio:     r.id_servicio,
+    ID_Beca:         r.id_beca  || '',
+    ID_Bono:         r.id_bono  || '',
+    EstadoAgenda:    r.estado_agenda,
+    Estado:          r.estado_agenda,
+    NotasAgenda:     r.notas_agenda || '',
+    Notas:           r.notas_agenda || '',
+    NombrePaciente:  pacMap[r.id_paciente]  || r.id_paciente  || '',
+    NombreTerapeuta: terMap[r.id_terapeuta] || r.id_terapeuta || '',
+    NombreServicio:  srvMap[r.id_servicio]  || r.id_servicio  || '',
+  }));
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  NAVEGACIÓN
+// ═══════════════════════════════════════════════════════════════
+function lunesDeHoy() {
+  const hoy = new Date(); const d = hoy.getDay();
+  const diff = (d === 0) ? -6 : 1 - d;
+  const l = new Date(hoy); l.setDate(hoy.getDate() + diff); l.setHours(0,0,0,0); return l;
+}
+
+function lunesDe(fecha) {
+  // Devuelve el lunes de la semana que contiene 'fecha'
+  const d = new Date(fecha); d.setHours(0,0,0,0);
+  const dow = d.getDay();
+  const diff = (dow === 0) ? -6 : 1 - dow;
+  d.setDate(d.getDate() + diff);
+  return d;
+}
+
+function cambiarVista(v, luneForzado) {
+  // ▶ Fix: si se pasa luneForzado, usarlo en lugar de calcular lunesDeHoy()
+  G.vista = v;
+  ['dia','semana','mes'].forEach(x => document.getElementById('btn-vista-' + x).classList.toggle('active', x === v));
+  document.getElementById('grid-dia').style.display    = v === 'dia'    ? '' : 'none';
+  document.getElementById('grid-semana').style.display = v === 'semana' ? '' : 'none';
+  document.getElementById('grid-mes').style.display    = v === 'mes'    ? '' : 'none';
+  if (v === 'mes') {
+    if (!luneForzado) { const d = new Date(G.lunes); d.setDate(1); G.lunes = d; }
+    cargarMes();
+  } else if (v === 'dia') {
+    if (!G.diaActual) { G.diaActual = new Date(); G.diaActual.setHours(0,0,0,0); }
+    cargarDia();
+  } else {
+    // semana: respetar luneForzado si viene del click en el mes
+    if (luneForzado) G.lunes = luneForzado;
+    else if (!G.lunes) G.lunes = lunesDeHoy();
+    // Si NO viene de mes, resetear a hoy solo cuando el usuario pulsa el botón "Semana" directamente
+    // (sin luneForzado). Mantenemos G.lunes tal cual en ese caso para no perder la posición.
+    cargarSemana();
+  }
+}
+
+function cambiarPeriodo(delta) {
+  if (G.vista === 'mes') { const d = new Date(G.lunes); d.setMonth(d.getMonth() + delta); d.setDate(1); G.lunes = d; cargarMes(); }
+  else if (G.vista === 'dia') { if (!G.diaActual) G.diaActual = new Date(); G.diaActual = new Date(G.diaActual); G.diaActual.setDate(G.diaActual.getDate() + delta); cargarDia(); }
+  else { G.lunes = new Date(G.lunes); G.lunes.setDate(G.lunes.getDate() + delta * 7); cargarSemana(); }
+}
+
+function irHoy() {
+  if (G.vista === 'mes') { const d = new Date(); d.setDate(1); d.setHours(0,0,0,0); G.lunes = d; cargarMes(); }
+  else if (G.vista === 'dia') { G.diaActual = new Date(); G.diaActual.setHours(0,0,0,0); cargarDia(); }
+  else { G.lunes = lunesDeHoy(); cargarSemana(); }
+}
+
+function recargarAgenda() {
+  if (G.vista === 'mes') cargarMes();
+  else if (G.vista === 'dia') cargarDia();
+  else cargarSemana();
+  toast('Agenda actualizada ✓', 'ok');
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  CARGAR CITAS
+// ═══════════════════════════════════════════════════════════════
+async function cargarSemana() {
+  const pad = n => String(n).padStart(2,'0');
+  const fi = G.lunes.getFullYear()+'-'+pad(G.lunes.getMonth()+1)+'-'+pad(G.lunes.getDate());
+  const fd = new Date(G.lunes); fd.setDate(fd.getDate()+7);
+  const ff = fd.getFullYear()+'-'+pad(fd.getMonth()+1)+'-'+pad(fd.getDate());
+  try {
+    G.citas = mapearCitas(await supaGet('agenda_datos', `fecha=gte.${fi}&fecha=lt.${ff}&order=fecha.asc,hora.asc`));
+    renderizarSemana(); actualizarWeekLabel(); renderizarLeyenda(); popularSelectores();
+  } catch(err) { toast('Error al cargar agenda: ' + err.message, 'err'); }
+}
+
+async function cargarMes() {
+  const pad = n => String(n).padStart(2,'0');
+  const pd = new Date(G.lunes); const dow = pd.getDay();
+  const ig = new Date(pd); ig.setDate(pd.getDate() + ((dow===0)?-6:1-dow));
+  const fg = new Date(ig); fg.setDate(ig.getDate()+42);
+  const fi = ig.getFullYear()+'-'+pad(ig.getMonth()+1)+'-'+pad(ig.getDate());
+  const ff = fg.getFullYear()+'-'+pad(fg.getMonth()+1)+'-'+pad(fg.getDate());
+  try {
+    G.citas = mapearCitas(await supaGet('agenda_datos', `fecha=gte.${fi}&fecha=lt.${ff}&order=fecha.asc,hora.asc`));
+    renderizarMes(ig); actualizarMonthLabel(); renderizarLeyenda(); popularSelectores();
+  } catch(err) { toast('Error al cargar mes: ' + err.message, 'err'); }
+}
+
+async function cargarDia() {
+  if (!G.diaActual) { G.diaActual = new Date(); G.diaActual.setHours(0,0,0,0); }
+  const pad = n => String(n).padStart(2,'0');
+  const fi = G.diaActual.getFullYear()+'-'+pad(G.diaActual.getMonth()+1)+'-'+pad(G.diaActual.getDate());
+  const fd = new Date(G.diaActual); fd.setDate(fd.getDate()+1);
+  const ff = fd.getFullYear()+'-'+pad(fd.getMonth()+1)+'-'+pad(fd.getDate());
+  try {
+    G.citas = mapearCitas(await supaGet('agenda_datos', `fecha=gte.${fi}&fecha=lt.${ff}&order=hora.asc`));
+    renderizarDia(); actualizarDiaLabel(); renderizarLeyenda(); popularSelectores();
+  } catch(err) { toast('Error al cargar día: ' + err.message, 'err'); }
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  OPERACIONES DE ESCRITURA
+// ═══════════════════════════════════════════════════════════════
+async function crearCita(datos) {
+  const idCita = await generarId('agenda_datos', 'id_cita', 'AG');
+  let idBeca = '', idBono = '';
+  if (datos.tipoFin === 'BECA') idBeca = datos.idFin || await resolverBecaActiva(datos.idPaciente) || '';
+  if (datos.tipoFin === 'BONO') idBono = datos.idFin || await resolverBonoActivo(datos.idPaciente) || '';
+  await supaPost('agenda_datos', {
+    id_cita:        idCita,
+    fecha:          datos.fecha,
+    hora:           datos.hora,
+    id_terapeuta:   G.miId,
+    id_paciente:    datos.idPaciente,
+    id_servicio:    datos.idServicio,
+    id_beca:        idBeca,
+    id_bono:        idBono,
+    estado_agenda:  'Programada',
+    id_compromiso:  '',
+    notas_agenda:   datos.notas || '',
+    fecha_alta_cita: new Date().toISOString().split('T')[0],
+  });
+  return idCita;
+}
+
+async function resolverBonoActivo(idPaciente) {
+  const rows = await supaGet('bonos', `id_paciente=eq.${idPaciente}&estado=eq.Activo&sesiones_pendientes=gt.0&order=fecha_caducidad.asc&limit=1`);
+  return rows && rows.length ? rows[0].id_bono : null;
+}
+
+async function resolverBecaActiva(idPaciente) {
+  const rows = await supaGet('becas', `id_paciente=eq.${idPaciente}&estado=eq.Activo&sesiones_pendientes=gt.0&order=anio.desc&limit=1`);
+  return rows && rows.length ? rows[0].id_beca : null;
+}
+
+async function calcularImporte(idServicio, tipoFin, idFin) {
+  if (tipoFin === 'BONO' && idFin) {
+    const rows = await supaGet('bonos', `id_bono=eq.${idFin}`);
+    if (rows && rows.length) return parseFloat(rows[0].valor_sesion) || 0;
+  }
+  if (tipoFin === 'BECA' && idFin) {
+    const rows = await supaGet('becas', `id_beca=eq.${idFin}`);
+    if (rows && rows.length) return parseFloat(rows[0].valor_sesion) || 0;
+  }
+  const rows = await supaGet('servicios', `id_servicio=eq.${idServicio}`);
+  return rows && rows.length ? parseFloat(rows[0].precio) || 0 : 0;
+}
+
+async function actualizarBono(idBono, delta) {
+  const rows = await supaGet('bonos', `id_bono=eq.${idBono}`);
+  if (!rows || !rows.length) return;
+  const b = rows[0];
+  const consumidas = (parseInt(b.sesiones_consumidas)||0) + delta;
+  const pendientes = Math.max((parseInt(b.sesiones_totales)||0) - consumidas, 0);
+  const valSes     = parseFloat(b.valor_sesion)||0;
+  await supaPatch('bonos', `id_bono=eq.${idBono}`, {
+    sesiones_consumidas: consumidas, sesiones_pendientes: pendientes,
+    importe_devengado: consumidas * valSes,
+    importe_pendiente: Math.max((parseInt(b.sesiones_totales)||0)*valSes - consumidas*valSes, 0),
+    estado: pendientes <= 0 ? 'Agotado' : b.estado,
+  });
+}
+
+async function actualizarBeca(idBeca, delta) {
+  const rows = await supaGet('becas', `id_beca=eq.${idBeca}`);
+  if (!rows || !rows.length) return;
+  const b = rows[0];
+  const consumidas = (parseInt(b.sesiones_consumidas)||0) + delta;
+  const pendientes = Math.max((parseInt(b.sesiones_pendientes)||0) - delta, 0);
+  await supaPatch('becas', `id_beca=eq.${idBeca}`, {
+    sesiones_consumidas: consumidas, sesiones_pendientes: pendientes,
+    fecha_ultima_sesion: new Date().toISOString().split('T')[0],
+    estado: pendientes <= 0 ? 'Agotada' : b.estado,
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  RENDERIZADO
+// ═══════════════════════════════════════════════════════════════
+function popularSelectores() {
+  const opts = '<option value="">— Selecciona servicio —</option>' +
+    G.servicios.filter(s => s.Activo !== 'No').map(s =>
+      `<option value="${s.ID_Servicio}">${s.Servicio} (${s.Precio||0}€)</option>`).join('');
+  document.getElementById('n-servicio').innerHTML  = opts;
+  document.getElementById('mm-servicio').innerHTML = opts;
+}
+
+function actualizarWeekLabel() {
+  const fin = new Date(G.lunes); fin.setDate(fin.getDate()+5);
+  document.getElementById('week-label').textContent =
+    G.lunes.getDate()+' '+MESES_ES[G.lunes.getMonth()]+' – '+fin.getDate()+' '+MESES_ES[fin.getMonth()]+' '+fin.getFullYear();
+}
+
+function actualizarMonthLabel() {
+  const m = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  document.getElementById('week-label').textContent = m[G.lunes.getMonth()] + ' ' + G.lunes.getFullYear();
+}
+
+function actualizarDiaLabel() {
+  const d = G.diaActual || new Date();
+  document.getElementById('week-label').textContent = DIAS_ES[d.getDay()]+' '+d.getDate()+' de '+MESES_ES[d.getMonth()]+' '+d.getFullYear();
+}
+
+function renderizarLeyenda() {
+  document.getElementById('leyenda').innerHTML = G.terapeutas.map(t =>
+    `<div class="leyenda-item"><div class="leyenda-dot" style="background:${G.colores[t.ID_Terapeuta]}"></div>${t.Nombre}${t.ID_Terapeuta===G.miId?' <strong>(tú)</strong>':''}</div>`).join('');
+}
+
+function renderizarMes(inicioGrid) {
+  const hoy = new Date(); hoy.setHours(0,0,0,0);
+  const mes = G.lunes.getMonth(); const pad2 = n => String(n).padStart(2,'0');
+  const OCULTOS = ['Cancelada','Reprogramada'];
+  document.getElementById('month-header').innerHTML = ['LUN','MAR','MIÉ','JUE','VIE','SÁB','DOM'].map(d=>`<div class="month-header-cell">${d}</div>`).join('');
+  const body = document.getElementById('month-body'); body.innerHTML = '';
+  for (let i = 0; i < 42; i++) {
+    const fecha = new Date(inicioGrid); fecha.setDate(inicioGrid.getDate()+i);
+    const fechaStr = fecha.getFullYear()+'-'+pad2(fecha.getMonth()+1)+'-'+pad2(fecha.getDate());
+    const cell = document.createElement('div');
+    cell.className = 'month-day'+(fecha.getMonth()!==mes?' otro-mes':'')+(fecha.getTime()===hoy.getTime()?' es-hoy':'');
+
+    // Al clicar un día en vista mes → ir a vista día
+    cell.onclick = () => {
+      G.diaActual = new Date(fecha); G.diaActual.setHours(0,0,0,0);
+      G.lunes = lunesDe(fecha); // mantener coherencia por si luego va a semana
+      cambiarVista('dia');
+    };
+
+    const num = document.createElement('div'); num.className='month-day-num'; num.textContent=fecha.getDate(); cell.appendChild(num);
+    const citasDelDia = G.citas.filter(c => c.Fecha===fechaStr && !OCULTOS.includes(c.EstadoAgenda)).sort((a,b)=>(a.Hora||'').localeCompare(b.Hora||''));
+    citasDelDia.slice(0,3).forEach(cita => {
+      const pill = document.createElement('div'); pill.className='month-cita'; pill.style.background=G.colores[cita.ID_Terapeuta]||'#aaa';
+      pill.innerHTML=`<span class="month-cita-hora">${(cita.Hora||'').slice(0,5)}</span><span style="overflow:hidden;text-overflow:ellipsis">${cita.NombrePaciente||'—'}</span>`;
+      if (cita.ID_Terapeuta===G.miId) pill.onclick=e=>{e.stopPropagation();abrirModalCita(cita);};
+      else pill.onclick=e=>e.stopPropagation();
+      cell.appendChild(pill);
+    });
+    if (citasDelDia.length>3) {
+      const mas=document.createElement('div'); mas.className='month-mas'; mas.textContent='+'+(citasDelDia.length-3)+' más';
+      mas.onclick=e=>{
+        e.stopPropagation();
+        G.diaActual = new Date(fecha); G.diaActual.setHours(0,0,0,0);
+        G.lunes = lunesDe(fecha);
+        cambiarVista('dia');
+      };
+      cell.appendChild(mas);
+    }
+    body.appendChild(cell);
+  }
+}
+
+function renderizarSemana() {
+  const hoy=new Date(); hoy.setHours(0,0,0,0);
+  const DURACION=50; const SLOT_H=48; const pad2=n=>String(n).padStart(2,'0');
+  const OCULTOS=['Cancelada','Reprogramada'];
+  const header=document.getElementById('grid-header');
+  header.innerHTML='<div class="grid-header-cell"></div>';
+  for (let d=0;d<6;d++) {
+    const fecha=new Date(G.lunes); fecha.setDate(fecha.getDate()+d);
+    const esHoy=fecha.getTime()===hoy.getTime();
+    header.innerHTML+=`<div class="grid-header-cell ${esHoy?'hoy-col':''}"><span class="dia-num">${fecha.getDate()}</span>${DIAS_ES[fecha.getDay()]}</div>`;
+  }
+  const body=document.getElementById('grid-body'); body.innerHTML='';
+  const timeCol=document.createElement('div'); timeCol.className='time-col';
+  for (let h=HORAS_INICIO;h<HORAS_FIN;h++) { const sl=document.createElement('div'); sl.className='time-slot'; sl.textContent=h.toString().padStart(2,'0')+':00'; timeCol.appendChild(sl); }
+  body.appendChild(timeCol);
+  for (let d=0;d<6;d++) {
+    const fecha=new Date(G.lunes); fecha.setDate(fecha.getDate()+d);
+    const esHoy=fecha.getTime()===hoy.getTime();
+    const fechaStr=fecha.getFullYear()+'-'+pad2(fecha.getMonth()+1)+'-'+pad2(fecha.getDate());
+    const dayCol=document.createElement('div'); dayCol.className='day-col'+(esHoy?' hoy-col':''); dayCol.dataset.fecha=fechaStr; dayCol.style.position='relative';
+    for (let h=HORAS_INICIO;h<HORAS_FIN;h++) {
+      const sl=document.createElement('div'); sl.className='day-slot';
+      sl.dataset.hora=h.toString().padStart(2,'0')+':00';
+      sl.dataset.fecha=fechaStr;
+      sl.onclick=e=>{if(e.target!==sl)return;abrirModalNueva(dayCol.dataset.fecha,sl.dataset.hora);};
+      sl.addEventListener('dragover', e=>{
+        if(!G.dragCita)return;
+        e.preventDefault(); e.dataTransfer.dropEffect='move';
+        document.querySelectorAll('.day-slot.drag-over').forEach(s=>s.classList.remove('drag-over'));
+        sl.classList.add('drag-over');
+      });
+      sl.addEventListener('dragleave', ()=>sl.classList.remove('drag-over'));
+      sl.addEventListener('drop', e=>{
+        e.preventDefault();
+        sl.classList.remove('drag-over');
+        if(!G.dragCita)return;
+        moverCita(G.dragCita, sl.dataset.fecha, sl.dataset.hora);
+      });
+      dayCol.appendChild(sl);
+    }
+    const citasDelDia=G.citas.filter(c=>c.Fecha===fechaStr&&!OCULTOS.includes(c.EstadoAgenda));
+    if (citasDelDia.length) {
+      const ordenadas=[...citasDelDia].sort((a,b)=>(parseHora(a.Hora)||0)-(parseHora(b.Hora)||0));
+      const asign=new Map();
+      ordenadas.forEach(cita=>{
+        const hmA=parseHora(cita.Hora)||0; const finA=hmA+DURACION;
+        const grupo=ordenadas.filter(c2=>{const hmB=parseHora(c2.Hora)||0;return hmA<hmB+DURACION&&finA>hmB;});
+        grupo.sort((a,b)=>{if(a.ID_Terapeuta===G.miId)return -1;if(b.ID_Terapeuta===G.miId)return 1;return(a.ID_Terapeuta||'').localeCompare(b.ID_Terapeuta||'');});
+        if(!asign.has(cita))asign.set(cita,{col:grupo.indexOf(cita),totalCols:grupo.length});
+      });
+      asign.forEach((pos,cita)=>{
+        const hm=parseHora(cita.Hora); if(hm===null)return;
+        const offsetMin=hm-HORAS_INICIO*60; if(offsetMin<0)return;
+        const top=(offsetMin/60)*SLOT_H; const height=Math.max((DURACION/60)*SLOT_H,22);
+        const esMia=cita.ID_Terapeuta===G.miId; const color=G.colores[cita.ID_Terapeuta]||'#aaa';
+        const pct=100/pos.totalCols;
+        const div=document.createElement('div'); div.className='cita'+(esMia?' propia':' ajena');
+        div.style.cssText=`position:absolute;top:${top}px;height:${height}px;left:calc(2px + ${pos.col*pct}%);right:calc(2px + ${(pos.totalCols-pos.col-1)*pct}%);background:${color};border-left:3px solid ${darken(color)};color:${contrastColor(color)};opacity:${esMia?'1':'0.72'};`;
+        const nombreCorto=pos.totalCols>2?(cita.NombrePaciente||'—').split(' ').slice(0,2).join(' '):(cita.NombrePaciente||'—');
+        div.innerHTML=`<div class="cita-nombre">${nombreCorto}</div>${pos.totalCols<=3?`<div class="cita-servicio">${cita.NombreServicio||''}</div>`:''}<span class="cita-estado">${estadoLabel(cita.Estado)}</span>`;
+        if(esMia) {
+          div.onclick=()=>abrirModalCita(cita);
+          if(cita.Estado==='Programada') {
+            div.draggable=true;
+            div.addEventListener('dragstart', e => {
+              G.dragCita = cita;
+              setTimeout(()=>div.classList.add('dragging'), 0);
+              e.dataTransfer.effectAllowed = 'move';
+            });
+            div.addEventListener('dragend', () => {
+              div.classList.remove('dragging');
+              G.dragCita = null;
+              document.querySelectorAll('.day-slot.drag-over').forEach(s=>s.classList.remove('drag-over'));
+            });
+          }
+        } else {
+          div.title=(cita.NombreTerapeuta||'')+' · '+(cita.NombrePaciente||'');
+        }
+        dayCol.appendChild(div);
+      });
+    }
+    body.appendChild(dayCol);
+  }
+}
+
+function renderizarDia() {
+  const DURACION=50; const SLOT_H=48; const pad2=n=>String(n).padStart(2,'0');
+  const OCULTOS=['Cancelada','Reprogramada'];
+  const d=G.diaActual||new Date(); const hoy=new Date(); hoy.setHours(0,0,0,0);
+  const fechaStr=d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-'+pad2(d.getDate());
+  const esHoy=d.getTime()===hoy.getTime();
+  const header=document.getElementById('grid-dia-header');
+  header.innerHTML=`<div class="grid-header-cell"></div><div class="grid-header-cell ${esHoy?'hoy-col':''}" style="grid-column:span 1"><span class="dia-num">${d.getDate()}</span>${DIAS_ES[d.getDay()]} ${MESES_ES[d.getMonth()]}</div>`;
+  header.style.gridTemplateColumns='56px 1fr';
+  const body=document.getElementById('grid-dia-body'); body.innerHTML=''; body.style.gridTemplateColumns='56px 1fr';
+  const timeCol=document.createElement('div'); timeCol.className='time-col';
+  for(let h=HORAS_INICIO;h<HORAS_FIN;h++){const sl=document.createElement('div');sl.className='time-slot';sl.textContent=h.toString().padStart(2,'0')+':00';timeCol.appendChild(sl);}
+  body.appendChild(timeCol);
+  const dayCol=document.createElement('div'); dayCol.className='day-col'+(esHoy?' hoy-col':''); dayCol.dataset.fecha=fechaStr; dayCol.style.position='relative';
+  for(let h=HORAS_INICIO;h<HORAS_FIN;h++){const sl=document.createElement('div');sl.className='day-slot';sl.dataset.hora=h.toString().padStart(2,'0')+':00';sl.onclick=e=>{if(e.target!==sl)return;abrirModalNueva(dayCol.dataset.fecha,sl.dataset.hora);};dayCol.appendChild(sl);}
+  const citasDelDia=G.citas.filter(c=>c.Fecha===fechaStr&&!OCULTOS.includes(c.EstadoAgenda));
+  if(citasDelDia.length){
+    const ordenadas=[...citasDelDia].sort((a,b)=>(parseHora(a.Hora)||0)-(parseHora(b.Hora)||0));
+    const asign=new Map();
+    ordenadas.forEach(cita=>{
+      const hmA=parseHora(cita.Hora)||0;const finA=hmA+DURACION;
+      const grupo=ordenadas.filter(c2=>{const hmB=parseHora(c2.Hora)||0;return hmA<hmB+DURACION&&finA>hmB;});
+      grupo.sort((a,b)=>{if(a.ID_Terapeuta===G.miId)return -1;if(b.ID_Terapeuta===G.miId)return 1;return(a.ID_Terapeuta||'').localeCompare(b.ID_Terapeuta||'');});
+      if(!asign.has(cita))asign.set(cita,{col:grupo.indexOf(cita),totalCols:grupo.length});
+    });
+    asign.forEach((pos,cita)=>{
+      const hm=parseHora(cita.Hora);if(hm===null)return;
+      const offsetMin=hm-HORAS_INICIO*60;if(offsetMin<0)return;
+      const top=(offsetMin/60)*SLOT_H;const height=Math.max((DURACION/60)*SLOT_H,22);
+      const esMia=cita.ID_Terapeuta===G.miId;const color=G.colores[cita.ID_Terapeuta]||'#aaa';
+      const pct=100/pos.totalCols;
+      const div=document.createElement('div');div.className='cita'+(esMia?' propia':' ajena');
+      div.style.cssText=`position:absolute;top:${top}px;height:${height}px;left:calc(2px + ${pos.col*pct}%);right:calc(2px + ${(pos.totalCols-pos.col-1)*pct}%);background:${color};border-left:3px solid ${darken(color)};color:${contrastColor(color)};opacity:${esMia?'1':'0.72'};`;
+      div.innerHTML=`<div class="cita-nombre">${cita.NombrePaciente||'—'}</div><div class="cita-servicio">${cita.NombreServicio||''}${!esMia?' · '+(cita.NombreTerapeuta||''):''}</div><div class="cita-servicio">${cita.Hora||''}</div><span class="cita-estado">${estadoLabel(cita.Estado)}</span>`;
+      if(esMia)div.onclick=()=>abrirModalCita(cita);
+      else div.title=(cita.NombreTerapeuta||'')+' · '+(cita.NombrePaciente||'');
+      dayCol.appendChild(div);
+    });
+  }
+  body.appendChild(dayCol);
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  MODAL NUEVA CITA
+// ═══════════════════════════════════════════════════════════════
+function abrirModalNueva(fechaPref, horaPref) {
+  document.getElementById('n-fecha').value  = fechaPref || new Date().toISOString().slice(0,10);
+  document.getElementById('n-hora').value   = horaPref  || '09:00';
+  document.getElementById('n-servicio').value = '';
+  document.getElementById('n-tipofin').value  = 'SUELTA';
+  document.getElementById('n-notas').value    = '';
+  document.getElementById('n-recur-check').checked = false;
+  document.getElementById('n-recur-panel').classList.remove('visible');
+  document.getElementById('n-recur-hasta').value = '';
+  document.getElementById('n-recur-festivos').value = '';
+  document.getElementById('n-recur-preview').innerHTML = '';
+  document.getElementById('btn-crear-cita').textContent = 'Crear cita';
+  pacReset('cita'); ocultarBonoAviso(); abrirOverlay('modal-nueva');
+}
+
+function ocultarBonoAviso() {
+  const av = document.getElementById('n-bono-aviso');
+  av.style.display='none'; av.className='bono-aviso'; av.textContent='';
+}
+
+async function onTipoFinChange() {
+  const v = document.getElementById('n-tipofin').value;
+  ocultarBonoAviso();
+  if ((v==='BONO'||v==='BECA') && document.getElementById('n-paciente').value) {
+    await verificarBonoDisponible(document.getElementById('n-paciente').value, v);
+  }
+}
+
+async function guardarNuevaCita() {
+  const fecha=document.getElementById('n-fecha').value;
+  const hora=document.getElementById('n-hora').value;
+  const paciente=document.getElementById('n-paciente').value;
+  const servicio=document.getElementById('n-servicio').value;
+  const tipoFin=document.getElementById('n-tipofin').value;
+  const notas=document.getElementById('n-notas').value.trim();
+  const recur=document.getElementById('n-recur-check').checked;
+  if (!fecha||!hora||!paciente||!servicio){toast('Completa fecha, hora, paciente y servicio','err');return;}
+
+  if ((tipoFin==='BONO'||tipoFin==='BECA') && !(await verificarBonoDisponible(paciente,tipoFin))) return;
+
+  if (recur) {
+    const hasta=document.getElementById('n-recur-hasta').value;
+    const cadaDias=parseInt(document.getElementById('n-recur-cada').value)||7;
+    if (!hasta){toast('Indica la fecha hasta la que repetir','err');return;}
+    const festivos=[...parseFestivos(document.getElementById('n-recur-festivos').value),...diasDeAgosto(new Date().getFullYear()),...diasDeAgosto(new Date().getFullYear()+1)];
+    const fechas=calcularFechasRecurrentes(fecha,hasta,cadaDias,festivos);
+    if (!fechas.length){toast('No hay fechas válidas en ese rango','err');return;}
+    const btn=document.getElementById('btn-crear-cita'); btn.disabled=true; btn.textContent=`⏳ Creando ${fechas.length} citas…`;
+    try {
+      for (const f of fechas) await crearCita({fecha:f,hora,idPaciente:paciente,idServicio:servicio,tipoFin,idFin:'',notas});
+      toast(`${fechas.length} citas creadas ✓`,'ok'); cerrarModal('modal-nueva'); recargarVista();
+    } catch(err){toast('Error: '+err.message,'err');}
+    finally{btn.disabled=false;btn.textContent='Crear citas';}
+    return;
+  }
+
+  const btn=document.getElementById('btn-crear-cita'); btn.disabled=true; btn.textContent='⏳ Creando…';
+  try {
+    await crearCita({fecha,hora,idPaciente:paciente,idServicio:servicio,tipoFin,idFin:'',notas});
+    toast('Cita creada ✓','ok'); cerrarModal('modal-nueva'); recargarVista();
+  } catch(err){toast('Error: '+err.message,'err');}
+  finally{btn.disabled=false;btn.textContent='Crear cita';}
+}
+
+function recargarVista() {
+  if(G.vista==='mes')cargarMes(); else if(G.vista==='dia')cargarDia(); else cargarSemana();
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  MODAL VER/EDITAR CITA
+// ═══════════════════════════════════════════════════════════════
+function abrirModalCita(cita) {
+  G.citaActual=cita; G.estadoSel=cita.EstadoAgenda||cita.Estado||'Programada';
+  document.getElementById('mc-titulo').textContent    = cita.NombrePaciente||'Cita';
+  document.getElementById('mc-paciente').textContent  = cita.NombrePaciente||'—';
+  document.getElementById('mc-servicio').textContent  = cita.NombreServicio||'—';
+  document.getElementById('mc-terapeuta').textContent = cita.NombreTerapeuta||'—';
+  document.getElementById('mc-fechahora').textContent = formatFecha(cita.Fecha)+' · '+(cita.Hora||'—');
+  document.getElementById('mc-notas').value = cita.NotasAgenda||cita.Notas||'';
+  document.getElementById('mc-reprog-panel').classList.remove('visible');
+  document.getElementById('mc-reprog-fecha').value=''; document.getElementById('mc-reprog-hora').value='';
+  document.getElementById('mc-btn-guardar').textContent='Guardar';
+  document.getElementById('mc-repetir-panel').style.display='none';
+  document.getElementById('mc-rep-hasta').value=''; document.getElementById('mc-rep-preview').innerHTML='';
+  const esMia=cita.ID_Terapeuta===G.miId;
+  document.getElementById('mc-seccion-estado').style.display=esMia?'block':'none';
+  document.getElementById('mc-solo-lectura').style.display=esMia?'none':'block';
+  document.getElementById('mc-btn-repetir').style.display=esMia?'inline-flex':'none';
+  document.getElementById('mc-btn-eliminar').style.display=esMia?'inline-flex':'none';
+  // Botón editar paciente: visible siempre que haya ID_Paciente
+  document.getElementById('mc-btn-editar-pac').style.display = cita.ID_Paciente ? 'inline-flex' : 'none';
+  actualizarBotonesEstado(); abrirOverlay('modal-cita');
+}
+
+function selEstado(estado) {
+  G.estadoSel=estado; actualizarBotonesEstado();
+  const panel=document.getElementById('mc-reprog-panel');
+  const panelCobro=document.getElementById('mc-cobro-panel');
+  const btn=document.getElementById('mc-btn-guardar');
+  if(estado==='Reprogramada'){if(G.citaActual)document.getElementById('mc-reprog-hora').value=G.citaActual.Hora||'';panel.classList.add('visible');btn.textContent='🔄 Reprogramar y crear cita';}
+  else{panel.classList.remove('visible');btn.textContent='Guardar';}
+  const tipoFin=G.citaActual?(G.citaActual.ID_Bono?'BONO':(G.citaActual.ID_Beca?'BECA':'SUELTA')):'SUELTA';
+  panelCobro.style.display=(estado==='Hecha'&&tipoFin==='SUELTA')?'':'none';
+  if(panelCobro.style.display==='none')document.getElementById('mc-cobrado').value='No';
+}
+
+function actualizarBotonesEstado() {
+  const estadoOrig=G.citaActual?(G.citaActual.EstadoAgenda||G.citaActual.Estado||''):'';
+  const yaHecha=estadoOrig==='Hecha';
+  document.querySelectorAll('.estado-btn').forEach(btn=>{btn.className='estado-btn';if(btn.dataset.estado===G.estadoSel)btn.className='estado-btn active-'+G.estadoSel;});
+  let av=document.getElementById('mc-aviso-hecha');
+  if(!av){av=document.createElement('p');av.id='mc-aviso-hecha';av.style.cssText='font-size:12px;color:#c0392b;background:#fff3f3;border:1px solid #DA291C;border-radius:6px;padding:7px 10px;margin-bottom:10px;font-weight:500;';const s=document.getElementById('mc-seccion-estado');s.insertBefore(av,s.firstChild);}
+  av.textContent=yaHecha?'⚠️ Esta sesión ya está marcada como Hecha. Si guardas se actualizarán las notas pero no se duplicará en SESIONES.':'';
+  av.style.display=yaHecha?'block':'none';
+}
+
+async function guardarEstadoCita() {
+  if(!G.citaActual)return;
+  const notas=document.getElementById('mc-notas').value.trim();
+  const btn=document.getElementById('mc-btn-guardar');
+
+  if(G.estadoSel==='Reprogramada'){
+    const nuevaFecha=document.getElementById('mc-reprog-fecha').value;
+    const nuevaHora=document.getElementById('mc-reprog-hora').value||G.citaActual.Hora||'09:00';
+    if(!nuevaFecha){toast('Indica la nueva fecha','err');return;}
+    btn.disabled=true;btn.textContent='⏳ Reprogramando…';
+    try {
+      await supaPatch('agenda_datos',`id_cita=eq.${G.citaActual.ID_Cita}`,{estado_agenda:'Reprogramada',notas_agenda:notas});
+      await crearCita({fecha:nuevaFecha,hora:nuevaHora,idPaciente:G.citaActual.ID_Paciente,idServicio:G.citaActual.ID_Servicio,tipoFin:G.citaActual.ID_Bono?'BONO':(G.citaActual.ID_Beca?'BECA':'SUELTA'),idFin:G.citaActual.ID_Bono||G.citaActual.ID_Beca||'',notas:'[Reprog. desde '+formatFecha(G.citaActual.Fecha)+']'+(notas?' '+notas:'')});
+      toast('Cita reprogramada ✓','ok');cerrarModal('modal-cita');recargarVista();
+    }catch(err){toast('Error: '+err.message,'err');}
+    finally{btn.disabled=false;btn.textContent='🔄 Reprogramar y crear cita';}
+    return;
+  }
+
+  btn.disabled=true; btn.textContent='⏳ Guardando…';
+  try {
+    await supaPatch('agenda_datos',`id_cita=eq.${G.citaActual.ID_Cita}`,{estado_agenda:G.estadoSel,notas_agenda:notas});
+
+    if(G.estadoSel==='Hecha'||G.estadoSel==='No-show'){
+      const tipoFin=G.citaActual.ID_Bono?'BONO':(G.citaActual.ID_Beca?'BECA':'SUELTA');
+      const idFin=G.citaActual.ID_Bono||G.citaActual.ID_Beca||'';
+      const sesExist=await supaGet('sesiones',`id_cita=eq.${G.citaActual.ID_Cita}`);
+      if(!sesExist||!sesExist.length){
+        const importe=G.estadoSel==='No-show'&&tipoFin!=='BECA'?0:await calcularImporte(G.citaActual.ID_Servicio,tipoFin,idFin);
+        const idSes=await generarId('sesiones','id_cita','S');
+        await supaPost('sesiones',{id_cita:idSes,fecha:G.citaActual.Fecha,hora:G.citaActual.Hora,financiacion_tipo:tipoFin,id_paciente:G.citaActual.ID_Paciente,id_terapeuta:G.miId,id_servicio:G.citaActual.ID_Servicio,id_beca:tipoFin==='BECA'?idFin:'',id_bono:tipoFin==='BONO'?idFin:'',estado:G.estadoSel,importe:importe,cerrada:'No',fecha_cierre:'',notas:notas||G.citaActual.NotasAgenda||''});
+        if(G.estadoSel==='Hecha'){
+          if(tipoFin==='BONO'&&idFin)await actualizarBono(idFin,1);
+          if(tipoFin==='BECA'&&idFin)await actualizarBeca(idFin,1);
+          if(tipoFin==='SUELTA'&&document.getElementById('mc-cobrado').value==='Sí'){
+            const idCobro=await generarId('cobros','id_cobro','C');
+            await supaPost('cobros',{id_cobro:idCobro,fecha:new Date().toISOString().split('T')[0],id_paciente:G.citaActual.ID_Paciente,id_sesion:idSes,importe:importe,metodo_pago:document.getElementById('mc-metodo-cobro').value||'Efectivo',estado:'Confirmado',notas:'Cobro desde MiniApp'});
+          }
+        }
+        if(G.estadoSel==='No-show'&&tipoFin==='BECA'&&idFin)await actualizarBeca(idFin,1);
+      } else {
+        await supaPatch('sesiones',`id_cita=eq.${G.citaActual.ID_Cita}`,{estado:G.estadoSel});
+      }
+    }
+    toast('Estado actualizado ✓','ok'); cerrarModal('modal-cita'); recargarVista();
+  }catch(err){toast('Error: '+err.message,'err');}
+  finally{btn.disabled=false;btn.textContent='Guardar';}
+}
+
+async function eliminarCita() {
+  const cita=G.citaActual; if(!cita)return;
+  if(!window.confirm(`¿Eliminar la cita de ${cita.NombrePaciente||'este paciente'} el ${formatFecha(cita.Fecha)} a las ${cita.Hora}?\n\nEsta acción no se puede deshacer.`))return;
+  const btn=document.getElementById('mc-btn-eliminar'); btn.disabled=true; btn.textContent='⏳';
+  try {
+    await supaDelete('agenda_datos',`id_cita=eq.${cita.ID_Cita}`);
+    toast('Cita eliminada ✓','ok'); cerrarModal('modal-cita'); recargarVista();
+  }catch(err){toast('Error: '+err.message,'err');}
+  finally{btn.disabled=false;btn.textContent='🗑 Eliminar';}
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  MODAL EDITAR PACIENTE
+// ═══════════════════════════════════════════════════════════════
+async function abrirModalEditarPacienteDesde() {
+  // Se llama desde el botón ✏️ del modal de cita
+  if (!G.citaActual || !G.citaActual.ID_Paciente) return;
+  // Cerrar modal de cita antes de abrir el de edición (evita apilamiento de overlays)
+  cerrarModal('modal-cita');
+  await abrirModalEditarPaciente(G.citaActual.ID_Paciente);
+}
+
+async function abrirModalEditarPaciente(idPaciente) {
+  G.pacienteEditandoId = idPaciente;
+  document.getElementById('ep-id-label').textContent = idPaciente;
+  // Limpiar campos mientras carga
+  ['ep-nombre','ep-apellidos','ep-alias','ep-tutor1','ep-tel','ep-tutor2','ep-tel2','ep-email','ep-notas'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+  const btn = document.getElementById('btn-guardar-edicion-paciente');
+  btn.disabled = true; btn.textContent = '⏳ Cargando…';
+  abrirOverlay('modal-editar-paciente');
+  try {
+    const rows = await supaGet('pacientes', `id_paciente=eq.${idPaciente}`);
+    if (!rows || !rows.length) { toast('Paciente no encontrado', 'err'); cerrarModal('modal-editar-paciente'); return; }
+    const p = rows[0];
+    document.getElementById('ep-nombre').value    = p.nombre    || '';
+    document.getElementById('ep-apellidos').value = p.apellidos || '';
+    document.getElementById('ep-alias').value     = p.alias     || '';
+    document.getElementById('ep-tutor1').value    = p.tutor1    || '';
+    document.getElementById('ep-tel').value       = p.telefono  || '';
+    document.getElementById('ep-tutor2').value    = p.tutor2    || '';
+    document.getElementById('ep-tel2').value      = p.telefono2 || '';
+    document.getElementById('ep-email').value     = p.email     || '';
+    document.getElementById('ep-notas').value     = p.notas     || '';
+  } catch(err) {
+    toast('Error al cargar paciente: ' + err.message, 'err');
+    cerrarModal('modal-editar-paciente');
+    return;
+  } finally {
+    btn.disabled = false; btn.textContent = 'Guardar cambios';
+  }
+}
+
+async function guardarEdicionPaciente() {
+  const idPaciente = G.pacienteEditandoId;
+  if (!idPaciente) return;
+  const nombre = document.getElementById('ep-nombre').value.trim();
+  if (!nombre) { toast('El nombre es obligatorio', 'err'); return; }
+  const btn = document.getElementById('btn-guardar-edicion-paciente');
+  btn.disabled = true; btn.textContent = '⏳ Guardando…';
+  try {
+    await supaPatch('pacientes', `id_paciente=eq.${idPaciente}`, {
+      nombre:    nombre,
+      apellidos: document.getElementById('ep-apellidos').value.trim(),
+      alias:     document.getElementById('ep-alias').value.trim(),
+      tutor1:    document.getElementById('ep-tutor1').value.trim(),
+      telefono:  document.getElementById('ep-tel').value.trim(),
+      tutor2:    document.getElementById('ep-tutor2').value.trim(),
+      telefono2: document.getElementById('ep-tel2').value.trim(),
+      email:     document.getElementById('ep-email').value.trim(),
+      notas:     document.getElementById('ep-notas').value.trim(),
+    });
+    // Actualizar caché local de pacientes
+    const pac = await supaGet('pacientes', 'order=nombre.asc');
+    G.pacientes = pac.map(p => ({
+      ID_Paciente: p.id_paciente,
+      Nombre: ((p.nombre||'') + ' ' + (p.apellidos||'')).trim(),
+      Alias: p.alias || '',
+    }));
+    toast('Paciente actualizado ✓', 'ok');
+    cerrarModal('modal-editar-paciente');
+    // Volver a abrir el modal de cita con el nombre ya actualizado
+    if (G.citaActual && G.citaActual.ID_Paciente === idPaciente) {
+      const alias = document.getElementById('ep-alias').value.trim();
+      const nombreCompleto = (nombre + ' ' + document.getElementById('ep-apellidos').value.trim()).trim();
+      G.citaActual.NombrePaciente = alias || nombreCompleto;
+      abrirModalCita(G.citaActual);
+    }
+    toast('Error al guardar: ' + err.message, 'err');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Guardar cambios';
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  VERIFICAR BONO/BECA
+// ═══════════════════════════════════════════════════════════════
+async function verificarBonoDisponible(idPaciente, tipoFin) {
+  if(!idPaciente)return true;
+  const aviso=document.getElementById('n-bono-aviso');
+  aviso.textContent='⏳ Comprobando…'; aviso.className='bono-aviso ok'; aviso.style.display='block';
+  try {
+    const tabla=tipoFin==='BONO'?'bonos':'becas';
+    const idCamp=tipoFin==='BONO'?'id_bono':'id_beca';
+    const rows=await supaGet(tabla,`id_paciente=eq.${idPaciente}&estado=eq.Activo&sesiones_pendientes=gt.0&limit=1`);
+    if(rows.length){aviso.className='bono-aviso ok';aviso.textContent=`✓ ${rows[0][idCamp]} · ${rows[0].sesiones_pendientes} ses. pendientes`;return true;}
+    else{aviso.className='bono-aviso warn';aviso.textContent=`✗ No hay ${tipoFin==='BONO'?'bono':'beca'} activo para este paciente.`;return false;}
+  }catch(e){aviso.className='bono-aviso warn';aviso.textContent='✗ Error: '+e.message;return false;}
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  MODAL NUEVO PACIENTE
+// ═══════════════════════════════════════════════════════════════
+function abrirModalPaciente() {
+  ['mp-nombre','mp-apellidos','mp-tutor1','mp-tel','mp-tutor2','mp-tel2','mp-email','mp-notas'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  document.getElementById('mp-beca').value='No'; document.getElementById('mp-consent').value='Pendiente';
+  const sel=document.getElementById('mp-terapeuta');
+  sel.innerHTML='<option value="">— Selecciona terapeuta —</option>'+G.terapeutas.filter(t=>t.Activa==='Sí').map(t=>`<option value="${t.ID_Terapeuta}"${t.ID_Terapeuta===G.miId?' selected':''}>${t.Nombre}</option>`).join('');
+  document.getElementById('mp-aviso-similar').style.display='none';
+  abrirOverlay('modal-paciente');
+}
+
+async function guardarNuevoPaciente() {
+  const nombre=document.getElementById('mp-nombre').value.trim();
+  if(!nombre){toast('El nombre es obligatorio','err');return;}
+  const btn=document.getElementById('btn-guardar-paciente'); btn.disabled=true; btn.textContent='⏳ Creando…';
+  try {
+    const id=await generarId('pacientes','id_paciente','P');
+    await supaPost('pacientes',{id_paciente:id,nombre,apellidos:document.getElementById('mp-apellidos').value.trim(),tutor1:document.getElementById('mp-tutor1').value.trim(),telefono:document.getElementById('mp-tel').value.trim(),tutor2:document.getElementById('mp-tutor2').value.trim(),telefono2:document.getElementById('mp-tel2').value.trim(),email:document.getElementById('mp-email').value.trim(),fecha_alta:new Date().toISOString().split('T')[0],terapeuta_principal:document.getElementById('mp-terapeuta').value,es_beca:document.getElementById('mp-beca').value,consentimiento:document.getElementById('mp-consent').value,notas:document.getElementById('mp-notas').value.trim(),alias:''});
+    toast('Paciente creado — '+id,'ok'); cerrarModal('modal-paciente');
+    const pac=await supaGet('pacientes','order=apellidos.asc,nombre.asc');
+    G.pacientes=pac.map(p=>({ID_Paciente:p.id_paciente,Nombre:((p.nombre||'')+' '+(p.apellidos||'')).trim(),Alias:p.alias||''}));
+  }catch(err){toast('Error: '+err.message,'err');}
+  finally{btn.disabled=false;btn.textContent='Crear paciente';}
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  MODAL NUEVO BONO
+// ═══════════════════════════════════════════════════════════════
+function abrirModalBono() {
+  const hoy=new Date(); const hoyStr=hoy.getFullYear()+'-'+String(hoy.getMonth()+1).padStart(2,'0')+'-'+String(hoy.getDate()).padStart(2,'0');
+  document.getElementById('mb-fecha-compra').value=hoyStr; document.getElementById('mb-tipo').value='Sesión individual';
+  document.getElementById('mb-sesiones').value=''; document.getElementById('mb-importe').value='';
+  document.getElementById('mb-fecha-cad').value=''; document.getElementById('mb-notas').value='';
+  document.getElementById('mb-cobrado').value='No'; pacReset('bono'); abrirOverlay('modal-bono');
+}
+
+async function guardarNuevoBono() {
+  const idPaciente=document.getElementById('mb-paciente').value.trim();
+  const sesionesTotales=parseInt(document.getElementById('mb-sesiones').value)||0;
+  const importeAnticipo=parseFloat(document.getElementById('mb-importe').value)||0;
+  if(!idPaciente){toast('Selecciona un paciente','err');return;}
+  if(sesionesTotales<1){toast('Indica el número de sesiones','err');return;}
+  if(importeAnticipo<=0){toast('Indica el importe','err');return;}
+  const btn=document.getElementById('btn-guardar-bono'); btn.disabled=true; btn.textContent='Guardando…';
+  try {
+    const id=await generarId('bonos','id_bono','B');
+    const valorSesion=sesionesTotales>0?importeAnticipo/sesionesTotales:0;
+    await supaPost('bonos',{id_bono:id,id_paciente:idPaciente,tipo_bono:document.getElementById('mb-tipo').value.trim()||'Sesión individual',importe_anticipo:importeAnticipo,valor_sesion:valorSesion,fecha_compra:document.getElementById('mb-fecha-compra').value,fecha_caducidad:document.getElementById('mb-fecha-cad').value||'',sesiones_totales:sesionesTotales,sesiones_consumidas:0,sesiones_pendientes:sesionesTotales,importe_devengado:0,importe_pendiente:importeAnticipo,estado:'Activo',cobrado:document.getElementById('mb-cobrado').value,notas:document.getElementById('mb-notas').value.trim()});
+    cerrarModal('modal-bono'); toast(`Bono creado ✓ · ${sesionesTotales} ses. · ${valorSesion.toFixed(2)} €/ses.`,'ok');
+  }catch(err){toast('Error: '+err.message,'err');}
+  finally{btn.disabled=false;btn.textContent='Crear bono';}
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  BUSCADOR PACIENTE
+// ═══════════════════════════════════════════════════════════════
+const PAC_CTX={cita:{txt:'n-paciente-txt',hid:'n-paciente',lista:'pac-lista-cita'},bono:{txt:'mb-paciente-txt',hid:'mb-paciente',lista:'pac-lista-bono'},multi:{txt:'mm-paciente-txt',hid:'mm-paciente',lista:'pac-lista-multi'}};
+function pacNombre(p){return(p.Alias||'').trim()||((p.Nombre||'').trim())||p.Nombre||'';}
+function pacResaltar(texto,query){if(!query)return texto;const re=new RegExp('('+query.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','gi');return texto.replace(re,'<em>$1</em>');}
+function pacFiltrar(ctx){const ids=PAC_CTX[ctx];const query=document.getElementById(ids.txt).value.trim().toLowerCase();document.getElementById(ids.hid).value='';document.getElementById(ids.txt).classList.remove('seleccionado');const lista=document.getElementById(ids.lista);const items=query.length<1?G.pacientes.slice(0,40):G.pacientes.filter(p=>pacNombre(p).toLowerCase().includes(query));if(!items.length){lista.innerHTML='<div class="pac-vacio">Sin resultados</div>';}else{lista.innerHTML=items.map(p=>`<div class="pac-item" data-id="${p.ID_Paciente}" onmousedown="pacSeleccionar('${ctx}','${p.ID_Paciente}',this)">${pacResaltar(pacNombre(p),query)}</div>`).join('');}lista.classList.add('visible');if(ctx==='cita')ocultarBonoAviso();}
+function pacAbrir(ctx){pacFiltrar(ctx);}
+function pacBlur(ctx){setTimeout(()=>{document.getElementById(PAC_CTX[ctx].lista).classList.remove('visible');if(!document.getElementById(PAC_CTX[ctx].hid).value){document.getElementById(PAC_CTX[ctx].txt).value='';document.getElementById(PAC_CTX[ctx].txt).classList.remove('seleccionado');}},150);}
+function pacSeleccionar(ctx,idPaciente,el){const ids=PAC_CTX[ctx];const p=G.pacientes.find(p=>p.ID_Paciente===idPaciente);if(!p)return;document.getElementById(ids.hid).value=idPaciente;document.getElementById(ids.txt).value=pacNombre(p);document.getElementById(ids.txt).classList.add('seleccionado');document.getElementById(ids.lista).classList.remove('visible');if(ctx==='cita'){const tipoFin=document.getElementById('n-tipofin').value;if(tipoFin==='BONO'||tipoFin==='BECA')verificarBonoDisponible(idPaciente,tipoFin);}}
+function pacReset(ctx){const ids=PAC_CTX[ctx];document.getElementById(ids.txt).value='';document.getElementById(ids.hid).value='';document.getElementById(ids.txt).classList.remove('seleccionado');document.getElementById(ids.lista).classList.remove('visible');}
+
+// ═══════════════════════════════════════════════════════════════
+//  MODAL VARIAS CITAS
+// ═══════════════════════════════════════════════════════════════
+let mmFechas=[];
+function abrirModalMultiCita(){mmFechas=[];pacReset('multi');document.getElementById('mm-servicio').value='';document.getElementById('mm-tipofin').value='SUELTA';document.getElementById('mm-bono-aviso').style.display='none';document.getElementById('mm-nueva-fecha').value='';document.getElementById('mm-nueva-hora').value='';mmRenderizarLista();abrirOverlay('modal-multicita');}
+async function onMultiTipoFinChange(){const tipo=document.getElementById('mm-tipofin').value;const idPac=document.getElementById('mm-paciente').value;const av=document.getElementById('mm-bono-aviso');av.style.display='none';if((tipo==='BONO'||tipo==='BECA')&&idPac){try{const tabla=tipo==='BONO'?'bonos':'becas';const idC=tipo==='BONO'?'id_bono':'id_beca';const rows=await supaGet(tabla,`id_paciente=eq.${idPac}&estado=eq.Activo&sesiones_pendientes=gt.0&limit=1`);av.style.display='block';if(rows.length){av.style.cssText='display:block;background:#f0fff4;border:1px solid #97D700;border-radius:6px;padding:8px 12px;font-size:12px;color:#3a6600;margin-bottom:10px';av.textContent='✓ '+rows[0][idC]+' · '+rows[0].sesiones_pendientes+' ses. pendientes';}else{av.style.cssText='display:block;background:#fff3cd;border:1px solid #f0c040;border-radius:6px;padding:8px 12px;font-size:12px;color:#7a5c00;margin-bottom:10px';av.textContent='⚠️ Sin '+tipo.toLowerCase()+' activo para este paciente.';}}catch(e){}}}
+function mmAnadirFecha(){const fecha=document.getElementById('mm-nueva-fecha').value;const hora=document.getElementById('mm-nueva-hora').value;if(!fecha){toast('Indica la fecha','err');return;}if(!hora){toast('Indica la hora','err');return;}mmFechas.push({fecha,hora});document.getElementById('mm-nueva-fecha').value='';mmRenderizarLista();}
+function mmEliminarFecha(idx){mmFechas.splice(idx,1);mmRenderizarLista();}
+function mmRenderizarLista(){const c=document.getElementById('mm-lista-fechas');const r=document.getElementById('mm-resumen');if(!mmFechas.length){c.innerHTML='<div style="color:var(--muted);font-size:12px;padding:6px 0">Añade al menos una fecha.</div>';r.style.display='none';return;}c.innerHTML=mmFechas.map((f,i)=>{const d=new Date(f.fecha+'T12:00:00');return`<div style="display:flex;align-items:center;justify-content:space-between;background:#fafbff;border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-size:13px"><span><strong>${DIAS_ES[d.getDay()]} ${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()}</strong> · ${f.hora}</span><button onclick="mmEliminarFecha(${i})" style="background:none;border:none;cursor:pointer;color:#DA291C;font-size:16px;line-height:1;padding:0 4px">✕</button></div>`;}).join('');r.style.display='block';r.textContent=mmFechas.length+' cita'+(mmFechas.length>1?'s':'')+' programada'+(mmFechas.length>1?'s':'');}
+async function guardarMultiCita(){const idPaciente=document.getElementById('mm-paciente').value;const idServicio=document.getElementById('mm-servicio').value;const tipoFin=document.getElementById('mm-tipofin').value;if(!idPaciente){toast('Selecciona un paciente','err');return;}if(!idServicio){toast('Selecciona un servicio','err');return;}if(!mmFechas.length){toast('Añade al menos una fecha','err');return;}const btn=document.getElementById('btn-crear-multicita');btn.disabled=true;btn.textContent=`⏳ Creando ${mmFechas.length} citas…`;try{for(const entrada of mmFechas)await crearCita({fecha:entrada.fecha,hora:entrada.hora,idPaciente,idServicio,tipoFin,idFin:'',notas:''});toast(`✅ ${mmFechas.length} citas creadas`,'ok');cerrarModal('modal-multicita');recargarVista();}catch(err){toast('Error: '+err.message,'err');}finally{btn.disabled=false;btn.textContent='Crear citas';}}
+
+// ═══════════════════════════════════════════════════════════════
+//  REPETIR CITA
+// ═══════════════════════════════════════════════════════════════
+function diasDeAgosto(anio){const dias=[];const dm=new Date(anio,8,0).getDate();for(let d=1;d<=dm;d++)dias.push(`${anio}-08-${String(d).padStart(2,'0')}`);return dias;}
+function parseFestivos(txt){return(txt||'').split(',').map(s=>{s=s.trim();if(!s)return null;const m=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);if(m)return`${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`;return s;}).filter(Boolean);}
+const FESTIVOS_ES=['2026-01-01','2026-01-06','2026-04-02','2026-04-03','2026-05-01','2026-08-15','2026-10-12','2026-11-01','2026-12-06','2026-12-08','2026-12-25','2027-01-01','2027-01-06','2027-03-25','2027-03-26','2027-05-01','2027-08-15','2027-10-12','2027-11-01','2027-12-06','2027-12-08','2027-12-25'];
+function calcularFechasRecurrentes(fechaInicio,fechaHasta,cadaDias,festivosExtra){const festivos=new Set([...FESTIVOS_ES,...festivosExtra]);const fechas=[];const hasta=new Date(fechaHasta+'T12:00:00');let cur=new Date(fechaInicio+'T12:00:00');cur.setDate(cur.getDate()+cadaDias);while(cur<=hasta){const iso=cur.toISOString().slice(0,10);if(!festivos.has(iso)){fechas.push(iso);}else{let sig=new Date(cur);for(let i=1;i<=6;i++){sig.setDate(sig.getDate()+1);const isoS=sig.toISOString().slice(0,10);if(!festivos.has(isoS)&&sig<=hasta){fechas.push(isoS);break;}}}cur.setDate(cur.getDate()+cadaDias);}return fechas;}
+function onRecurChange(){const checked=document.getElementById('n-recur-check').checked;document.getElementById('n-recur-panel').classList.toggle('visible',checked);document.getElementById('btn-crear-cita').textContent=checked?'Crear citas':'Crear cita';if(checked){const hastaEl=document.getElementById('n-recur-hasta');if(!hastaEl.value){const anio=new Date().getFullYear();hastaEl.value=`${anio}-07-31`;}actualizarPreviewRecur();}}
+function actualizarPreviewRecur(){const fecha=document.getElementById('n-fecha').value;const hasta=document.getElementById('n-recur-hasta').value;const cadaDias=parseInt(document.getElementById('n-recur-cada').value)||7;const preview=document.getElementById('n-recur-preview');if(!fecha||!hasta||hasta<=fecha){preview.innerHTML='';return;}const festivos=[...parseFestivos(document.getElementById('n-recur-festivos').value),...diasDeAgosto(new Date().getFullYear()),...diasDeAgosto(new Date().getFullYear()+1)];const fechas=calcularFechasRecurrentes(fecha,hasta,cadaDias,festivos);const total=fechas.length+1;if(!fechas.length){preview.innerHTML='<strong>Sin repeticiones</strong> en ese rango.';return;}const etiquetas=[fecha,...fechas].map(f=>{const d=new Date(f+'T12:00:00');return DIAS_ES[d.getDay()]+' '+d.getDate()+'/'+(d.getMonth()+1);});preview.innerHTML=`<strong>${total} citas</strong> en total: `+etiquetas.join(' · ');}
+function togglePanelRepetir(){const panel=document.getElementById('mc-repetir-panel');const abierto=panel.style.display!=='none';panel.style.display=abierto?'none':'block';if(!abierto){const anio=new Date().getFullYear();document.getElementById('mc-rep-hasta').value=`${anio}-07-31`;actualizarPreviewRepetir();}}
+function cerrarPanelRepetir(){document.getElementById('mc-repetir-panel').style.display='none';document.getElementById('mc-rep-preview').innerHTML='';}
+function actualizarPreviewRepetir(){const cita=G.citaActual;if(!cita)return;const hasta=document.getElementById('mc-rep-hasta').value;const cadaDias=parseInt(document.getElementById('mc-rep-cada').value)||7;const preview=document.getElementById('mc-rep-preview');if(!hasta||hasta<=cita.Fecha){preview.innerHTML='';return;}const agosto=[...diasDeAgosto(new Date().getFullYear()),...diasDeAgosto(new Date().getFullYear()+1)];const fechas=calcularFechasRecurrentes(cita.Fecha,hasta,cadaDias,agosto);if(!fechas.length){preview.innerHTML='<strong>Sin repeticiones</strong> en ese rango.';return;}const etiquetas=fechas.map(f=>{const d=new Date(f+'T12:00:00');return DIAS_ES[d.getDay()]+' '+d.getDate()+'/'+(d.getMonth()+1);});preview.innerHTML=`<strong>${fechas.length} citas nuevas</strong>: `+etiquetas.join(' · ');}
+async function confirmarRepetirCita(){const cita=G.citaActual;if(!cita)return;const hasta=document.getElementById('mc-rep-hasta').value;const cadaDias=parseInt(document.getElementById('mc-rep-cada').value)||7;if(!hasta){toast('Indica la fecha hasta la que repetir','err');return;}const agosto=[...diasDeAgosto(new Date().getFullYear()),...diasDeAgosto(new Date().getFullYear()+1)];const fechas=calcularFechasRecurrentes(cita.Fecha,hasta,cadaDias,agosto);if(!fechas.length){toast('No hay fechas válidas','err');return;}const btn=document.getElementById('mc-btn-confirmar-repetir');btn.disabled=true;btn.textContent=`⏳ Creando ${fechas.length} citas…`;try{for(const f of fechas)await crearCita({fecha:f,hora:cita.Hora,idPaciente:cita.ID_Paciente,idServicio:cita.ID_Servicio,tipoFin:cita.ID_Beca?'BECA':(cita.ID_Bono?'BONO':'SUELTA'),idFin:cita.ID_Beca||cita.ID_Bono||'',notas:''});toast(`✅ ${fechas.length} citas creadas`,'ok');cerrarModal('modal-cita');recargarVista();}catch(err){toast('Error: '+err.message,'err');}finally{btn.disabled=false;btn.textContent='Crear repeticiones';}}
+
+// ═══════════════════════════════════════════════════════════════
+//  DETECCIÓN DUPLICADO AL CREAR PACIENTE
+// ═══════════════════════════════════════════════════════════════
+function normalizarTexto(s){return(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9 ]/g,'').trim();}
+function similitudNombre(a,b){const pa=normalizarTexto(a).split(/\s+/).filter(w=>w.length>=3);const pb=normalizarTexto(b).split(/\s+/).filter(w=>w.length>=3);return pa.some(wa=>pb.some(wb=>wa===wb||wa.startsWith(wb)||wb.startsWith(wa)));}
+function comprobarPacienteSimilar(){const nombre=normalizarTexto(document.getElementById('mp-nombre').value);const apellidos=normalizarTexto(document.getElementById('mp-apellidos').value);const aviso=document.getElementById('mp-aviso-similar');const lista=document.getElementById('mp-aviso-lista');if(!nombre&&!apellidos){aviso.style.display='none';return;}const similares=(G.pacientes||[]).filter(p=>{const pN=normalizarTexto(p.Nombre);const pA=normalizarTexto(p.Alias);const busq=(nombre+' '+apellidos).trim();return similitudNombre(busq,pN)||(pA&&similitudNombre(busq,pA));});if(!similares.length){aviso.style.display='none';return;}lista.innerHTML=similares.slice(0,4).map(p=>`<span style="display:inline-block;background:#fff;border-radius:4px;padding:1px 7px;margin:2px 4px 2px 0;border:1px solid #ddb"><strong>${p.Nombre}</strong>${p.Alias?' · <em>'+p.Alias+'</em>':''} <span style="color:#aaa;font-size:11px">${p.ID_Paciente}</span></span>`).join('');aviso.style.display='block';}
+
+// ═══════════════════════════════════════════════════════════════
+//  DRAG & DROP — mover cita
+// ═══════════════════════════════════════════════════════════════
+async function moverCita(cita, nuevaFecha, nuevaHora) {
+  if (!cita || !nuevaFecha || !nuevaHora) return;
+  if (nuevaFecha === cita.Fecha && nuevaHora === cita.Hora) return; // sin cambio
+  const nombrePac = cita.NombrePaciente || 'este paciente';
+  const origen    = formatFecha(cita.Fecha) + ' ' + cita.Hora;
+  const destino   = formatFecha(nuevaFecha) + ' ' + nuevaHora;
+  if (!window.confirm(`Mover cita de ${nombrePac}\nDe: ${origen}\nA:  ${destino}`)) return;
+  try {
+    await supaPatch('agenda_datos', `id_cita=eq.${cita.ID_Cita}`, {
+      fecha: nuevaFecha,
+      hora:  nuevaHora,
+    });
+    toast(`Cita movida a ${destino} ✓`, 'ok');
+    recargarVista();
+  } catch(err) {
+    toast('Error al mover: ' + err.message, 'err');
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  UTILIDADES
+// ═══════════════════════════════════════════════════════════════
+function abrirOverlay(id){document.getElementById(id).classList.add('visible');}
+function cerrarModal(id){document.getElementById(id).classList.remove('visible');}
+let toastTimer;
+function toast(msg,tipo=''){const el=document.getElementById('toast');el.textContent=msg;el.className='toast visible'+(tipo?' '+tipo:'');clearTimeout(toastTimer);toastTimer=setTimeout(()=>{el.className='toast';},3200);}
+document.querySelectorAll('.overlay').forEach(ov=>{ov.addEventListener('click',e=>{if(e.target===ov)ov.classList.remove('visible');});});
+function parseHora(hora){if(!hora)return null;if(typeof hora==='string'){if(hora.includes('T')){const d=new Date(hora);return d.getUTCHours()*60+d.getUTCMinutes();}const[h,m]=hora.split(':').map(Number);if(isNaN(h)||isNaN(m))return null;return h*60+m;}return null;}
+function formatFecha(val){if(!val)return'—';const d=new Date(val+'T12:00:00');if(isNaN(d))return String(val);return d.getDate()+' '+MESES_ES[d.getMonth()]+' '+d.getFullYear();}
+function estadoLabel(e){const m={Hecha:'✓ Hecha','No-show':'👻 No-show',Reprogramada:'🔄 Reprogram.',Cancelada:'✕ Cancelada',Programada:'📅 Programada'};return m[e]||e||'';}
+function contrastColor(hex){const r=parseInt(hex.slice(1,3),16);const g=parseInt(hex.slice(3,5),16);const b=parseInt(hex.slice(5,7),16);return(r*299+g*587+b*114)/1000>128?'#1A1B2E':'#FFFFFF';}
+function darken(hex){return hex.replace(/^#/,'').replace(/../g,c=>Math.max(0,parseInt(c,16)-30).toString(16).padStart(2,'0')).replace(/^/,'#');}
+</script>
+</body>
+</html>
