@@ -1374,7 +1374,7 @@ function abrirModalCita(cita) {
   document.getElementById('mc-btn-guardar').textContent='Guardar';
   document.getElementById('mc-repetir-panel').style.display='none';
   document.getElementById('mc-rep-hasta').value=''; document.getElementById('mc-rep-preview').innerHTML='';
-  const esMia=cita.ID_Terapeuta===G.miId;
+ const esMia=cita.ID_Terapeuta===G.miId||esAdmin();
   document.getElementById('mc-seccion-estado').style.display=esMia?'block':'none';
   document.getElementById('mc-solo-lectura').style.display=esMia?'none':'block';
   document.getElementById('mc-btn-repetir').style.display=esMia?'inline-flex':'none';
