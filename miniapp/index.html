@@ -1220,7 +1220,7 @@ function renderizarSemana() {
         div.style.cssText=`position:absolute;top:${top}px;height:${height}px;left:calc(2px + ${pos.col*pct}%);right:calc(2px + ${(pos.totalCols-pos.col-1)*pct}%);background:${color};border-left:3px solid ${darken(color)};color:${contrastColor(color)};opacity:${esMia?'1':'0.72'};`;
         const nombreCorto=pos.totalCols>2?(cita.NombrePaciente||'—').split(' ').slice(0,2).join(' '):(cita.NombrePaciente||'—');
         div.innerHTML=`<div class="cita-nombre">${nombreCorto}</div>${pos.totalCols<=3?`<div class="cita-servicio">${cita.NombreServicio||''}</div>`:''}<span class="cita-estado">${estadoLabel(cita.Estado)}</span>`;
-        if(esMia) {
+        if(esMia||esAdmin()) {
           div.onclick=()=>abrirModalCita(cita);
           if(cita.Estado==='Programada') {
             div.draggable=true;
