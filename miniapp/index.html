@@ -8,6 +8,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="IPSE Agenda">
 <meta name="theme-color" content="#10069F">
+<link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%2310069F'/%3E%3Crect x='20' y='18' width='60' height='12' rx='6' fill='%2300B5E2'/%3E%3Crect x='20' y='72' width='60' height='12' rx='6' fill='%2300B5E2'/%3E%3Crect x='42' y='30' width='16' height='42' rx='5' fill='%2300B5E2'/%3E%3Ccircle cx='74' cy='24' r='9' fill='%2397D700'/%3E%3C/svg%3E">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%2310069F'/%3E%3Crect x='20' y='18' width='60' height='12' rx='6' fill='%2300B5E2'/%3E%3Crect x='20' y='72' width='60' height='12' rx='6' fill='%2300B5E2'/%3E%3Crect x='42' y='30' width='16' height='42' rx='5' fill='%2300B5E2'/%3E%3Ccircle cx='74' cy='24' r='9' fill='%2397D700'/%3E%3C/svg%3E">
 <title>IPSE — Agenda</title>
@@ -2042,7 +2043,11 @@ document.addEventListener('DOMContentLoaded', () => {
   observer.observe(document.body, { attributes: true, subtree: true, attributeFilter: ['style'] });
 });
 </script>
-
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/ipse-app/miniapp/sw.js');
+  });
+}
 </script>
 </body>
 </html>

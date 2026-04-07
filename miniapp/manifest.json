@@ -1,0 +1,25 @@
+{
+  "name": "IPSE Agenda",
+  "short_name": "IPSE",
+  "description": "Agenda clínica IPSE",
+  "start_url": "/ipse-app/miniapp/",
+  "scope": "/ipse-app/miniapp/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F4F5F9",
+  "theme_color": "#10069F",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
