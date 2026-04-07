@@ -877,8 +877,13 @@ async function iniciarApp() {
     document.getElementById('btn-nueva').style.display           = 'flex';
     document.getElementById('btn-multicita').style.display       = 'flex';
 
-    G.lunes = lunesDeHoy();
-    await cargarSemana();
+   G.lunes = lunesDeHoy();
+if (window.innerWidth < 700) {
+  G.diaActual = new Date(); G.diaActual.setHours(0,0,0,0);
+  cambiarVista('dia');
+} else {
+  await cargarSemana();
+}
   } catch (err) {
     document.getElementById('estado-cargando').style.display = 'none';
     document.getElementById('pantalla-login').style.display  = 'block';
