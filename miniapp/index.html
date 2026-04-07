@@ -2042,12 +2042,12 @@ document.addEventListener('DOMContentLoaded', () => {
   });
   observer.observe(document.body, { attributes: true, subtree: true, attributeFilter: ['style'] });
 });
-</script>
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/ipse-app/miniapp/sw.js');
   });
 }
 </script>
+
 </body>
 </html>
