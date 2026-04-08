@@ -1160,7 +1160,7 @@ function renderizarSemana() {
         const offsetMin=hm-HORAS_INICIO*60; if(offsetMin<0)return;
         const top=(offsetMin/60)*SLOT_H;
         // ── FIX ALTURA: exactamente proporcional a DURACION, sin mínimo que desborde ──
-        const height=(DURACION/60)*SLOT_H - 2; // -2px para gap visual entre citas
+        const height=SLOT_H - 2; // -2px para gap visual entre citas
         const esMia=cita.ID_Terapeuta===G.miId; const color=G.colores[cita.ID_Terapeuta]||'#aaa';
         const pct=100/pos.totalCols;
         const div=document.createElement('div'); div.className='cita'+(esMia?' propia':' ajena');
@@ -1214,7 +1214,7 @@ function renderizarDia() {
       const offsetMin=hm-HORAS_INICIO*60;if(offsetMin<0)return;
       const top=(offsetMin/60)*SLOT_H;
       // ── FIX ALTURA: exactamente proporcional, sin mínimo que desborde ──
-      const height=(DURACION/60)*SLOT_H - 2;
+      const height=SLOT_H - 2;
       const esMia=cita.ID_Terapeuta===G.miId;const color=G.colores[cita.ID_Terapeuta]||'#aaa';
       const pct=100/pos.totalCols;
       const div=document.createElement('div');div.className='cita'+(esMia?' propia':' ajena');
