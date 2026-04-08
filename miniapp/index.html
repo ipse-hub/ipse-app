@@ -1164,7 +1164,7 @@ function renderizarSemana() {
         const esMia=cita.ID_Terapeuta===G.miId; const color=G.colores[cita.ID_Terapeuta]||'#aaa';
         const pct=100/pos.totalCols;
         const div=document.createElement('div'); div.className='cita'+(esMia?' propia':' ajena');
-        div.style.cssText=`top:${top+1}px;height:${height}px;left:calc(2px + ${pos.col*pct}%);right:calc(2px + ${(pos.totalCols-pos.col-1)*pct}%);background:${color};border-left-color:${darken(color)};color:${contrastColor(color)};opacity:${esMia?'1':'0.72'};`;
+        div.style.cssText=`top:${top}px;height:${height - 1}px;left:calc(2px + ${pos.col*pct}%);right:calc(2px + ${(pos.totalCols-pos.col-1)*pct}%);background:${color};border-left-color:${darken(color)};color:${contrastColor(color)};opacity:${esMia?'1':'0.72'};`;
         const nombreCorto=pos.totalCols>2?(cita.NombrePaciente||'—').split(' ').slice(0,2).join(' '):(cita.NombrePaciente||'—');
         div.innerHTML=`<div class="cita-nombre">${nombreCorto}</div>${pos.totalCols<=3?`<div class="cita-servicio">${cita.NombreServicio||''}</div>`:''}<span class="cita-estado">${estadoLabel(cita.Estado)}</span>`;
         if(esMia||esAdmin()) {
@@ -1218,7 +1218,7 @@ function renderizarDia() {
       const esMia=cita.ID_Terapeuta===G.miId;const color=G.colores[cita.ID_Terapeuta]||'#aaa';
       const pct=100/pos.totalCols;
       const div=document.createElement('div');div.className='cita'+(esMia?' propia':' ajena');
-      div.style.cssText=`top:${top+1}px;height:${height}px;left:calc(2px + ${pos.col*pct}%);right:calc(2px + ${(pos.totalCols-pos.col-1)*pct}%);background:${color};border-left-color:${darken(color)};color:${contrastColor(color)};opacity:${esMia?'1':'0.72'};`;
+      div.style.cssText=`top:${top}px;height:${height - 1}px;left:calc(2px + ${pos.col*pct}%);right:calc(2px + ${(pos.totalCols-pos.col-1)*pct}%);background:${color};border-left-color:${darken(color)};color:${contrastColor(color)};opacity:${esMia?'1':'0.72'};`;
       div.innerHTML=`<div class="cita-nombre">${cita.NombrePaciente||'—'}</div><div class="cita-servicio">${cita.NombreServicio||''}${!esMia?' · '+(cita.NombreTerapeuta||''):''}</div><div class="cita-servicio">${cita.Hora||''}</div><span class="cita-estado">${estadoLabel(cita.Estado)}</span>`;
       // ── FIX BUG MÓVIL ADMIN: añadido ||esAdmin() ──
       if(esMia||esAdmin())div.onclick=()=>abrirModalCita(cita);
