@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IPSE — Gestión</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --azul:   #10069F;
+    --cyan:   #00B5E2;
+    --rojo:   #DA291C;
+    --verde:  #97D700;
+    --bg:     #F4F5F9;
+    --surface:#FFFFFF;
+    --border: #E2E4EE;
+    --text:   #1A1B2E;
+    --muted:  #6B7280;
+    --shadow: 0 2px 8px rgba(16,6,159,.08);
+    --radius: 10px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); font-size: 14px; min-height: 100vh; }
+
+  /* ── TOPBAR ── */
+  .topbar { background: var(--azul); color: #fff; display: flex; align-items: center; justify-content: space-between; padding: 0 24px; height: 56px; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 12px rgba(16,6,159,.3); }
+  .topbar-logo { font-size: 17px; font-weight: 600; letter-spacing: -.3px; display: flex; align-items: center; gap: 10px; }
+  .topbar-logo span { color: var(--cyan); }
+  .topbar-nav { display: flex; gap: 4px; }
+  .topbar-nav a { color: rgba(255,255,255,.75); text-decoration: none; font-size: 13px; font-weight: 500; padding: 6px 14px; border-radius: 6px; transition: all .15s; }
+  .topbar-nav a:hover, .topbar-nav a.active { background: rgba(255,255,255,.15); color: #fff; }
+  .topbar-right { display: flex; align-items: center; gap: 10px; font-size: 13px; }
+  .avatar { width: 30px; height: 30px; border-radius: 50%; background: var(--cyan); color: var(--azul); font-weight: 700; font-size: 12px; display: flex; align-items: center; justify-content: center; }
+
+  /* ── LAYOUT ── */
+  .main { max-width: 1200px; margin: 0 auto; padding: 28px 24px; }
+  .page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+  .page-title { font-size: 22px; font-weight: 700; color: var(--text); }
+  .page-title span { color: var(--azul); }
+
+  /* ── SEARCH BAR ── */
+  .search-bar { display: flex; gap: 10px; margin-bottom: 20px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px 16px; box-shadow: var(--shadow); }
+  .search-input { flex: 1; border: 1.5px solid var(--border); border-radius: 8px; padding: 8px 12px; font-family: inherit; font-size: 14px; color: var(--text); background: var(--bg); outline: none; transition: border-color .15s; }
+  .search-input:focus { border-color: var(--azul); background: #fff; }
+  .search-filter { border: 1.5px solid var(--border); border-radius: 8px; padding: 8px 12px; font-family: inherit; font-size: 13px; color: var(--text); background: var(--bg); outline: none; cursor: pointer; }
+
+  /* ── TABLA ── */
+  .tabla-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; }
+  .tabla-header { display: grid; padding: 10px 16px; background: var(--azul); color: rgba(255,255,255,.85); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; }
+  .tabla-row { display: grid; padding: 12px 16px; border-bottom: 1px solid var(--border); align-items: center; cursor: pointer; transition: background .1s; }
+  .tabla-row:last-child { border-bottom: none; }
+  .tabla-row:hover { background: rgba(16,6,159,.03); }
+  .tabla-empty { padding: 40px; text-align: center; color: var(--muted); font-size: 14px; }
+  .tabla-loading { padding: 40px; text-align: center; color: var(--muted); }
+
+  /* Grid columnas pacientes */
+  .grid-pac { grid-template-columns: 2fr 1.5fr 1.2fr 1fr 80px; }
+
+  /* ── BADGES ── */
+  .badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 4px; }
+  .badge-verde { background: #f0ffe0; color: #3a6600; border: 1px solid var(--verde); }
+  .badge-rojo  { background: #fff0f0; color: #a00; border: 1px solid #DA291C; }
+  .badge-gris  { background: #f0f0f0; color: #555; border: 1px solid #ccc; }
+  .badge-cyan  { background: #e6f8fd; color: #006080; border: 1px solid var(--cyan); }
+
+  /* ── BOTONES ── */
+  .btn { padding: 8px 18px; border-radius: 8px; font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer; border: none; transition: all .15s; display: inline-flex; align-items: center; gap: 6px; }
+  .btn-primary { background: var(--azul); color: #fff; }
+  .btn-primary:hover { background: #0b0580; }
+  .btn-secondary { background: var(--bg); color: var(--muted); border: 1.5px solid var(--border); }
+  .btn-secondary:hover { border-color: var(--azul); color: var(--azul); }
+  .btn-danger { background: #FEE2E2; color: var(--rojo); border: 1px solid #DA291C; }
+  .btn-danger:hover { background: var(--rojo); color: #fff; }
+  .btn-sm { padding: 4px 10px; font-size: 12px; border-radius: 6px; }
+
+  /* ── MODAL ── */
+  .overlay { display: none; position: fixed; inset: 0; background: rgba(26,27,46,.5); z-index: 200; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(2px); }
+  .overlay.visible { display: flex; }
+  .modal { background: var(--surface); border-radius: 14px; padding: 28px; width: 100%; max-width: 560px; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,.2); animation: modalIn .2s ease; }
+  .modal-lg { max-width: 720px; }
+  @keyframes modalIn { from { opacity:0; transform:scale(.96) translateY(8px); } to { opacity:1; transform:scale(1) translateY(0); } }
+  .modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 22px; }
+  .modal-title { font-size: 17px; font-weight: 700; color: var(--azul); }
+  .modal-close { background: none; border: none; cursor: pointer; color: var(--muted); font-size: 20px; line-height: 1; padding: 4px; border-radius: 4px; }
+  .modal-close:hover { background: var(--bg); color: var(--text); }
+  .modal-footer { display: flex; justify-content: flex-end; gap: 10px; margin-top: 22px; padding-top: 18px; border-top: 1px solid var(--border); }
+  .modal-tabs { display: flex; gap: 4px; background: var(--border); border-radius: 8px; padding: 3px; margin-bottom: 20px; }
+  .modal-tab { flex: 1; border: none; background: none; border-radius: 6px; padding: 7px 10px; font-size: 12px; font-weight: 600; color: var(--muted); cursor: pointer; font-family: inherit; transition: all .15s; }
+  .modal-tab.active { background: #fff; color: var(--azul); box-shadow: 0 1px 4px rgba(0,0,0,.1); }
+
+  /* ── FORM ── */
+  .form-group { margin-bottom: 14px; }
+  .form-label { display: block; font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 5px; }
+  .form-control { width: 100%; border: 1.5px solid var(--border); border-radius: 8px; padding: 8px 12px; font-family: inherit; font-size: 14px; color: var(--text); background: var(--bg); outline: none; transition: border-color .15s; }
+  .form-control:focus { border-color: var(--azul); background: #fff; }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .form-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+
+  /* ── FICHA PACIENTE ── */
+  .ficha-header { background: linear-gradient(135deg, var(--azul), #2563eb); border-radius: 10px; padding: 20px; margin-bottom: 20px; color: #fff; display: flex; align-items: center; gap: 16px; }
+  .ficha-avatar { width: 52px; height: 52px; border-radius: 50%; background: rgba(255,255,255,.2); display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 700; flex-shrink: 0; }
+  .ficha-nombre { font-size: 18px; font-weight: 700; }
+  .ficha-id { font-size: 12px; opacity: .75; font-family: 'DM Mono', monospace; margin-top: 2px; }
+  .ficha-datos { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+  .ficha-dato { background: var(--bg); border-radius: 8px; padding: 10px 12px; }
+  .ficha-dato-label { font-size: 11px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .4px; }
+  .ficha-dato-val { font-size: 13px; font-weight: 500; margin-top: 2px; }
+
+  /* ── CARDS bonos/becas ── */
+  .card-list { display: flex; flex-direction: column; gap: 10px; }
+  .card { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; border-left: 4px solid var(--border); }
+  .card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+  .card-id { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--azul); font-weight: 600; }
+  .card-row { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); margin-bottom: 3px; }
+  .card-row strong { color: var(--text); }
+
+  /* ── SPINNER / TOAST ── */
+  .spinner { width: 32px; height: 32px; border: 3px solid var(--border); border-top-color: var(--azul); border-radius: 50%; animation: spin .7s linear infinite; margin: 0 auto; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .estado-app { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 60vh; gap: 16px; color: var(--muted); }
+  .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--text); color: #fff; padding: 10px 20px; border-radius: 8px; font-size: 13px; font-weight: 500; opacity: 0; pointer-events: none; transition: all .25s; z-index: 999; white-space: nowrap; }
+  .toast.visible { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .toast.ok  { background: #1a3a00; }
+  .toast.err { background: #7f1d1d; }
+
+  /* ── LOGIN ── */
+  #pantalla-login { display: none; min-height: 100vh; align-items: center; justify-content: center; padding: 20px; background: var(--bg); }
+  #pantalla-login.visible { display: flex; }
+
+  /* ── PAGINACIÓN ── */
+  .paginacion { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-top: 1px solid var(--border); font-size: 13px; color: var(--muted); }
+  .paginacion-btns { display: flex; gap: 4px; }
+  .paginacion-btns button { border: 1px solid var(--border); background: var(--bg); border-radius: 6px; padding: 4px 10px; font-size: 12px; cursor: pointer; font-family: inherit; }
+  .paginacion-btns button:hover { border-color: var(--azul); color: var(--azul); }
+  .paginacion-btns button:disabled { opacity: .4; cursor: default; }
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="pantalla-login">
+  <div style="background:var(--surface);border-radius:16px;padding:40px 36px;width:100%;max-width:380px;box-shadow:0 8px 32px rgba(16,6,159,.12);text-align:center;">
+    <div style="width:56px;height:56px;background:var(--azul);border-radius:14px;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;font-size:24px;">🏥</div>
+    <div style="font-size:20px;font-weight:700;color:var(--azul);margin-bottom:6px;">IPSE · Gestión</div>
+    <div style="font-size:13px;color:var(--muted);margin-bottom:28px;">Acceso restringido — solo administración</div>
+    <input type="email" id="login-email" class="form-control" placeholder="tu@email.com" style="text-align:center;margin-bottom:12px;font-size:15px;" onkeydown="if(event.key==='Enter')loginEntrar()">
+    <div id="login-error" style="color:var(--rojo);font-size:12px;margin-bottom:10px;min-height:18px;"></div>
+    <button onclick="loginEntrar()" class="btn btn-primary" style="width:100%;padding:11px;font-size:14px;">Entrar</button>
+  </div>
+</div>
+
+<!-- TOPBAR -->
+<div class="topbar" id="topbar" style="display:none">
+  <div class="topbar-logo">IPSE <span>·</span> Gestión</div>
+  <nav class="topbar-nav">
+    <a href="#" id="nav-pacientes" class="active" onclick="mostrarSeccion('pacientes')">👤 Pacientes</a>
+    <a href="#" id="nav-bonos"     onclick="mostrarSeccion('bonos')">🎟 Bonos</a>
+    <a href="#" id="nav-becas"     onclick="mostrarSeccion('becas')">🎓 Becas</a>
+  </nav>
+  <div class="topbar-right">
+    <a href="../miniapp/" style="color:rgba(255,255,255,.75);font-size:12px;text-decoration:none;">← MiniApp</a>
+    <span id="topbar-nombre" style="font-size:13px;opacity:.85">—</span>
+    <div class="avatar" id="topbar-avatar">–</div>
+  </div>
+</div>
+
+<!-- CARGANDO -->
+<div class="estado-app" id="estado-cargando">
+  <div class="spinner"></div>
+  <p>Verificando acceso…</p>
+</div>
+
+<!-- CONTENIDO -->
+<div id="contenido" style="display:none">
+  <div class="main">
+
+    <!-- ══ PACIENTES ══ -->
+    <div id="sec-pacientes">
+      <div class="page-header">
+        <div class="page-title">👤 <span>Pacientes</span></div>
+        <button class="btn btn-primary" onclick="abrirNuevoPaciente()">+ Nuevo paciente</button>
+      </div>
+      <div class="search-bar">
+        <input type="text" id="pac-search" class="search-input" placeholder="Buscar por nombre, alias o ID…" oninput="filtrarPacientes()">
+        <select id="pac-filtro-terapeuta" class="search-filter" onchange="filtrarPacientes()">
+          <option value="">Todas las terapeutas</option>
+        </select>
+        <select id="pac-filtro-beca" class="search-filter" onchange="filtrarPacientes()">
+          <option value="">Beca: todos</option>
+          <option value="Sí">Con beca</option>
+          <option value="No">Sin beca</option>
+        </select>
+      </div>
+      <div class="tabla-wrap">
+        <div class="tabla-header grid-pac">
+          <span>Paciente</span>
+          <span>Terapeuta</span>
+          <span>Teléfono</span>
+          <span>Beca</span>
+          <span></span>
+        </div>
+        <div id="pac-lista"></div>
+        <div class="paginacion" id="pac-paginacion">
+          <span id="pac-pag-info"></span>
+          <div class="paginacion-btns">
+            <button id="pac-pag-prev" onclick="pacPaginar(-1)">← Ant.</button>
+            <button id="pac-pag-next" onclick="pacPaginar(1)">Sig. →</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ BONOS ══ -->
+    <div id="sec-bonos" style="display:none">
+      <div class="page-header">
+        <div class="page-title">🎟 <span>Bonos</span></div>
+        <button class="btn btn-primary" onclick="abrirNuevoBono()">+ Nuevo bono</button>
+      </div>
+      <div class="search-bar">
+        <input type="text" id="bono-search" class="search-input" placeholder="Buscar por paciente o ID de bono…" oninput="filtrarBonos()">
+        <select id="bono-filtro-estado" class="search-filter" onchange="filtrarBonos()">
+          <option value="">Todos los estados</option>
+          <option value="Activo">Activo</option>
+          <option value="Agotado">Agotado</option>
+          <option value="Caducado">Caducado</option>
+          <option value="Cancelado">Cancelado</option>
+        </select>
+      </div>
+      <div class="tabla-wrap">
+        <div class="tabla-header" style="grid-template-columns:1fr 1.5fr 1fr 1fr 1fr 80px">
+          <span>ID Bono</span><span>Paciente</span><span>Sesiones</span><span>Valor/ses</span><span>Estado</span><span></span>
+        </div>
+        <div id="bono-lista"></div>
+      </div>
+    </div>
+
+    <!-- ══ BECAS ══ -->
+    <div id="sec-becas" style="display:none">
+      <div class="page-header">
+        <div class="page-title">🎓 <span>Becas</span></div>
+      </div>
+      <div class="search-bar">
+        <input type="text" id="beca-search" class="search-input" placeholder="Buscar por paciente o ID de beca…" oninput="filtrarBecas()">
+        <select id="beca-filtro-estado" class="search-filter" onchange="filtrarBecas()">
+          <option value="">Todos los estados</option>
+          <option value="Activo">Activo</option>
+          <option value="Agotada">Agotada</option>
+          <option value="Caducada">Caducada</option>
+          <option value="Cancelada">Cancelada</option>
+        </select>
+      </div>
+      <div class="tabla-wrap">
+        <div class="tabla-header" style="grid-template-columns:1fr 1.5fr 1fr 1fr 1fr 80px">
+          <span>ID Beca</span><span>Paciente</span><span>Sesiones</span><span>Año</span><span>Estado</span><span></span>
+        </div>
+        <div id="beca-lista"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- MODAL FICHA PACIENTE -->
+<div class="overlay" id="modal-paciente">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <span class="modal-title" id="mp-modal-titulo">Paciente</span>
+      <button class="modal-close" onclick="cerrarModal('modal-paciente')">✕</button>
+    </div>
+    <div class="modal-tabs">
+      <button class="modal-tab active" id="tab-datos"    onclick="fichaTab('datos')">📋 Datos</button>
+      <button class="modal-tab"        id="tab-bonos-p"  onclick="fichaTab('bonos')">🎟 Bonos</button>
+      <button class="modal-tab"        id="tab-becas-p"  onclick="fichaTab('becas')">🎓 Becas</button>
+    </div>
+
+    <!-- Tab datos -->
+    <div id="ficha-datos">
+      <div class="ficha-header" id="ficha-header-info">
+        <div class="ficha-avatar" id="ficha-avatar">?</div>
+        <div>
+          <div class="ficha-nombre" id="ficha-nombre-display">—</div>
+          <div class="ficha-id" id="ficha-id-display">—</div>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Nombre *</label><input type="text" id="fp-nombre" class="form-control"></div>
+        <div class="form-group"><label class="form-label">Apellidos</label><input type="text" id="fp-apellidos" class="form-control"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Alias <span style="font-weight:400;text-transform:none;font-size:11px">(nombre corto en agenda)</span></label><input type="text" id="fp-alias" class="form-control" placeholder="Ej: Juanito"></div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Tutor 1</label><input type="text" id="fp-tutor1" class="form-control"></div>
+        <div class="form-group"><label class="form-label">Teléfono</label><input type="tel" id="fp-tel" class="form-control"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Tutor 2</label><input type="text" id="fp-tutor2" class="form-control"></div>
+        <div class="form-group"><label class="form-label">Teléfono 2</label><input type="tel" id="fp-tel2" class="form-control"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Email</label><input type="email" id="fp-email" class="form-control"></div>
+        <div class="form-group"><label class="form-label">Fecha alta</label><input type="date" id="fp-fecha-alta" class="form-control"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Terapeuta principal</label><select id="fp-terapeuta" class="form-control"></select></div>
+        <div class="form-group"><label class="form-label">¿Beca?</label><select id="fp-beca" class="form-control"><option value="No">No</option><option value="Sí">Sí</option></select></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Consentimiento</label><select id="fp-consent" class="form-control"><option value="Pendiente">Pendiente</option><option value="Firmado">Firmado</option></select></div>
+        <div class="form-group"><label class="form-label">DNI Tutor</label><input type="text" id="fp-dni" class="form-control" placeholder="Opcional"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Notas</label><textarea id="fp-notas" class="form-control" rows="3" style="resize:vertical"></textarea></div>
+      <div class="modal-footer">
+        <button class="btn btn-danger btn-sm" id="fp-btn-eliminar" onclick="eliminarPaciente()" style="margin-right:auto">🗑 Eliminar</button>
+        <button class="btn btn-secondary" onclick="cerrarModal('modal-paciente')">Cancelar</button>
+        <button class="btn btn-primary" id="fp-btn-guardar" onclick="guardarPaciente()">Guardar</button>
+      </div>
+    </div>
+
+    <!-- Tab bonos del paciente -->
+    <div id="ficha-bonos" style="display:none">
+      <div style="display:flex;justify-content:flex-end;margin-bottom:12px">
+        <button class="btn btn-primary btn-sm" onclick="abrirNuevoBonoParaPaciente()">+ Nuevo bono</button>
+      </div>
+      <div id="ficha-bonos-lista" class="card-list"></div>
+    </div>
+
+    <!-- Tab becas del paciente -->
+    <div id="ficha-becas" style="display:none">
+      <div id="ficha-becas-lista" class="card-list"></div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL NUEVO/EDITAR BONO -->
+<div class="overlay" id="modal-bono">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="mb-titulo">Bono</span>
+      <button class="modal-close" onclick="cerrarModal('modal-bono')">✕</button>
+    </div>
+    <div style="font-size:11px;color:var(--muted);margin-bottom:14px;font-family:'DM Mono',monospace;background:var(--bg);padding:6px 10px;border-radius:6px" id="mb-meta"></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Tipo</label><input type="text" id="mb-tipo" class="form-control" placeholder="Sesión individual"></div>
+      <div class="form-group"><label class="form-label">Estado</label><select id="mb-estado" class="form-control"><option value="Activo">Activo</option><option value="Agotado">Agotado</option><option value="Caducado">Caducado</option><option value="Cancelado">Cancelado</option></select></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Sesiones totales</label><input type="number" id="mb-totales" class="form-control" min="1" oninput="bonoRecalcular()"></div>
+      <div class="form-group"><label class="form-label">Sesiones consumidas</label><input type="number" id="mb-consumidas" class="form-control" min="0" oninput="bonoRecalcular()"></div>
+    </div>
+    <div style="background:var(--bg);border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:13px">
+      Pendientes: <strong id="mb-pendientes" style="color:var(--azul)">—</strong> &nbsp;·&nbsp; Valor/ses: <strong id="mb-valorsesion">—</strong> €
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Importe anticipo (€)</label><input type="number" id="mb-importe" class="form-control" step="0.01" oninput="bonoRecalcular()"></div>
+      <div class="form-group"><label class="form-label">Cobrado</label><select id="mb-cobrado" class="form-control"><option value="No">No</option><option value="Sí">Sí</option></select></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Fecha compra</label><input type="date" id="mb-fecha-compra" class="form-control"></div>
+      <div class="form-group"><label class="form-label">Fecha caducidad</label><input type="date" id="mb-fecha-cad" class="form-control"></div>
+    </div>
+    <div class="form-group"><label class="form-label">Notas</label><input type="text" id="mb-notas" class="form-control"></div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="cerrarModal('modal-bono')">Cancelar</button>
+      <button class="btn btn-primary" id="mb-btn-guardar" onclick="guardarBono()">Guardar bono</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════
+//  SUPABASE
+// ═══════════════════════════════════════════
+const SUPA_URL = 'https://vlplebjqhufbzfncrawf.supabase.co';
+const SUPA_KEY = 'sb_publishable_Qt604gEH_lfx89HkPElvcA_OGwbKeDO';
+const ADMIN_EMAIL = 'abraham.garcia.blanco@gmail.com';
+
+async function supaGet(tabla, params) {
+  const r = await fetch(`${SUPA_URL}/rest/v1/${tabla}${params?'?'+params:''}`, { headers: { apikey: SUPA_KEY, Authorization: 'Bearer '+SUPA_KEY } });
+  if (!r.ok) throw new Error('Error '+r.status+' leyendo '+tabla);
+  return r.json();
+}
+async function supaPost(tabla, datos) {
+  const r = await fetch(`${SUPA_URL}/rest/v1/${tabla}`, { method:'POST', headers:{ apikey:SUPA_KEY, Authorization:'Bearer '+SUPA_KEY, 'Content-Type':'application/json', Prefer:'return=representation' }, body:JSON.stringify(datos) });
+  if (!r.ok) { const t=await r.text(); throw new Error(t); }
+  return r.json();
+}
+async function supaPatch(tabla, filtro, datos) {
+  const r = await fetch(`${SUPA_URL}/rest/v1/${tabla}?${filtro}`, { method:'PATCH', headers:{ apikey:SUPA_KEY, Authorization:'Bearer '+SUPA_KEY, 'Content-Type':'application/json', Prefer:'return=representation' }, body:JSON.stringify(datos) });
+  if (!r.ok) { const t=await r.text(); throw new Error(t); }
+  return r.json();
+}
+async function supaDelete(tabla, filtro) {
+  const r = await fetch(`${SUPA_URL}/rest/v1/${tabla}?${filtro}`, { method:'DELETE', headers:{ apikey:SUPA_KEY, Authorization:'Bearer '+SUPA_KEY } });
+  if (!r.ok) throw new Error('Error al eliminar');
+}
+async function generarId(tabla, campo, prefijo) {
+  const rows = await supaGet(tabla, `select=${campo}&order=${campo}.desc&limit=1`);
+  if (!rows || !rows.length) return prefijo+'001';
+  const num = parseInt((rows[0][campo]||'').replace(prefijo,''))||0;
+  return prefijo+String(num+1).padStart(3,'0');
+}
+
+// ═══════════════════════════════════════════
+//  ESTADO
+// ═══════════════════════════════════════════
+let G = {
+  email: '', terapeutas: [], pacientes: [], bonos: [], becas: [],
+  pacienteEditando: null, bonoEditando: null,
+  pacPag: 0, PAC_PER_PAG: 30,
+};
+
+// ═══════════════════════════════════════════
+//  LOGIN
+// ═══════════════════════════════════════════
+function loginEntrar() {
+  const email = document.getElementById('login-email').value.trim().toLowerCase();
+  if (!email) { document.getElementById('login-error').textContent='Introduce tu email.'; return; }
+  if (email !== ADMIN_EMAIL) { document.getElementById('login-error').textContent='Acceso restringido a administración.'; return; }
+  G.email = email;
+  sessionStorage.setItem('ipse_gestion_email', email);
+  document.getElementById('login-error').textContent='';
+  document.getElementById('pantalla-login').classList.remove('visible');
+  document.getElementById('estado-cargando').style.display='flex';
+  iniciarApp();
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  const saved = sessionStorage.getItem('ipse_gestion_email');
+  if (saved && saved === ADMIN_EMAIL) { G.email = saved; iniciarApp(); }
+  else { document.getElementById('estado-cargando').style.display='none'; document.getElementById('pantalla-login').classList.add('visible'); }
+});
+
+// ═══════════════════════════════════════════
+//  INICIALIZACIÓN
+// ═══════════════════════════════════════════
+async function iniciarApp() {
+  try {
+    const [terapeutas, pacientes, bonos, becas] = await Promise.all([
+      supaGet('terapeutas', 'activa=eq.Sí&order=id_terapeuta.asc'),
+      supaGet('pacientes', 'order=apellidos.asc,nombre.asc'),
+      supaGet('bonos', 'order=fecha_compra.desc'),
+      supaGet('becas', 'order=anio.desc'),
+    ]);
+    G.terapeutas = terapeutas;
+    G.pacientes  = pacientes;
+    G.bonos      = bonos;
+    G.becas      = becas;
+
+    // Poblar filtro terapeutas
+    const sel = document.getElementById('pac-filtro-terapeuta');
+    terapeutas.forEach(t => {
+      const o = document.createElement('option'); o.value=t.id_terapeuta; o.textContent=t.nombre; sel.appendChild(o);
+    });
+
+    document.getElementById('topbar-nombre').textContent = 'Admin';
+    document.getElementById('topbar-avatar').textContent = 'AG';
+    document.getElementById('estado-cargando').style.display = 'none';
+    document.getElementById('topbar').style.display = 'flex';
+    document.getElementById('contenido').style.display = 'block';
+
+    renderizarPacientes();
+  } catch(err) {
+    document.getElementById('estado-cargando').style.display='none';
+    document.getElementById('pantalla-login').classList.add('visible');
+    document.getElementById('login-error').textContent = 'Error al cargar: '+err.message;
+  }
+}
+
+// ═══════════════════════════════════════════
+//  NAVEGACIÓN
+// ═══════════════════════════════════════════
+function mostrarSeccion(sec) {
+  ['pacientes','bonos','becas'].forEach(s => {
+    document.getElementById('sec-'+s).style.display = s===sec ? '' : 'none';
+    document.getElementById('nav-'+s).classList.toggle('active', s===sec);
+  });
+  if (sec==='bonos')  renderizarBonos();
+  if (sec==='becas')  renderizarBecas();
+}
+
+// ═══════════════════════════════════════════
+//  HELPERS
+// ═══════════════════════════════════════════
+function nombrePaciente(id) {
+  const p = G.pacientes.find(x=>x.id_paciente===id);
+  if (!p) return id||'—';
+  return ((p.nombre||'')+' '+(p.apellidos||'')).trim() || p.alias || id;
+}
+function nombreTerapeuta(id) {
+  const t = G.terapeutas.find(x=>x.id_terapeuta===id);
+  return t ? t.nombre : id||'—';
+}
+function formatFecha(v) {
+  if (!v) return '—';
+  const d = new Date(v+'T12:00:00');
+  return isNaN(d)?v:d.getDate()+'/'+(d.getMonth()+1)+'/'+d.getFullYear();
+}
+function estadoBadge(e, tipo='bono') {
+  const activo = tipo==='beca' ? 'Activo' : 'Activo';
+  const agotado = tipo==='beca' ? 'Agotada' : 'Agotado';
+  if (e===activo) return `<span class="badge badge-verde">${e}</span>`;
+  if (e===agotado) return `<span class="badge badge-rojo">${e}</span>`;
+  return `<span class="badge badge-gris">${e||'—'}</span>`;
+}
+
+// ═══════════════════════════════════════════
+//  PACIENTES
+// ═══════════════════════════════════════════
+function getPacientesFiltrados() {
+  const q = (document.getElementById('pac-search').value||'').toLowerCase();
+  const ter = document.getElementById('pac-filtro-terapeuta').value;
+  const beca = document.getElementById('pac-filtro-beca').value;
+  return G.pacientes.filter(p => {
+    const nombre = ((p.nombre||'')+' '+(p.apellidos||'')+' '+(p.alias||'')+' '+(p.id_paciente||'')).toLowerCase();
+    if (q && !nombre.includes(q)) return false;
+    if (ter && p.terapeuta_principal !== ter) return false;
+    if (beca && p.es_beca !== beca) return false;
+    return true;
+  });
+}
+
+function filtrarPacientes() { G.pacPag=0; renderizarPacientes(); }
+
+function pacPaginar(d) {
+  const total = getPacientesFiltrados().length;
+  const maxPag = Math.ceil(total/G.PAC_PER_PAG)-1;
+  G.pacPag = Math.max(0, Math.min(G.pacPag+d, maxPag));
+  renderizarPacientes();
+}
+
+function renderizarPacientes() {
+  const todos = getPacientesFiltrados();
+  const inicio = G.pacPag * G.PAC_PER_PAG;
+  const pagina = todos.slice(inicio, inicio + G.PAC_PER_PAG);
+  const lista = document.getElementById('pac-lista');
+
+  if (!todos.length) { lista.innerHTML='<div class="tabla-empty">Sin pacientes que coincidan con la búsqueda.</div>'; }
+  else if (!pagina.length) { lista.innerHTML='<div class="tabla-empty">Sin resultados en esta página.</div>'; }
+  else {
+    lista.innerHTML = pagina.map(p => {
+      const nombre = ((p.nombre||'')+' '+(p.apellidos||'')).trim() || '—';
+      const alias = p.alias ? `<span style="color:var(--muted);font-size:12px"> · ${p.alias}</span>` : '';
+      const ter = nombreTerapeuta(p.terapeuta_principal);
+      const beca = p.es_beca==='Sí' ? '<span class="badge badge-cyan">Beca</span>' : '';
+      return `<div class="tabla-row grid-pac" onclick="abrirFichaPaciente('${p.id_paciente}')">
+        <div><strong>${nombre}</strong>${alias}<br><span style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace">${p.id_paciente}</span></div>
+        <div>${ter}</div>
+        <div>${p.telefono||'—'}</div>
+        <div>${beca}</div>
+        <div><button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();abrirFichaPaciente('${p.id_paciente}')">✏️</button></div>
+      </div>`;
+    }).join('');
+  }
+
+  // Paginación
+  const total = todos.length;
+  const maxPag = Math.max(0, Math.ceil(total/G.PAC_PER_PAG)-1);
+  document.getElementById('pac-pag-info').textContent = `${inicio+1}–${Math.min(inicio+G.PAC_PER_PAG,total)} de ${total} pacientes`;
+  document.getElementById('pac-pag-prev').disabled = G.pacPag===0;
+  document.getElementById('pac-pag-next').disabled = G.pacPag>=maxPag;
+  document.getElementById('pac-paginacion').style.display = total>G.PAC_PER_PAG ? '' : 'none';
+}
+
+async function abrirFichaPaciente(id) {
+  const p = G.pacientes.find(x=>x.id_paciente===id);
+  if (!p) return;
+  G.pacienteEditando = p;
+
+  // Header visual
+  const iniciales = ((p.nombre||'').charAt(0)+(p.apellidos||'').charAt(0)).toUpperCase();
+  document.getElementById('ficha-avatar').textContent = iniciales||'?';
+  document.getElementById('ficha-nombre-display').textContent = ((p.nombre||'')+' '+(p.apellidos||'')).trim();
+  document.getElementById('ficha-id-display').textContent = p.id_paciente + (p.alias ? ' · '+p.alias : '');
+  document.getElementById('mp-modal-titulo').textContent = 'Paciente — '+p.id_paciente;
+
+  // Campos
+  document.getElementById('fp-nombre').value      = p.nombre||'';
+  document.getElementById('fp-apellidos').value   = p.apellidos||'';
+  document.getElementById('fp-alias').value       = p.alias||'';
+  document.getElementById('fp-tutor1').value      = p.tutor1||'';
+  document.getElementById('fp-tel').value         = p.telefono||'';
+  document.getElementById('fp-tutor2').value      = p.tutor2||'';
+  document.getElementById('fp-tel2').value        = p.telefono2||'';
+  document.getElementById('fp-email').value       = p.email||'';
+  document.getElementById('fp-fecha-alta').value  = p.fecha_alta||'';
+  document.getElementById('fp-beca').value        = p.es_beca||'No';
+  document.getElementById('fp-consent').value     = p.consentimiento||'Pendiente';
+  document.getElementById('fp-dni').value         = p.dni_tutor||'';
+  document.getElementById('fp-notas').value       = p.notas||'';
+
+  // Terapeuta select
+  const sel = document.getElementById('fp-terapeuta');
+  sel.innerHTML = '<option value="">— Sin asignar —</option>' + G.terapeutas.map(t=>`<option value="${t.id_terapeuta}"${t.id_terapeuta===p.terapeuta_principal?' selected':''}>${t.nombre}</option>`).join('');
+
+  document.getElementById('fp-btn-eliminar').style.display = 'inline-flex';
+  fichaTab('datos');
+  abrirOverlay('modal-paciente');
+}
+
+function abrirNuevoPaciente() {
+  G.pacienteEditando = null;
+  document.getElementById('ficha-avatar').textContent = '?';
+  document.getElementById('ficha-nombre-display').textContent = 'Nuevo paciente';
+  document.getElementById('ficha-id-display').textContent = '—';
+  document.getElementById('mp-modal-titulo').textContent = 'Nuevo paciente';
+  ['fp-nombre','fp-apellidos','fp-alias','fp-tutor1','fp-tel','fp-tutor2','fp-tel2','fp-email','fp-dni','fp-notas'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('fp-fecha-alta').value = new Date().toISOString().split('T')[0];
+  document.getElementById('fp-beca').value='No';
+  document.getElementById('fp-consent').value='Pendiente';
+  const sel = document.getElementById('fp-terapeuta');
+  sel.innerHTML = '<option value="">— Sin asignar —</option>' + G.terapeutas.map(t=>`<option value="${t.id_terapeuta}">${t.nombre}</option>`).join('');
+  document.getElementById('fp-btn-eliminar').style.display='none';
+  fichaTab('datos');
+  abrirOverlay('modal-paciente');
+}
+
+async function guardarPaciente() {
+  const nombre = document.getElementById('fp-nombre').value.trim();
+  if (!nombre) { toast('El nombre es obligatorio','err'); return; }
+  const btn = document.getElementById('fp-btn-guardar');
+  btn.disabled=true; btn.textContent='⏳ Guardando…';
+  const datos = {
+    nombre, apellidos: document.getElementById('fp-apellidos').value.trim(),
+    alias: document.getElementById('fp-alias').value.trim(),
+    tutor1: document.getElementById('fp-tutor1').value.trim(),
+    telefono: document.getElementById('fp-tel').value.trim(),
+    tutor2: document.getElementById('fp-tutor2').value.trim(),
+    telefono2: document.getElementById('fp-tel2').value.trim(),
+    email: document.getElementById('fp-email').value.trim(),
+    fecha_alta: document.getElementById('fp-fecha-alta').value||null,
+    terapeuta_principal: document.getElementById('fp-terapeuta').value,
+    es_beca: document.getElementById('fp-beca').value,
+    consentimiento: document.getElementById('fp-consent').value,
+    dni_tutor: document.getElementById('fp-dni').value.trim(),
+    notas: document.getElementById('fp-notas').value.trim(),
+  };
+  try {
+    if (G.pacienteEditando) {
+      await supaPatch('pacientes', `id_paciente=eq.${G.pacienteEditando.id_paciente}`, datos);
+      // Actualizar caché local
+      const idx = G.pacientes.findIndex(p=>p.id_paciente===G.pacienteEditando.id_paciente);
+      if (idx>=0) G.pacientes[idx] = {...G.pacientes[idx], ...datos};
+      toast('Paciente actualizado ✓','ok');
+    } else {
+      const id = await generarId('pacientes','id_paciente','P');
+      await supaPost('pacientes', {...datos, id_paciente:id});
+      G.pacientes.push({...datos, id_paciente:id});
+      G.pacientes.sort((a,b)=>((a.apellidos||'')+(a.nombre||'')).localeCompare((b.apellidos||'')+(b.nombre||'')));
+      toast('Paciente creado ✓','ok');
+    }
+    cerrarModal('modal-paciente');
+    renderizarPacientes();
+  } catch(err) { toast('Error: '+err.message,'err'); }
+  finally { btn.disabled=false; btn.textContent='Guardar'; }
+}
+
+async function eliminarPaciente() {
+  if (!G.pacienteEditando) return;
+  const p = G.pacienteEditando;
+  const nombre = ((p.nombre||'')+' '+(p.apellidos||'')).trim();
+  if (!confirm(`¿Eliminar paciente ${nombre} (${p.id_paciente})?\n\nEsta acción no se puede deshacer.`)) return;
+  try {
+    await supaDelete('pacientes', `id_paciente=eq.${p.id_paciente}`);
+    G.pacientes = G.pacientes.filter(x=>x.id_paciente!==p.id_paciente);
+    toast('Paciente eliminado ✓','ok');
+    cerrarModal('modal-paciente');
+    renderizarPacientes();
+  } catch(err) { toast('Error: '+err.message,'err'); }
+}
+
+// ── Tabs ficha ──
+function fichaTab(tab) {
+  ['datos','bonos','becas'].forEach(t => {
+    document.getElementById('ficha-'+t).style.display = t===tab?'':'none';
+    const btn = document.getElementById('tab-'+(t==='bonos'?'bonos-p':t==='becas'?'becas-p':t));
+    if (btn) btn.classList.toggle('active', t===tab);
+  });
+  if (tab==='bonos' && G.pacienteEditando) renderizarBonosPaciente(G.pacienteEditando.id_paciente);
+  if (tab==='becas' && G.pacienteEditando) renderizarBecasPaciente(G.pacienteEditando.id_paciente);
+}
+
+function renderizarBonosPaciente(idPac) {
+  const bonos = G.bonos.filter(b=>b.id_paciente===idPac);
+  const lista = document.getElementById('ficha-bonos-lista');
+  if (!bonos.length) { lista.innerHTML='<div style="color:var(--muted);font-size:13px;padding:20px 0;text-align:center">Sin bonos para este paciente.</div>'; return; }
+  lista.innerHTML = bonos.map(b => {
+    const color = b.estado==='Activo'?'#97D700':b.estado==='Agotado'?'#DA291C':'#9CA3AF';
+    const bg = b.estado==='Activo'?'#f7ffe8':b.estado==='Agotado'?'#fff3f3':'#f3f4f6';
+    return `<div class="card" style="border-left-color:${color};background:${bg}">
+      <div class="card-header">
+        <div><div class="card-id">${b.id_bono}</div><div style="font-size:13px;font-weight:600;margin-top:2px">${b.tipo_bono||'—'}</div></div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+          <span class="badge" style="background:${color};color:${b.estado==='Activo'?'#2d4a00':'#fff'}">${b.estado}</span>
+          <button class="btn btn-secondary btn-sm" onclick="abrirEditarBono(${JSON.stringify(b).replace(/"/g,'&quot;')})">✏️ Editar</button>
+        </div>
+      </div>
+      <div class="card-row"><span>Sesiones</span><strong>${b.sesiones_consumidas||0} / ${b.sesiones_totales} · ${b.sesiones_pendientes} pend.</strong></div>
+      <div class="card-row"><span>Valor/ses</span><strong>${parseFloat(b.valor_sesion||0).toFixed(2)} €</strong></div>
+      <div class="card-row"><span>Importe</span><strong>${parseFloat(b.importe_anticipo||0).toFixed(2)} € · ${b.cobrado==='Sí'?'✅ Cobrado':'⏳ Pendiente'}</strong></div>
+      ${b.fecha_caducidad?`<div class="card-row"><span>Caduca</span><strong>${formatFecha(b.fecha_caducidad)}</strong></div>`:''}
+    </div>`;
+  }).join('');
+}
+
+function renderizarBecasPaciente(idPac) {
+  const becas = G.becas.filter(b=>b.id_paciente===idPac);
+  const lista = document.getElementById('ficha-becas-lista');
+  if (!becas.length) { lista.innerHTML='<div style="color:var(--muted);font-size:13px;padding:20px 0;text-align:center">Sin becas para este paciente.</div>'; return; }
+  lista.innerHTML = becas.map(b => {
+    const color = b.estado==='Activo'?'#97D700':b.estado==='Agotada'?'#DA291C':'#9CA3AF';
+    const bg = b.estado==='Activo'?'#f7ffe8':b.estado==='Agotada'?'#fff3f3':'#f3f4f6';
+    return `<div class="card" style="border-left-color:${color};background:${bg}">
+      <div class="card-header">
+        <div><div class="card-id">${b.id_beca}</div><div style="font-size:13px;font-weight:600;margin-top:2px">${b.entidad_financiadora||'—'} · ${b.anio||''}</div></div>
+        <span class="badge" style="background:${color};color:${b.estado==='Activo'?'#2d4a00':'#fff'}">${b.estado}</span>
+      </div>
+      <div class="card-row"><span>Sesiones</span><strong>${b.sesiones_consumidas||0} / ${b.sesiones_autorizadas||'?'} · ${b.sesiones_pendientes||0} pend.</strong></div>
+      <div class="card-row"><span>Valor/ses</span><strong>${parseFloat(b.valor_sesion||0).toFixed(2)} €</strong></div>
+    </div>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════
+//  BONOS (listado global)
+// ═══════════════════════════════════════════
+function filtrarBonos() { renderizarBonos(); }
+
+function renderizarBonos() {
+  const q = (document.getElementById('bono-search').value||'').toLowerCase();
+  const estado = document.getElementById('bono-filtro-estado').value;
+  const lista = document.getElementById('bono-lista');
+  let bonos = G.bonos.filter(b => {
+    const nombre = (nombrePaciente(b.id_paciente)+' '+b.id_bono).toLowerCase();
+    if (q && !nombre.includes(q)) return false;
+    if (estado && b.estado!==estado) return false;
+    return true;
+  });
+  if (!bonos.length) { lista.innerHTML='<div class="tabla-empty">Sin bonos que coincidan.</div>'; return; }
+  lista.innerHTML = bonos.map(b => {
+    const color = b.estado==='Activo'?'var(--verde)':b.estado==='Agotado'?'var(--rojo)':'#9CA3AF';
+    return `<div class="tabla-row" style="grid-template-columns:1fr 1.5fr 1fr 1fr 1fr 80px;border-left:3px solid ${color}" onclick="abrirEditarBono(${JSON.stringify(b).replace(/"/g,'&quot;')})">
+      <div style="font-family:'DM Mono',monospace;font-size:12px;color:var(--azul)">${b.id_bono}</div>
+      <div>${nombrePaciente(b.id_paciente)}</div>
+      <div>${b.sesiones_consumidas||0}/${b.sesiones_totales} (${b.sesiones_pendientes} pend.)</div>
+      <div>${parseFloat(b.valor_sesion||0).toFixed(2)} €</div>
+      <div>${estadoBadge(b.estado)}</div>
+      <div><button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();abrirEditarBono(${JSON.stringify(b).replace(/"/g,'&quot;')})">✏️</button></div>
+    </div>`;
+  }).join('');
+}
+
+function abrirNuevoBono() {
+  G.bonoEditando = null;
+  document.getElementById('mb-titulo').textContent = 'Nuevo bono';
+  document.getElementById('mb-meta').textContent = '';
+  ['mb-tipo','mb-notas'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('mb-tipo').value='Sesión individual';
+  document.getElementById('mb-estado').value='Activo';
+  document.getElementById('mb-totales').value='';
+  document.getElementById('mb-consumidas').value='0';
+  document.getElementById('mb-importe').value='';
+  document.getElementById('mb-cobrado').value='No';
+  document.getElementById('mb-fecha-compra').value=new Date().toISOString().split('T')[0];
+  document.getElementById('mb-fecha-cad').value='';
+  bonoRecalcular();
+  abrirOverlay('modal-bono');
+}
+
+function abrirNuevoBonoParaPaciente() {
+  abrirNuevoBono();
+  if (G.pacienteEditando) {
+    document.getElementById('mb-meta').textContent = G.pacienteEditando.id_paciente + ' · ' + nombrePaciente(G.pacienteEditando.id_paciente);
+  }
+}
+
+function abrirEditarBono(b) {
+  G.bonoEditando = b;
+  document.getElementById('mb-titulo').textContent = 'Editar bono';
+  document.getElementById('mb-meta').textContent = b.id_bono + ' · ' + nombrePaciente(b.id_paciente);
+  document.getElementById('mb-tipo').value         = b.tipo_bono||'';
+  document.getElementById('mb-estado').value       = b.estado||'Activo';
+  document.getElementById('mb-totales').value      = b.sesiones_totales||0;
+  document.getElementById('mb-consumidas').value   = b.sesiones_consumidas||0;
+  document.getElementById('mb-importe').value      = b.importe_anticipo||0;
+  document.getElementById('mb-cobrado').value      = b.cobrado||'No';
+  document.getElementById('mb-fecha-compra').value = b.fecha_compra||'';
+  document.getElementById('mb-fecha-cad').value    = b.fecha_caducidad||'';
+  document.getElementById('mb-notas').value        = b.notas||'';
+  bonoRecalcular();
+  abrirOverlay('modal-bono');
+}
+
+function bonoRecalcular() {
+  const tot  = parseInt(document.getElementById('mb-totales').value)||0;
+  const cons = parseInt(document.getElementById('mb-consumidas').value)||0;
+  const imp  = parseFloat(document.getElementById('mb-importe').value)||0;
+  document.getElementById('mb-pendientes').textContent = Math.max(tot-cons,0);
+  document.getElementById('mb-valorsesion').textContent = tot>0?(imp/tot).toFixed(2):'0.00';
+}
+
+async function guardarBono() {
+  const tot  = parseInt(document.getElementById('mb-totales').value)||0;
+  const cons = parseInt(document.getElementById('mb-consumidas').value)||0;
+  const imp  = parseFloat(document.getElementById('mb-importe').value)||0;
+  if (tot<1) { toast('Indica el número de sesiones','err'); return; }
+  const pend = Math.max(tot-cons,0);
+  const valSes = tot>0?imp/tot:0;
+  const btn = document.getElementById('mb-btn-guardar');
+  btn.disabled=true; btn.textContent='⏳ Guardando…';
+  const datos = {
+    tipo_bono: document.getElementById('mb-tipo').value.trim(),
+    estado: document.getElementById('mb-estado').value,
+    sesiones_totales: tot, sesiones_consumidas: cons, sesiones_pendientes: pend,
+    valor_sesion: valSes, importe_anticipo: imp,
+    importe_devengado: cons*valSes, importe_pendiente: pend*valSes,
+    cobrado: document.getElementById('mb-cobrado').value,
+    fecha_compra: document.getElementById('mb-fecha-compra').value||null,
+    fecha_caducidad: document.getElementById('mb-fecha-cad').value||null,
+    notas: document.getElementById('mb-notas').value.trim(),
+  };
+  try {
+    if (G.bonoEditando) {
+      await supaPatch('bonos', `id_bono=eq.${G.bonoEditando.id_bono}`, datos);
+      const idx = G.bonos.findIndex(b=>b.id_bono===G.bonoEditando.id_bono);
+      if (idx>=0) G.bonos[idx] = {...G.bonos[idx], ...datos};
+      toast('Bono actualizado ✓','ok');
+    } else {
+      const id = await generarId('bonos','id_bono','B');
+      const idPac = G.pacienteEditando ? G.pacienteEditando.id_paciente : '';
+      await supaPost('bonos', {...datos, id_bono:id, id_paciente:idPac});
+      G.bonos.unshift({...datos, id_bono:id, id_paciente:idPac});
+      toast('Bono creado ✓','ok');
+    }
+    cerrarModal('modal-bono');
+    if (G.pacienteEditando) renderizarBonosPaciente(G.pacienteEditando.id_paciente);
+    renderizarBonos();
+  } catch(err) { toast('Error: '+err.message,'err'); }
+  finally { btn.disabled=false; btn.textContent='Guardar bono'; }
+}
+
+// ═══════════════════════════════════════════
+//  BECAS (listado global)
+// ═══════════════════════════════════════════
+function filtrarBecas() { renderizarBecas(); }
+
+function renderizarBecas() {
+  const q = (document.getElementById('beca-search').value||'').toLowerCase();
+  const estado = document.getElementById('beca-filtro-estado').value;
+  const lista = document.getElementById('beca-lista');
+  let becas = G.becas.filter(b => {
+    const nombre = (nombrePaciente(b.id_paciente)+' '+b.id_beca).toLowerCase();
+    if (q && !nombre.includes(q)) return false;
+    if (estado && b.estado!==estado) return false;
+    return true;
+  });
+  if (!becas.length) { lista.innerHTML='<div class="tabla-empty">Sin becas que coincidan.</div>'; return; }
+  lista.innerHTML = becas.map(b => {
+    const color = b.estado==='Activo'?'var(--verde)':b.estado==='Agotada'?'var(--rojo)':'#9CA3AF';
+    return `<div class="tabla-row" style="grid-template-columns:1fr 1.5fr 1fr 1fr 1fr 80px;border-left:3px solid ${color}">
+      <div style="font-family:'DM Mono',monospace;font-size:12px;color:var(--azul)">${b.id_beca}</div>
+      <div>${nombrePaciente(b.id_paciente)}</div>
+      <div>${b.sesiones_consumidas||0}/${b.sesiones_autorizadas||'?'} (${b.sesiones_pendientes||0} pend.)</div>
+      <div>${b.anio||'—'}</div>
+      <div>${estadoBadge(b.estado,'beca')}</div>
+      <div></div>
+    </div>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════
+//  UTILIDADES
+// ═══════════════════════════════════════════
+function abrirOverlay(id) { document.getElementById(id).classList.add('visible'); }
+function cerrarModal(id)  { document.getElementById(id).classList.remove('visible'); }
+document.querySelectorAll('.overlay').forEach(ov => {
+  ov.addEventListener('click', e => { if(e.target===ov) ov.classList.remove('visible'); });
+});
+let toastTimer;
+function toast(msg, tipo='') {
+  const el = document.getElementById('toast');
+  el.textContent=msg; el.className='toast visible'+(tipo?' '+tipo:'');
+  clearTimeout(toastTimer); toastTimer=setTimeout(()=>el.className='toast',3200);
+}
+</script>
+</body>
+</html>
