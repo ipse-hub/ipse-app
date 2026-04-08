@@ -99,11 +99,62 @@
   .day-slot { height: 48px; border-bottom: 1px solid var(--border); position: relative; }
   .day-slot:last-child { border-bottom: none; }
   .day-slot:hover { background: rgba(16,6,159,.04); }
-  .cita { position: absolute; left: 2px; right: 2px; border-radius: 5px; padding: 3px 6px; font-size: 11px; font-weight: 500; overflow: hidden; cursor: pointer; z-index: 2; transition: opacity .1s, transform .1s; border-left: 3px solid transparent; box-shadow: 0 1px 4px rgba(0,0,0,.15); }
+
+  /* ── CITA: fix altura y overflow ── */
+  .cita {
+    position: absolute;
+    left: 2px; right: 2px;
+    border-radius: 5px;
+    padding: 2px 5px;
+    font-size: 11px;
+    font-weight: 500;
+    overflow: hidden;
+    cursor: pointer;
+    z-index: 2;
+    transition: opacity .1s, transform .1s;
+    border-left: 3px solid transparent;
+    box-shadow: 0 1px 4px rgba(0,0,0,.15);
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    gap: 0;
+  }
   .cita:hover { opacity: .9; transform: scale(1.01); }
-  .cita-nombre { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .cita-servicio { opacity: .8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 10px; }
-  .cita-estado { display: inline-block; font-size: 9px; padding: 0 4px; border-radius: 3px; background: rgba(255,255,255,.25); margin-top: 1px; font-weight: 600; text-transform: uppercase; letter-spacing: .3px; }
+  .cita-nombre {
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.3;
+    flex-shrink: 0;
+  }
+  .cita-servicio {
+    opacity: .8;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 10px;
+    line-height: 1.2;
+    flex-shrink: 0;
+  }
+  .cita-estado {
+    display: inline-block;
+    font-size: 9px;
+    padding: 0 4px;
+    border-radius: 3px;
+    background: rgba(255,255,255,.25);
+    margin-top: auto;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .3px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex-shrink: 0;
+    align-self: flex-start;
+  }
+  /* ─────────────────────────────── */
+
   .cita.ajena { opacity: .5; cursor: default; }
   .cita.ajena:hover { opacity: .5; transform: none; }
   .cita.dragging { opacity: .35 !important; transform: scale(.97) !important; box-shadow: none !important; }
@@ -186,8 +237,8 @@
     .grid-body { max-height: calc(100vh - 300px); }
     .btn-nueva { bottom: 16px; right: 16px; padding: 12px 16px; font-size: 13px; }
     .week-nav { flex-wrap: wrap; gap: 8px; }
-  .view-toggle { order: 3; width: 100%; justify-content: stretch; }
-  .view-toggle button { flex: 1; }
+    .view-toggle { order: 3; width: 100%; justify-content: stretch; }
+    .view-toggle button { flex: 1; }
   }
 </style>
 </head>
@@ -216,7 +267,7 @@
     <button onclick="recargarAgenda()" style="background:rgba(255,255,255,.15);border:none;color:#fff;border-radius:6px;padding:5px 10px;cursor:pointer;font-size:12px;font-family:inherit;font-weight:500;">↺ Recargar</button>
     <button onclick="abrirModalPaciente()" style="background:rgba(0,181,226,.25);border:none;color:#fff;border-radius:6px;padding:5px 10px;cursor:pointer;font-size:12px;font-family:inherit;font-weight:500;">+ Paciente</button>
     <button onclick="abrirModalBono()" style="background:rgba(151,215,0,.25);border:none;color:#fff;border-radius:6px;padding:5px 10px;cursor:pointer;font-size:12px;font-family:inherit;font-weight:500;">+ Bono</button>
-  <button id="btn-admin" onclick="abrirAdmin()" style="display:none;background:rgba(218,41,28,.35);border:none;color:#fff;border-radius:6px;padding:5px 10px;cursor:pointer;font-size:12px;font-family:inherit;font-weight:600;">⚙️ Admin</button>
+    <button id="btn-admin" onclick="abrirAdmin()" style="display:none;background:rgba(218,41,28,.35);border:none;color:#fff;border-radius:6px;padding:5px 10px;cursor:pointer;font-size:12px;font-family:inherit;font-weight:600;">⚙️ Admin</button>
     <span id="topbar-nombre">—</span>
     <div class="avatar" id="topbar-avatar">–</div>
   </div>
@@ -564,25 +615,18 @@
   </div>
 </div>
 
-  <!-- =====================================================
-     CAMBIO 2: Añadir este modal completo justo antes de:
-     <div class="toast" id="toast"></div>
-     ===================================================== -->
+<!-- MODAL ADMIN -->
 <div class="overlay" id="modal-admin">
   <div class="modal" style="max-width:620px;max-height:90vh;overflow:visible">
     <div class="modal-header" style="position:sticky;top:0;background:#fff;z-index:10;padding-bottom:12px;border-bottom:1px solid var(--border);margin-bottom:16px">
       <span class="modal-title" style="color:var(--rojo)">⚙️ Panel Admin</span>
       <button class="modal-close" onclick="cerrarModal('modal-admin')">✕</button>
     </div>
-
-    <!-- TABS -->
     <div style="display:flex;gap:4px;margin-bottom:20px;background:var(--border);border-radius:8px;padding:3px">
       <button id="admin-tab-bonos"  onclick="adminTab('bonos')"  class="admin-tab active-tab">🎟 Bonos</button>
       <button id="admin-tab-becas"  onclick="adminTab('becas')"  class="admin-tab">🎓 Becas</button>
       <button id="admin-tab-citas"  onclick="adminTab('citas')"  class="admin-tab">📅 Citas</button>
     </div>
-
-    <!-- ── BONOS ── -->
     <div id="admin-sec-bonos">
       <div style="display:flex;gap:8px;margin-bottom:12px">
         <div class="pac-wrap" style="flex:1" id="pac-wrap-admin-bono">
@@ -595,8 +639,6 @@
       </div>
       <div id="admin-bonos-lista" style="display:flex;flex-direction:column;gap:10px"></div>
     </div>
-
-    <!-- ── BECAS ── -->
     <div id="admin-sec-becas" style="display:none">
       <div style="display:flex;gap:8px;margin-bottom:12px">
         <div class="pac-wrap" style="flex:1" id="pac-wrap-admin-beca">
@@ -609,8 +651,6 @@
       </div>
       <div id="admin-becas-lista" style="display:flex;flex-direction:column;gap:10px"></div>
     </div>
-
-    <!-- ── CITAS ── -->
     <div id="admin-sec-citas" style="display:none">
       <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
         <div class="pac-wrap" style="flex:1;min-width:180px" id="pac-wrap-admin-cita">
@@ -624,7 +664,6 @@
       </div>
       <div id="admin-citas-lista" style="display:flex;flex-direction:column;gap:8px"></div>
     </div>
-
   </div>
 </div>
 
@@ -749,14 +788,11 @@
   </div>
 </div>
 
-
-
-  
 <div class="toast" id="toast"></div>
 
 <script>
 // ═══════════════════════════════════════════════════════════════
-//  SUPABASE — acceso directo desde el navegador
+//  SUPABASE
 // ═══════════════════════════════════════════════════════════════
 const SUPA_URL = 'https://vlplebjqhufbzfncrawf.supabase.co';
 const SUPA_KEY = 'sb_publishable_Qt604gEH_lfx89HkPElvcA_OGwbKeDO';
@@ -767,7 +803,6 @@ async function supaGet(tabla, params) {
   if (!r.ok) throw new Error('Error ' + r.status + ' al leer ' + tabla);
   return r.json();
 }
-
 async function supaPost(tabla, datos) {
   const r = await fetch(`${SUPA_URL}/rest/v1/${tabla}`, {
     method: 'POST',
@@ -777,7 +812,6 @@ async function supaPost(tabla, datos) {
   if (!r.ok) { const t = await r.text(); throw new Error('Error al insertar: ' + t); }
   return r.json();
 }
-
 async function supaPatch(tabla, filtro, datos) {
   const r = await fetch(`${SUPA_URL}/rest/v1/${tabla}?${filtro}`, {
     method: 'PATCH',
@@ -787,7 +821,6 @@ async function supaPatch(tabla, filtro, datos) {
   if (!r.ok) { const t = await r.text(); throw new Error('Error al actualizar: ' + t); }
   return r.json();
 }
-
 async function supaDelete(tabla, filtro) {
   const r = await fetch(`${SUPA_URL}/rest/v1/${tabla}?${filtro}`, {
     method: 'DELETE',
@@ -795,7 +828,6 @@ async function supaDelete(tabla, filtro) {
   });
   if (!r.ok) throw new Error('Error al eliminar');
 }
-
 async function generarId(tabla, campo, prefijo) {
   const rows = await supaGet(tabla, `select=${campo}&order=${campo}.desc&limit=1`);
   if (!rows || !rows.length) return prefijo + '001';
@@ -813,7 +845,6 @@ let G = {
   colores: {}, citaActual: null, estadoSel: 'Programada',
   pacienteEditandoId: null, dragCita: null,
 };
-
 const HORAS_INICIO = 8;
 const HORAS_FIN    = 21;
 const PALETTE = ['#10069F','#00B5E2','#DA291C','#97D700','#F59E0B','#8B5CF6'];
@@ -833,7 +864,6 @@ function loginEntrar() {
   document.getElementById('estado-cargando').style.display = 'flex';
   iniciarApp();
 }
-
 window.addEventListener('DOMContentLoaded', () => {
   const saved = sessionStorage.getItem('ipse_email');
   if (saved) { G.email = saved; iniciarApp(); }
@@ -850,29 +880,15 @@ async function iniciarApp() {
     const ter = terRows[0];
     G.miId     = ter.id_terapeuta;
     G.miNombre = ter.nombre;
-
     const [terapeutas, pacientesRaw, servicios] = await Promise.all([
       supaGet('terapeutas', 'activa=eq.Sí&order=id_terapeuta.asc'),
       supaGet('pacientes',  'order=nombre.asc'),
       supaGet('servicios',  'order=id_servicio.asc'),
     ]);
-
-    G.terapeutas = terapeutas.map(t => ({
-      ID_Terapeuta: t.id_terapeuta, Nombre: t.nombre,
-      Activa: t.activa, Pct_Com: t.pct_com, Email: t.email,
-    }));
-    G.pacientes = pacientesRaw.map(p => ({
-      ID_Paciente: p.id_paciente,
-      Nombre: ((p.nombre||'') + ' ' + (p.apellidos||'')).trim(),
-      Alias: p.alias || '',
-    }));
-    G.servicios = servicios.map(s => ({
-      ID_Servicio: s.id_servicio, Servicio: s.servicio,
-      Precio: s.precio, DuraciónMin: s.duracion_min, Activo: s.activo,
-    }));
-
+    G.terapeutas = terapeutas.map(t => ({ ID_Terapeuta: t.id_terapeuta, Nombre: t.nombre, Activa: t.activa, Pct_Com: t.pct_com, Email: t.email }));
+    G.pacientes  = pacientesRaw.map(p => ({ ID_Paciente: p.id_paciente, Nombre: ((p.nombre||'') + ' ' + (p.apellidos||'')).trim(), Alias: p.alias || '' }));
+    G.servicios  = servicios.map(s => ({ ID_Servicio: s.id_servicio, Servicio: s.servicio, Precio: s.precio, DuraciónMin: s.duracion_min, Activo: s.activo }));
     G.terapeutas.forEach((t, i) => { G.colores[t.ID_Terapeuta] = PALETTE[i % PALETTE.length]; });
-
     document.getElementById('topbar-nombre').textContent = G.miNombre;
     document.getElementById('topbar-avatar').textContent = G.miNombre.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
     document.getElementById('estado-cargando').style.display     = 'none';
@@ -880,14 +896,14 @@ async function iniciarApp() {
     document.getElementById('contenido-principal').style.display = 'block';
     document.getElementById('btn-nueva').style.display           = 'flex';
     document.getElementById('btn-multicita').style.display       = 'flex';
-
-   G.lunes = lunesDeHoy();
-if (window.innerWidth < 700) {
-  G.diaActual = new Date(); G.diaActual.setHours(0,0,0,0);
-  cambiarVista('dia');
-} else {
-  await cargarSemana();
-}
+    adminMostrarBoton();
+    G.lunes = lunesDeHoy();
+    if (window.innerWidth < 700) {
+      G.diaActual = new Date(); G.diaActual.setHours(0,0,0,0);
+      cambiarVista('dia');
+    } else {
+      await cargarSemana();
+    }
   } catch (err) {
     document.getElementById('estado-cargando').style.display = 'none';
     document.getElementById('pantalla-login').style.display  = 'block';
@@ -902,18 +918,11 @@ function mapearCitas(rows) {
   G.terapeutas.forEach(t => { terMap[t.ID_Terapeuta] = t.Nombre; });
   G.servicios.forEach(s  => { srvMap[s.ID_Servicio]  = s.Servicio; });
   return rows.map(r => ({
-    ID_Cita:         r.id_cita,
-    Fecha:           r.fecha,
-    Hora:            r.hora ? r.hora.slice(0,5) : '',
-    ID_Terapeuta:    r.id_terapeuta,
-    ID_Paciente:     r.id_paciente,
-    ID_Servicio:     r.id_servicio,
-    ID_Beca:         r.id_beca  || '',
-    ID_Bono:         r.id_bono  || '',
-    EstadoAgenda:    r.estado_agenda,
-    Estado:          r.estado_agenda,
-    NotasAgenda:     r.notas_agenda || '',
-    Notas:           r.notas_agenda || '',
+    ID_Cita: r.id_cita, Fecha: r.fecha, Hora: r.hora ? r.hora.slice(0,5) : '',
+    ID_Terapeuta: r.id_terapeuta, ID_Paciente: r.id_paciente, ID_Servicio: r.id_servicio,
+    ID_Beca: r.id_beca||'', ID_Bono: r.id_bono||'',
+    EstadoAgenda: r.estado_agenda, Estado: r.estado_agenda,
+    NotasAgenda: r.notas_agenda||'', Notas: r.notas_agenda||'',
     NombrePaciente:  pacMap[r.id_paciente]  || r.id_paciente  || '',
     NombreTerapeuta: terMap[r.id_terapeuta] || r.id_terapeuta || '',
     NombreServicio:  srvMap[r.id_servicio]  || r.id_servicio  || '',
@@ -928,18 +937,12 @@ function lunesDeHoy() {
   const diff = (d === 0) ? -6 : 1 - d;
   const l = new Date(hoy); l.setDate(hoy.getDate() + diff); l.setHours(0,0,0,0); return l;
 }
-
 function lunesDe(fecha) {
-  // Devuelve el lunes de la semana que contiene 'fecha'
   const d = new Date(fecha); d.setHours(0,0,0,0);
-  const dow = d.getDay();
-  const diff = (dow === 0) ? -6 : 1 - dow;
-  d.setDate(d.getDate() + diff);
-  return d;
+  const dow = d.getDay(); const diff = (dow === 0) ? -6 : 1 - dow;
+  d.setDate(d.getDate() + diff); return d;
 }
-
 function cambiarVista(v, luneForzado) {
-  // ▶ Fix: si se pasa luneForzado, usarlo en lugar de calcular lunesDeHoy()
   G.vista = v;
   ['dia','semana','mes'].forEach(x => document.getElementById('btn-vista-' + x).classList.toggle('active', x === v));
   document.getElementById('grid-dia').style.display    = v === 'dia'    ? '' : 'none';
@@ -952,27 +955,21 @@ function cambiarVista(v, luneForzado) {
     if (!G.diaActual) { G.diaActual = new Date(); G.diaActual.setHours(0,0,0,0); }
     cargarDia();
   } else {
-    // semana: respetar luneForzado si viene del click en el mes
     if (luneForzado) G.lunes = luneForzado;
     else if (!G.lunes) G.lunes = lunesDeHoy();
-    // Si NO viene de mes, resetear a hoy solo cuando el usuario pulsa el botón "Semana" directamente
-    // (sin luneForzado). Mantenemos G.lunes tal cual en ese caso para no perder la posición.
     cargarSemana();
   }
 }
-
 function cambiarPeriodo(delta) {
   if (G.vista === 'mes') { const d = new Date(G.lunes); d.setMonth(d.getMonth() + delta); d.setDate(1); G.lunes = d; cargarMes(); }
   else if (G.vista === 'dia') { if (!G.diaActual) G.diaActual = new Date(); G.diaActual = new Date(G.diaActual); G.diaActual.setDate(G.diaActual.getDate() + delta); cargarDia(); }
   else { G.lunes = new Date(G.lunes); G.lunes.setDate(G.lunes.getDate() + delta * 7); cargarSemana(); }
 }
-
 function irHoy() {
   if (G.vista === 'mes') { const d = new Date(); d.setDate(1); d.setHours(0,0,0,0); G.lunes = d; cargarMes(); }
   else if (G.vista === 'dia') { G.diaActual = new Date(); G.diaActual.setHours(0,0,0,0); cargarDia(); }
   else { G.lunes = lunesDeHoy(); cargarSemana(); }
 }
-
 function recargarAgenda() {
   if (G.vista === 'mes') cargarMes();
   else if (G.vista === 'dia') cargarDia();
@@ -993,7 +990,6 @@ async function cargarSemana() {
     renderizarSemana(); actualizarWeekLabel(); renderizarLeyenda(); popularSelectores();
   } catch(err) { toast('Error al cargar agenda: ' + err.message, 'err'); }
 }
-
 async function cargarMes() {
   const pad = n => String(n).padStart(2,'0');
   const pd = new Date(G.lunes); const dow = pd.getDay();
@@ -1006,7 +1002,6 @@ async function cargarMes() {
     renderizarMes(ig); actualizarMonthLabel(); renderizarLeyenda(); popularSelectores();
   } catch(err) { toast('Error al cargar mes: ' + err.message, 'err'); }
 }
-
 async function cargarDia() {
   if (!G.diaActual) { G.diaActual = new Date(); G.diaActual.setHours(0,0,0,0); }
   const pad = n => String(n).padStart(2,'0');
@@ -1028,71 +1023,41 @@ async function crearCita(datos) {
   if (datos.tipoFin === 'BECA') idBeca = datos.idFin || await resolverBecaActiva(datos.idPaciente) || '';
   if (datos.tipoFin === 'BONO') idBono = datos.idFin || await resolverBonoActivo(datos.idPaciente) || '';
   await supaPost('agenda_datos', {
-    id_cita:        idCita,
-    fecha:          datos.fecha,
-    hora:           datos.hora,
-    id_terapeuta:   G.miId,
-    id_paciente:    datos.idPaciente,
-    id_servicio:    datos.idServicio,
-    id_beca:        idBeca,
-    id_bono:        idBono,
-    estado_agenda:  'Programada',
-    id_compromiso:  '',
-    notas_agenda:   datos.notas || '',
-    fecha_alta_cita: new Date().toISOString().split('T')[0],
+    id_cita: idCita, fecha: datos.fecha, hora: datos.hora,
+    id_terapeuta: G.miId, id_paciente: datos.idPaciente, id_servicio: datos.idServicio,
+    id_beca: idBeca, id_bono: idBono, estado_agenda: 'Programada', id_compromiso: '',
+    notas_agenda: datos.notas || '', fecha_alta_cita: new Date().toISOString().split('T')[0],
   });
   return idCita;
 }
-
 async function resolverBonoActivo(idPaciente) {
   const rows = await supaGet('bonos', `id_paciente=eq.${idPaciente}&estado=eq.Activo&sesiones_pendientes=gt.0&order=fecha_caducidad.asc&limit=1`);
   return rows && rows.length ? rows[0].id_bono : null;
 }
-
 async function resolverBecaActiva(idPaciente) {
   const rows = await supaGet('becas', `id_paciente=eq.${idPaciente}&estado=eq.Activo&sesiones_pendientes=gt.0&order=anio.desc&limit=1`);
   return rows && rows.length ? rows[0].id_beca : null;
 }
-
 async function calcularImporte(idServicio, tipoFin, idFin) {
-  if (tipoFin === 'BONO' && idFin) {
-    const rows = await supaGet('bonos', `id_bono=eq.${idFin}`);
-    if (rows && rows.length) return parseFloat(rows[0].valor_sesion) || 0;
-  }
-  if (tipoFin === 'BECA' && idFin) {
-    const rows = await supaGet('becas', `id_beca=eq.${idFin}`);
-    if (rows && rows.length) return parseFloat(rows[0].valor_sesion) || 0;
-  }
+  if (tipoFin === 'BONO' && idFin) { const rows = await supaGet('bonos', `id_bono=eq.${idFin}`); if (rows && rows.length) return parseFloat(rows[0].valor_sesion)||0; }
+  if (tipoFin === 'BECA' && idFin) { const rows = await supaGet('becas', `id_beca=eq.${idFin}`); if (rows && rows.length) return parseFloat(rows[0].valor_sesion)||0; }
   const rows = await supaGet('servicios', `id_servicio=eq.${idServicio}`);
-  return rows && rows.length ? parseFloat(rows[0].precio) || 0 : 0;
+  return rows && rows.length ? parseFloat(rows[0].precio)||0 : 0;
 }
-
 async function actualizarBono(idBono, delta) {
-  const rows = await supaGet('bonos', `id_bono=eq.${idBono}`);
-  if (!rows || !rows.length) return;
+  const rows = await supaGet('bonos', `id_bono=eq.${idBono}`); if (!rows || !rows.length) return;
   const b = rows[0];
   const consumidas = (parseInt(b.sesiones_consumidas)||0) + delta;
   const pendientes = Math.max((parseInt(b.sesiones_totales)||0) - consumidas, 0);
-  const valSes     = parseFloat(b.valor_sesion)||0;
-  await supaPatch('bonos', `id_bono=eq.${idBono}`, {
-    sesiones_consumidas: consumidas, sesiones_pendientes: pendientes,
-    importe_devengado: consumidas * valSes,
-    importe_pendiente: Math.max((parseInt(b.sesiones_totales)||0)*valSes - consumidas*valSes, 0),
-    estado: pendientes <= 0 ? 'Agotado' : b.estado,
-  });
+  const valSes = parseFloat(b.valor_sesion)||0;
+  await supaPatch('bonos', `id_bono=eq.${idBono}`, { sesiones_consumidas: consumidas, sesiones_pendientes: pendientes, importe_devengado: consumidas*valSes, importe_pendiente: Math.max((parseInt(b.sesiones_totales)||0)*valSes - consumidas*valSes, 0), estado: pendientes<=0?'Agotado':b.estado });
 }
-
 async function actualizarBeca(idBeca, delta) {
-  const rows = await supaGet('becas', `id_beca=eq.${idBeca}`);
-  if (!rows || !rows.length) return;
+  const rows = await supaGet('becas', `id_beca=eq.${idBeca}`); if (!rows || !rows.length) return;
   const b = rows[0];
   const consumidas = (parseInt(b.sesiones_consumidas)||0) + delta;
   const pendientes = Math.max((parseInt(b.sesiones_pendientes)||0) - delta, 0);
-  await supaPatch('becas', `id_beca=eq.${idBeca}`, {
-    sesiones_consumidas: consumidas, sesiones_pendientes: pendientes,
-    fecha_ultima_sesion: new Date().toISOString().split('T')[0],
-    estado: pendientes <= 0 ? 'Agotada' : b.estado,
-  });
+  await supaPatch('becas', `id_beca=eq.${idBeca}`, { sesiones_consumidas: consumidas, sesiones_pendientes: pendientes, fecha_ultima_sesion: new Date().toISOString().split('T')[0], estado: pendientes<=0?'Agotada':b.estado });
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -1100,28 +1065,22 @@ async function actualizarBeca(idBeca, delta) {
 // ═══════════════════════════════════════════════════════════════
 function popularSelectores() {
   const opts = '<option value="">— Selecciona servicio —</option>' +
-    G.servicios.filter(s => s.Activo !== 'No').map(s =>
-      `<option value="${s.ID_Servicio}">${s.Servicio} (${s.Precio||0}€)</option>`).join('');
+    G.servicios.filter(s => s.Activo !== 'No').map(s => `<option value="${s.ID_Servicio}">${s.Servicio} (${s.Precio||0}€)</option>`).join('');
   document.getElementById('n-servicio').innerHTML  = opts;
   document.getElementById('mm-servicio').innerHTML = opts;
 }
-
 function actualizarWeekLabel() {
   const fin = new Date(G.lunes); fin.setDate(fin.getDate()+5);
-  document.getElementById('week-label').textContent =
-    G.lunes.getDate()+' '+MESES_ES[G.lunes.getMonth()]+' – '+fin.getDate()+' '+MESES_ES[fin.getMonth()]+' '+fin.getFullYear();
+  document.getElementById('week-label').textContent = G.lunes.getDate()+' '+MESES_ES[G.lunes.getMonth()]+' – '+fin.getDate()+' '+MESES_ES[fin.getMonth()]+' '+fin.getFullYear();
 }
-
 function actualizarMonthLabel() {
   const m = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
   document.getElementById('week-label').textContent = m[G.lunes.getMonth()] + ' ' + G.lunes.getFullYear();
 }
-
 function actualizarDiaLabel() {
   const d = G.diaActual || new Date();
   document.getElementById('week-label').textContent = DIAS_ES[d.getDay()]+' '+d.getDate()+' de '+MESES_ES[d.getMonth()]+' '+d.getFullYear();
 }
-
 function renderizarLeyenda() {
   document.getElementById('leyenda').innerHTML = G.terapeutas.map(t =>
     `<div class="leyenda-item"><div class="leyenda-dot" style="background:${G.colores[t.ID_Terapeuta]}"></div>${t.Nombre}${t.ID_Terapeuta===G.miId?' <strong>(tú)</strong>':''}</div>`).join('');
@@ -1138,14 +1097,7 @@ function renderizarMes(inicioGrid) {
     const fechaStr = fecha.getFullYear()+'-'+pad2(fecha.getMonth()+1)+'-'+pad2(fecha.getDate());
     const cell = document.createElement('div');
     cell.className = 'month-day'+(fecha.getMonth()!==mes?' otro-mes':'')+(fecha.getTime()===hoy.getTime()?' es-hoy':'');
-
-    // Al clicar un día en vista mes → ir a vista día
-    cell.onclick = () => {
-      G.diaActual = new Date(fecha); G.diaActual.setHours(0,0,0,0);
-      G.lunes = lunesDe(fecha); // mantener coherencia por si luego va a semana
-      cambiarVista('dia');
-    };
-
+    cell.onclick = () => { G.diaActual = new Date(fecha); G.diaActual.setHours(0,0,0,0); G.lunes = lunesDe(fecha); cambiarVista('dia'); };
     const num = document.createElement('div'); num.className='month-day-num'; num.textContent=fecha.getDate(); cell.appendChild(num);
     const citasDelDia = G.citas.filter(c => c.Fecha===fechaStr && !OCULTOS.includes(c.EstadoAgenda)).sort((a,b)=>(a.Hora||'').localeCompare(b.Hora||''));
     citasDelDia.slice(0,3).forEach(cita => {
@@ -1157,12 +1109,7 @@ function renderizarMes(inicioGrid) {
     });
     if (citasDelDia.length>3) {
       const mas=document.createElement('div'); mas.className='month-mas'; mas.textContent='+'+(citasDelDia.length-3)+' más';
-      mas.onclick=e=>{
-        e.stopPropagation();
-        G.diaActual = new Date(fecha); G.diaActual.setHours(0,0,0,0);
-        G.lunes = lunesDe(fecha);
-        cambiarVista('dia');
-      };
+      mas.onclick=e=>{e.stopPropagation();G.diaActual=new Date(fecha);G.diaActual.setHours(0,0,0,0);G.lunes=lunesDe(fecha);cambiarVista('dia');};
       cell.appendChild(mas);
     }
     body.appendChild(cell);
@@ -1191,22 +1138,11 @@ function renderizarSemana() {
     const dayCol=document.createElement('div'); dayCol.className='day-col'+(esHoy?' hoy-col':''); dayCol.dataset.fecha=fechaStr; dayCol.style.position='relative';
     for (let h=HORAS_INICIO;h<HORAS_FIN;h++) {
       const sl=document.createElement('div'); sl.className='day-slot';
-      sl.dataset.hora=h.toString().padStart(2,'0')+':00';
-      sl.dataset.fecha=fechaStr;
+      sl.dataset.hora=h.toString().padStart(2,'0')+':00'; sl.dataset.fecha=fechaStr;
       sl.onclick=e=>{if(e.target!==sl)return;abrirModalNueva(dayCol.dataset.fecha,sl.dataset.hora);};
-      sl.addEventListener('dragover', e=>{
-        if(!G.dragCita)return;
-        e.preventDefault(); e.dataTransfer.dropEffect='move';
-        document.querySelectorAll('.day-slot.drag-over').forEach(s=>s.classList.remove('drag-over'));
-        sl.classList.add('drag-over');
-      });
+      sl.addEventListener('dragover', e=>{if(!G.dragCita)return;e.preventDefault();e.dataTransfer.dropEffect='move';document.querySelectorAll('.day-slot.drag-over').forEach(s=>s.classList.remove('drag-over'));sl.classList.add('drag-over');});
       sl.addEventListener('dragleave', ()=>sl.classList.remove('drag-over'));
-      sl.addEventListener('drop', e=>{
-        e.preventDefault();
-        sl.classList.remove('drag-over');
-        if(!G.dragCita)return;
-        moverCita(G.dragCita, sl.dataset.fecha, sl.dataset.hora);
-      });
+      sl.addEventListener('drop', e=>{e.preventDefault();sl.classList.remove('drag-over');if(!G.dragCita)return;moverCita(G.dragCita,sl.dataset.fecha,sl.dataset.hora);});
       dayCol.appendChild(sl);
     }
     const citasDelDia=G.citas.filter(c=>c.Fecha===fechaStr&&!OCULTOS.includes(c.EstadoAgenda));
@@ -1222,27 +1158,21 @@ function renderizarSemana() {
       asign.forEach((pos,cita)=>{
         const hm=parseHora(cita.Hora); if(hm===null)return;
         const offsetMin=hm-HORAS_INICIO*60; if(offsetMin<0)return;
-        const top=(offsetMin/60)*SLOT_H; const height=Math.max((DURACION/60)*SLOT_H,38);
+        const top=(offsetMin/60)*SLOT_H;
+        // ── FIX ALTURA: exactamente proporcional a DURACION, sin mínimo que desborde ──
+        const height=(DURACION/60)*SLOT_H - 2; // -2px para gap visual entre citas
         const esMia=cita.ID_Terapeuta===G.miId; const color=G.colores[cita.ID_Terapeuta]||'#aaa';
         const pct=100/pos.totalCols;
         const div=document.createElement('div'); div.className='cita'+(esMia?' propia':' ajena');
-        div.style.cssText=`position:absolute;top:${top}px;height:${height}px;left:calc(2px + ${pos.col*pct}%);right:calc(2px + ${(pos.totalCols-pos.col-1)*pct}%);background:${color};border-left:3px solid ${darken(color)};color:${contrastColor(color)};opacity:${esMia?'1':'0.72'};`;
+        div.style.cssText=`top:${top}px;height:${height}px;left:calc(2px + ${pos.col*pct}%);right:calc(2px + ${(pos.totalCols-pos.col-1)*pct}%);background:${color};border-left-color:${darken(color)};color:${contrastColor(color)};opacity:${esMia?'1':'0.72'};`;
         const nombreCorto=pos.totalCols>2?(cita.NombrePaciente||'—').split(' ').slice(0,2).join(' '):(cita.NombrePaciente||'—');
         div.innerHTML=`<div class="cita-nombre">${nombreCorto}</div>${pos.totalCols<=3?`<div class="cita-servicio">${cita.NombreServicio||''}</div>`:''}<span class="cita-estado">${estadoLabel(cita.Estado)}</span>`;
         if(esMia||esAdmin()) {
           div.onclick=()=>abrirModalCita(cita);
           if(cita.Estado==='Programada') {
             div.draggable=true;
-            div.addEventListener('dragstart', e => {
-              G.dragCita = cita;
-              setTimeout(()=>div.classList.add('dragging'), 0);
-              e.dataTransfer.effectAllowed = 'move';
-            });
-            div.addEventListener('dragend', () => {
-              div.classList.remove('dragging');
-              G.dragCita = null;
-              document.querySelectorAll('.day-slot.drag-over').forEach(s=>s.classList.remove('drag-over'));
-            });
+            div.addEventListener('dragstart', e=>{G.dragCita=cita;setTimeout(()=>div.classList.add('dragging'),0);e.dataTransfer.effectAllowed='move';});
+            div.addEventListener('dragend', ()=>{div.classList.remove('dragging');G.dragCita=null;document.querySelectorAll('.day-slot.drag-over').forEach(s=>s.classList.remove('drag-over'));});
           }
         } else {
           div.title=(cita.NombreTerapeuta||'')+' · '+(cita.NombrePaciente||'');
@@ -1282,13 +1212,16 @@ function renderizarDia() {
     asign.forEach((pos,cita)=>{
       const hm=parseHora(cita.Hora);if(hm===null)return;
       const offsetMin=hm-HORAS_INICIO*60;if(offsetMin<0)return;
-      const top=(offsetMin/60)*SLOT_H;const height=Math.max((DURACION/60)*SLOT_H,38);
+      const top=(offsetMin/60)*SLOT_H;
+      // ── FIX ALTURA: exactamente proporcional, sin mínimo que desborde ──
+      const height=(DURACION/60)*SLOT_H - 2;
       const esMia=cita.ID_Terapeuta===G.miId;const color=G.colores[cita.ID_Terapeuta]||'#aaa';
       const pct=100/pos.totalCols;
       const div=document.createElement('div');div.className='cita'+(esMia?' propia':' ajena');
-      div.style.cssText=`position:absolute;top:${top}px;height:${height}px;left:calc(2px + ${pos.col*pct}%);right:calc(2px + ${(pos.totalCols-pos.col-1)*pct}%);background:${color};border-left:3px solid ${darken(color)};color:${contrastColor(color)};opacity:${esMia?'1':'0.72'};`;
+      div.style.cssText=`top:${top}px;height:${height}px;left:calc(2px + ${pos.col*pct}%);right:calc(2px + ${(pos.totalCols-pos.col-1)*pct}%);background:${color};border-left-color:${darken(color)};color:${contrastColor(color)};opacity:${esMia?'1':'0.72'};`;
       div.innerHTML=`<div class="cita-nombre">${cita.NombrePaciente||'—'}</div><div class="cita-servicio">${cita.NombreServicio||''}${!esMia?' · '+(cita.NombreTerapeuta||''):''}</div><div class="cita-servicio">${cita.Hora||''}</div><span class="cita-estado">${estadoLabel(cita.Estado)}</span>`;
-      if(esMia)div.onclick=()=>abrirModalCita(cita);
+      // ── FIX BUG MÓVIL ADMIN: añadido ||esAdmin() ──
+      if(esMia||esAdmin())div.onclick=()=>abrirModalCita(cita);
       else div.title=(cita.NombreTerapeuta||'')+' · '+(cita.NombrePaciente||'');
       dayCol.appendChild(div);
     });
@@ -1313,20 +1246,16 @@ function abrirModalNueva(fechaPref, horaPref) {
   document.getElementById('btn-crear-cita').textContent = 'Crear cita';
   pacReset('cita'); ocultarBonoAviso(); abrirOverlay('modal-nueva');
 }
-
 function ocultarBonoAviso() {
   const av = document.getElementById('n-bono-aviso');
   av.style.display='none'; av.className='bono-aviso'; av.textContent='';
 }
-
 async function onTipoFinChange() {
-  const v = document.getElementById('n-tipofin').value;
-  ocultarBonoAviso();
+  const v = document.getElementById('n-tipofin').value; ocultarBonoAviso();
   if ((v==='BONO'||v==='BECA') && document.getElementById('n-paciente').value) {
     await verificarBonoDisponible(document.getElementById('n-paciente').value, v);
   }
 }
-
 async function guardarNuevaCita() {
   const fecha=document.getElementById('n-fecha').value;
   const hora=document.getElementById('n-hora').value;
@@ -1336,9 +1265,7 @@ async function guardarNuevaCita() {
   const notas=document.getElementById('n-notas').value.trim();
   const recur=document.getElementById('n-recur-check').checked;
   if (!fecha||!hora||!paciente||!servicio){toast('Completa fecha, hora, paciente y servicio','err');return;}
-
   if ((tipoFin==='BONO'||tipoFin==='BECA') && !(await verificarBonoDisponible(paciente,tipoFin))) return;
-
   if (recur) {
     const hasta=document.getElementById('n-recur-hasta').value;
     const cadaDias=parseInt(document.getElementById('n-recur-cada').value)||7;
@@ -1347,22 +1274,16 @@ async function guardarNuevaCita() {
     const fechas=calcularFechasRecurrentes(fecha,hasta,cadaDias,festivos);
     if (!fechas.length){toast('No hay fechas válidas en ese rango','err');return;}
     const btn=document.getElementById('btn-crear-cita'); btn.disabled=true; btn.textContent=`⏳ Creando ${fechas.length} citas…`;
-    try {
-      for (const f of fechas) await crearCita({fecha:f,hora,idPaciente:paciente,idServicio:servicio,tipoFin,idFin:'',notas});
-      toast(`${fechas.length} citas creadas ✓`,'ok'); cerrarModal('modal-nueva'); recargarVista();
-    } catch(err){toast('Error: '+err.message,'err');}
+    try { for (const f of fechas) await crearCita({fecha:f,hora,idPaciente:paciente,idServicio:servicio,tipoFin,idFin:'',notas}); toast(`${fechas.length} citas creadas ✓`,'ok'); cerrarModal('modal-nueva'); recargarVista(); }
+    catch(err){toast('Error: '+err.message,'err');}
     finally{btn.disabled=false;btn.textContent='Crear citas';}
     return;
   }
-
   const btn=document.getElementById('btn-crear-cita'); btn.disabled=true; btn.textContent='⏳ Creando…';
-  try {
-    await crearCita({fecha,hora,idPaciente:paciente,idServicio:servicio,tipoFin,idFin:'',notas});
-    toast('Cita creada ✓','ok'); cerrarModal('modal-nueva'); recargarVista();
-  } catch(err){toast('Error: '+err.message,'err');}
+  try { await crearCita({fecha,hora,idPaciente:paciente,idServicio:servicio,tipoFin,idFin:'',notas}); toast('Cita creada ✓','ok'); cerrarModal('modal-nueva'); recargarVista(); }
+  catch(err){toast('Error: '+err.message,'err');}
   finally{btn.disabled=false;btn.textContent='Crear cita';}
 }
-
 function recargarVista() {
   if(G.vista==='mes')cargarMes(); else if(G.vista==='dia')cargarDia(); else cargarSemana();
 }
@@ -1383,16 +1304,14 @@ function abrirModalCita(cita) {
   document.getElementById('mc-btn-guardar').textContent='Guardar';
   document.getElementById('mc-repetir-panel').style.display='none';
   document.getElementById('mc-rep-hasta').value=''; document.getElementById('mc-rep-preview').innerHTML='';
- const esMia=cita.ID_Terapeuta===G.miId||esAdmin();
+  const esMia=cita.ID_Terapeuta===G.miId||esAdmin();
   document.getElementById('mc-seccion-estado').style.display=esMia?'block':'none';
   document.getElementById('mc-solo-lectura').style.display=esMia?'none':'block';
   document.getElementById('mc-btn-repetir').style.display=esMia?'inline-flex':'none';
   document.getElementById('mc-btn-eliminar').style.display=esMia?'inline-flex':'none';
-  // Botón editar paciente: visible siempre que haya ID_Paciente
   document.getElementById('mc-btn-editar-pac').style.display = cita.ID_Paciente ? 'inline-flex' : 'none';
   actualizarBotonesEstado(); abrirOverlay('modal-cita');
 }
-
 function selEstado(estado) {
   G.estadoSel=estado; actualizarBotonesEstado();
   const panel=document.getElementById('mc-reprog-panel');
@@ -1404,7 +1323,6 @@ function selEstado(estado) {
   panelCobro.style.display=(estado==='Hecha'&&tipoFin==='SUELTA')?'':'none';
   if(panelCobro.style.display==='none')document.getElementById('mc-cobrado').value='No';
 }
-
 function actualizarBotonesEstado() {
   const estadoOrig=G.citaActual?(G.citaActual.EstadoAgenda||G.citaActual.Estado||''):'';
   const yaHecha=estadoOrig==='Hecha';
@@ -1414,12 +1332,10 @@ function actualizarBotonesEstado() {
   av.textContent=yaHecha?'⚠️ Esta sesión ya está marcada como Hecha. Si guardas se actualizarán las notas pero no se duplicará en SESIONES.':'';
   av.style.display=yaHecha?'block':'none';
 }
-
 async function guardarEstadoCita() {
   if(!G.citaActual)return;
   const notas=document.getElementById('mc-notas').value.trim();
   const btn=document.getElementById('mc-btn-guardar');
-
   if(G.estadoSel==='Reprogramada'){
     const nuevaFecha=document.getElementById('mc-reprog-fecha').value;
     const nuevaHora=document.getElementById('mc-reprog-hora').value||G.citaActual.Hora||'09:00';
@@ -1433,11 +1349,9 @@ async function guardarEstadoCita() {
     finally{btn.disabled=false;btn.textContent='🔄 Reprogramar y crear cita';}
     return;
   }
-
   btn.disabled=true; btn.textContent='⏳ Guardando…';
   try {
     await supaPatch('agenda_datos',`id_cita=eq.${G.citaActual.ID_Cita}`,{estado_agenda:G.estadoSel,notas_agenda:notas});
-
     if(G.estadoSel==='Hecha'||G.estadoSel==='No-show'){
       const tipoFin=G.citaActual.ID_Bono?'BONO':(G.citaActual.ID_Beca?'BECA':'SUELTA');
       const idFin=G.citaActual.ID_Bono||G.citaActual.ID_Beca||'';
@@ -1463,15 +1377,12 @@ async function guardarEstadoCita() {
   }catch(err){toast('Error: '+err.message,'err');}
   finally{btn.disabled=false;btn.textContent='Guardar';}
 }
-
 async function eliminarCita() {
   const cita=G.citaActual; if(!cita)return;
   if(!window.confirm(`¿Eliminar la cita de ${cita.NombrePaciente||'este paciente'} el ${formatFecha(cita.Fecha)} a las ${cita.Hora}?\n\nEsta acción no se puede deshacer.`))return;
   const btn=document.getElementById('mc-btn-eliminar'); btn.disabled=true; btn.textContent='⏳';
-  try {
-    await supaDelete('agenda_datos',`id_cita=eq.${cita.ID_Cita}`);
-    toast('Cita eliminada ✓','ok'); cerrarModal('modal-cita'); recargarVista();
-  }catch(err){toast('Error: '+err.message,'err');}
+  try { await supaDelete('agenda_datos',`id_cita=eq.${cita.ID_Cita}`); toast('Cita eliminada ✓','ok'); cerrarModal('modal-cita'); recargarVista(); }
+  catch(err){toast('Error: '+err.message,'err');}
   finally{btn.disabled=false;btn.textContent='🗑 Eliminar';}
 }
 
@@ -1479,20 +1390,14 @@ async function eliminarCita() {
 //  MODAL EDITAR PACIENTE
 // ═══════════════════════════════════════════════════════════════
 async function abrirModalEditarPacienteDesde() {
-  // Se llama desde el botón ✏️ del modal de cita
   if (!G.citaActual || !G.citaActual.ID_Paciente) return;
-  // Cerrar modal de cita antes de abrir el de edición (evita apilamiento de overlays)
   cerrarModal('modal-cita');
   await abrirModalEditarPaciente(G.citaActual.ID_Paciente);
 }
-
 async function abrirModalEditarPaciente(idPaciente) {
   G.pacienteEditandoId = idPaciente;
   document.getElementById('ep-id-label').textContent = idPaciente;
-  // Limpiar campos mientras carga
-  ['ep-nombre','ep-apellidos','ep-alias','ep-tutor1','ep-tel','ep-tutor2','ep-tel2','ep-email','ep-notas'].forEach(id => {
-    document.getElementById(id).value = '';
-  });
+  ['ep-nombre','ep-apellidos','ep-alias','ep-tutor1','ep-tel','ep-tutor2','ep-tel2','ep-email','ep-notas'].forEach(id => { document.getElementById(id).value = ''; });
   const btn = document.getElementById('btn-guardar-edicion-paciente');
   btn.disabled = true; btn.textContent = '⏳ Cargando…';
   abrirOverlay('modal-editar-paciente');
@@ -1509,54 +1414,38 @@ async function abrirModalEditarPaciente(idPaciente) {
     document.getElementById('ep-tel2').value      = p.telefono2 || '';
     document.getElementById('ep-email').value     = p.email     || '';
     document.getElementById('ep-notas').value     = p.notas     || '';
-  } catch(err) {
-    toast('Error al cargar paciente: ' + err.message, 'err');
-    cerrarModal('modal-editar-paciente');
-    return;
-  } finally {
-    btn.disabled = false; btn.textContent = 'Guardar cambios';
-  }
+  } catch(err) { toast('Error al cargar paciente: ' + err.message, 'err'); cerrarModal('modal-editar-paciente'); return; }
+  finally { btn.disabled = false; btn.textContent = 'Guardar cambios'; }
 }
-
 async function guardarEdicionPaciente() {
-  const idPaciente = G.pacienteEditandoId;
-  if (!idPaciente) return;
+  const idPaciente = G.pacienteEditandoId; if (!idPaciente) return;
   const nombre = document.getElementById('ep-nombre').value.trim();
   if (!nombre) { toast('El nombre es obligatorio', 'err'); return; }
   const btn = document.getElementById('btn-guardar-edicion-paciente');
   btn.disabled = true; btn.textContent = '⏳ Guardando…';
   try {
     await supaPatch('pacientes', `id_paciente=eq.${idPaciente}`, {
-      nombre:    nombre,
-      apellidos: document.getElementById('ep-apellidos').value.trim(),
-      alias:     document.getElementById('ep-alias').value.trim(),
-      tutor1:    document.getElementById('ep-tutor1').value.trim(),
-      telefono:  document.getElementById('ep-tel').value.trim(),
-      tutor2:    document.getElementById('ep-tutor2').value.trim(),
+      nombre, apellidos: document.getElementById('ep-apellidos').value.trim(),
+      alias: document.getElementById('ep-alias').value.trim(),
+      tutor1: document.getElementById('ep-tutor1').value.trim(),
+      telefono: document.getElementById('ep-tel').value.trim(),
+      tutor2: document.getElementById('ep-tutor2').value.trim(),
       telefono2: document.getElementById('ep-tel2').value.trim(),
-      email:     document.getElementById('ep-email').value.trim(),
-      notas:     document.getElementById('ep-notas').value.trim(),
+      email: document.getElementById('ep-email').value.trim(),
+      notas: document.getElementById('ep-notas').value.trim(),
     });
-    // Actualizar caché local de pacientes
     const pac = await supaGet('pacientes', 'order=nombre.asc');
-    G.pacientes = pac.map(p => ({
-      ID_Paciente: p.id_paciente,
-      Nombre: ((p.nombre||'') + ' ' + (p.apellidos||'')).trim(),
-      Alias: p.alias || '',
-    }));
+    G.pacientes = pac.map(p => ({ ID_Paciente: p.id_paciente, Nombre: ((p.nombre||'') + ' ' + (p.apellidos||'')).trim(), Alias: p.alias || '' }));
     toast('Paciente actualizado ✓', 'ok');
     cerrarModal('modal-editar-paciente');
-    // Volver a abrir el modal de cita con el nombre ya actualizado
     if (G.citaActual && G.citaActual.ID_Paciente === idPaciente) {
       const alias = document.getElementById('ep-alias').value.trim();
       const nombreCompleto = (nombre + ' ' + document.getElementById('ep-apellidos').value.trim()).trim();
       G.citaActual.NombrePaciente = alias || nombreCompleto;
       abrirModalCita(G.citaActual);
     }
-    toast('Error al guardar: ' + err.message, 'err');
-  } finally {
-    btn.disabled = false; btn.textContent = 'Guardar cambios';
-  }
+  } catch(err) { toast('Error al guardar: ' + err.message, 'err'); }
+  finally { btn.disabled = false; btn.textContent = 'Guardar cambios'; }
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -1567,8 +1456,7 @@ async function verificarBonoDisponible(idPaciente, tipoFin) {
   const aviso=document.getElementById('n-bono-aviso');
   aviso.textContent='⏳ Comprobando…'; aviso.className='bono-aviso ok'; aviso.style.display='block';
   try {
-    const tabla=tipoFin==='BONO'?'bonos':'becas';
-    const idCamp=tipoFin==='BONO'?'id_bono':'id_beca';
+    const tabla=tipoFin==='BONO'?'bonos':'becas'; const idCamp=tipoFin==='BONO'?'id_bono':'id_beca';
     const rows=await supaGet(tabla,`id_paciente=eq.${idPaciente}&estado=eq.Activo&sesiones_pendientes=gt.0&limit=1`);
     if(rows.length){aviso.className='bono-aviso ok';aviso.textContent=`✓ ${rows[0][idCamp]} · ${rows[0].sesiones_pendientes} ses. pendientes`;return true;}
     else{aviso.className='bono-aviso warn';aviso.textContent=`✗ No hay ${tipoFin==='BONO'?'bono':'beca'} activo para este paciente.`;return false;}
@@ -1586,7 +1474,6 @@ function abrirModalPaciente() {
   document.getElementById('mp-aviso-similar').style.display='none';
   abrirOverlay('modal-paciente');
 }
-
 async function guardarNuevoPaciente() {
   const nombre=document.getElementById('mp-nombre').value.trim();
   if(!nombre){toast('El nombre es obligatorio','err');return;}
@@ -1611,7 +1498,6 @@ function abrirModalBono() {
   document.getElementById('mb-fecha-cad').value=''; document.getElementById('mb-notas').value='';
   document.getElementById('mb-cobrado').value='No'; pacReset('bono'); abrirOverlay('modal-bono');
 }
-
 async function guardarNuevoBono() {
   const idPaciente=document.getElementById('mb-paciente').value.trim();
   const sesionesTotales=parseInt(document.getElementById('mb-sesiones').value)||0;
@@ -1632,7 +1518,15 @@ async function guardarNuevoBono() {
 // ═══════════════════════════════════════════════════════════════
 //  BUSCADOR PACIENTE
 // ═══════════════════════════════════════════════════════════════
-const PAC_CTX={cita:{txt:'n-paciente-txt',hid:'n-paciente',lista:'pac-lista-cita'},bono:{txt:'mb-paciente-txt',hid:'mb-paciente',lista:'pac-lista-bono'},multi:{txt:'mm-paciente-txt',hid:'mm-paciente',lista:'pac-lista-multi'}};
+const PAC_CTX={
+  cita:      {txt:'n-paciente-txt',      hid:'n-paciente',      lista:'pac-lista-cita'},
+  bono:      {txt:'mb-paciente-txt',     hid:'mb-paciente',     lista:'pac-lista-bono'},
+  multi:     {txt:'mm-paciente-txt',     hid:'mm-paciente',     lista:'pac-lista-multi'},
+  'admin-bono':{txt:'admin-bono-pac-txt',hid:'admin-bono-pac',  lista:'pac-lista-admin-bono'},
+  'admin-beca':{txt:'admin-beca-pac-txt',hid:'admin-beca-pac',  lista:'pac-lista-admin-beca'},
+  'admin-cita':{txt:'admin-cita-pac-txt',hid:'admin-cita-pac',  lista:'pac-lista-admin-cita'},
+  aec:       {txt:'aec-pac-txt',         hid:'aec-pac',         lista:'pac-lista-aec'},
+};
 function pacNombre(p){return(p.Alias||'').trim()||((p.Nombre||'').trim())||p.Nombre||'';}
 function pacResaltar(texto,query){if(!query)return texto;const re=new RegExp('('+query.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','gi');return texto.replace(re,'<em>$1</em>');}
 function pacFiltrar(ctx){const ids=PAC_CTX[ctx];const query=document.getElementById(ids.txt).value.trim().toLowerCase();document.getElementById(ids.hid).value='';document.getElementById(ids.txt).classList.remove('seleccionado');const lista=document.getElementById(ids.lista);const items=query.length<1?G.pacientes.slice(0,40):G.pacientes.filter(p=>pacNombre(p).toLowerCase().includes(query));if(!items.length){lista.innerHTML='<div class="pac-vacio">Sin resultados</div>';}else{lista.innerHTML=items.map(p=>`<div class="pac-item" data-id="${p.ID_Paciente}" onmousedown="pacSeleccionar('${ctx}','${p.ID_Paciente}',this)">${pacResaltar(pacNombre(p),query)}</div>`).join('');}lista.classList.add('visible');if(ctx==='cita')ocultarBonoAviso();}
@@ -1667,32 +1561,25 @@ function actualizarPreviewRepetir(){const cita=G.citaActual;if(!cita)return;cons
 async function confirmarRepetirCita(){const cita=G.citaActual;if(!cita)return;const hasta=document.getElementById('mc-rep-hasta').value;const cadaDias=parseInt(document.getElementById('mc-rep-cada').value)||7;if(!hasta){toast('Indica la fecha hasta la que repetir','err');return;}const agosto=[...diasDeAgosto(new Date().getFullYear()),...diasDeAgosto(new Date().getFullYear()+1)];const fechas=calcularFechasRecurrentes(cita.Fecha,hasta,cadaDias,agosto);if(!fechas.length){toast('No hay fechas válidas','err');return;}const btn=document.getElementById('mc-btn-confirmar-repetir');btn.disabled=true;btn.textContent=`⏳ Creando ${fechas.length} citas…`;try{for(const f of fechas)await crearCita({fecha:f,hora:cita.Hora,idPaciente:cita.ID_Paciente,idServicio:cita.ID_Servicio,tipoFin:cita.ID_Beca?'BECA':(cita.ID_Bono?'BONO':'SUELTA'),idFin:cita.ID_Beca||cita.ID_Bono||'',notas:''});toast(`✅ ${fechas.length} citas creadas`,'ok');cerrarModal('modal-cita');recargarVista();}catch(err){toast('Error: '+err.message,'err');}finally{btn.disabled=false;btn.textContent='Crear repeticiones';}}
 
 // ═══════════════════════════════════════════════════════════════
-//  DETECCIÓN DUPLICADO AL CREAR PACIENTE
+//  DETECCIÓN DUPLICADO
 // ═══════════════════════════════════════════════════════════════
 function normalizarTexto(s){return(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9 ]/g,'').trim();}
 function similitudNombre(a,b){const pa=normalizarTexto(a).split(/\s+/).filter(w=>w.length>=3);const pb=normalizarTexto(b).split(/\s+/).filter(w=>w.length>=3);return pa.some(wa=>pb.some(wb=>wa===wb||wa.startsWith(wb)||wb.startsWith(wa)));}
 function comprobarPacienteSimilar(){const nombre=normalizarTexto(document.getElementById('mp-nombre').value);const apellidos=normalizarTexto(document.getElementById('mp-apellidos').value);const aviso=document.getElementById('mp-aviso-similar');const lista=document.getElementById('mp-aviso-lista');if(!nombre&&!apellidos){aviso.style.display='none';return;}const similares=(G.pacientes||[]).filter(p=>{const pN=normalizarTexto(p.Nombre);const pA=normalizarTexto(p.Alias);const busq=(nombre+' '+apellidos).trim();return similitudNombre(busq,pN)||(pA&&similitudNombre(busq,pA));});if(!similares.length){aviso.style.display='none';return;}lista.innerHTML=similares.slice(0,4).map(p=>`<span style="display:inline-block;background:#fff;border-radius:4px;padding:1px 7px;margin:2px 4px 2px 0;border:1px solid #ddb"><strong>${p.Nombre}</strong>${p.Alias?' · <em>'+p.Alias+'</em>':''} <span style="color:#aaa;font-size:11px">${p.ID_Paciente}</span></span>`).join('');aviso.style.display='block';}
 
 // ═══════════════════════════════════════════════════════════════
-//  DRAG & DROP — mover cita
+//  DRAG & DROP
 // ═══════════════════════════════════════════════════════════════
 async function moverCita(cita, nuevaFecha, nuevaHora) {
   if (!cita || !nuevaFecha || !nuevaHora) return;
-  if (nuevaFecha === cita.Fecha && nuevaHora === cita.Hora) return; // sin cambio
+  if (nuevaFecha === cita.Fecha && nuevaHora === cita.Hora) return;
   const nombrePac = cita.NombrePaciente || 'este paciente';
-  const origen    = formatFecha(cita.Fecha) + ' ' + cita.Hora;
-  const destino   = formatFecha(nuevaFecha) + ' ' + nuevaHora;
-  if (!window.confirm(`Mover cita de ${nombrePac}\nDe: ${origen}\nA:  ${destino}`)) return;
+  if (!window.confirm(`Mover cita de ${nombrePac}\nDe: ${formatFecha(cita.Fecha)} ${cita.Hora}\nA:  ${formatFecha(nuevaFecha)} ${nuevaHora}`)) return;
   try {
-    await supaPatch('agenda_datos', `id_cita=eq.${cita.ID_Cita}`, {
-      fecha: nuevaFecha,
-      hora:  nuevaHora,
-    });
-    toast(`Cita movida a ${destino} ✓`, 'ok');
+    await supaPatch('agenda_datos', `id_cita=eq.${cita.ID_Cita}`, { fecha: nuevaFecha, hora: nuevaHora });
+    toast(`Cita movida a ${formatFecha(nuevaFecha)} ${nuevaHora} ✓`, 'ok');
     recargarVista();
-  } catch(err) {
-    toast('Error al mover: ' + err.message, 'err');
-  }
+  } catch(err) { toast('Error al mover: ' + err.message, 'err'); }
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -1710,7 +1597,7 @@ function contrastColor(hex){const r=parseInt(hex.slice(1,3),16);const g=parseInt
 function darken(hex){return hex.replace(/^#/,'').replace(/../g,c=>Math.max(0,parseInt(c,16)-30).toString(16).padStart(2,'0')).replace(/^/,'#');}
 
 // ═══════════════════════════════════════════════════════════════
-//  ADMIN — solo para abraham.garcia.blanco@gmail.com
+//  ADMIN
 // ═══════════════════════════════════════════════════════════════
 const ADMIN_EMAIL = 'abraham.garcia.blanco@gmail.com';
 const ADMIN_CSS = `
@@ -1725,28 +1612,16 @@ const ADMIN_CSS = `
 `;
 (function(){ const s=document.createElement('style'); s.textContent=ADMIN_CSS; document.head.appendChild(s); })();
 
-// Registrar contextos pac adicionales para admin
-PAC_CTX['admin-bono'] = {txt:'admin-bono-pac-txt', hid:'admin-bono-pac', lista:'pac-lista-admin-bono'};
-PAC_CTX['admin-beca'] = {txt:'admin-beca-pac-txt', hid:'admin-beca-pac', lista:'pac-lista-admin-beca'};
-PAC_CTX['admin-cita'] = {txt:'admin-cita-pac-txt', hid:'admin-cita-pac', lista:'pac-lista-admin-cita'};
-PAC_CTX['aec']        = {txt:'aec-pac-txt',        hid:'aec-pac',        lista:'pac-lista-aec'};
-
 let adminBonoEditando = null;
 let adminBecaEditando = null;
 let adminCitaEditando = null;
 
 function esAdmin() { return G.email === ADMIN_EMAIL; }
-
 function adminMostrarBoton() {
   const btn = document.getElementById('btn-admin');
   if (btn) btn.style.display = esAdmin() ? 'inline-flex' : 'none';
 }
-
-function abrirAdmin() {
-  adminTab('bonos');
-  abrirOverlay('modal-admin');
-}
-
+function abrirAdmin() { adminTab('bonos'); abrirOverlay('modal-admin'); }
 function adminTab(tab) {
   ['bonos','becas','citas'].forEach(t => {
     document.getElementById('admin-sec-' + t).style.display  = t === tab ? '' : 'none';
@@ -1754,30 +1629,21 @@ function adminTab(tab) {
   });
 }
 
-// ── BONOS ──
 async function adminCargarBonos() {
   const idPac = document.getElementById('admin-bono-pac').value;
   const lista  = document.getElementById('admin-bonos-lista');
   lista.innerHTML = '<div style="color:var(--muted);font-size:13px">Cargando…</div>';
   try {
-    const params = idPac
-      ? `id_paciente=eq.${idPac}&order=fecha_compra.desc`
-      : `order=fecha_compra.desc&limit=30`;
+    const params = idPac ? `id_paciente=eq.${idPac}&order=fecha_compra.desc` : `order=fecha_compra.desc&limit=30`;
     const rows = await supaGet('bonos', params);
     if (!rows.length) { lista.innerHTML = '<div style="color:var(--muted);font-size:13px">Sin bonos.</div>'; return; }
-    const pacMap = {};
-    G.pacientes.forEach(p => { pacMap[p.ID_Paciente] = p.Nombre; });
+    const pacMap = {}; G.pacientes.forEach(p => { pacMap[p.ID_Paciente] = p.Nombre; });
     lista.innerHTML = rows.map(b => {
       const color = b.estado === 'Activo' ? '#97D700' : b.estado === 'Agotado' ? '#DA291C' : '#9CA3AF';
       const bg    = b.estado === 'Activo' ? '#f7ffe8' : b.estado === 'Agotado' ? '#fff3f3' : '#f3f4f6';
-      return `
-      <div class="admin-card" style="border-left:4px solid ${color};background:${bg}">
+      return `<div class="admin-card" style="border-left:4px solid ${color};background:${bg}">
         <div class="admin-card-header">
-          <div>
-            <div class="admin-card-id">${b.id_bono}</div>
-            <div style="font-size:13px;font-weight:600;margin-top:2px">${pacMap[b.id_paciente]||b.id_paciente}</div>
-            <div style="font-size:12px;color:var(--muted)">${b.tipo_bono||''}</div>
-          </div>
+          <div><div class="admin-card-id">${b.id_bono}</div><div style="font-size:13px;font-weight:600;margin-top:2px">${pacMap[b.id_paciente]||b.id_paciente}</div><div style="font-size:12px;color:var(--muted)">${b.tipo_bono||''}</div></div>
           <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
             <span class="admin-card-estado" style="background:${color};color:${b.estado==='Activo'?'#2d4a00':'#fff'}">${b.estado}</span>
             <button class="btn btn-secondary" style="font-size:11px;padding:4px 10px" onclick="adminAbrirEditBono(${JSON.stringify(b).replace(/"/g,'&quot;')})">✏️ Editar</button>
@@ -1791,7 +1657,6 @@ async function adminCargarBonos() {
     }).join('');
   } catch(err) { lista.innerHTML = '<div style="color:var(--rojo)">Error: '+err.message+'</div>'; }
 }
-
 function adminAbrirEditBono(b) {
   adminBonoEditando = b;
   const pacMap = {}; G.pacientes.forEach(p => { pacMap[p.ID_Paciente] = p.Nombre; });
@@ -1806,75 +1671,45 @@ function adminAbrirEditBono(b) {
   document.getElementById('aeb-fecha-compra').value    = b.fecha_compra||'';
   document.getElementById('aeb-fecha-cad').value       = b.fecha_caducidad||'';
   document.getElementById('aeb-notas').value           = b.notas||'';
-  aebRecalcular();
-  abrirOverlay('modal-admin-bono');
+  aebRecalcular(); abrirOverlay('modal-admin-bono');
 }
-
 function aebRecalcular() {
-  const tot  = parseInt(document.getElementById('aeb-totales').value)||0;
-  const cons = parseInt(document.getElementById('aeb-consumidas').value)||0;
-  const imp  = parseFloat(document.getElementById('aeb-importe').value)||0;
-  const pend = Math.max(tot - cons, 0);
-  const valSes = tot > 0 ? (imp / tot) : 0;
-  document.getElementById('aeb-pendientes-calc').textContent = pend;
-  document.getElementById('aeb-valorsesion').textContent     = valSes.toFixed(2);
+  const tot=parseInt(document.getElementById('aeb-totales').value)||0;
+  const cons=parseInt(document.getElementById('aeb-consumidas').value)||0;
+  const imp=parseFloat(document.getElementById('aeb-importe').value)||0;
+  const pend=Math.max(tot-cons,0); const valSes=tot>0?(imp/tot):0;
+  document.getElementById('aeb-pendientes-calc').textContent=pend;
+  document.getElementById('aeb-valorsesion').textContent=valSes.toFixed(2);
 }
-
 async function adminGuardarBono() {
-  const b = adminBonoEditando; if (!b) return;
-  const tot  = parseInt(document.getElementById('aeb-totales').value)||0;
-  const cons = parseInt(document.getElementById('aeb-consumidas').value)||0;
-  const imp  = parseFloat(document.getElementById('aeb-importe').value)||0;
-  const pend = Math.max(tot - cons, 0);
-  const valSes = tot > 0 ? imp / tot : 0;
-  const btn = document.getElementById('aeb-btn-guardar');
-  btn.disabled = true; btn.textContent = '⏳ Guardando…';
+  const b=adminBonoEditando; if(!b)return;
+  const tot=parseInt(document.getElementById('aeb-totales').value)||0;
+  const cons=parseInt(document.getElementById('aeb-consumidas').value)||0;
+  const imp=parseFloat(document.getElementById('aeb-importe').value)||0;
+  const pend=Math.max(tot-cons,0); const valSes=tot>0?imp/tot:0;
+  const btn=document.getElementById('aeb-btn-guardar'); btn.disabled=true; btn.textContent='⏳ Guardando…';
   try {
-    await supaPatch('bonos', `id_bono=eq.${b.id_bono}`, {
-      tipo_bono:           document.getElementById('aeb-tipo').value.trim(),
-      estado:              document.getElementById('aeb-estado').value,
-      sesiones_totales:    tot,
-      sesiones_consumidas: cons,
-      sesiones_pendientes: pend,
-      valor_sesion:        valSes,
-      importe_anticipo:    imp,
-      importe_devengado:   cons * valSes,
-      importe_pendiente:   pend * valSes,
-      cobrado:             document.getElementById('aeb-cobrado').value,
-      fecha_compra:        document.getElementById('aeb-fecha-compra').value||null,
-      fecha_caducidad:     document.getElementById('aeb-fecha-cad').value||null,
-      notas:               document.getElementById('aeb-notas').value.trim(),
-    });
-    toast('Bono actualizado ✓', 'ok');
-    cerrarModal('modal-admin-bono');
-    adminCargarBonos();
-  } catch(err) { toast('Error: '+err.message, 'err'); }
-  finally { btn.disabled=false; btn.textContent='Guardar bono'; }
+    await supaPatch('bonos',`id_bono=eq.${b.id_bono}`,{tipo_bono:document.getElementById('aeb-tipo').value.trim(),estado:document.getElementById('aeb-estado').value,sesiones_totales:tot,sesiones_consumidas:cons,sesiones_pendientes:pend,valor_sesion:valSes,importe_anticipo:imp,importe_devengado:cons*valSes,importe_pendiente:pend*valSes,cobrado:document.getElementById('aeb-cobrado').value,fecha_compra:document.getElementById('aeb-fecha-compra').value||null,fecha_caducidad:document.getElementById('aeb-fecha-cad').value||null,notas:document.getElementById('aeb-notas').value.trim()});
+    toast('Bono actualizado ✓','ok'); cerrarModal('modal-admin-bono'); adminCargarBonos();
+  }catch(err){toast('Error: '+err.message,'err');}
+  finally{btn.disabled=false;btn.textContent='Guardar bono';}
 }
 
-// ── BECAS ──
 async function adminCargarBecas() {
-  const idPac = document.getElementById('admin-beca-pac').value;
-  const lista  = document.getElementById('admin-becas-lista');
-  lista.innerHTML = '<div style="color:var(--muted);font-size:13px">Cargando…</div>';
+  const idPac=document.getElementById('admin-beca-pac').value;
+  const lista=document.getElementById('admin-becas-lista');
+  lista.innerHTML='<div style="color:var(--muted);font-size:13px">Cargando…</div>';
   try {
-    const params = idPac
-      ? `id_paciente=eq.${idPac}&order=anio.desc`
-      : `order=anio.desc&limit=30`;
-    const rows = await supaGet('becas', params);
-    if (!rows.length) { lista.innerHTML = '<div style="color:var(--muted);font-size:13px">Sin becas.</div>'; return; }
-    const pacMap = {}; G.pacientes.forEach(p => { pacMap[p.ID_Paciente] = p.Nombre; });
-    lista.innerHTML = rows.map(b => {
-      const color = b.estado==='Activo' ? '#97D700' : b.estado==='Agotada' ? '#DA291C' : '#9CA3AF';
-      const bg    = b.estado==='Activo' ? '#f7ffe8' : b.estado==='Agotada' ? '#fff3f3' : '#f3f4f6';
-      return `
-      <div class="admin-card" style="border-left:4px solid ${color};background:${bg}">
+    const params=idPac?`id_paciente=eq.${idPac}&order=anio.desc`:`order=anio.desc&limit=30`;
+    const rows=await supaGet('becas',params);
+    if(!rows.length){lista.innerHTML='<div style="color:var(--muted);font-size:13px">Sin becas.</div>';return;}
+    const pacMap={}; G.pacientes.forEach(p=>{pacMap[p.ID_Paciente]=p.Nombre;});
+    lista.innerHTML=rows.map(b=>{
+      const color=b.estado==='Activo'?'#97D700':b.estado==='Agotada'?'#DA291C':'#9CA3AF';
+      const bg=b.estado==='Activo'?'#f7ffe8':b.estado==='Agotada'?'#fff3f3':'#f3f4f6';
+      return`<div class="admin-card" style="border-left:4px solid ${color};background:${bg}">
         <div class="admin-card-header">
-          <div>
-            <div class="admin-card-id">${b.id_beca}</div>
-            <div style="font-size:13px;font-weight:600;margin-top:2px">${pacMap[b.id_paciente]||b.id_paciente}</div>
-            <div style="font-size:12px;color:var(--muted)">${b.entidad_financiadora||''} · ${b.anio||''}</div>
-          </div>
+          <div><div class="admin-card-id">${b.id_beca}</div><div style="font-size:13px;font-weight:600;margin-top:2px">${pacMap[b.id_paciente]||b.id_paciente}</div><div style="font-size:12px;color:var(--muted)">${b.entidad_financiadora||''} · ${b.anio||''}</div></div>
           <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
             <span class="admin-card-estado" style="background:${color};color:${b.estado==='Activo'?'#2d4a00':'#fff'}">${b.estado}</span>
             <button class="btn btn-secondary" style="font-size:11px;padding:4px 10px" onclick="adminAbrirEditBeca(${JSON.stringify(b).replace(/"/g,'&quot;')})">✏️ Editar</button>
@@ -1884,82 +1719,57 @@ async function adminCargarBecas() {
         <div class="admin-card-row"><span>Valor/ses</span><strong>${parseFloat(b.valor_sesion||0).toFixed(2)} €</strong></div>
       </div>`;
     }).join('');
-  } catch(err) { lista.innerHTML = '<div style="color:var(--rojo)">Error: '+err.message+'</div>'; }
+  }catch(err){lista.innerHTML='<div style="color:var(--rojo)">Error: '+err.message+'</div>';}
 }
-
 function adminAbrirEditBeca(b) {
-  adminBecaEditando = b;
-  const pacMap = {}; G.pacientes.forEach(p => { pacMap[p.ID_Paciente] = p.Nombre; });
-  document.getElementById('aeca-id').textContent       = b.id_beca;
-  document.getElementById('aeca-paciente').textContent = pacMap[b.id_paciente]||b.id_paciente;
-  document.getElementById('aeca-anio').value           = b.anio||new Date().getFullYear();
-  document.getElementById('aeca-estado').value         = b.estado||'Activo';
-  document.getElementById('aeca-autorizadas').value    = b.sesiones_autorizadas||0;
-  document.getElementById('aeca-consumidas').value     = b.sesiones_consumidas||0;
-  document.getElementById('aeca-valorsesion').value    = b.valor_sesion||0;
-  document.getElementById('aeca-entidad').value        = b.entidad_financiadora||'';
-  document.getElementById('aeca-notas').value          = b.notas||'';
-  aecaRecalcular();
-  abrirOverlay('modal-admin-beca');
+  adminBecaEditando=b;
+  const pacMap={}; G.pacientes.forEach(p=>{pacMap[p.ID_Paciente]=p.Nombre;});
+  document.getElementById('aeca-id').textContent=b.id_beca;
+  document.getElementById('aeca-paciente').textContent=pacMap[b.id_paciente]||b.id_paciente;
+  document.getElementById('aeca-anio').value=b.anio||new Date().getFullYear();
+  document.getElementById('aeca-estado').value=b.estado||'Activo';
+  document.getElementById('aeca-autorizadas').value=b.sesiones_autorizadas||0;
+  document.getElementById('aeca-consumidas').value=b.sesiones_consumidas||0;
+  document.getElementById('aeca-valorsesion').value=b.valor_sesion||0;
+  document.getElementById('aeca-entidad').value=b.entidad_financiadora||'';
+  document.getElementById('aeca-notas').value=b.notas||'';
+  aecaRecalcular(); abrirOverlay('modal-admin-beca');
 }
-
-function aecaRecalcular() {
-  const aut  = parseInt(document.getElementById('aeca-autorizadas').value)||0;
-  const cons = parseInt(document.getElementById('aeca-consumidas').value)||0;
-  document.getElementById('aeca-pendientes-calc').textContent = Math.max(aut - cons, 0);
-}
-
+function aecaRecalcular(){const aut=parseInt(document.getElementById('aeca-autorizadas').value)||0;const cons=parseInt(document.getElementById('aeca-consumidas').value)||0;document.getElementById('aeca-pendientes-calc').textContent=Math.max(aut-cons,0);}
 async function adminGuardarBeca() {
-  const b = adminBecaEditando; if (!b) return;
-  const aut  = parseInt(document.getElementById('aeca-autorizadas').value)||0;
-  const cons = parseInt(document.getElementById('aeca-consumidas').value)||0;
-  const pend = Math.max(aut - cons, 0);
-  const btn = document.getElementById('aeca-btn-guardar');
-  btn.disabled = true; btn.textContent = '⏳ Guardando…';
+  const b=adminBecaEditando; if(!b)return;
+  const aut=parseInt(document.getElementById('aeca-autorizadas').value)||0;
+  const cons=parseInt(document.getElementById('aeca-consumidas').value)||0;
+  const pend=Math.max(aut-cons,0);
+  const btn=document.getElementById('aeca-btn-guardar'); btn.disabled=true; btn.textContent='⏳ Guardando…';
   try {
-    await supaPatch('becas', `id_beca=eq.${b.id_beca}`, {
-      anio:                  parseInt(document.getElementById('aeca-anio').value)||null,
-      estado:                document.getElementById('aeca-estado').value,
-      sesiones_autorizadas:  aut,
-      sesiones_consumidas:   cons,
-      sesiones_pendientes:   pend,
-      valor_sesion:          parseFloat(document.getElementById('aeca-valorsesion').value)||0,
-      entidad_financiadora:  document.getElementById('aeca-entidad').value.trim(),
-      notas:                 document.getElementById('aeca-notas').value.trim(),
-    });
-    toast('Beca actualizada ✓', 'ok');
-    cerrarModal('modal-admin-beca');
-    adminCargarBecas();
-  } catch(err) { toast('Error: '+err.message, 'err'); }
-  finally { btn.disabled=false; btn.textContent='Guardar beca'; }
+    await supaPatch('becas',`id_beca=eq.${b.id_beca}`,{anio:parseInt(document.getElementById('aeca-anio').value)||null,estado:document.getElementById('aeca-estado').value,sesiones_autorizadas:aut,sesiones_consumidas:cons,sesiones_pendientes:pend,valor_sesion:parseFloat(document.getElementById('aeca-valorsesion').value)||0,entidad_financiadora:document.getElementById('aeca-entidad').value.trim(),notas:document.getElementById('aeca-notas').value.trim()});
+    toast('Beca actualizada ✓','ok'); cerrarModal('modal-admin-beca'); adminCargarBecas();
+  }catch(err){toast('Error: '+err.message,'err');}
+  finally{btn.disabled=false;btn.textContent='Guardar beca';}
 }
 
-// ── CITAS (admin) ──
 async function adminCargarCitas() {
-  const idPac  = document.getElementById('admin-cita-pac').value;
-  const fecha  = document.getElementById('admin-cita-fecha').value;
-  const lista  = document.getElementById('admin-citas-lista');
-  lista.innerHTML = '<div style="color:var(--muted);font-size:13px">Cargando…</div>';
-  if (!idPac && !fecha) { lista.innerHTML = '<div style="color:var(--muted);font-size:13px">Indica paciente o fecha.</div>'; return; }
+  const idPac=document.getElementById('admin-cita-pac').value;
+  const fecha=document.getElementById('admin-cita-fecha').value;
+  const lista=document.getElementById('admin-citas-lista');
+  lista.innerHTML='<div style="color:var(--muted);font-size:13px">Cargando…</div>';
+  if(!idPac&&!fecha){lista.innerHTML='<div style="color:var(--muted);font-size:13px">Indica paciente o fecha.</div>';return;}
   try {
-    let params = 'order=fecha.desc,hora.asc&limit=50';
-    if (idPac)  params = `id_paciente=eq.${idPac}&` + params;
-    if (fecha)  params = `fecha=eq.${fecha}&` + params;
-    const rows = await supaGet('agenda_datos', params);
-    if (!rows.length) { lista.innerHTML = '<div style="color:var(--muted);font-size:13px">Sin citas.</div>'; return; }
-    const pacMap = {}, terMap = {}, srvMap = {};
-    G.pacientes.forEach(p  => { pacMap[p.ID_Paciente]  = p.Nombre; });
-    G.terapeutas.forEach(t => { terMap[t.ID_Terapeuta] = t.Nombre; });
-    G.servicios.forEach(s  => { srvMap[s.ID_Servicio]  = s.Servicio; });
-    const colorEstado = {Hecha:'#97D700',Programada:'#00B5E2','No-show':'#DA291C',Reprogramada:'#F59E0B',Cancelada:'#9CA3AF'};
-    lista.innerHTML = rows.map(r => `
+    let params='order=fecha.desc,hora.asc&limit=50';
+    if(idPac) params=`id_paciente=eq.${idPac}&`+params;
+    if(fecha) params=`fecha=eq.${fecha}&`+params;
+    const rows=await supaGet('agenda_datos',params);
+    if(!rows.length){lista.innerHTML='<div style="color:var(--muted);font-size:13px">Sin citas.</div>';return;}
+    const pacMap={},terMap={},srvMap={};
+    G.pacientes.forEach(p=>{pacMap[p.ID_Paciente]=p.Nombre;});
+    G.terapeutas.forEach(t=>{terMap[t.ID_Terapeuta]=t.Nombre;});
+    G.servicios.forEach(s=>{srvMap[s.ID_Servicio]=s.Servicio;});
+    const colorEstado={Hecha:'#97D700',Programada:'#00B5E2','No-show':'#DA291C',Reprogramada:'#F59E0B',Cancelada:'#9CA3AF'};
+    lista.innerHTML=rows.map(r=>`
       <div class="admin-card" style="border-left:4px solid ${colorEstado[r.estado_agenda]||'#ccc'}">
         <div class="admin-card-header">
-          <div>
-            <div class="admin-card-id">${r.id_cita}</div>
-            <div style="font-size:13px;font-weight:600;margin-top:2px">${pacMap[r.id_paciente]||r.id_paciente}</div>
-            <div style="font-size:12px;color:var(--muted)">${terMap[r.id_terapeuta]||r.id_terapeuta} · ${srvMap[r.id_servicio]||r.id_servicio}</div>
-          </div>
+          <div><div class="admin-card-id">${r.id_cita}</div><div style="font-size:13px;font-weight:600;margin-top:2px">${pacMap[r.id_paciente]||r.id_paciente}</div><div style="font-size:12px;color:var(--muted)">${terMap[r.id_terapeuta]||r.id_terapeuta} · ${srvMap[r.id_servicio]||r.id_servicio}</div></div>
           <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
             <span class="admin-card-estado" style="background:${colorEstado[r.estado_agenda]||'#ccc'};color:${r.estado_agenda==='Programada'||r.estado_agenda==='Reprogramada'?'#1a1b2e':'#fff'}">${r.estado_agenda}</span>
             <button class="btn btn-secondary" style="font-size:11px;padding:4px 10px" onclick='adminAbrirEditCita(${JSON.stringify(r).replace(/'/g,"&#39;")})'>✏️ Editar</button>
@@ -1968,86 +1778,50 @@ async function adminCargarCitas() {
         <div class="admin-card-row"><span>Fecha / Hora</span><strong>${formatFecha(r.fecha)} · ${(r.hora||'').slice(0,5)}</strong></div>
         ${r.notas_agenda?`<div class="admin-card-row"><span>Notas</span><strong>${r.notas_agenda}</strong></div>`:''}
       </div>`).join('');
-  } catch(err) { lista.innerHTML = '<div style="color:var(--rojo)">Error: '+err.message+'</div>'; }
+  }catch(err){lista.innerHTML='<div style="color:var(--rojo)">Error: '+err.message+'</div>';}
 }
-
 function adminAbrirEditCita(r) {
-  adminCitaEditando = r;
-  document.getElementById('aec-id').textContent   = r.id_cita;
-  document.getElementById('aec-fecha').value       = r.fecha||'';
-  document.getElementById('aec-hora').value        = (r.hora||'').slice(0,5);
-  document.getElementById('aec-estado').value      = r.estado_agenda||'Programada';
-  document.getElementById('aec-notas').value       = r.notas_agenda||'';
-  // Terapeuta select
-  const selTer = document.getElementById('aec-terapeuta');
-  selTer.innerHTML = G.terapeutas.map(t =>
-    `<option value="${t.ID_Terapeuta}" ${t.ID_Terapeuta===r.id_terapeuta?'selected':''}>${t.Nombre}</option>`).join('');
-  // Paciente
-  const pac = G.pacientes.find(p => p.ID_Paciente === r.id_paciente);
-  document.getElementById('aec-pac').value     = r.id_paciente||'';
-  document.getElementById('aec-pac-txt').value = pac ? (pac.Alias||pac.Nombre) : r.id_paciente||'';
-  document.getElementById('aec-pac-txt').classList.toggle('seleccionado', !!r.id_paciente);
+  adminCitaEditando=r;
+  document.getElementById('aec-id').textContent=r.id_cita;
+  document.getElementById('aec-fecha').value=r.fecha||'';
+  document.getElementById('aec-hora').value=(r.hora||'').slice(0,5);
+  document.getElementById('aec-estado').value=r.estado_agenda||'Programada';
+  document.getElementById('aec-notas').value=r.notas_agenda||'';
+  const selTer=document.getElementById('aec-terapeuta');
+  selTer.innerHTML=G.terapeutas.map(t=>`<option value="${t.ID_Terapeuta}" ${t.ID_Terapeuta===r.id_terapeuta?'selected':''}>${t.Nombre}</option>`).join('');
+  const pac=G.pacientes.find(p=>p.ID_Paciente===r.id_paciente);
+  document.getElementById('aec-pac').value=r.id_paciente||'';
+  document.getElementById('aec-pac-txt').value=pac?(pac.Alias||pac.Nombre):r.id_paciente||'';
+  document.getElementById('aec-pac-txt').classList.toggle('seleccionado',!!r.id_paciente);
   abrirOverlay('modal-admin-cita');
 }
-
 async function adminGuardarCita() {
-  const r = adminCitaEditando; if (!r) return;
-  const btn = document.getElementById('aec-btn-guardar');
-  btn.disabled = true; btn.textContent = '⏳ Guardando…';
+  const r=adminCitaEditando; if(!r)return;
+  const btn=document.getElementById('aec-btn-guardar'); btn.disabled=true; btn.textContent='⏳ Guardando…';
   try {
-    await supaPatch('agenda_datos', `id_cita=eq.${r.id_cita}`, {
-      fecha:          document.getElementById('aec-fecha').value,
-      hora:           document.getElementById('aec-hora').value,
-      id_terapeuta:   document.getElementById('aec-terapeuta').value,
-      id_paciente:    document.getElementById('aec-pac').value,
-      estado_agenda:  document.getElementById('aec-estado').value,
-      notas_agenda:   document.getElementById('aec-notas').value.trim(),
-    });
-    toast('Cita actualizada ✓', 'ok');
-    cerrarModal('modal-admin-cita');
-    adminCargarCitas();
-    recargarVista();
-  } catch(err) { toast('Error: '+err.message, 'err'); }
-  finally { btn.disabled=false; btn.textContent='Guardar cita'; }
+    await supaPatch('agenda_datos',`id_cita=eq.${r.id_cita}`,{fecha:document.getElementById('aec-fecha').value,hora:document.getElementById('aec-hora').value,id_terapeuta:document.getElementById('aec-terapeuta').value,id_paciente:document.getElementById('aec-pac').value,estado_agenda:document.getElementById('aec-estado').value,notas_agenda:document.getElementById('aec-notas').value.trim()});
+    toast('Cita actualizada ✓','ok'); cerrarModal('modal-admin-cita'); adminCargarCitas(); recargarVista();
+  }catch(err){toast('Error: '+err.message,'err');}
+  finally{btn.disabled=false;btn.textContent='Guardar cita';}
 }
-
 async function adminEliminarCita() {
-  const r = adminCitaEditando; if (!r) return;
-  const pacMap = {}; G.pacientes.forEach(p => { pacMap[p.ID_Paciente] = p.Nombre; });
-  if (!window.confirm(`¿Eliminar cita ${r.id_cita} de ${pacMap[r.id_paciente]||r.id_paciente} el ${formatFecha(r.fecha)}?\n\nEsta acción no se puede deshacer.`)) return;
-  const btn = document.getElementById('aec-btn-eliminar');
-  btn.disabled = true;
-  try {
-    await supaDelete('agenda_datos', `id_cita=eq.${r.id_cita}`);
-    toast('Cita eliminada ✓', 'ok');
-    cerrarModal('modal-admin-cita');
-    adminCargarCitas();
-    recargarVista();
-  } catch(err) { toast('Error: '+err.message, 'err'); }
-  finally { btn.disabled=false; }
+  const r=adminCitaEditando; if(!r)return;
+  const pacMap={}; G.pacientes.forEach(p=>{pacMap[p.ID_Paciente]=p.Nombre;});
+  if(!window.confirm(`¿Eliminar cita ${r.id_cita} de ${pacMap[r.id_paciente]||r.id_paciente} el ${formatFecha(r.fecha)}?\n\nEsta acción no se puede deshacer.`))return;
+  const btn=document.getElementById('aec-btn-eliminar'); btn.disabled=true;
+  try { await supaDelete('agenda_datos',`id_cita=eq.${r.id_cita}`); toast('Cita eliminada ✓','ok'); cerrarModal('modal-admin-cita'); adminCargarCitas(); recargarVista(); }
+  catch(err){toast('Error: '+err.message,'err');}
+  finally{btn.disabled=false;}
 }
 
-// Enganchar adminMostrarBoton al flujo de inicialización
-const _iniciarAppOrig = iniciarApp;
-// Parchear: después de iniciarApp, mostrar botón admin si procede
-// Lo hacemos sobrescribiendo el final de iniciarApp vía evento
-document.addEventListener('DOMContentLoaded', () => {
-  // Esperar a que G.email esté seteado y el topbar visible
-  const observer = new MutationObserver(() => {
-    const topbar = document.getElementById('topbar');
-    if (topbar && topbar.style.display !== 'none') {
-      adminMostrarBoton();
-      observer.disconnect();
-    }
-  });
-  observer.observe(document.body, { attributes: true, subtree: true, attributeFilter: ['style'] });
-});
+// ═══════════════════════════════════════════════════════════════
+//  SERVICE WORKER
+// ═══════════════════════════════════════════════════════════════
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/ipse-app/miniapp/sw.js');
   });
 }
 </script>
-
 </body>
 </html>
