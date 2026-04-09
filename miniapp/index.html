@@ -1228,7 +1228,6 @@ function abrirModalNueva(fechaPref, horaPref) {
   document.getElementById('n-fecha').value  = fechaPref || new Date().toISOString().slice(0,10);
   document.getElementById('n-hora').value   = horaPref  || '09:00';
   document.getElementById('n-servicio').value = '';
-  document.getElementById('n-tipofin').value  = 'SUELTA';
   document.getElementById('n-notas').value    = '';
   document.getElementById('n-recur-check').checked = false;
   document.getElementById('n-recur-panel').classList.remove('visible');
