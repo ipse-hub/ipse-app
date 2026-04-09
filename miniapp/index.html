@@ -422,9 +422,8 @@
         <div class="pac-lista" id="pac-lista-multi"></div>
       </div>
     </div>
-         <div class="form-group"><label class="form-label">Servicio *</label><select id="mm-servicio" class="form-control"></select></div>
-      <div class="form-group"><label class="form-label">Financiación</label><select id="mm-tipofin" class="form-control" onchange="onMultiTipoFinChange()"><option value="SUELTA">Suelta</option><option value="BONO">Bono</option><option value="BECA">Beca</option><option value="ADECCO">ADECCO</option></select></div>
-    </div>
+         <div class="form-group"><label class="form-label">Servicio *</label><select id="mm-servicio" class="form-control" onchange="onMultiServicioChange()"></select></div>
+          </div>
     <div id="mm-bono-aviso" style="display:none;margin-bottom:10px"></div>
     <div style="margin-bottom:8px;font-size:12px;font-weight:600;color:var(--azul);text-transform:uppercase;letter-spacing:.5px">Fechas y horas</div>
     <div id="mm-lista-fechas" style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px;max-height:240px;overflow-y:auto"></div>
@@ -495,17 +494,8 @@
         <div class="pac-lista" id="pac-lista-cita"></div>
       </div>
     </div>
-    <div class="form-group"><label class="form-label">Servicio</label><select id="n-servicio" class="form-control"></select></div>
-    <div class="form-group">
-      <label class="form-label">Financiación</label>
-      <select id="n-tipofin" class="form-control" onchange="onTipoFinChange()">
-        <option value="SUELTA">Privado (sesión suelta)</option>
-        <option value="BONO">Bono</option>
-        <option value="BECA">Beca</option>
-        <option value="ADECCO">ADECCO</option>
-      </select>
-      <div class="bono-aviso" id="n-bono-aviso"></div>
-    </div>
+    <div class="form-group"><label class="form-label">Servicio</label><select id="n-servicio" class="form-control" onchange="onServicioChange()"></select>
+      <div class="bono-aviso" id="n-bono-aviso"></div></div>
     <div class="form-group"><label class="form-label">Notas</label><input type="text" id="n-notas" class="form-control" placeholder="Opcional"></div>
     <div class="form-group" style="margin-bottom:8px">
       <label class="recur-toggle">
@@ -886,7 +876,7 @@ async function iniciarApp() {
     ]);
     G.terapeutas = terapeutas.map(t => ({ ID_Terapeuta: t.id_terapeuta, Nombre: t.nombre, Activa: t.activa, Pct_Com: t.pct_com, Email: t.email }));
     G.pacientes  = pacientesRaw.map(p => ({ ID_Paciente: p.id_paciente, Nombre: ((p.nombre||'') + ' ' + (p.apellidos||'')).trim(), Alias: p.alias || '' }));
-    G.servicios  = servicios.map(s => ({ ID_Servicio: s.id_servicio, Servicio: s.servicio, Precio: s.precio, DuraciónMin: s.duracion_min, Activo: s.activo }));
+    G.servicios  = servicios.map(s => ({ ID_Servicio: s.id_servicio, Servicio: s.servicio, Precio: s.precio, DuraciónMin: s.duracion_min, , Activo: s.activo, TipoConsumo: s.tipo_consumo_default || 'Privado' }));
     G.terapeutas.forEach((t, i) => { G.colores[t.ID_Terapeuta] = PALETTE[i % PALETTE.length]; });
     document.getElementById('topbar-nombre').textContent = G.miNombre;
     document.getElementById('topbar-avatar').textContent = G.miNombre.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
@@ -1062,6 +1052,14 @@ async function actualizarBeca(idBeca, delta) {
 // ═══════════════════════════════════════════════════════════════
 //  RENDERIZADO
 // ═══════════════════════════════════════════════════════════════
+function derivarTipoFin(idServicio) {
+  const srv = G.servicios.find(s => s.ID_Servicio === idServicio);
+  if (!srv) return 'SUELTA';
+  const tc = (srv.TipoConsumo || '').toLowerCase();
+  if (tc === 'beca') return 'BECA';
+  if (tc === 'bono') return 'BONO';
+  return 'SUELTA';
+}
 function popularSelectores() {
   const opts = '<option value="">— Selecciona servicio —</option>' +
     G.servicios.filter(s => s.Activo !== 'No').map(s => `<option value="${s.ID_Servicio}">${s.Servicio} (${s.Precio||0}€)</option>`).join('');
@@ -1249,6 +1247,14 @@ function ocultarBonoAviso() {
   const av = document.getElementById('n-bono-aviso');
   av.style.display='none'; av.className='bono-aviso'; av.textContent='';
 }
+async function onServicioChange() {
+  const idServicio = document.getElementById('n-servicio').value;
+  const tipoFin = derivarTipoFin(idServicio);
+  ocultarBonoAviso();
+  if ((tipoFin === 'BONO' || tipoFin === 'BECA') && document.getElementById('n-paciente').value) {
+    await verificarBonoDisponible(document.getElementById('n-paciente').value, tipoFin);
+  }
+}
 async function onTipoFinChange() {
   const v = document.getElementById('n-tipofin').value; ocultarBonoAviso();
   if ((v==='BONO'||v==='BECA') && document.getElementById('n-paciente').value) {
@@ -1260,7 +1266,7 @@ async function guardarNuevaCita() {
   const hora=document.getElementById('n-hora').value;
   const paciente=document.getElementById('n-paciente').value;
   const servicio=document.getElementById('n-servicio').value;
-  const tipoFin=document.getElementById('n-tipofin').value;
+  const tipoFin=derivarTipoFin(servicio);
   const notas=document.getElementById('n-notas').value.trim();
   const recur=document.getElementById('n-recur-check').checked;
   if (!fecha||!hora||!paciente||!servicio){toast('Completa fecha, hora, paciente y servicio','err');return;}
@@ -1538,12 +1544,12 @@ function pacReset(ctx){const ids=PAC_CTX[ctx];document.getElementById(ids.txt).v
 //  MODAL VARIAS CITAS
 // ═══════════════════════════════════════════════════════════════
 let mmFechas=[];
-function abrirModalMultiCita(){mmFechas=[];pacReset('multi');document.getElementById('mm-servicio').value='';document.getElementById('mm-tipofin').value='SUELTA';document.getElementById('mm-bono-aviso').style.display='none';document.getElementById('mm-nueva-fecha').value='';document.getElementById('mm-nueva-hora').value='';mmRenderizarLista();abrirOverlay('modal-multicita');}
+function abrirModalMultiCita(){mmFechas=[];pacReset('multi');document.getElementById('mm-servicio').value='';document.getElementById('mm-bono-aviso').style.display='none';document.getElementById('mm-nueva-fecha').value='';document.getElementById('mm-nueva-hora').value='';mmRenderizarLista();abrirOverlay('modal-multicita');}
 async function onMultiTipoFinChange(){const tipo=document.getElementById('mm-tipofin').value;const idPac=document.getElementById('mm-paciente').value;const av=document.getElementById('mm-bono-aviso');av.style.display='none';if((tipo==='BONO'||tipo==='BECA')&&idPac){try{const tabla=tipo==='BONO'?'bonos':'becas';const idC=tipo==='BONO'?'id_bono':'id_beca';const rows=await supaGet(tabla,`id_paciente=eq.${idPac}&estado=eq.Activo&sesiones_pendientes=gt.0&limit=1`);av.style.display='block';if(rows.length){av.style.cssText='display:block;background:#f0fff4;border:1px solid #97D700;border-radius:6px;padding:8px 12px;font-size:12px;color:#3a6600;margin-bottom:10px';av.textContent='✓ '+rows[0][idC]+' · '+rows[0].sesiones_pendientes+' ses. pendientes';}else{av.style.cssText='display:block;background:#fff3cd;border:1px solid #f0c040;border-radius:6px;padding:8px 12px;font-size:12px;color:#7a5c00;margin-bottom:10px';av.textContent='⚠️ Sin '+tipo.toLowerCase()+' activo para este paciente.';}}catch(e){}}}
 function mmAnadirFecha(){const fecha=document.getElementById('mm-nueva-fecha').value;const hora=document.getElementById('mm-nueva-hora').value;if(!fecha){toast('Indica la fecha','err');return;}if(!hora){toast('Indica la hora','err');return;}mmFechas.push({fecha,hora});document.getElementById('mm-nueva-fecha').value='';mmRenderizarLista();}
 function mmEliminarFecha(idx){mmFechas.splice(idx,1);mmRenderizarLista();}
 function mmRenderizarLista(){const c=document.getElementById('mm-lista-fechas');const r=document.getElementById('mm-resumen');if(!mmFechas.length){c.innerHTML='<div style="color:var(--muted);font-size:12px;padding:6px 0">Añade al menos una fecha.</div>';r.style.display='none';return;}c.innerHTML=mmFechas.map((f,i)=>{const d=new Date(f.fecha+'T12:00:00');return`<div style="display:flex;align-items:center;justify-content:space-between;background:#fafbff;border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-size:13px"><span><strong>${DIAS_ES[d.getDay()]} ${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()}</strong> · ${f.hora}</span><button onclick="mmEliminarFecha(${i})" style="background:none;border:none;cursor:pointer;color:#DA291C;font-size:16px;line-height:1;padding:0 4px">✕</button></div>`;}).join('');r.style.display='block';r.textContent=mmFechas.length+' cita'+(mmFechas.length>1?'s':'')+' programada'+(mmFechas.length>1?'s':'');}
-async function guardarMultiCita(){const idPaciente=document.getElementById('mm-paciente').value;const idServicio=document.getElementById('mm-servicio').value;const tipoFin=document.getElementById('mm-tipofin').value;if(!idPaciente){toast('Selecciona un paciente','err');return;}if(!idServicio){toast('Selecciona un servicio','err');return;}if(!mmFechas.length){toast('Añade al menos una fecha','err');return;}const btn=document.getElementById('btn-crear-multicita');btn.disabled=true;btn.textContent=`⏳ Creando ${mmFechas.length} citas…`;try{for(const entrada of mmFechas)await crearCita({fecha:entrada.fecha,hora:entrada.hora,idPaciente,idServicio,tipoFin,idFin:'',notas:''});toast(`✅ ${mmFechas.length} citas creadas`,'ok');cerrarModal('modal-multicita');recargarVista();}catch(err){toast('Error: '+err.message,'err');}finally{btn.disabled=false;btn.textContent='Crear citas';}}
+async function guardarMultiCita(){const idPaciente=document.getElementById('mm-paciente').value;const idServicio=const tipoFin=derivarTipoFin(idServicio);document.getElementById('mm-servicio').value;if(!idPaciente){toast('Selecciona un paciente','err');return;}if(!idServicio){toast('Selecciona un servicio','err');return;}if(!mmFechas.length){toast('Añade al menos una fecha','err');return;}const btn=document.getElementById('btn-crear-multicita');btn.disabled=true;btn.textContent=`⏳ Creando ${mmFechas.length} citas…`;try{for(const entrada of mmFechas)await crearCita({fecha:entrada.fecha,hora:entrada.hora,idPaciente,idServicio,tipoFin,idFin:'',notas:''});toast(`✅ ${mmFechas.length} citas creadas`,'ok');cerrarModal('modal-multicita');recargarVista();}catch(err){toast('Error: '+err.message,'err');}finally{btn.disabled=false;btn.textContent='Crear citas';}}
 
 // ═══════════════════════════════════════════════════════════════
 //  REPETIR CITA
