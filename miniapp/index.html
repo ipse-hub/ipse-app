@@ -1255,7 +1255,7 @@ async function guardarNuevaCita() {
   const hora=document.getElementById('n-hora').value;
   const paciente=document.getElementById('n-paciente').value;
   const servicio=document.getElementById('n-servicio').value;
-  const tipoFin=document.getElementById('n-tipofin').value;
+  const tipoFin=derivarTipoFin(servicio);
   const notas=document.getElementById('n-notas').value.trim();
   const recur=document.getElementById('n-recur-check').checked;
   if (!fecha||!hora||!paciente||!servicio){toast('Completa fecha, hora, paciente y servicio','err');return;}
