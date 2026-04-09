@@ -1244,7 +1244,15 @@ function ocultarBonoAviso() {
   const av = document.getElementById('n-bono-aviso');
   av.style.display='none'; av.className='bono-aviso'; av.textContent='';
 }
-async function onTipoFinChange() {
+async function onServicioChange() {
+  const idServicio = document.getElementById('n-servicio').value;
+  const tipoFin = derivarTipoFin(idServicio);
+  ocultarBonoAviso();
+  if ((tipoFin === 'BONO' || tipoFin === 'BECA') && document.getElementById('n-paciente').value) {
+    await verificarBonoDisponible(document.getElementById('n-paciente').value, tipoFin);
+  }
+}
+  async function onTipoFinChange() {
   const v = document.getElementById('n-tipofin').value; ocultarBonoAviso();
   if ((v==='BONO'||v==='BECA') && document.getElementById('n-paciente').value) {
     await verificarBonoDisponible(document.getElementById('n-paciente').value, v);
