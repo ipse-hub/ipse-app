@@ -887,7 +887,7 @@ async function iniciarApp() {
     ]);
     G.terapeutas = terapeutas.map(t => ({ ID_Terapeuta: t.id_terapeuta, Nombre: t.nombre, Activa: t.activa, Pct_Com: t.pct_com, Email: t.email }));
     G.pacientes  = pacientesRaw.map(p => ({ ID_Paciente: p.id_paciente, Nombre: ((p.nombre||'') + ' ' + (p.apellidos||'')).trim(), Alias: p.alias || '' }));
-    G.servicios  = servicios.map(s => ({ ID_Servicio: s.id_servicio, Servicio: s.servicio, Precio: s.precio, DuraciónMin: s.duracion_min, Activo: s.activo }));
+    G.servicios  = servicios.map(s => ({ ID_Servicio: s.id_servicio, Servicio: s.servicio, Precio: s.precio, DuraciónMin: s.duracion_min, Activo: s.activo, TipoConsumo: s.tipo_consumo_default || 'Privado' }));
     G.terapeutas.forEach((t, i) => { G.colores[t.ID_Terapeuta] = PALETTE[i % PALETTE.length]; });
     document.getElementById('topbar-nombre').textContent = G.miNombre;
     document.getElementById('topbar-avatar').textContent = G.miNombre.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
