@@ -1063,11 +1063,13 @@ async function actualizarBeca(idBeca, delta) {
 // ═══════════════════════════════════════════════════════════════
 //  RENDERIZADO
 // ═══════════════════════════════════════════════════════════════
-function popularSelectores() {
-  const opts = '<option value="">— Selecciona servicio —</option>' +
-    G.servicios.filter(s => s.Activo !== 'No').map(s => `<option value="${s.ID_Servicio}">${s.Servicio} (${s.Precio||0}€)</option>`).join('');
-  document.getElementById('n-servicio').innerHTML  = opts;
-  document.getElementById('mm-servicio').innerHTML = opts;
+function derivarTipoFin(idServicio) {
+  const srv = G.servicios.find(s => s.ID_Servicio === idServicio);
+  if (!srv) return 'SUELTA';
+  const tc = (srv.TipoConsumo || '').toLowerCase();
+  if (tc === 'beca') return 'BECA';
+  if (tc === 'bono') return 'BONO';
+  return 'SUELTA';
 }
 function actualizarWeekLabel() {
   const fin = new Date(G.lunes); fin.setDate(fin.getDate()+5);
