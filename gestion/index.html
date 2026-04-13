@@ -2561,7 +2561,8 @@ async function cargarLineasDesdeSesiones() {
       const ter = nomTer(g.sesiones[0].id_terapeuta);
       const ses0 = g.sesiones[0];
       const sesN = g.sesiones[g.sesiones.length - 1];
-      const rango = fmtFecha(ses0.fecha) + (count > 1 ? ' al ' + fmtFecha(sesN.fecha) : '');
+      const fmtF = f => { if(!f) return ''; const d = new Date(f+'T12:00:00'); return d.getDate()+'/'+(d.getMonth()+1)+'/'+d.getFullYear(); };
+      const rango = fmtF(ses0.fecha) + (count > 1 ? ' al ' + fmtF(sesN.fecha) : '');
       const concepto = `Asistencia psicológica · ${count} sesión${count>1?'es':''} de ${ter} (${rango})`;
       return { concepto, horas: count, precio_hora: precio, importe: total };
     });
@@ -2764,246 +2765,205 @@ function descargarPDFFactura(id) {
 
 function generarPDFFactura(f, descargar = true) {
   if (typeof jspdf === 'undefined' && typeof window.jspdf === 'undefined') {
-    toast('jsPDF no cargado — revisa el CDN en <head>', 'err');
-    return;
+    toast('jsPDF no cargado', 'err'); return;
   }
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
 
-  const W = 210, MARGIN = 18;
-  const BLUE = [16, 6, 159];
-  const ORANGE = [241, 142, 28];
-  const DARK = [26, 31, 53];
-  const MUTED = [107, 116, 144];
-  const BORDER = [228, 232, 240];
-  const CREAM = [242, 244, 248];
+  const W = 210, M = 18;
+  const RED   = [206, 101, 25];
+  const DARK  = [30, 30, 30];
+  const MUTED = [100, 100, 100];
+  const BORDR = [200, 200, 200];
+  const CREAM = [245, 245, 245];
 
-  const fmt2 = v => (parseFloat(v)||0).toLocaleString('es-ES', {minimumFractionDigits:2, maximumFractionDigits:2}) + ' €';
-  const fmt2plain = v => (parseFloat(v)||0).toLocaleString('es-ES', {minimumFractionDigits:2, maximumFractionDigits:2});
-
-  // ── Cabecera azul top ──────────────────────────────
-  doc.setFillColor(...BLUE);
-  doc.rect(0, 0, W, 2, 'F');
-
-  // ── Logo / nombre institución (izquierda) ──────────
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(15);
-  doc.setTextColor(...BLUE);
-  doc.text('IPSE', MARGIN, 20);
-
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(8);
-  doc.setTextColor(...MUTED);
-  doc.text('Instituto Psicoeducativo', MARGIN, 25);
-
-  // ── Datos emisor (derecha) ─────────────────────────
-  const exr = W - MARGIN;
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(8);
-  doc.setTextColor(...DARK);
-  doc.text(EMISOR.nombre, exr, 10, { align: 'right' });
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(7.5);
-  doc.setTextColor(...MUTED);
-  [
-    EMISOR.nica,
-    EMISOR.persona,
-    EMISOR.master,
-    EMISOR.ncol,
-    EMISOR.nif,
-    EMISOR.dir1,
-    EMISOR.dir2 + ' · ' + EMISOR.dir3,
-    EMISOR.tlf + ' · ' + EMISOR.email,
-  ].forEach((line, i) => doc.text(line, exr, 15 + i * 4.2, { align: 'right' }));
-
-  // ── Línea separadora ──────────────────────────────
-  doc.setDrawColor(...BORDER);
-  doc.setLineWidth(0.3);
-  doc.line(MARGIN, 52, W - MARGIN, 52);
-
-  // ── Fecha y número factura ─────────────────────────
+  const fmtImpStr = v => {
+    const n = parseFloat(v)||0;
+    const [e,d] = n.toFixed(2).split('.');
+    return e + "'" + d;
+  };
+  const MESES_ES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
   const fechaStr = (() => {
     if (!f.fecha) return '—';
-    const d = new Date(f.fecha + 'T12:00:00');
-    return EMISOR.lugar + ', ' + d.getDate() + ' de ' +
-      ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'][d.getMonth()] +
-      ' de ' + d.getFullYear();
+    const d = new Date(f.fecha+'T12:00:00');
+    return EMISOR.lugar+', '+d.getDate()+' de '+MESES_ES[d.getMonth()]+' de '+d.getFullYear();
   })();
 
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(9);
-  doc.setTextColor(...DARK);
-  doc.text('FECHA:', MARGIN, 60);
-  doc.setFont('helvetica', 'normal');
-  doc.text(fechaStr, MARGIN + 15, 60);
-
-  doc.setFont('helvetica', 'bold');
-  doc.text('Nº FACTURA:', W - MARGIN - 50, 60);
-  doc.setFont('helvetica', 'normal');
-  doc.text(f.numero_factura || '—', W - MARGIN - 20, 60);
-
-  // ── Sello PAGADO si procede ────────────────────────
-  if (f.estado === 'Pagada') {
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(18);
-    doc.setTextColor(...[0, 150, 80]);
-    doc.text('PAGADO', MARGIN, 72);
-    doc.setLineWidth(1);
-    doc.setDrawColor(...[0, 150, 80]);
-    doc.line(MARGIN, 73.5, MARGIN + 28, 73.5);
+  // ── Logo izquierda ──────────────────────────────────────
+  try {
+    doc.addImage('data:image/png;base64,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1MvMgloyGtaAMnl4jmuu4tUltqZdGXW8bhBO5kdbNvcB3ZDXHp06uORzVB2s5zHljR3a55UTXTJaW7Da18bZHHvXlWdht5Zm9VJtXd+41BRWn0Gqk9KjfJ6QxmYo9vg4+BK2YkZtJ3twOpz0UeXUQs4raSZSuzTi3yiMh2QWhp2/LyXC6rt9ztOprxo2hEpj1BVQTQOAOAwucXfQCcH2NVku0Xw7xLbF1/5BHLmclTBspk5a0P3SW72fTeIJ15DOlPrpGNbuc9ob5k8llrmuGWkEeYUWcR6Sgj1Fpe0XyV8Omo4XMc7eWMdI1oDQ9w6cgPrK+/Ap9YDf6Zjp32SKqAtj5MkFu5+dpPUYDD9KubjycRwS3w18L0rTkCqH7NAwn2gO8dMqJI1vXmRWik1ERdFcpERERERERERERERERERERYIB6ptCyiIsbQm0LKIixtHkm0LKIixtGMJtCyiIsbQm0LKIiLAACyiIsEA9U2hZREWNoQtCyiIsbRlNoWURFjaE2hZREWNoTaFlERY2hC0HqsoiLG0JtCyiIsbQgAHRZREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREX/9k=', 'PNG', M, 8, 42, 22);
+  } catch(e) {
+    doc.setFont('helvetica','bold'); doc.setFontSize(24);
+    doc.setTextColor(139,0,0); doc.text('IPSE', M, 20);
+    doc.setFont('helvetica','normal'); doc.setFontSize(8);
+    doc.setTextColor(...MUTED); doc.text('Instituto Psicoeducativo', M, 26);
   }
 
-  // ── Bloque CLIENTE ─────────────────────────────────
-  const clienteY = 78;
-  doc.setFillColor(...ORANGE);
-  doc.setDrawColor(...ORANGE);
-  doc.roundedRect(MARGIN, clienteY, W - MARGIN * 2, 7, 1, 1, 'F');
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(9);
-  doc.setTextColor(255, 255, 255);
-  doc.text('CLIENTE', MARGIN + 4, clienteY + 4.8);
-
-  doc.setDrawColor(...BORDER);
-  doc.setLineWidth(0.3);
-  doc.rect(MARGIN, clienteY + 7, W - MARGIN * 2, 26);
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(9);
-  doc.setTextColor(...DARK);
-  doc.text((f.receptor_nombre || '').toUpperCase(), MARGIN + 4, clienteY + 13);
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(8.5);
-  [
-    f.receptor_dni ? 'D.N.I.: ' + f.receptor_dni : '',
-    f.receptor_direccion || '',
-    (f.receptor_cp ? 'C.P./' + f.receptor_cp + '  ' : '') + (f.receptor_municipio || ''),
-  ].filter(Boolean).forEach((line, i) => doc.text(line, MARGIN + 4, clienteY + 18 + i * 4.5));
-
-  // ── Tabla CONCEPTO ─────────────────────────────────
-  let tableY = clienteY + 38;
-
-  // Cabecera tabla
-  doc.setFillColor(...ORANGE);
-  doc.roundedRect(MARGIN, tableY, W - MARGIN * 2, 7, 1, 1, 'F');
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(8.5);
-  doc.setTextColor(255, 255, 255);
-  const cols = [MARGIN + 4, 128, 150, 176];
-  doc.text('CONCEPTO', cols[0], tableY + 4.8);
-  doc.text('Nº HRS', cols[1], tableY + 4.8, { align: 'center' });
-  doc.text('PRECIO / H', cols[2], tableY + 4.8, { align: 'center' });
-  doc.text('TOTAL', W - MARGIN - 4, tableY + 4.8, { align: 'right' });
-
-  tableY += 7;
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(8.5);
-  doc.setTextColor(...DARK);
-
-  const lineas = Array.isArray(f.lineas) ? f.lineas : [];
-  lineas.forEach((l, i) => {
-    const rowH = 14;
-    const bg = i % 2 === 0 ? [255,255,255] : CREAM;
-    doc.setFillColor(...bg);
-    doc.rect(MARGIN, tableY, W - MARGIN * 2, rowH, 'F');
-    doc.setDrawColor(...BORDER);
-    doc.line(MARGIN, tableY + rowH, W - MARGIN, tableY + rowH);
-
-    // Concepto (con wrap)
-    const lines = doc.splitTextToSize(l.concepto || '', 100);
-    doc.setFont('helvetica', 'bold');
-    doc.text(lines[0], cols[0], tableY + 5);
-    if (lines[1]) {
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(7.5);
-      doc.text(lines[1], cols[0], tableY + 9.5);
-      doc.setFontSize(8.5);
-    }
-    doc.setFont('helvetica', 'normal');
-    doc.text(String(l.horas || 0) + ' h', cols[1], tableY + 5, { align: 'center' });
-    doc.text(fmt2plain(l.precio_hora) + ' €/h', cols[2], tableY + 5, { align: 'center' });
-    doc.setFont('helvetica', 'bold');
-    doc.text(fmt2plain(l.importe), W - MARGIN - 4, tableY + 5, { align: 'right' });
-    doc.text('€', W - MARGIN - 1, tableY + 5, { align: 'right' });
-    doc.setFont('helvetica', 'normal');
-    tableY += rowH;
+  // ── Datos emisor derecha ────────────────────────────────
+  const exr = W - M;
+  const eLines = [
+    [EMISOR.nombre, true],
+    ['N.I.C.A.: 60.178', false],
+    [EMISOR.persona, true],
+    [EMISOR.master, false],
+    [EMISOR.ncol, false],
+    [EMISOR.nif, false],
+    [EMISOR.dir1, false],
+    ['C.P./ 18110 Híjar- Las Gabias  Granada', false],
+    [EMISOR.tlf, false],
+    [EMISOR.email, false],
+  ];
+  eLines.forEach(([txt, bold], i) => {
+    doc.setFont('helvetica', bold ? 'bold' : 'normal');
+    doc.setFontSize(7.8);
+    doc.setTextColor(...DARK);
+    doc.text(txt, exr, 10 + i * 3.8, { align: 'right' });
   });
 
-  // Fila TOTAL concepto
-  doc.setFillColor(...CREAM);
-  doc.rect(MARGIN, tableY, W - MARGIN * 2, 8, 'F');
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(9);
+  // ── Línea separadora ────────────────────────────────────
+  doc.setDrawColor(...BORDR);
+  doc.setLineWidth(0.5);
+  doc.line(M, 52, W-M, 52);
+
+  // ── PAGADO ──────────────────────────────────────────────
+  if (f.estado === 'Pagada') {
+    doc.setFont('helvetica','bold'); doc.setFontSize(22);
+    doc.setTextColor(...RED);
+    doc.text('PAGADO', M, 64);
+    doc.setLineWidth(0.8); doc.setDrawColor(...RED);
+    doc.line(M, 66, M+36, 66);
+  }
+
+  // ── Fecha y Nº Factura ──────────────────────────────────
+  doc.setFont('helvetica','bold'); doc.setFontSize(9.5);
   doc.setTextColor(...DARK);
-  doc.text('TOTAL', W - MARGIN - 36, tableY + 5.5, { align: 'right' });
-  doc.text(fmt2plain(f.base_imponible) + ' €', W - MARGIN - 4, tableY + 5.5, { align: 'right' });
-  tableY += 14;
+  doc.text('FECHA:  '+fechaStr, W-M, 62, { align:'right' });
+  doc.text('Nº FACTURA: '+(f.numero_factura||'—'), W-M, 70, { align:'right' });
 
-  // ── Bloque IMPORTE ────────────────────────────────
-  doc.setFillColor(...ORANGE);
-  doc.roundedRect(MARGIN, tableY, W - MARGIN * 2, 7, 1, 1, 'F');
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(9);
-  doc.setTextColor(255, 255, 255);
-  doc.text('IMPORTE', MARGIN + 4, tableY + 4.8);
-  tableY += 7;
+  // ── Bloque CLIENTE ──────────────────────────────────────
+  let y = 78;
+  doc.setFillColor(...RED);
+  doc.rect(M, y, W-M*2, 7, 'F');
+  doc.setFont('helvetica','bold'); doc.setFontSize(9);
+  doc.setTextColor(255,255,255);
+  doc.text('CLIENTE', M+3, y+5);
+  y += 7;
+  doc.setDrawColor(...BORDR); doc.setLineWidth(0.3);
+  doc.rect(M, y, W-M*2, 28);
+  doc.setFont('helvetica','bold'); doc.setFontSize(9.5); doc.setTextColor(...DARK);
+  doc.text((f.receptor_nombre||'').toUpperCase(), M+4, y+7);
+  doc.setFont('helvetica','normal'); doc.setFontSize(9);
+  [
+    f.receptor_dni ? 'D.N.I.: '+f.receptor_dni : '',
+    f.receptor_direccion||'',
+    'C.P./'+f.receptor_cp+'  '+(f.receptor_municipio||''),
+  ].filter(Boolean).forEach((l,i) => doc.text(l, M+4, y+13+i*5));
+  y += 34;
 
-  const importeRows = [
-    ['Base imponible', fmt2plain(f.base_imponible) + ' €'],
-    ['I.V.A.',         fmt2plain(f.iva_importe)    + ' €'],
-    ['Retención Aplicable I.R.P.F', fmt2plain(f.irpf_importe) + ' €'],
-  ];
-  importeRows.forEach(([label, val], i) => {
-    const rowH = 7;
-    if (i % 2 === 0) { doc.setFillColor(255,255,255); } else { doc.setFillColor(...CREAM); }
-    doc.rect(MARGIN, tableY, W - MARGIN * 2, rowH, 'F');
-    doc.setDrawColor(...BORDER);
-    doc.line(MARGIN, tableY + rowH, W - MARGIN, tableY + rowH);
-    doc.setFont('helvetica', i === 1 || i === 2 ? 'bolditalic' : 'normal');
-    doc.setFontSize(8.5);
-    doc.setTextColor(...DARK);
-    doc.text(label, MARGIN + 4, tableY + 5);
-    doc.text(val, W - MARGIN - 4, tableY + 5, { align: 'right' });
-    tableY += rowH;
+  // ── Tabla CONCEPTO ──────────────────────────────────────
+  y += 4;
+  doc.setFillColor(...RED);
+  doc.rect(M, y, W-M*2, 8, 'F');
+  doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor(255,255,255);
+  const C1=M+3, C2=128, C3=153, C4=W-M-3;
+  doc.text('CONCEPTO', C1, y+3);
+  doc.text('Nº DE HORAS', C2, y+3, {align:'center'});
+  doc.text('TOTALES', C2, y+7, {align:'center'});
+  doc.text('PRECIO HORA', C3, y+5.5, {align:'center'});
+  doc.text('PRECIO TOTAL', C4, y+5.5, {align:'right'});
+  y += 8;
+
+  const lineas = Array.isArray(f.lineas) ? f.lineas : [];
+  const fmtFLocal = s => { if(!s) return ''; const d=new Date(s.split(' ')[0]+'T12:00:00'); return d.getDate()+'/'+(d.getMonth()+1)+'/'+d.getFullYear(); };
+
+  lineas.forEach((l, i) => {
+    const rowH = 24;
+    doc.setFillColor(i%2===0 ? 255:248, i%2===0 ? 255:248, i%2===0 ? 255:248);
+    doc.rect(M, y, W-M*2, rowH, 'F');
+    doc.setDrawColor(...BORDR); doc.setLineWidth(0.2);
+    doc.rect(M, y, W-M*2, rowH);
+
+    // Título bold
+    doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(...DARK);
+    doc.text('ASISTENCIA PSICOLÓGICA', C1, y+7);
+    // Detalle: extraer la parte tras el punto medio
+    const partes = (l.concepto||'').split('·');
+    if (partes[1]) {
+      doc.setFont('helvetica','normal'); doc.setFontSize(8.5);
+      // Limpiar timestamps de las fechas
+      const detalle = partes[1].trim().replace(/\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/g, m => fmtFLocal(m));
+      const wrapped = doc.splitTextToSize('* '+detalle, 100);
+      wrapped.forEach((line,li) => doc.text(line, C1, y+13+li*4));
+    }
+    doc.setFont('helvetica','normal'); doc.setFontSize(9);
+    doc.text(String(l.horas||0)+' h', C2, y+10, {align:'center'});
+    doc.text(fmtImpStr(l.precio_hora)+" €/h", C3, y+10, {align:'center'});
+    doc.setFont('helvetica','bold');
+    doc.text(fmtImpStr(l.importe)+' €', C4, y+10, {align:'right'});
+    y += rowH;
+  });
+
+  // Fila TOTAL
+  doc.setFillColor(...CREAM); doc.rect(M, y, W-M*2, 8, 'F');
+  doc.setFont('helvetica','bold'); doc.setFontSize(9.5); doc.setTextColor(...DARK);
+  doc.text('TOTAL', C4-25, y+5.5, {align:'right'});
+  doc.text(fmtImpStr(f.base_imponible)+" €", C4, y+5.5, {align:'right'});
+  y += 14;
+
+  // ── Bloque IMPORTE ──────────────────────────────────────
+  doc.setFillColor(...RED); doc.rect(M, y, W-M*2, 7, 'F');
+  doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(255,255,255);
+  doc.text('IMPORTE', M+3, y+5);
+  y += 7;
+
+  [
+    ['Base imponible', fmtImpStr(f.base_imponible)+' €', false],
+    ['I.V.A.',         fmtImpStr(f.iva_importe)   +' €', true],
+    ['Retención Aplicable I.R.P.F', fmtImpStr(f.irpf_importe)+' €', true],
+  ].forEach(([label, val, italic], i) => {
+    const rh = 8;
+    doc.setFillColor(i%2===0?255:248, i%2===0?255:248, i%2===0?255:248);
+    doc.rect(M, y, W-M*2, rh, 'F');
+    doc.setDrawColor(...BORDR); doc.setLineWidth(0.2);
+    doc.line(M, y+rh, W-M, y+rh);
+    doc.setFont('helvetica', italic?'bolditalic':'bold'); doc.setFontSize(9); doc.setTextColor(...DARK);
+    doc.text(label, M+4, y+5.5);
+    doc.setFont('helvetica', italic?'italic':'normal');
+    doc.text(val, W-M-4, y+5.5, {align:'right'});
+    y += rh;
   });
 
   // Fila TOTAL FACTURA
-  doc.setFillColor(240, 240, 250);
-  doc.rect(MARGIN, tableY, W - MARGIN * 2, 9, 'F');
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(10);
-  doc.setTextColor(...DARK);
-  doc.text('TOTAL FACTURA', MARGIN + 4, tableY + 6.2);
-  doc.setTextColor(...BLUE);
-  doc.text(fmt2plain(f.total) + ' €', W - MARGIN - 4, tableY + 6.2, { align: 'right' });
-  tableY += 14;
+  doc.setFillColor(255,255,255); doc.rect(M, y, W-M*2, 9, 'F');
+  doc.setDrawColor(...BORDR); doc.rect(M, y, W-M*2, 9);
+  doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(...DARK);
+  doc.text('TOTAL FACTURA', M+4, y+6.2);
+  doc.text(fmtImpStr(f.total)+'€', W-M-4, y+6.2, {align:'right'});
+  y += 14;
 
-  // ── IBAN + nota legal ──────────────────────────────
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(8);
-  doc.setTextColor(...DARK);
-  doc.text('Nº Cuenta: ' + EMISOR.iban, W / 2, tableY, { align: 'center' });
-  tableY += 5;
+  // ── Pie: IBAN + nota ────────────────────────────────────
+  doc.setFillColor(...CREAM); doc.rect(M, y, W-M*2, 14, 'F');
+  doc.setDrawColor(...BORDR); doc.rect(M, y, W-M*2, 14);
+  doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.setTextColor(...DARK);
+  doc.text('Nº Cuenta: '+EMISOR.iban, W/2, y+5, {align:'center'});
   if (f.notas) {
-    doc.setTextColor(...MUTED);
-    doc.setFontSize(7.5);
-    const notaLines = doc.splitTextToSize('* ' + f.notas, W - MARGIN * 2);
-    doc.text(notaLines, W / 2, tableY, { align: 'center' });
-    tableY += notaLines.length * 4;
+    doc.setFontSize(7.8); doc.setTextColor(...MUTED);
+    const nl = doc.splitTextToSize('* '+f.notas, W-M*2-8);
+    doc.text(nl, W/2, y+10, {align:'center'});
   }
+  y += 20;
 
-  // ── Línea azul pie ────────────────────────────────
-  doc.setFillColor(...BLUE);
-  doc.rect(0, 295, W, 2, 'F');
+  // ── Firma ───────────────────────────────────────────────
+  try {
+    doc.addImage('data:image/png;base64,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', 'PNG', W/2-25, y, 50, 22);
+  } catch(e) { /* sin firma */ }
 
-  // ── Exportar ──────────────────────────────────────
-  const filename = 'IPSE_Factura_' + (f.numero_factura || f.id_factura || 'nueva').replace(/\//g, '-') + '.pdf';
-  if (descargar) {
-    doc.save(filename);
-    toast('PDF descargado ✓', 'ok');
-  } else {
-    const blob = doc.output('blob');
-    window.open(URL.createObjectURL(blob), '_blank');
-  }
+  // ── Guardar ─────────────────────────────────────────────
+  const filename = 'IPSE_Factura_'+(f.numero_factura||f.id_factura||'nueva').replace(/\//g,'-')+'.pdf';
+  if (descargar) { doc.save(filename); toast('PDF descargado ✓','ok'); }
+  else { window.open(URL.createObjectURL(doc.output('blob')),'_blank'); }
 }
+
 
 // ── Export XLSX ────────────────────────────────────────
 function exportarFacturasXLSX() {
