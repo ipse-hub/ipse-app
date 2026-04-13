@@ -722,8 +722,11 @@ body { font-family: 'Inter', sans-serif; background: var(--cream); color: var(--
       <div id="bn-meta" style="font-size:11px;color:var(--ink-muted);background:var(--cream);padding:6px 10px;border-radius:6px;margin-bottom:14px;font-family:monospace;display:none"></div>
       <div class="form-grid">
         <div class="form-group span2"><label class="form-label">Paciente *</label>
-          <input type="text" class="form-control" id="bn-paciente-txt" placeholder="Escribe nombre..." oninput="filtrarDatalistPac('bn-paciente-txt','bn-paciente','dl-pac-bono')" onchange="onChangePacTxt('bn-paciente-txt','bn-paciente')" autocomplete="off">
-          <input type="hidden" id="bn-paciente">
+          <div class="pac-search-wrap">
+              <input type="text" class="form-control" id="bn-paciente-txt" placeholder="Escribe nombre…" oninput="pacSearch(this,'bn-paciente','psd-bono')" autocomplete="off" onblur="setTimeout(()=>hidePacDrop('psd-bono'),200)">
+              <input type="hidden" id="bn-paciente">
+              <div class="pac-search-drop" id="psd-bono"></div>
+            </div>
           <datalist id="dl-pac-bono"></datalist>
         </div>
         <div class="form-group"><label class="form-label">Tipo</label><input type="text" class="form-control" id="bn-tipo" value="Sesión individual"></div>
@@ -763,8 +766,11 @@ body { font-family: 'Inter', sans-serif; background: var(--cream); color: var(--
       <input type="hidden" id="bc-id">
       <div class="form-grid">
         <div class="form-group span2"><label class="form-label">Paciente *</label>
-          <input type="text" class="form-control" id="bc-paciente-txt" placeholder="Escribe nombre..." oninput="filtrarDatalistPac('bc-paciente-txt','bc-paciente','dl-pac-beca')" onchange="onChangePacTxt('bc-paciente-txt','bc-paciente')" autocomplete="off">
-          <input type="hidden" id="bc-paciente">
+          <div class="pac-search-wrap">
+              <input type="text" class="form-control" id="bc-paciente-txt" placeholder="Escribe nombre…" oninput="pacSearch(this,'bc-paciente','psd-beca')" autocomplete="off" onblur="setTimeout(()=>hidePacDrop('psd-beca'),200)">
+              <input type="hidden" id="bc-paciente">
+              <div class="pac-search-drop" id="psd-beca"></div>
+            </div>
           <datalist id="dl-pac-beca"></datalist>
         </div>
         <div class="form-group"><label class="form-label">Año *</label>
