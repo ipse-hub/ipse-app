@@ -6,6 +6,7 @@
 <title>IPSE — Panel de Gestión</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
 :root {
   --blue:       #10069F;
@@ -244,6 +245,7 @@ body { font-family: 'Inter', sans-serif; background: var(--cream); color: var(--
     <div class="nav-item" onclick="navigate('bonos')"><span class="icon">🎫</span><span>Bonos</span></div>
     <div class="nav-item" onclick="navigate('becas')"><span class="icon">🏛️</span><span>Becas</span></div>
     <div class="nav-item" onclick="navigate('servicios')"><span class="icon">📋</span><span>Servicios</span></div>
+    <div class="nav-item" onclick="navigate('facturas')"><span class="icon">🧾</span><span>Facturas</span></div>
   </div>
   <div class="sidebar-footer">v3.1 · IPSE 2026</div>
 </nav>
@@ -535,6 +537,49 @@ body { font-family: 'Inter', sans-serif; background: var(--cream); color: var(--
         </table>
       </div>
     </div>
+
+<div class="page" id="page-facturas">
+  <div class="page-header">
+    <div><h1>Facturas</h1><p>Emisión y gestión de facturas IPSE</p></div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-secondary btn-sm" onclick="exportarFacturasXLSX()">⬇ Excel</button>
+      <button class="btn btn-primary" onclick="abrirModalFactura()">+ Nueva factura</button>
+    </div>
+  </div>
+
+  <div class="kpi-grid kpi-grid-3" style="margin-bottom:20px">
+    <div class="kpi-card cyan"><div class="kpi-label">Facturado este año</div><div class="kpi-value" style="font-size:22px" id="fac-total-anio">— €</div></div>
+    <div class="kpi-card red"><div class="kpi-label">Pendiente de pago</div><div class="kpi-value" style="font-size:22px" id="fac-pendiente">—</div></div>
+    <div class="kpi-card blue"><div class="kpi-label">Nº facturas emitidas</div><div class="kpi-value" style="font-size:22px" id="fac-count">—</div></div>
+  </div>
+
+  <div class="table-toolbar">
+    <input class="search-input" placeholder="🔍 Paciente, nº factura…" oninput="filtrarFacturas()" id="fac-busq">
+    <label style="font-size:12px;color:var(--ink-muted)">Desde</label>
+    <input type="date" class="form-control btn-sm" id="fac-desde" style="width:140px" onchange="filtrarFacturas()">
+    <label style="font-size:12px;color:var(--ink-muted)">Hasta</label>
+    <input type="date" class="form-control btn-sm" id="fac-hasta" style="width:140px" onchange="filtrarFacturas()">
+    <select class="filter-select" id="fac-estado" onchange="filtrarFacturas()">
+      <option value="">Todos estados</option>
+      <option>Emitida</option><option>Pagada</option><option>Anulada</option>
+    </select>
+    <button class="btn btn-secondary btn-sm" onclick="limpiarFiltrosFacturas()">✕ Limpiar</button>
+  </div>
+
+  <div class="data-table-wrap">
+    <table class="data-table">
+      <thead><tr>
+        <th>Nº Factura</th><th>Fecha</th><th>Paciente</th><th>Receptor</th>
+        <th>Base imp.</th><th>IVA</th><th>Total</th><th>Estado</th><th></th>
+      </tr></thead>
+      <tbody id="tbody-facturas"></tbody>
+    </table>
+    <div class="table-footer">
+      <span id="fac-footer">—</span>
+      <div id="pag-facturas" style="display:flex;gap:4px"></div>
+    </div>
+  </div>
+</div>
 
   </div><!-- /content -->
 </main>
@@ -835,6 +880,133 @@ body { font-family: 'Inter', sans-serif; background: var(--cream); color: var(--
   </div>
 </div>
 
+<div class="modal-overlay" id="modal-factura">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-fac-titulo">Nueva factura</div>
+      <button class="modal-close" onclick="cerrarModal('modal-factura')">×</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="fac-id">
+
+      <!-- Cabecera -->
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label">Nº Factura *</label>
+          <input type="text" class="form-control" id="fac-numero" placeholder="Ej: 001/2026">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Fecha *</label>
+          <input type="date" class="form-control" id="fac-fecha">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Paciente *</label>
+          <div class="pac-search-wrap">
+            <input type="text" class="form-control" id="fac-pac-txt" placeholder="Escribe nombre…"
+              oninput="pacSearch(this,'fac-pac-id','psd-factura')"
+              autocomplete="off"
+              onblur="setTimeout(()=>hidePacDrop('psd-factura'),200)"
+              onchange="rellenarDatosReceptor()">
+            <input type="hidden" id="fac-pac-id">
+            <div class="pac-search-drop" id="psd-factura"></div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Estado</label>
+          <select class="form-control" id="fac-estado-modal">
+            <option>Emitida</option><option>Pagada</option><option>Anulada</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Receptor -->
+      <div style="font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-muted);margin:16px 0 8px;border-top:1px solid var(--border);padding-top:14px">
+        Datos receptor (se autocompletan al seleccionar paciente)
+      </div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label">Nombre receptor</label>
+          <input type="text" class="form-control" id="fac-rec-nombre">
+        </div>
+        <div class="form-group">
+          <label class="form-label">DNI / NIE receptor</label>
+          <input type="text" class="form-control" id="fac-rec-dni">
+        </div>
+        <div class="form-group span2">
+          <label class="form-label">Dirección</label>
+          <input type="text" class="form-control" id="fac-rec-dir">
+        </div>
+        <div class="form-group">
+          <label class="form-label">CP</label>
+          <input type="text" class="form-control" id="fac-rec-cp">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Municipio</label>
+          <input type="text" class="form-control" id="fac-rec-mun">
+        </div>
+      </div>
+
+      <!-- Líneas de concepto -->
+      <div style="display:flex;align-items:center;justify-content:space-between;margin:16px 0 8px;border-top:1px solid var(--border);padding-top:14px">
+        <span style="font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-muted)">Líneas de concepto</span>
+        <button class="btn btn-secondary btn-sm" onclick="addLineaFactura()">+ Línea</button>
+      </div>
+
+      <!-- Cargador desde sesiones -->
+      <div style="background:var(--blue-pale);border:1px solid var(--blue);border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:13px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+        <span style="color:var(--blue);font-weight:500">📋 Cargar desde sesiones:</span>
+        <label style="font-size:12px;color:var(--ink-muted)">Desde</label>
+        <input type="date" class="form-control btn-sm" id="fac-ses-desde" style="width:130px">
+        <label style="font-size:12px;color:var(--ink-muted)">Hasta</label>
+        <input type="date" class="form-control btn-sm" id="fac-ses-hasta" style="width:130px">
+        <button class="btn btn-secondary btn-sm" onclick="cargarLineasDesdeSesiones()">Cargar</button>
+      </div>
+
+      <div id="fac-lineas-wrap">
+        <!-- Líneas dinámicas insertadas por JS -->
+      </div>
+
+      <!-- Totales -->
+      <div style="background:var(--cream);border:1px solid var(--border);border-radius:8px;padding:14px 18px;margin-top:14px">
+        <div style="display:grid;grid-template-columns:1fr 180px;gap:6px;font-size:13px;max-width:420px;margin-left:auto">
+          <div style="color:var(--ink-muted)">Base imponible</div>
+          <div style="text-align:right;font-weight:500" id="fac-calc-base">0,00 €</div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="color:var(--ink-muted)">IVA</span>
+            <input type="number" id="fac-iva-pct" value="0" min="0" max="100" step="1"
+              style="width:54px;padding:3px 6px;border:1px solid var(--border);border-radius:6px;font-size:12px;text-align:center"
+              oninput="recalcularTotales()"> %
+          </div>
+          <div style="text-align:right;color:var(--ink-muted)" id="fac-calc-iva">0,00 €</div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="color:var(--ink-muted)">Retención IRPF</span>
+            <input type="number" id="fac-irpf-pct" value="0" min="0" max="100" step="1"
+              style="width:54px;padding:3px 6px;border:1px solid var(--border);border-radius:6px;font-size:12px;text-align:center"
+              oninput="recalcularTotales()"> %
+          </div>
+          <div style="text-align:right;color:var(--ink-muted)" id="fac-calc-irpf">0,00 €</div>
+          <div style="font-weight:700;font-size:15px;color:var(--ink);padding-top:6px;border-top:1px solid var(--border)">TOTAL FACTURA</div>
+          <div style="text-align:right;font-weight:700;font-size:15px;color:var(--blue);padding-top:6px;border-top:1px solid var(--border)" id="fac-calc-total">0,00 €</div>
+        </div>
+      </div>
+
+      <div class="form-group" style="margin-top:12px">
+        <label class="form-label">Notas</label>
+        <input type="text" class="form-control" id="fac-notas"
+          value="Factura exenta de IVA según Artículo 20.1.3 Ley 37/1992 de 28 de Diciembre.">
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-danger btn-sm" id="fac-btn-eliminar" style="margin-right:auto;display:none" onclick="eliminarFactura()">🗑 Eliminar</button>
+      <button class="btn btn-secondary" onclick="cerrarModal('modal-factura')">Cancelar</button>
+      <button class="btn btn-secondary" onclick="previsualizarFacturaPDF()" id="fac-btn-preview">👁 Vista previa PDF</button>
+      <button class="btn btn-primary" onclick="guardarFactura()">💾 Guardar</button>
+      <button class="btn btn-primary" style="background:var(--green-dark)" onclick="guardarYDescargarFactura()">⬇ Guardar y descargar PDF</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -1037,7 +1209,7 @@ function navigate(page) {
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   document.getElementById('page-'+page).classList.add('active');
   document.querySelector(`.nav-item[onclick*="${page}"]`).classList.add('active');
-  const titles = {dashboard:'Dashboard',produccion:'Producción',cobros:'Cobros',pacientes:'Pacientes',terapeutas:'Terapeutas',bonos:'Bonos',becas:'Becas',servicios:'Servicios'};
+  const titles = {dashboard:'Dashboard',produccion:'Producción',cobros:'Cobros',pacientes:'Pacientes',terapeutas:'Terapeutas',bonos:'Bonos',becas:'Becas',servicios:'Servicios',facturas:'Facturas'};
   document.getElementById('topbar-title').textContent = titles[page]||page;
   if (page==='produccion') cargarSesiones();
   if (page==='cobros') cargarCobros();
@@ -1046,6 +1218,7 @@ function navigate(page) {
   if (page==='bonos') renderBonos();
   if (page==='becas') renderBecas();
   if (page==='servicios') cargarServicios();
+  if (page==='facturas') cargarFacturas();
 }
 
 // ═══════════════════════════════════════════════════════
@@ -2171,6 +2344,677 @@ function cerrarModal(id) { document.getElementById(id).classList.remove('open');
 document.querySelectorAll('.modal-overlay').forEach(ov=>{
   ov.addEventListener('click',e=>{ if(e.target===ov) ov.classList.remove('open'); });
 });
+
+
+// ═══════════════════════════════════════════════════════
+//  FACTURAS
+// ═══════════════════════════════════════════════════════
+
+// ── Datos en memoria ───────────────────────────────────
+// G.facturas se añade al objeto G existente (se inicializa en cargarFacturas)
+
+let facFiltradas = [];
+let facPag = 0;
+let facLineas = []; // líneas del modal activo
+
+// ── Constantes emisor ──────────────────────────────────
+const EMISOR = {
+  nombre:    'IPSE. Instituto Psicoeducativo.',
+  nica:      'N.I.C.A.: 60.178',
+  persona:   'Inés Ferreira Reyes. Psicóloga Sanitaria.',
+  master:    'Máster en Psicología Infanto-Juvenil.',
+  ncol:      'NºCol. AO07537',
+  nif:       'N.I.F.- 26.036.593-H',
+  dir1:      'C/ Paseo de Carlos Cano, 51, 1ºB',
+  dir2:      'C.P./ 18110 Híjar-Las Gabias',
+  dir3:      'Granada',
+  tlf:       'Tlf./ 658 609 996',
+  email:     'inesferrei@cop.es',
+  iban:      'ES65 0182 1294 1002 0192 9436',
+  lugar:     'Híjar',
+};
+
+// ── Carga ──────────────────────────────────────────────
+async function cargarFacturas() {
+  try {
+    const rows = await sg('facturas', 'order=fecha.desc&limit=500');
+    G.facturas = rows;
+    filtrarFacturas();
+  } catch(err) {
+    toast('Error cargando facturas: ' + err.message, 'err');
+    G.facturas = [];
+    filtrarFacturas();
+  }
+}
+
+// ── Filtrado y render tabla ────────────────────────────
+function filtrarFacturas() {
+  if (!G.facturas) G.facturas = [];
+  const q     = (document.getElementById('fac-busq')?.value || '').toLowerCase();
+  const desde = document.getElementById('fac-desde')?.value || '';
+  const hasta = document.getElementById('fac-hasta')?.value || '';
+  const est   = document.getElementById('fac-estado')?.value || '';
+
+  facFiltradas = G.facturas.filter(f => {
+    const txt = ((f.numero_factura||'') + ' ' + nomPacFull(f.id_paciente) + ' ' + (f.receptor_nombre||'')).toLowerCase();
+    if (q && !txt.includes(q)) return false;
+    if (desde && f.fecha < desde) return false;
+    if (hasta && f.fecha > hasta) return false;
+    if (est && f.estado !== est) return false;
+    return true;
+  });
+
+  const anio = new Date().getFullYear();
+  const totalAnio = G.facturas
+    .filter(f => f.fecha && f.fecha.startsWith(anio) && f.estado !== 'Anulada')
+    .reduce((s, f) => s + (parseFloat(f.total) || 0), 0);
+  const pendiente = G.facturas.filter(f => f.estado === 'Emitida').length;
+
+  document.getElementById('fac-total-anio').textContent = fmtEur(totalAnio);
+  document.getElementById('fac-pendiente').textContent  = pendiente + ' factura' + (pendiente !== 1 ? 's' : '');
+  document.getElementById('fac-count').textContent      = G.facturas.filter(f => f.estado !== 'Anulada').length;
+
+  facPag = 0;
+  _renderFacturasTable();
+}
+
+function _renderFacturasTable() {
+  const inicio = facPag * G.paginaSize;
+  const pagina = facFiltradas.slice(inicio, inicio + G.paginaSize);
+  const tbody  = document.getElementById('tbody-facturas');
+
+  if (!pagina.length) {
+    tbody.innerHTML = '<tr><td colspan="9" class="empty-state">Sin facturas</td></tr>';
+  } else {
+    tbody.innerHTML = pagina.map(f => `
+      <tr onclick="editarFactura('${f.id_factura}')">
+        <td class="mono" style="font-weight:600">${f.numero_factura || '—'}</td>
+        <td>${fmtFecha(f.fecha)}</td>
+        <td class="strong">${nomPacFull(f.id_paciente)}</td>
+        <td class="muted">${f.receptor_nombre || '—'}</td>
+        <td class="mono">${fmtEur(f.base_imponible)}</td>
+        <td class="muted">${(parseFloat(f.iva_pct)||0) > 0 ? fmtEur(f.iva_importe) : '—'}</td>
+        <td class="mono" style="font-weight:600;color:var(--blue)">${fmtEur(f.total)}</td>
+        <td>${badgeEstado(f.estado === 'Pagada' ? 'Cobrado' : f.estado === 'Anulada' ? 'Cancelada' : 'Programada')}</td>
+        <td style="display:flex;gap:6px">
+          <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();editarFactura('${f.id_factura}')">✏️</button>
+          <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();descargarPDFFactura('${f.id_factura}')" title="Descargar PDF">⬇ PDF</button>
+        </td>
+      </tr>`).join('');
+  }
+  document.getElementById('fac-footer').textContent = facFiltradas.length + ' facturas · Total: ' + fmtEur(facFiltradas.reduce((s,f)=>s+(parseFloat(f.total)||0),0));
+  renderPaginacion('pag-facturas', facFiltradas.length, G.paginaSize, facPag, (p) => { facPag = p; _renderFacturasTable(); });
+}
+
+function limpiarFiltrosFacturas() {
+  ['fac-busq','fac-desde','fac-hasta'].forEach(id => { const el = document.getElementById(id); if(el) el.value=''; });
+  document.getElementById('fac-estado').value = '';
+  filtrarFacturas();
+}
+
+// ── Líneas dinámicas ───────────────────────────────────
+function renderLineas() {
+  const wrap = document.getElementById('fac-lineas-wrap');
+  if (!wrap) return;
+  if (!facLineas.length) {
+    wrap.innerHTML = '<div style="color:var(--ink-muted);font-size:13px;padding:12px 0">Sin líneas. Pulsa "+ Línea" o carga desde sesiones.</div>';
+    recalcularTotales();
+    return;
+  }
+  wrap.innerHTML = `
+    <div style="overflow-x:auto">
+    <table style="width:100%;border-collapse:collapse;font-size:13px">
+      <thead>
+        <tr style="background:var(--cream)">
+          <th style="padding:8px 10px;text-align:left;font-size:11px;color:var(--ink-muted);font-weight:500;border-bottom:1px solid var(--border)">Concepto</th>
+          <th style="padding:8px 10px;width:70px;text-align:center;font-size:11px;color:var(--ink-muted);font-weight:500;border-bottom:1px solid var(--border)">Horas</th>
+          <th style="padding:8px 10px;width:100px;text-align:center;font-size:11px;color:var(--ink-muted);font-weight:500;border-bottom:1px solid var(--border)">€/hora</th>
+          <th style="padding:8px 10px;width:100px;text-align:right;font-size:11px;color:var(--ink-muted);font-weight:500;border-bottom:1px solid var(--border)">Importe</th>
+          <th style="padding:8px 10px;width:36px;border-bottom:1px solid var(--border)"></th>
+        </tr>
+      </thead>
+      <tbody>
+        ${facLineas.map((l, i) => `
+        <tr>
+          <td style="padding:6px 10px;border-bottom:1px solid var(--border)">
+            <input type="text" class="form-control" value="${escHtml(l.concepto)}"
+              oninput="facLineas[${i}].concepto=this.value" style="font-size:13px">
+          </td>
+          <td style="padding:6px 10px;border-bottom:1px solid var(--border)">
+            <input type="number" class="form-control" value="${l.horas}" min="0" step="0.25"
+              oninput="facLineas[${i}].horas=parseFloat(this.value)||0;facLineas[${i}].importe=facLineas[${i}].horas*facLineas[${i}].precio_hora;recalcularTotales()"
+              style="text-align:center;font-size:13px">
+          </td>
+          <td style="padding:6px 10px;border-bottom:1px solid var(--border)">
+            <input type="number" class="form-control" value="${l.precio_hora}" min="0" step="0.01"
+              oninput="facLineas[${i}].precio_hora=parseFloat(this.value)||0;facLineas[${i}].importe=facLineas[${i}].horas*facLineas[${i}].precio_hora;recalcularTotales()"
+              style="text-align:center;font-size:13px">
+          </td>
+          <td style="padding:6px 10px;border-bottom:1px solid var(--border);text-align:right;font-weight:500;font-variant-numeric:tabular-nums">
+            ${(l.importe||0).toLocaleString('es-ES',{minimumFractionDigits:2})} €
+          </td>
+          <td style="padding:6px 10px;border-bottom:1px solid var(--border);text-align:center">
+            <button onclick="eliminarLinea(${i})" style="background:none;border:none;cursor:pointer;color:var(--red);font-size:15px" title="Eliminar línea">×</button>
+          </td>
+        </tr>`).join('')}
+      </tbody>
+    </table>
+    </div>`;
+  recalcularTotales();
+}
+
+function addLineaFactura() {
+  facLineas.push({ concepto: 'Asistencia psicológica', horas: 1, precio_hora: 45, importe: 45 });
+  renderLineas();
+}
+
+function eliminarLinea(idx) {
+  facLineas.splice(idx, 1);
+  renderLineas();
+}
+
+function recalcularTotales() {
+  const base  = facLineas.reduce((s, l) => s + (parseFloat(l.importe) || 0), 0);
+  const ivaPct  = parseFloat(document.getElementById('fac-iva-pct')?.value) || 0;
+  const irpfPct = parseFloat(document.getElementById('fac-irpf-pct')?.value) || 0;
+  const iva     = base * ivaPct / 100;
+  const irpf    = base * irpfPct / 100;
+  const total   = base + iva - irpf;
+  const fmt     = v => v.toLocaleString('es-ES', {minimumFractionDigits:2, maximumFractionDigits:2}) + ' €';
+  const el = id => document.getElementById(id);
+  if (el('fac-calc-base'))  el('fac-calc-base').textContent  = fmt(base);
+  if (el('fac-calc-iva'))   el('fac-calc-iva').textContent   = fmt(iva);
+  if (el('fac-calc-irpf'))  el('fac-calc-irpf').textContent  = fmt(irpf);
+  if (el('fac-calc-total')) el('fac-calc-total').textContent = fmt(total);
+}
+
+function escHtml(str) {
+  return (str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── Cargar líneas desde sesiones del paciente ──────────
+async function cargarLineasDesdeSesiones() {
+  const pacId = document.getElementById('fac-pac-id').value;
+  const desde = document.getElementById('fac-ses-desde').value;
+  const hasta = document.getElementById('fac-ses-hasta').value;
+  if (!pacId) { toast('Selecciona primero un paciente', 'err'); return; }
+  try {
+    let params = `id_paciente=eq.${pacId}&estado=eq.Hecha`;
+    if (desde) params += `&fecha=gte.${desde}`;
+    if (hasta) params += `&fecha=lte.${hasta}`;
+    const sesiones = await sg('sesiones', params + '&order=fecha.asc');
+    if (!sesiones.length) { toast('No hay sesiones Hecha en ese período', 'err'); return; }
+
+    // Agrupa por terapeuta+servicio para crear líneas limpias
+    const grupos = {};
+    sesiones.forEach(s => {
+      const key = (s.id_terapeuta||'') + '|' + (s.id_servicio||'');
+      if (!grupos[key]) grupos[key] = { sesiones: [], importe: 0, key };
+      grupos[key].sesiones.push(s);
+      grupos[key].importe += parseFloat(s.importe) || 0;
+    });
+
+    facLineas = Object.values(grupos).map(g => {
+      const count = g.sesiones.length;
+      const total = g.importe;
+      const precio = count > 0 ? total / count : 45;
+      const ter = nomTer(g.sesiones[0].id_terapeuta);
+      const ses0 = g.sesiones[0];
+      const sesN = g.sesiones[g.sesiones.length - 1];
+      const rango = fmtFecha(ses0.fecha) + (count > 1 ? ' al ' + fmtFecha(sesN.fecha) : '');
+      const concepto = `Asistencia psicológica · ${count} sesión${count>1?'es':''} de ${ter} (${rango})`;
+      return { concepto, horas: count, precio_hora: precio, importe: total };
+    });
+
+    renderLineas();
+    toast(sesiones.length + ' sesiones cargadas ✓', 'ok');
+  } catch(err) { toast('Error: ' + err.message, 'err'); }
+}
+
+// ── Autocompletar datos receptor al seleccionar paciente ─
+function rellenarDatosReceptor() {
+  // Se llama también desde el onblur del pac-search via setTimeout
+  setTimeout(() => {
+    const id = document.getElementById('fac-pac-id').value;
+    if (!id) return;
+    const p = G.pacientes.find(x => x.id_paciente === id);
+    if (!p) return;
+    // Usa tutor1 si existe, si no el propio paciente
+    const nombre = p.tutor1 || ((p.nombre||'') + ' ' + (p.apellidos||'')).trim();
+    const dni    = p.dni_tutor1 || p.dni_paciente || '';
+    const dir    = p.direccion || '';
+    const cp     = p.codigo_postal || '';
+    const mun    = p.municipio || '';
+    const el = id2 => document.getElementById(id2);
+    if (el('fac-rec-nombre') && !el('fac-rec-nombre').value) el('fac-rec-nombre').value = nombre;
+    if (el('fac-rec-dni')    && !el('fac-rec-dni').value)    el('fac-rec-dni').value    = dni;
+    if (el('fac-rec-dir')    && !el('fac-rec-dir').value)    el('fac-rec-dir').value    = dir;
+    if (el('fac-rec-cp')     && !el('fac-rec-cp').value)     el('fac-rec-cp').value     = cp;
+    if (el('fac-rec-mun')    && !el('fac-rec-mun').value)    el('fac-rec-mun').value    = mun;
+  }, 300);
+}
+
+// Sobrescribir selPaciente para que también autocomplete datos receptor en modal factura
+const _selPacienteOrig = window.selPaciente;
+window.selPaciente = function(id, txtId, hiddenId, dropId) {
+  _selPacienteOrig(id, txtId, hiddenId, dropId);
+  if (hiddenId === 'fac-pac-id') {
+    // Limpiar campos receptor para que se rellenen frescos
+    ['fac-rec-nombre','fac-rec-dni','fac-rec-dir','fac-rec-cp','fac-rec-mun'].forEach(fid => {
+      const el = document.getElementById(fid); if(el) el.value = '';
+    });
+    rellenarDatosReceptor();
+  }
+};
+
+// ── Abrir / editar ─────────────────────────────────────
+async function abrirModalFactura() {
+  if (!G.facturas) G.facturas = [];
+  document.getElementById('fac-id').value = '';
+  document.getElementById('modal-fac-titulo').textContent = 'Nueva factura';
+  document.getElementById('fac-fecha').value = new Date().toISOString().split('T')[0];
+  document.getElementById('fac-estado-modal').value = 'Emitida';
+  document.getElementById('fac-iva-pct').value = '0';
+  document.getElementById('fac-irpf-pct').value = '0';
+  document.getElementById('fac-notas').value = 'Factura exenta de IVA según Artículo 20.1.3 Ley 37/1992 de 28 de Diciembre.';
+  setPacienteEnModal('fac-pac-txt', 'fac-pac-id', '');
+  ['fac-rec-nombre','fac-rec-dni','fac-rec-dir','fac-rec-cp','fac-rec-mun'].forEach(id => {
+    const el = document.getElementById(id); if(el) el.value = '';
+  });
+  ['fac-ses-desde','fac-ses-hasta'].forEach(id => {
+    const el = document.getElementById(id); if(el) el.value = '';
+  });
+  document.getElementById('fac-btn-eliminar').style.display = 'none';
+
+  // Autosugerir número correlativo
+  const ultimo = G.facturas.length ? G.facturas[0].numero_factura : null;
+  let siguienteNum = '001';
+  if (ultimo) {
+    const match = ultimo.match(/^(\d+)/);
+    if (match) siguienteNum = String(parseInt(match[1]) + 1).padStart(3, '0');
+  }
+  document.getElementById('fac-numero').value = siguienteNum + '/' + new Date().getFullYear();
+
+  facLineas = [];
+  renderLineas();
+  abrirModal('modal-factura');
+}
+
+function editarFactura(id) {
+  const f = (G.facturas || []).find(x => x.id_factura === id);
+  if (!f) return;
+  document.getElementById('fac-id').value = id;
+  document.getElementById('modal-fac-titulo').textContent = 'Editar factura · ' + f.numero_factura;
+  document.getElementById('fac-numero').value        = f.numero_factura || '';
+  document.getElementById('fac-fecha').value         = f.fecha || '';
+  document.getElementById('fac-estado-modal').value  = f.estado || 'Emitida';
+  document.getElementById('fac-iva-pct').value       = f.iva_pct || '0';
+  document.getElementById('fac-irpf-pct').value      = f.irpf_pct || '0';
+  document.getElementById('fac-notas').value         = f.notas || '';
+  setPacienteEnModal('fac-pac-txt', 'fac-pac-id', f.id_paciente);
+  document.getElementById('fac-rec-nombre').value    = f.receptor_nombre || '';
+  document.getElementById('fac-rec-dni').value       = f.receptor_dni || '';
+  document.getElementById('fac-rec-dir').value       = f.receptor_direccion || '';
+  document.getElementById('fac-rec-cp').value        = f.receptor_cp || '';
+  document.getElementById('fac-rec-mun').value       = f.receptor_municipio || '';
+  document.getElementById('fac-btn-eliminar').style.display = 'inline-flex';
+
+  facLineas = Array.isArray(f.lineas) ? JSON.parse(JSON.stringify(f.lineas)) : [];
+  renderLineas();
+  abrirModal('modal-factura');
+}
+
+// ── Guardar ────────────────────────────────────────────
+function _recogerDatosFactura() {
+  const base    = facLineas.reduce((s, l) => s + (parseFloat(l.importe) || 0), 0);
+  const ivaPct  = parseFloat(document.getElementById('fac-iva-pct').value) || 0;
+  const irpfPct = parseFloat(document.getElementById('fac-irpf-pct').value) || 0;
+  const iva     = base * ivaPct / 100;
+  const irpf    = base * irpfPct / 100;
+  return {
+    numero_factura:    document.getElementById('fac-numero').value.trim(),
+    fecha:             document.getElementById('fac-fecha').value,
+    id_paciente:       document.getElementById('fac-pac-id').value || null,
+    receptor_nombre:   document.getElementById('fac-rec-nombre').value.trim(),
+    receptor_dni:      document.getElementById('fac-rec-dni').value.trim(),
+    receptor_direccion:document.getElementById('fac-rec-dir').value.trim(),
+    receptor_cp:       document.getElementById('fac-rec-cp').value.trim(),
+    receptor_municipio:document.getElementById('fac-rec-mun').value.trim(),
+    lineas:            facLineas,
+    base_imponible:    parseFloat(base.toFixed(2)),
+    iva_pct:           ivaPct,
+    iva_importe:       parseFloat(iva.toFixed(2)),
+    irpf_pct:          irpfPct,
+    irpf_importe:      parseFloat(irpf.toFixed(2)),
+    total:             parseFloat((base + iva - irpf).toFixed(2)),
+    estado:            document.getElementById('fac-estado-modal').value,
+    notas:             document.getElementById('fac-notas').value.trim(),
+  };
+}
+
+async function guardarFactura() {
+  const id    = document.getElementById('fac-id').value;
+  const datos = _recogerDatosFactura();
+  if (!datos.numero_factura || !datos.fecha) { toast('Número y fecha son obligatorios', 'err'); return; }
+  if (!facLineas.length) { toast('Añade al menos una línea de concepto', 'err'); return; }
+  try {
+    if (id) {
+      await sa('facturas', `id_factura=eq.${id}`, datos);
+      const idx = G.facturas.findIndex(f => f.id_factura === id);
+      if (idx >= 0) G.facturas[idx] = { ...G.facturas[idx], ...datos };
+      toast('Factura actualizada ✓', 'ok');
+    } else {
+      const newId = await genId('facturas', 'id_factura', 'FAC');
+      await sp('facturas', { ...datos, id_factura: newId });
+      G.facturas.unshift({ ...datos, id_factura: newId });
+      toast('Factura guardada ✓', 'ok');
+    }
+    cerrarModal('modal-factura');
+    filtrarFacturas();
+  } catch(err) { toast('Error: ' + err.message, 'err'); }
+}
+
+async function guardarYDescargarFactura() {
+  const id    = document.getElementById('fac-id').value;
+  const datos = _recogerDatosFactura();
+  if (!datos.numero_factura || !datos.fecha) { toast('Número y fecha son obligatorios', 'err'); return; }
+  if (!facLineas.length) { toast('Añade al menos una línea', 'err'); return; }
+  try {
+    let facId = id;
+    if (id) {
+      await sa('facturas', `id_factura=eq.${id}`, datos);
+      const idx = G.facturas.findIndex(f => f.id_factura === id);
+      if (idx >= 0) G.facturas[idx] = { ...G.facturas[idx], ...datos };
+    } else {
+      const newId = await genId('facturas', 'id_factura', 'FAC');
+      facId = newId;
+      await sp('facturas', { ...datos, id_factura: newId });
+      G.facturas.unshift({ ...datos, id_factura: newId });
+    }
+    cerrarModal('modal-factura');
+    filtrarFacturas();
+    toast('Guardando PDF…');
+    setTimeout(() => generarPDFFactura({ id_factura: facId, ...datos }, true), 300);
+  } catch(err) { toast('Error: ' + err.message, 'err'); }
+}
+
+async function eliminarFactura() {
+  const id = document.getElementById('fac-id').value; if (!id) return;
+  if (!confirm('¿Eliminar factura ' + id + '? Esta acción no se puede deshacer.')) return;
+  try {
+    await sd('facturas', `id_factura=eq.${id}`);
+    G.facturas = G.facturas.filter(f => f.id_factura !== id);
+    toast('Factura eliminada ✓', 'ok');
+    cerrarModal('modal-factura');
+    filtrarFacturas();
+  } catch(err) { toast('Error: ' + err.message, 'err'); }
+}
+
+// ── PDF ────────────────────────────────────────────────
+function previsualizarFacturaPDF() {
+  const datos = _recogerDatosFactura();
+  generarPDFFactura(datos, false);
+}
+
+function descargarPDFFactura(id) {
+  const f = (G.facturas || []).find(x => x.id_factura === id);
+  if (!f) return;
+  generarPDFFactura(f, true);
+}
+
+function generarPDFFactura(f, descargar = true) {
+  if (typeof jspdf === 'undefined' && typeof window.jspdf === 'undefined') {
+    toast('jsPDF no cargado — revisa el CDN en <head>', 'err');
+    return;
+  }
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+
+  const W = 210, MARGIN = 18;
+  const BLUE = [16, 6, 159];
+  const ORANGE = [241, 142, 28];
+  const DARK = [26, 31, 53];
+  const MUTED = [107, 116, 144];
+  const BORDER = [228, 232, 240];
+  const CREAM = [242, 244, 248];
+
+  const fmt2 = v => (parseFloat(v)||0).toLocaleString('es-ES', {minimumFractionDigits:2, maximumFractionDigits:2}) + ' €';
+  const fmt2plain = v => (parseFloat(v)||0).toLocaleString('es-ES', {minimumFractionDigits:2, maximumFractionDigits:2});
+
+  // ── Cabecera azul top ──────────────────────────────
+  doc.setFillColor(...BLUE);
+  doc.rect(0, 0, W, 2, 'F');
+
+  // ── Logo / nombre institución (izquierda) ──────────
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(15);
+  doc.setTextColor(...BLUE);
+  doc.text('IPSE', MARGIN, 20);
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8);
+  doc.setTextColor(...MUTED);
+  doc.text('Instituto Psicoeducativo', MARGIN, 25);
+
+  // ── Datos emisor (derecha) ─────────────────────────
+  const exr = W - MARGIN;
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(8);
+  doc.setTextColor(...DARK);
+  doc.text(EMISOR.nombre, exr, 10, { align: 'right' });
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(7.5);
+  doc.setTextColor(...MUTED);
+  [
+    EMISOR.nica,
+    EMISOR.persona,
+    EMISOR.master,
+    EMISOR.ncol,
+    EMISOR.nif,
+    EMISOR.dir1,
+    EMISOR.dir2 + ' · ' + EMISOR.dir3,
+    EMISOR.tlf + ' · ' + EMISOR.email,
+  ].forEach((line, i) => doc.text(line, exr, 15 + i * 4.2, { align: 'right' }));
+
+  // ── Línea separadora ──────────────────────────────
+  doc.setDrawColor(...BORDER);
+  doc.setLineWidth(0.3);
+  doc.line(MARGIN, 52, W - MARGIN, 52);
+
+  // ── Fecha y número factura ─────────────────────────
+  const fechaStr = (() => {
+    if (!f.fecha) return '—';
+    const d = new Date(f.fecha + 'T12:00:00');
+    return EMISOR.lugar + ', ' + d.getDate() + ' de ' +
+      ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'][d.getMonth()] +
+      ' de ' + d.getFullYear();
+  })();
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(9);
+  doc.setTextColor(...DARK);
+  doc.text('FECHA:', MARGIN, 60);
+  doc.setFont('helvetica', 'normal');
+  doc.text(fechaStr, MARGIN + 15, 60);
+
+  doc.setFont('helvetica', 'bold');
+  doc.text('Nº FACTURA:', W - MARGIN - 50, 60);
+  doc.setFont('helvetica', 'normal');
+  doc.text(f.numero_factura || '—', W - MARGIN - 20, 60);
+
+  // ── Sello PAGADO si procede ────────────────────────
+  if (f.estado === 'Pagada') {
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(18);
+    doc.setTextColor(...[0, 150, 80]);
+    doc.text('PAGADO', MARGIN, 72);
+    doc.setLineWidth(1);
+    doc.setDrawColor(...[0, 150, 80]);
+    doc.line(MARGIN, 73.5, MARGIN + 28, 73.5);
+  }
+
+  // ── Bloque CLIENTE ─────────────────────────────────
+  const clienteY = 78;
+  doc.setFillColor(...ORANGE);
+  doc.setDrawColor(...ORANGE);
+  doc.roundedRect(MARGIN, clienteY, W - MARGIN * 2, 7, 1, 1, 'F');
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(9);
+  doc.setTextColor(255, 255, 255);
+  doc.text('CLIENTE', MARGIN + 4, clienteY + 4.8);
+
+  doc.setDrawColor(...BORDER);
+  doc.setLineWidth(0.3);
+  doc.rect(MARGIN, clienteY + 7, W - MARGIN * 2, 26);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(9);
+  doc.setTextColor(...DARK);
+  doc.text((f.receptor_nombre || '').toUpperCase(), MARGIN + 4, clienteY + 13);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8.5);
+  [
+    f.receptor_dni ? 'D.N.I.: ' + f.receptor_dni : '',
+    f.receptor_direccion || '',
+    (f.receptor_cp ? 'C.P./' + f.receptor_cp + '  ' : '') + (f.receptor_municipio || ''),
+  ].filter(Boolean).forEach((line, i) => doc.text(line, MARGIN + 4, clienteY + 18 + i * 4.5));
+
+  // ── Tabla CONCEPTO ─────────────────────────────────
+  let tableY = clienteY + 38;
+
+  // Cabecera tabla
+  doc.setFillColor(...ORANGE);
+  doc.roundedRect(MARGIN, tableY, W - MARGIN * 2, 7, 1, 1, 'F');
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(8.5);
+  doc.setTextColor(255, 255, 255);
+  const cols = [MARGIN + 4, 128, 150, 176];
+  doc.text('CONCEPTO', cols[0], tableY + 4.8);
+  doc.text('Nº HRS', cols[1], tableY + 4.8, { align: 'center' });
+  doc.text('PRECIO / H', cols[2], tableY + 4.8, { align: 'center' });
+  doc.text('TOTAL', W - MARGIN - 4, tableY + 4.8, { align: 'right' });
+
+  tableY += 7;
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8.5);
+  doc.setTextColor(...DARK);
+
+  const lineas = Array.isArray(f.lineas) ? f.lineas : [];
+  lineas.forEach((l, i) => {
+    const rowH = 14;
+    const bg = i % 2 === 0 ? [255,255,255] : CREAM;
+    doc.setFillColor(...bg);
+    doc.rect(MARGIN, tableY, W - MARGIN * 2, rowH, 'F');
+    doc.setDrawColor(...BORDER);
+    doc.line(MARGIN, tableY + rowH, W - MARGIN, tableY + rowH);
+
+    // Concepto (con wrap)
+    const lines = doc.splitTextToSize(l.concepto || '', 100);
+    doc.setFont('helvetica', 'bold');
+    doc.text(lines[0], cols[0], tableY + 5);
+    if (lines[1]) {
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(7.5);
+      doc.text(lines[1], cols[0], tableY + 9.5);
+      doc.setFontSize(8.5);
+    }
+    doc.setFont('helvetica', 'normal');
+    doc.text(String(l.horas || 0) + ' h', cols[1], tableY + 5, { align: 'center' });
+    doc.text(fmt2plain(l.precio_hora) + ' €/h', cols[2], tableY + 5, { align: 'center' });
+    doc.setFont('helvetica', 'bold');
+    doc.text(fmt2plain(l.importe), W - MARGIN - 4, tableY + 5, { align: 'right' });
+    doc.text('€', W - MARGIN - 1, tableY + 5, { align: 'right' });
+    doc.setFont('helvetica', 'normal');
+    tableY += rowH;
+  });
+
+  // Fila TOTAL concepto
+  doc.setFillColor(...CREAM);
+  doc.rect(MARGIN, tableY, W - MARGIN * 2, 8, 'F');
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(9);
+  doc.setTextColor(...DARK);
+  doc.text('TOTAL', W - MARGIN - 36, tableY + 5.5, { align: 'right' });
+  doc.text(fmt2plain(f.base_imponible) + ' €', W - MARGIN - 4, tableY + 5.5, { align: 'right' });
+  tableY += 14;
+
+  // ── Bloque IMPORTE ────────────────────────────────
+  doc.setFillColor(...ORANGE);
+  doc.roundedRect(MARGIN, tableY, W - MARGIN * 2, 7, 1, 1, 'F');
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(9);
+  doc.setTextColor(255, 255, 255);
+  doc.text('IMPORTE', MARGIN + 4, tableY + 4.8);
+  tableY += 7;
+
+  const importeRows = [
+    ['Base imponible', fmt2plain(f.base_imponible) + ' €'],
+    ['I.V.A.',         fmt2plain(f.iva_importe)    + ' €'],
+    ['Retención Aplicable I.R.P.F', fmt2plain(f.irpf_importe) + ' €'],
+  ];
+  importeRows.forEach(([label, val], i) => {
+    const rowH = 7;
+    if (i % 2 === 0) { doc.setFillColor(255,255,255); } else { doc.setFillColor(...CREAM); }
+    doc.rect(MARGIN, tableY, W - MARGIN * 2, rowH, 'F');
+    doc.setDrawColor(...BORDER);
+    doc.line(MARGIN, tableY + rowH, W - MARGIN, tableY + rowH);
+    doc.setFont('helvetica', i === 1 || i === 2 ? 'bolditalic' : 'normal');
+    doc.setFontSize(8.5);
+    doc.setTextColor(...DARK);
+    doc.text(label, MARGIN + 4, tableY + 5);
+    doc.text(val, W - MARGIN - 4, tableY + 5, { align: 'right' });
+    tableY += rowH;
+  });
+
+  // Fila TOTAL FACTURA
+  doc.setFillColor(240, 240, 250);
+  doc.rect(MARGIN, tableY, W - MARGIN * 2, 9, 'F');
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(10);
+  doc.setTextColor(...DARK);
+  doc.text('TOTAL FACTURA', MARGIN + 4, tableY + 6.2);
+  doc.setTextColor(...BLUE);
+  doc.text(fmt2plain(f.total) + ' €', W - MARGIN - 4, tableY + 6.2, { align: 'right' });
+  tableY += 14;
+
+  // ── IBAN + nota legal ──────────────────────────────
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8);
+  doc.setTextColor(...DARK);
+  doc.text('Nº Cuenta: ' + EMISOR.iban, W / 2, tableY, { align: 'center' });
+  tableY += 5;
+  if (f.notas) {
+    doc.setTextColor(...MUTED);
+    doc.setFontSize(7.5);
+    const notaLines = doc.splitTextToSize('* ' + f.notas, W - MARGIN * 2);
+    doc.text(notaLines, W / 2, tableY, { align: 'center' });
+    tableY += notaLines.length * 4;
+  }
+
+  // ── Línea azul pie ────────────────────────────────
+  doc.setFillColor(...BLUE);
+  doc.rect(0, 295, W, 2, 'F');
+
+  // ── Exportar ──────────────────────────────────────
+  const filename = 'IPSE_Factura_' + (f.numero_factura || f.id_factura || 'nueva').replace(/\//g, '-') + '.pdf';
+  if (descargar) {
+    doc.save(filename);
+    toast('PDF descargado ✓', 'ok');
+  } else {
+    const blob = doc.output('blob');
+    window.open(URL.createObjectURL(blob), '_blank');
+  }
+}
+
+// ── Export XLSX ────────────────────────────────────────
+function exportarFacturasXLSX() {
+  const data = [['Nº Factura','Fecha','Paciente','Receptor','Base imp.','IVA %','IVA €','IRPF %','IRPF €','Total','Estado']];
+  (G.facturas || []).forEach(f => data.push([
+    f.numero_factura, f.fecha, nomPacFull(f.id_paciente),
+    f.receptor_nombre, f.base_imponible, f.iva_pct, f.iva_importe,
+    f.irpf_pct, f.irpf_importe, f.total, f.estado
+  ]));
+  descargarXLSX(data, 'facturas_ipse.xlsx');
+}
 
 let toastTimer;
 function toast(msg, tipo='') {
