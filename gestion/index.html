@@ -76,7 +76,6 @@ body { font-family: 'Inter', sans-serif; background: var(--cream); color: var(--
 .card { background: var(--white); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
 .card-header { padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
 .card-title { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--blue); }
-.card-action { font-size: 12px; color: var(--cyan); cursor: pointer; font-weight: 500; }
 .card-body { padding: 18px 20px; }
 .dashboard-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
 
@@ -90,14 +89,6 @@ body { font-family: 'Inter', sans-serif; background: var(--cream); color: var(--
 .chart-label { font-size: 10px; color: var(--ink-muted); }
 .chart-legend { display: flex; gap: 14px; margin-top: 12px; }
 .legend-dot { width: 8px; height: 8px; border-radius: 2px; }
-
-/* ── DONUT ── */
-.donut-wrap { display: flex; align-items: center; gap: 20px; }
-.fin-bar-wrap { flex: 1; }
-.fin-bar-row { margin-bottom: 10px; }
-.fin-bar-label { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 3px; }
-.fin-bar-bg { height: 4px; background: var(--border); border-radius: 2px; }
-.fin-bar-fill { height: 4px; border-radius: 2px; }
 
 /* ── TABLE ── */
 .table-toolbar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
@@ -121,16 +112,16 @@ body { font-family: 'Inter', sans-serif; background: var(--cream); color: var(--
 
 /* ── BADGES ── */
 .badge { padding: 2px 9px; border-radius: 20px; font-size: 11px; font-weight: 500; display: inline-block; }
-.badge-hecha     { background: var(--green-pale); color: var(--green-dark); }
-.badge-programada{ background: var(--cyan-pale);  color: #0090B8; }
-.badge-cancelada { background: var(--red-pale);   color: var(--red); }
-.badge-noshow    { background: #F0F0F0;            color: var(--ink-muted); }
-.badge-beca      { background: var(--blue-pale);  color: var(--blue); }
-.badge-bono      { background: var(--cyan-pale);  color: #0090B8; }
-.badge-activo    { background: var(--green-pale); color: var(--green-dark); }
-.badge-agotado   { background: var(--red-pale);   color: var(--red); }
-.badge-cobrado   { background: var(--green-pale); color: var(--green-dark); }
-.badge-pendiente { background: #FFF8CC;            color: #8A6A00; }
+.badge-hecha      { background: var(--green-pale); color: var(--green-dark); }
+.badge-programada { background: var(--cyan-pale);  color: #0090B8; }
+.badge-cancelada  { background: var(--red-pale);   color: var(--red); }
+.badge-noshow     { background: #F0F0F0;            color: var(--ink-muted); }
+.badge-beca       { background: var(--blue-pale);  color: var(--blue); }
+.badge-bono       { background: var(--cyan-pale);  color: #0090B8; }
+.badge-activo     { background: var(--green-pale); color: var(--green-dark); }
+.badge-agotado    { background: var(--red-pale);   color: var(--red); }
+.badge-cobrado    { background: var(--green-pale); color: var(--green-dark); }
+.badge-pendiente  { background: #FFF8CC;            color: #8A6A00; }
 
 /* ── BTNS ── */
 .btn { padding: 8px 16px; border-radius: 8px; font-family: inherit; font-size: 13px; font-weight: 500; cursor: pointer; border: none; transition: all .2s; display: inline-flex; align-items: center; gap: 6px; }
@@ -153,6 +144,7 @@ body { font-family: 'Inter', sans-serif; background: var(--cream); color: var(--
 .modal-overlay.open { display: flex; }
 .modal { background: var(--white); border-radius: 16px; box-shadow: var(--shadow-lg); width: 760px; max-width: 96vw; max-height: 92vh; overflow-y: auto; animation: modalIn .25s ease; }
 .modal-sm { width: 520px; }
+.modal-lg { width: 900px; }
 @keyframes modalIn { from { transform: translateY(20px) scale(.97); opacity: 0; } to { transform: none; opacity: 1; } }
 .modal-header { padding: 22px 26px 18px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
 .modal-title { font-weight: 700; font-size: 18px; }
@@ -163,15 +155,17 @@ body { font-family: 'Inter', sans-serif; background: var(--cream); color: var(--
 
 /* ── FORM ── */
 .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-.form-grid.full { grid-template-columns: 1fr; }
+.form-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
 .form-group { display: flex; flex-direction: column; gap: 5px; }
 .form-group.span2 { grid-column: 1 / -1; }
+.form-group.span3 { grid-column: 1 / -1; }
 .form-label { font-size: 12px; font-weight: 500; color: var(--ink-light); text-transform: uppercase; letter-spacing: .05em; }
 .form-control { padding: 8px 11px; border: 1px solid var(--border); border-radius: 8px; font-family: inherit; font-size: 14px; color: var(--ink); background: var(--white); outline: none; transition: border-color .2s; width: 100%; }
 .form-control:focus { border-color: var(--blue); }
 .form-control[readonly] { background: var(--cream); color: var(--ink-muted); }
+.form-section { font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-muted); margin: 16px 0 4px; grid-column: 1 / -1; border-top: 1px solid var(--border); padding-top: 14px; }
 
-/* ── TERAPEUTA ROWS ── */
+/* ── TER ROWS ── */
 .ter-row { display: flex; align-items: center; gap: 12px; padding: 11px 0; border-bottom: 1px solid var(--border); }
 .ter-row:last-child { border-bottom: none; }
 .ter-avatar { width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: white; flex-shrink: 0; }
@@ -221,7 +215,7 @@ body { font-family: 'Inter', sans-serif; background: var(--cream); color: var(--
     <div style="font-size:13px;color:var(--ink-muted);margin-bottom:24px">Acceso restringido — administración</div>
     <input type="email" id="login-email" class="form-control" placeholder="tu@email.com" style="text-align:center;margin-bottom:10px;font-size:15px" onkeydown="if(event.key==='Enter')loginEntrar()">
     <div id="login-error" style="color:var(--red);font-size:12px;min-height:18px;margin-bottom:10px"></div>
-    <button class="btn btn-primary" style="width:100%;padding:11px;font-size:14px" onclick="loginEntrar()">Entrar</button>
+    <button class="btn btn-primary" style="width:100%;padding:11px;font-size:14px;justify-content:center" onclick="loginEntrar()">Entrar</button>
   </div>
 </div>
 
@@ -243,7 +237,7 @@ body { font-family: 'Inter', sans-serif; background: var(--cream); color: var(--
     <div class="nav-item" onclick="navigate('becas')"><span class="icon">🏛️</span><span>Becas</span></div>
     <div class="nav-item" onclick="navigate('servicios')"><span class="icon">📋</span><span>Servicios</span></div>
   </div>
-  <div class="sidebar-footer">v3.0 · IPSE 2026</div>
+  <div class="sidebar-footer">v3.1 · IPSE 2026</div>
 </nav>
 
 <!-- MAIN -->
@@ -271,7 +265,6 @@ body { font-family: 'Inter', sans-serif; background: var(--cream); color: var(--
           <span id="dash-nav-label" style="font-size:14px;font-weight:600;color:var(--blue);min-width:130px;text-align:center">—</span>
           <button class="btn btn-secondary btn-sm" onclick="navegarDash(1)">▶</button>
           <button class="btn btn-secondary btn-sm" onclick="navegarDash(0)">Hoy</button>
-          <button class="btn btn-secondary btn-sm" onclick="exportarInformeDash()">⬇ Exportar</button>
         </div>
       </div>
 
@@ -339,7 +332,7 @@ body { font-family: 'Inter', sans-serif; background: var(--cream); color: var(--
       </div>
 
       <div class="table-toolbar">
-        <input class="search-input" placeholder="🔍 Paciente, terapeuta…" oninput="filtrarSesiones()" id="ses-busq">
+        <input class="search-input" placeholder="🔍 Paciente, terapeuta, ID…" oninput="filtrarSesiones()" id="ses-busq">
         <label style="font-size:12px;color:var(--ink-muted)">Desde</label>
         <input type="date" class="form-control btn-sm" id="ses-desde" style="width:140px" onchange="filtrarSesiones()">
         <label style="font-size:12px;color:var(--ink-muted)">Hasta</label>
@@ -538,16 +531,21 @@ body { font-family: 'Inter', sans-serif; background: var(--cream); color: var(--
   </div><!-- /content -->
 </main>
 
-<!-- ══ MODALES ══ -->
+<!-- ══════════════════════════════════════════════════════
+     MODALES
+══════════════════════════════════════════════════════ -->
 
 <!-- MODAL SESIÓN -->
 <div class="modal-overlay" id="modal-sesion">
   <div class="modal">
-    <div class="modal-header"><div class="modal-title" id="modal-sesion-titulo">Registrar sesión</div><button class="modal-close" onclick="cerrarModal('modal-sesion')">×</button></div>
+    <div class="modal-header">
+      <div class="modal-title" id="modal-sesion-titulo">Registrar sesión</div>
+      <button class="modal-close" onclick="cerrarModal('modal-sesion')">×</button>
+    </div>
     <div class="modal-body">
       <input type="hidden" id="s-id">
       <div class="form-grid">
-        <div class="form-group"><label class="form-label">Fecha</label><input type="date" class="form-control" id="s-fecha"></div>
+        <div class="form-group"><label class="form-label">Fecha *</label><input type="date" class="form-control" id="s-fecha"></div>
         <div class="form-group"><label class="form-label">Hora</label><input type="time" class="form-control" id="s-hora" step="300"></div>
         <div class="form-group"><label class="form-label">Paciente *</label><select class="form-control" id="s-paciente"></select></div>
         <div class="form-group"><label class="form-label">Terapeuta</label><select class="form-control" id="s-terapeuta"></select></div>
@@ -566,12 +564,10 @@ body { font-family: 'Inter', sans-serif; background: var(--cream); color: var(--
         <div class="form-group"><label class="form-label">¿Cobrado?</label>
           <select class="form-control" id="s-cobrado"><option value="No">No</option><option value="Sí">Sí</option></select>
         </div>
-        <div class="form-group"><label class="form-label">Medio pago</label>
-          <select class="form-control" id="s-pago">
-            <option>Efectivo</option><option>Bizum</option><option>Transferencia</option>
-          </select>
-        </div>
         <div class="form-group"><label class="form-label">Importe (€)</label><input type="number" class="form-control" id="s-importe" step="0.01"></div>
+        <div class="form-group"><label class="form-label">ID Bono vinculado</label><input type="text" class="form-control" id="s-bono" placeholder="Ej: B001"></div>
+        <div class="form-group"><label class="form-label">ID Beca vinculada</label><input type="text" class="form-control" id="s-beca" placeholder="Ej: BCA001"></div>
+        <div class="form-group"><label class="form-label">Fecha cierre</label><input type="date" class="form-control" id="s-fecha-cierre"></div>
         <div class="form-group span2"><label class="form-label">Notas</label><input type="text" class="form-control" id="s-notas"></div>
       </div>
     </div>
@@ -586,7 +582,10 @@ body { font-family: 'Inter', sans-serif; background: var(--cream); color: var(--
 <!-- MODAL COBRO -->
 <div class="modal-overlay" id="modal-cobro">
   <div class="modal modal-sm">
-    <div class="modal-header"><div class="modal-title">Registrar cobro</div><button class="modal-close" onclick="cerrarModal('modal-cobro')">×</button></div>
+    <div class="modal-header">
+      <div class="modal-title" id="modal-cobro-titulo">Registrar cobro</div>
+      <button class="modal-close" onclick="cerrarModal('modal-cobro')">×</button>
+    </div>
     <div class="modal-body">
       <input type="hidden" id="c-id">
       <div class="form-grid">
@@ -604,35 +603,53 @@ body { font-family: 'Inter', sans-serif; background: var(--cream); color: var(--
       </div>
     </div>
     <div class="modal-footer">
+      <button class="btn btn-danger btn-sm" id="c-btn-eliminar" style="margin-right:auto;display:none" onclick="eliminarCobro()">🗑 Eliminar</button>
       <button class="btn btn-secondary" onclick="cerrarModal('modal-cobro')">Cancelar</button>
       <button class="btn btn-primary" onclick="guardarCobro()">Guardar cobro</button>
     </div>
   </div>
 </div>
 
-<!-- MODAL PACIENTE -->
+<!-- MODAL PACIENTE (formulario completo con todos los campos de la tabla) -->
 <div class="modal-overlay" id="modal-paciente">
-  <div class="modal">
-    <div class="modal-header"><div class="modal-title" id="modal-pac-titulo">Nuevo paciente</div><button class="modal-close" onclick="cerrarModal('modal-paciente')">×</button></div>
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-pac-titulo">Nuevo paciente</div>
+      <button class="modal-close" onclick="cerrarModal('modal-paciente')">×</button>
+    </div>
     <div class="modal-body">
       <input type="hidden" id="p-id">
       <div class="form-grid">
+        <!-- Datos básicos -->
+        <div class="form-section">Datos personales</div>
         <div class="form-group"><label class="form-label">Nombre *</label><input type="text" class="form-control" id="p-nombre"></div>
         <div class="form-group"><label class="form-label">Apellidos</label><input type="text" class="form-control" id="p-apellidos"></div>
         <div class="form-group"><label class="form-label">Alias</label><input type="text" class="form-control" id="p-alias" placeholder="Como se le conoce"></div>
+        <div class="form-group"><label class="form-label">Fecha nacimiento</label><input type="date" class="form-control" id="p-fnac"></div>
+        <div class="form-group"><label class="form-label">DNI paciente</label><input type="text" class="form-control" id="p-dni-pac"></div>
+        <!-- Tutores -->
+        <div class="form-section">Tutores y contacto</div>
         <div class="form-group"><label class="form-label">Tutor 1</label><input type="text" class="form-control" id="p-tutor1"></div>
+        <div class="form-group"><label class="form-label">DNI Tutor 1</label><input type="text" class="form-control" id="p-dni-tutor1"></div>
         <div class="form-group"><label class="form-label">Teléfono</label><input type="tel" class="form-control" id="p-tel"></div>
         <div class="form-group"><label class="form-label">Tutor 2</label><input type="text" class="form-control" id="p-tutor2"></div>
         <div class="form-group"><label class="form-label">Teléfono 2</label><input type="tel" class="form-control" id="p-tel2"></div>
         <div class="form-group"><label class="form-label">Email</label><input type="email" class="form-control" id="p-email"></div>
+        <!-- Dirección -->
+        <div class="form-section">Dirección</div>
+        <div class="form-group span2"><label class="form-label">Dirección</label><input type="text" class="form-control" id="p-dir"></div>
+        <div class="form-group"><label class="form-label">Código postal</label><input type="text" class="form-control" id="p-cp"></div>
+        <div class="form-group"><label class="form-label">Municipio</label><input type="text" class="form-control" id="p-municipio"></div>
+        <!-- Clínica -->
+        <div class="form-section">Datos clínicos</div>
         <div class="form-group"><label class="form-label">Terapeuta principal</label><select class="form-control" id="p-terapeuta"></select></div>
+        <div class="form-group"><label class="form-label">Fecha alta</label><input type="date" class="form-control" id="p-alta"></div>
         <div class="form-group"><label class="form-label">¿Beca?</label>
           <select class="form-control" id="p-beca"><option value="No">No</option><option value="Sí">Sí</option></select>
         </div>
         <div class="form-group"><label class="form-label">Consentimiento</label>
           <select class="form-control" id="p-consent"><option value="Pendiente">Pendiente</option><option value="Firmado">Firmado</option></select>
         </div>
-        <div class="form-group"><label class="form-label">Fecha alta</label><input type="date" class="form-control" id="p-alta"></div>
         <div class="form-group span2"><label class="form-label">Notas</label><input type="text" class="form-control" id="p-notas"></div>
       </div>
     </div>
@@ -647,22 +664,26 @@ body { font-family: 'Inter', sans-serif; background: var(--cream); color: var(--
 <!-- MODAL TERAPEUTA -->
 <div class="modal-overlay" id="modal-terapeuta">
   <div class="modal modal-sm">
-    <div class="modal-header"><div class="modal-title" id="modal-ter-titulo">Nueva terapeuta</div><button class="modal-close" onclick="cerrarModal('modal-terapeuta')">×</button></div>
+    <div class="modal-header">
+      <div class="modal-title" id="modal-ter-titulo">Nueva terapeuta</div>
+      <button class="modal-close" onclick="cerrarModal('modal-terapeuta')">×</button>
+    </div>
     <div class="modal-body">
       <input type="hidden" id="tr-id">
       <div class="form-grid">
         <div class="form-group"><label class="form-label">Nombre *</label><input type="text" class="form-control" id="tr-nombre"></div>
         <div class="form-group"><label class="form-label">Especialidad</label><input type="text" class="form-control" id="tr-especialidad"></div>
-        <div class="form-group"><label class="form-label">% Comisión</label><input type="number" class="form-control" id="tr-comision" min="0" max="100" step="0.1" placeholder="60"></div>
         <div class="form-group"><label class="form-label">Email</label><input type="email" class="form-control" id="tr-email"></div>
         <div class="form-group"><label class="form-label">Activa</label>
           <select class="form-control" id="tr-activa"><option value="Sí">Sí</option><option value="No">No</option></select>
         </div>
-        <div class="form-group"><label class="form-label">Pct_Com (0-1)</label><input type="number" class="form-control" id="tr-pct-com" step="0.01" min="0" max="1" placeholder="0.6"></div>
+        <div class="form-group"><label class="form-label">Pct_Com (0–1)</label><input type="number" class="form-control" id="tr-pct-com" step="0.01" min="0" max="1" placeholder="0.6"></div>
+        <div class="form-group"><label class="form-label">Calendar ID</label><input type="text" class="form-control" id="tr-cal"></div>
         <div class="form-group span2"><label class="form-label">Notas</label><input type="text" class="form-control" id="tr-notas"></div>
       </div>
     </div>
     <div class="modal-footer">
+      <button class="btn btn-danger btn-sm" id="tr-btn-eliminar" style="margin-right:auto;display:none" onclick="eliminarTerapeuta()">🗑 Eliminar</button>
       <button class="btn btn-secondary" onclick="cerrarModal('modal-terapeuta')">Cancelar</button>
       <button class="btn btn-primary" onclick="guardarTerapeuta()">Guardar</button>
     </div>
@@ -672,10 +693,13 @@ body { font-family: 'Inter', sans-serif; background: var(--cream); color: var(--
 <!-- MODAL BONO -->
 <div class="modal-overlay" id="modal-bono">
   <div class="modal modal-sm">
-    <div class="modal-header"><div class="modal-title" id="modal-bon-titulo">Nuevo bono</div><button class="modal-close" onclick="cerrarModal('modal-bono')">×</button></div>
+    <div class="modal-header">
+      <div class="modal-title" id="modal-bon-titulo">Nuevo bono</div>
+      <button class="modal-close" onclick="cerrarModal('modal-bono')">×</button>
+    </div>
     <div class="modal-body">
       <input type="hidden" id="bn-id">
-      <div id="bn-meta" style="font-size:11px;color:var(--ink-muted);background:var(--cream);padding:6px 10px;border-radius:6px;margin-bottom:14px;font-family:monospace"></div>
+      <div id="bn-meta" style="font-size:11px;color:var(--ink-muted);background:var(--cream);padding:6px 10px;border-radius:6px;margin-bottom:14px;font-family:monospace;display:none"></div>
       <div class="form-grid">
         <div class="form-group span2"><label class="form-label">Paciente *</label><select class="form-control" id="bn-paciente"></select></div>
         <div class="form-group"><label class="form-label">Tipo</label><input type="text" class="form-control" id="bn-tipo" value="Sesión individual"></div>
@@ -692,11 +716,12 @@ body { font-family: 'Inter', sans-serif; background: var(--cream); color: var(--
         <div class="form-group"><label class="form-label">Fecha caducidad</label><input type="date" class="form-control" id="bn-fecha-cad"></div>
         <div class="form-group span2"><label class="form-label">Notas</label><input type="text" class="form-control" id="bn-notas"></div>
       </div>
-      <div id="bn-resumen" style="background:var(--cream);border:1px solid var(--border);border-radius:8px;padding:12px;margin-top:12px;font-size:13px">
+      <div style="background:var(--cream);border:1px solid var(--border);border-radius:8px;padding:12px;margin-top:12px;font-size:13px">
         Pendientes: <strong id="bn-pendientes" style="color:var(--blue)">—</strong> &nbsp;·&nbsp; Valor/ses: <strong id="bn-valor-ses">—</strong> €
       </div>
     </div>
     <div class="modal-footer">
+      <button class="btn btn-danger btn-sm" id="bn-btn-eliminar" style="margin-right:auto;display:none" onclick="eliminarBono()">🗑 Eliminar</button>
       <button class="btn btn-secondary" onclick="cerrarModal('modal-bono')">Cancelar</button>
       <button class="btn btn-primary" onclick="guardarBono()">Guardar bono</button>
     </div>
@@ -706,7 +731,10 @@ body { font-family: 'Inter', sans-serif; background: var(--cream); color: var(--
 <!-- MODAL BECA -->
 <div class="modal-overlay" id="modal-beca">
   <div class="modal modal-sm">
-    <div class="modal-header"><div class="modal-title" id="modal-bec-titulo">Nueva beca</div><button class="modal-close" onclick="cerrarModal('modal-beca')">×</button></div>
+    <div class="modal-header">
+      <div class="modal-title" id="modal-bec-titulo">Nueva beca</div>
+      <button class="modal-close" onclick="cerrarModal('modal-beca')">×</button>
+    </div>
     <div class="modal-body">
       <input type="hidden" id="bc-id">
       <div class="form-grid">
@@ -729,11 +757,11 @@ body { font-family: 'Inter', sans-serif; background: var(--cream); color: var(--
           <select class="form-control" id="bc-cobrado"><option value="Pendiente_cobro">Pendiente</option><option value="Cobrado">Cobrado</option></select>
         </div>
         <div class="form-group"><label class="form-label">Fecha cobro</label><input type="date" class="form-control" id="bc-fecha-cobro"></div>
-        <div class="form-group"><label class="form-label">Entidad</label><input type="text" class="form-control" id="bc-entidad" placeholder="Junta de Andalucía"></div>
         <div class="form-group span2"><label class="form-label">Notas / expediente</label><input type="text" class="form-control" id="bc-notas"></div>
       </div>
     </div>
     <div class="modal-footer">
+      <button class="btn btn-danger btn-sm" id="bc-btn-eliminar" style="margin-right:auto;display:none" onclick="eliminarBeca()">🗑 Eliminar</button>
       <button class="btn btn-secondary" onclick="cerrarModal('modal-beca')">Cancelar</button>
       <button class="btn btn-primary" onclick="guardarBeca()">Guardar beca</button>
     </div>
@@ -743,7 +771,10 @@ body { font-family: 'Inter', sans-serif; background: var(--cream); color: var(--
 <!-- MODAL SERVICIO -->
 <div class="modal-overlay" id="modal-servicio">
   <div class="modal modal-sm">
-    <div class="modal-header"><div class="modal-title" id="modal-srv-titulo">Nuevo servicio</div><button class="modal-close" onclick="cerrarModal('modal-servicio')">×</button></div>
+    <div class="modal-header">
+      <div class="modal-title" id="modal-srv-titulo">Nuevo servicio</div>
+      <button class="modal-close" onclick="cerrarModal('modal-servicio')">×</button>
+    </div>
     <div class="modal-body">
       <input type="hidden" id="sv-id">
       <div class="form-grid">
@@ -763,6 +794,7 @@ body { font-family: 'Inter', sans-serif; background: var(--cream); color: var(--
       </div>
     </div>
     <div class="modal-footer">
+      <button class="btn btn-danger btn-sm" id="sv-btn-eliminar" style="margin-right:auto;display:none" onclick="eliminarServicio()">🗑 Eliminar</button>
       <button class="btn btn-secondary" onclick="cerrarModal('modal-servicio')">Cancelar</button>
       <button class="btn btn-primary" onclick="guardarServicio()">Guardar servicio</button>
     </div>
@@ -825,8 +857,7 @@ let G = {
   email:'', terapeutas:[], pacientes:[], servicios:[],
   sesiones:[], cobros:[], bonos:[], becas:[],
   dashMes: new Date().getMonth()+1, dashAnio: new Date().getFullYear(),
-  paginaActual:{}, paginaSize:50,
-  colores:{},
+  paginaSize:50, colores:{},
 };
 
 const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
@@ -858,7 +889,7 @@ window.addEventListener('DOMContentLoaded', () => {
 async function iniciarApp() {
   try {
     const [ters, pacs, srvs, bonos, becas] = await Promise.all([
-      sg('terapeutas','activa=eq.Sí&order=id_terapeuta.asc'),
+      sg('terapeutas','order=id_terapeuta.asc'),
       sg('pacientes','order=apellidos.asc,nombre.asc'),
       sg('servicios','order=id_servicio.asc'),
       sg('bonos','order=fecha_compra.desc'),
@@ -968,10 +999,9 @@ async function cargarDashboard() {
   const fd=new Date(a,m,1); const ff=`${fd.getFullYear()}-${pad(fd.getMonth()+1)}-01`;
 
   try {
-    const [sesiones, cobrosM, pacientes] = await Promise.all([
+    const [sesiones, cobrosM] = await Promise.all([
       sg('sesiones',`fecha=gte.${fi}&fecha=lt.${ff}&order=fecha.asc,hora.asc`),
       sg('cobros',`fecha=gte.${fi}&fecha=lt.${ff}`),
-      sg('pacientes','order=nombre.asc'),
     ]);
 
     const realizadas = sesiones.filter(s=>s.estado==='Hecha');
@@ -984,7 +1014,6 @@ async function cargarDashboard() {
     const banco      = cobrosM.filter(c=>['Bizum','Transferencia'].includes(c.metodo_pago)&&c.estado==='Confirmado').reduce((sum,c)=>sum+(parseFloat(c.importe)||0),0);
     const pendiente  = produccion - cobrado;
 
-    // Por terapeuta
     const porTer = G.terapeutas.map(t=>{
       const sesT = realizadas.filter(s=>s.id_terapeuta===t.id_terapeuta);
       const prod = sesT.reduce((sum,s)=>sum+(parseFloat(s.importe)||0),0);
@@ -997,7 +1026,6 @@ async function cargarDashboard() {
     const margen   = produccion - totalCom;
     const tasaAsist = conEstado.length>0 ? Math.round(realizadas.length/conEstado.length*100) : 0;
 
-    // KPIs económicos
     document.getElementById('kpi-produccion').textContent     = fmtEur(produccion);
     document.getElementById('kpi-produccion-sub').textContent = realizadas.length+' sesiones realizadas';
     document.getElementById('kpi-cobrado').textContent        = fmtEur(cobrado);
@@ -1006,8 +1034,6 @@ async function cargarDashboard() {
     document.getElementById('kpi-cobrado-banco').textContent  = fmtEur(banco);
     document.getElementById('kpi-margen').textContent         = fmtEur(margen);
     document.getElementById('kpi-margen-sub').textContent     = 'Com: '+fmtEur(totalCom);
-
-    // KPIs operativos
     document.getElementById('kpi-tasa').textContent           = tasaAsist+'%';
     document.getElementById('kpi-noshow').textContent         = canceladas.length+' + '+noShows.length;
     document.getElementById('kpi-noshow-sub').textContent     = 'canceladas + no-shows';
@@ -1025,10 +1051,8 @@ async function cargarDashboard() {
     const becasAct = G.becas.filter(b=>b.estado==='Activo').length;
     document.getElementById('kpi-bonos-becas').textContent     = bonosAct+' / '+becasAct;
     document.getElementById('kpi-bonos-becas-sub').textContent = 'bonos / becas activos';
+    document.getElementById('dash-periodo-label').textContent  = MESES[m-1]+' '+a+' · '+sesiones.length+' citas totales';
 
-    document.getElementById('dash-periodo-label').textContent = MESES[m-1]+' '+a+' · '+sesiones.length+' citas totales';
-
-    // Ranking terapeutas
     const maxProd = Math.max(...porTer.map(t=>t.produccion),1);
     document.getElementById('ranking-terapeutas').innerHTML = porTer.length ? porTer.map((t,i)=>`
       <div class="ter-row">
@@ -1044,14 +1068,12 @@ async function cargarDashboard() {
         </div>
       </div>`).join('') : '<div style="color:var(--ink-muted);font-size:13px">Sin sesiones este mes</div>';
 
-    // Pendiente por terapeuta
     document.getElementById('pendiente-terapeutas').innerHTML = porTer.filter(t=>t.pendiente>0).map(t=>`
       <div class="ter-row">
         <div class="ter-info"><div class="ter-name">${t.nombre}</div></div>
         <div style="font-size:14px;font-weight:600;color:var(--red)">${fmtEur(t.pendiente)}</div>
       </div>`).join('') || '<div style="color:var(--ink-muted);font-size:13px">Sin pendiente</div>';
 
-    // Alertas
     const alertas = [];
     G.bonos.filter(b=>b.estado==='Activo'&&(parseInt(b.sesiones_pendientes)||0)<=2).forEach(b=>{
       alertas.push({icon:'🎫',msg:`Bono ${b.id_bono} — ${nomPac(b.id_paciente)}: ${b.sesiones_pendientes} ses. pendientes`});
@@ -1063,9 +1085,7 @@ async function cargarDashboard() {
       alertas.slice(0,8).map(a=>`<div class="alert-item"><div class="alert-icon">${a.icon}</div><div>${a.msg}</div></div>`).join('') :
       '<div style="color:var(--ink-muted);font-size:13px">Sin alertas</div>';
 
-    // Gráfico últimos 6 meses
     await renderGrafico();
-
   } catch(err) { toast('Error dashboard: '+err.message,'err'); }
 }
 
@@ -1088,7 +1108,6 @@ async function renderGrafico() {
     const cobr = cob.reduce((s,r)=>s+(parseFloat(r.importe)||0),0);
     return {label, prod, cobr};
   }));
-
   const maxVal = Math.max(...datos.map(d=>d.prod),1);
   document.getElementById('chart-produccion').innerHTML = datos.map(d=>`
     <div class="chart-bar-wrap">
@@ -1099,8 +1118,6 @@ async function renderGrafico() {
       <div class="chart-label">${d.label}</div>
     </div>`).join('');
 }
-
-function exportarInformeDash() { toast('Exportación en construcción','err'); }
 
 // ═══════════════════════════════════════════════════════
 //  SESIONES
@@ -1142,7 +1159,7 @@ function filtrarSesiones() {
   const realizadas = sesFiltradas.filter(s=>s.estado==='Hecha');
   const ticket = realizadas.length>0 ? prod/realizadas.length : 0;
 
-  document.getElementById('prod-valor').textContent   = fmtEur(prod);
+  document.getElementById('prod-valor').textContent    = fmtEur(prod);
   document.getElementById('prod-sesiones').textContent = realizadas.length+' sesiones realizadas';
   document.getElementById('prod-cobrado').textContent  = fmtEur(cobr);
   document.getElementById('prod-cobrado-pct').textContent = prod>0?Math.round(cobr/prod*100)+'% cobrado':'—';
@@ -1190,9 +1207,7 @@ function exportarCSVSesiones() {
   descargarCSV(rows,'sesiones_ipse.csv');
 }
 
-// ═══════════════════════════════════════════════════════
-//  MODAL SESIÓN
-// ═══════════════════════════════════════════════════════
+// ─── Modal Sesión ──────────────────────────────────────
 function abrirModalSesion() {
   document.getElementById('s-id').value='';
   document.getElementById('modal-sesion-titulo').textContent='Nueva sesión';
@@ -1206,6 +1221,9 @@ function abrirModalSesion() {
   document.getElementById('s-paciente').value='';
   document.getElementById('s-terapeuta').value='';
   document.getElementById('s-servicio').value='';
+  document.getElementById('s-bono').value='';
+  document.getElementById('s-beca').value='';
+  document.getElementById('s-fecha-cierre').value='';
   document.getElementById('s-btn-eliminar').style.display='none';
   abrirModal('modal-sesion');
 }
@@ -1223,6 +1241,9 @@ function editarSesion(id) {
   document.getElementById('s-fin').value=s.financiacion_tipo||'SUELTA';
   document.getElementById('s-cobrado').value=s.cerrada||'No';
   document.getElementById('s-importe').value=s.importe||'';
+  document.getElementById('s-bono').value=s.id_bono||'';
+  document.getElementById('s-beca').value=s.id_beca||'';
+  document.getElementById('s-fecha-cierre').value=s.fecha_cierre||'';
   document.getElementById('s-notas').value=s.notas||'';
   document.getElementById('s-btn-eliminar').style.display='inline-flex';
   abrirModal('modal-sesion');
@@ -1231,16 +1252,19 @@ function editarSesion(id) {
 async function guardarSesion() {
   const id = document.getElementById('s-id').value;
   const datos = {
-    fecha: document.getElementById('s-fecha').value,
-    hora:  document.getElementById('s-hora').value,
-    id_paciente:  document.getElementById('s-paciente').value,
-    id_terapeuta: document.getElementById('s-terapeuta').value,
-    id_servicio:  document.getElementById('s-servicio').value,
-    estado:            document.getElementById('s-estado').value,
-    financiacion_tipo: document.getElementById('s-fin').value,
-    cerrada:      document.getElementById('s-cobrado').value,
-    importe:      parseFloat(document.getElementById('s-importe').value)||0,
-    notas:        document.getElementById('s-notas').value.trim(),
+    fecha:            document.getElementById('s-fecha').value,
+    hora:             document.getElementById('s-hora').value||null,
+    id_paciente:      document.getElementById('s-paciente').value,
+    id_terapeuta:     document.getElementById('s-terapeuta').value||null,
+    id_servicio:      document.getElementById('s-servicio').value||null,
+    estado:           document.getElementById('s-estado').value,
+    financiacion_tipo:document.getElementById('s-fin').value,
+    cerrada:          document.getElementById('s-cobrado').value,
+    importe:          parseFloat(document.getElementById('s-importe').value)||0,
+    id_bono:          document.getElementById('s-bono').value.trim()||null,
+    id_beca:          document.getElementById('s-beca').value.trim()||null,
+    fecha_cierre:     document.getElementById('s-fecha-cierre').value||null,
+    notas:            document.getElementById('s-notas').value.trim(),
   };
   if (!datos.fecha||!datos.id_paciente) { toast('Fecha y paciente son obligatorios','err'); return; }
   try {
@@ -1251,7 +1275,7 @@ async function guardarSesion() {
       toast('Sesión actualizada ✓','ok');
     } else {
       const newId = await genId('sesiones','id_cita','S');
-      await sp('sesiones',{...datos,id_cita:newId,fecha_alta_cita:new Date().toISOString().split('T')[0]});
+      await sp('sesiones',{...datos,id_cita:newId});
       G.sesiones.unshift({...datos,id_cita:newId});
       toast('Sesión creada ✓','ok');
     }
@@ -1262,7 +1286,7 @@ async function guardarSesion() {
 
 async function eliminarSesion() {
   const id = document.getElementById('s-id').value; if (!id) return;
-  if (!confirm('¿Eliminar sesión '+id+'?')) return;
+  if (!confirm('¿Eliminar sesión '+id+'? Esta acción no se puede deshacer.')) return;
   try {
     await sd('sesiones',`id_cita=eq.${id}`);
     G.sesiones = G.sesiones.filter(s=>s.id_cita!==id);
@@ -1284,7 +1308,6 @@ async function cargarCobros() {
     const fi  = hoy.getFullYear()+'-'+String(hoy.getMonth()+1).padStart(2,'0')+'-01';
     const rows = await sg('cobros',`order=fecha.desc&limit=500`);
     G.cobros = rows;
-    // Default: mes actual
     document.getElementById('cob-desde').value = fi;
     filtrarCobros();
   } catch(err) { toast('Error cargando cobros: '+err.message,'err'); }
@@ -1304,11 +1327,11 @@ function filtrarCobros() {
     return true;
   });
 
-  const total   = cobFiltrados.filter(c=>c.estado==='Confirmado').reduce((sum,c)=>sum+(parseFloat(c.importe)||0),0);
+  const total     = cobFiltrados.filter(c=>c.estado==='Confirmado').reduce((sum,c)=>sum+(parseFloat(c.importe)||0),0);
   const pendiente = G.sesiones.filter(s=>s.estado==='Hecha'&&s.cerrada!=='Sí').reduce((sum,s)=>sum+(parseFloat(s.importe)||0),0);
-  document.getElementById('cobros-total').textContent    = fmtEur(total);
+  document.getElementById('cobros-total').textContent     = fmtEur(total);
   document.getElementById('cobros-pendiente').textContent = fmtEur(pendiente);
-  document.getElementById('cobros-count').textContent    = cobFiltrados.length;
+  document.getElementById('cobros-count').textContent     = cobFiltrados.length;
 
   const tbody = document.getElementById('tbody-cobros');
   if (!cobFiltrados.length) { tbody.innerHTML='<tr><td colspan="9" class="empty-state">Sin cobros</td></tr>'; return; }
@@ -1335,6 +1358,7 @@ function limpiarFiltrosCobros() {
 
 function abrirModalCobro() {
   document.getElementById('c-id').value='';
+  document.getElementById('modal-cobro-titulo').textContent='Nuevo cobro';
   document.getElementById('c-fecha').value=new Date().toISOString().split('T')[0];
   document.getElementById('c-paciente').value='';
   document.getElementById('c-sesion').value='';
@@ -1342,12 +1366,14 @@ function abrirModalCobro() {
   document.getElementById('c-metodo').value='Efectivo';
   document.getElementById('c-estado').value='Confirmado';
   document.getElementById('c-obs').value='';
+  document.getElementById('c-btn-eliminar').style.display='none';
   abrirModal('modal-cobro');
 }
 
 function editarCobro(id) {
   const c = G.cobros.find(x=>x.id_cobro===id); if (!c) return;
   document.getElementById('c-id').value=id;
+  document.getElementById('modal-cobro-titulo').textContent='Editar cobro · '+id;
   document.getElementById('c-fecha').value=c.fecha||'';
   document.getElementById('c-paciente').value=c.id_paciente||'';
   document.getElementById('c-sesion').value=c.id_sesion||'';
@@ -1355,6 +1381,7 @@ function editarCobro(id) {
   document.getElementById('c-metodo').value=c.metodo_pago||'Efectivo';
   document.getElementById('c-estado').value=c.estado||'Confirmado';
   document.getElementById('c-obs').value=c.notas||'';
+  document.getElementById('c-btn-eliminar').style.display='inline-flex';
   abrirModal('modal-cobro');
 }
 
@@ -1363,13 +1390,13 @@ async function guardarCobro() {
   const importe = parseFloat(document.getElementById('c-importe').value)||0;
   if (!importe) { toast('El importe es obligatorio','err'); return; }
   const datos = {
-    fecha:      document.getElementById('c-fecha').value,
-    id_paciente:document.getElementById('c-paciente').value,
-    id_sesion:  document.getElementById('c-sesion').value||'',
+    fecha:       document.getElementById('c-fecha').value,
+    id_paciente: document.getElementById('c-paciente').value,
+    id_sesion:   document.getElementById('c-sesion').value||null,
     importe,
-    metodo_pago:document.getElementById('c-metodo').value,
-    estado:     document.getElementById('c-estado').value,
-    notas:      document.getElementById('c-obs').value.trim(),
+    metodo_pago: document.getElementById('c-metodo').value,
+    estado:      document.getElementById('c-estado').value,
+    notas:       document.getElementById('c-obs').value.trim(),
   };
   try {
     if (id) {
@@ -1383,6 +1410,18 @@ async function guardarCobro() {
       G.cobros.unshift({...datos,id_cobro:newId});
       toast('Cobro registrado ✓','ok');
     }
+    cerrarModal('modal-cobro');
+    filtrarCobros();
+  } catch(err) { toast('Error: '+err.message,'err'); }
+}
+
+async function eliminarCobro() {
+  const id = document.getElementById('c-id').value; if (!id) return;
+  if (!confirm('¿Eliminar cobro '+id+'?')) return;
+  try {
+    await sd('cobros',`id_cobro=eq.${id}`);
+    G.cobros = G.cobros.filter(c=>c.id_cobro!==id);
+    toast('Cobro eliminado ✓','ok');
     cerrarModal('modal-cobro');
     filtrarCobros();
   } catch(err) { toast('Error: '+err.message,'err'); }
@@ -1413,11 +1452,14 @@ function filtrarPacientes() {
     return true;
   });
   pacPag=0;
-  renderPacientes();
+  _renderPacientesTable();
 }
 
 function renderPacientes() {
   filtrarPacientes();
+}
+
+function _renderPacientesTable() {
   const inicio = pacPag*G.paginaSize;
   const pagina = pacFiltrados.slice(inicio,inicio+G.paginaSize);
   const tbody = document.getElementById('tbody-pacientes');
@@ -1439,13 +1481,13 @@ function renderPacientes() {
   }
   document.getElementById('pac-footer').textContent = pacFiltrados.length+' pacientes';
   document.getElementById('pac-count').textContent  = pacFiltrados.length+' pacientes';
-  renderPaginacion('pag-pacientes',pacFiltrados.length,G.paginaSize,pacPag,(p)=>{ pacPag=p; renderPacientes(); });
+  renderPaginacion('pag-pacientes',pacFiltrados.length,G.paginaSize,pacPag,(p)=>{ pacPag=p; _renderPacientesTable(); });
 }
 
 function abrirModalPaciente() {
   document.getElementById('p-id').value='';
   document.getElementById('modal-pac-titulo').textContent='Nuevo paciente';
-  ['p-nombre','p-apellidos','p-alias','p-tutor1','p-tel','p-tutor2','p-tel2','p-email','p-notas'].forEach(id=>document.getElementById(id).value='');
+  ['p-nombre','p-apellidos','p-alias','p-fnac','p-dni-pac','p-tutor1','p-dni-tutor1','p-tel','p-tutor2','p-tel2','p-email','p-dir','p-cp','p-municipio','p-notas'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   document.getElementById('p-beca').value='No';
   document.getElementById('p-consent').value='Pendiente';
   document.getElementById('p-alta').value=new Date().toISOString().split('T')[0];
@@ -1459,19 +1501,25 @@ function editarPaciente(id) {
   const p = G.pacientes.find(x=>x.id_paciente===id); if (!p) return;
   document.getElementById('p-id').value=id;
   document.getElementById('modal-pac-titulo').textContent='Editar — '+id;
-  document.getElementById('p-nombre').value    = p.nombre||'';
-  document.getElementById('p-apellidos').value = p.apellidos||'';
-  document.getElementById('p-alias').value     = p.alias||'';
-  document.getElementById('p-tutor1').value    = p.tutor1||'';
-  document.getElementById('p-tel').value       = p.telefono||'';
-  document.getElementById('p-tutor2').value    = p.tutor2||'';
-  document.getElementById('p-tel2').value      = p.telefono2||'';
-  document.getElementById('p-email').value     = p.email||'';
-  document.getElementById('p-notas').value     = p.notas||'';
-  document.getElementById('p-beca').value      = p.es_beca||'No';
-  document.getElementById('p-consent').value   = p.consentimiento||'Pendiente';
-  document.getElementById('p-alta').value      = p.fecha_alta||'';
-  document.getElementById('p-terapeuta').value = p.terapeuta_principal||'';
+  document.getElementById('p-nombre').value      = p.nombre||'';
+  document.getElementById('p-apellidos').value   = p.apellidos||'';
+  document.getElementById('p-alias').value       = p.alias||'';
+  document.getElementById('p-fnac').value        = p.fecha_nacimiento||'';
+  document.getElementById('p-dni-pac').value     = p.dni_paciente||'';
+  document.getElementById('p-tutor1').value      = p.tutor1||'';
+  document.getElementById('p-dni-tutor1').value  = p.dni_tutor1||'';
+  document.getElementById('p-tel').value         = p.telefono||'';
+  document.getElementById('p-tutor2').value      = p.tutor2||'';
+  document.getElementById('p-tel2').value        = p.telefono2||'';
+  document.getElementById('p-email').value       = p.email||'';
+  document.getElementById('p-dir').value         = p.direccion||'';
+  document.getElementById('p-cp').value          = p.codigo_postal||'';
+  document.getElementById('p-municipio').value   = p.municipio||'';
+  document.getElementById('p-notas').value       = p.notas||'';
+  document.getElementById('p-beca').value        = p.es_beca||'No';
+  document.getElementById('p-consent').value     = p.consentimiento||'Pendiente';
+  document.getElementById('p-alta').value        = p.fecha_alta||'';
+  document.getElementById('p-terapeuta').value   = p.terapeuta_principal||'';
   document.getElementById('p-btn-eliminar').style.display='inline-flex';
   document.getElementById('p-btn-guardar').textContent='Guardar cambios';
   abrirModal('modal-paciente');
@@ -1482,17 +1530,24 @@ async function guardarPaciente() {
   const nombre = document.getElementById('p-nombre').value.trim();
   if (!nombre) { toast('El nombre es obligatorio','err'); return; }
   const datos = {
-    nombre, apellidos: document.getElementById('p-apellidos').value.trim(),
-    alias:    document.getElementById('p-alias').value.trim(),
-    tutor1:   document.getElementById('p-tutor1').value.trim(),
-    telefono: document.getElementById('p-tel').value.trim(),
-    tutor2:   document.getElementById('p-tutor2').value.trim(),
-    telefono2:document.getElementById('p-tel2').value.trim(),
-    email:    document.getElementById('p-email').value.trim(),
-    notas:    document.getElementById('p-notas').value.trim(),
-    es_beca:           document.getElementById('p-beca').value,
-    consentimiento:    document.getElementById('p-consent').value,
-    fecha_alta:        document.getElementById('p-alta').value||null,
+    nombre,
+    apellidos:        document.getElementById('p-apellidos').value.trim(),
+    alias:            document.getElementById('p-alias').value.trim(),
+    fecha_nacimiento: document.getElementById('p-fnac').value||null,
+    dni_paciente:     document.getElementById('p-dni-pac').value.trim(),
+    tutor1:           document.getElementById('p-tutor1').value.trim(),
+    dni_tutor1:       document.getElementById('p-dni-tutor1').value.trim(),
+    telefono:         document.getElementById('p-tel').value.trim(),
+    tutor2:           document.getElementById('p-tutor2').value.trim(),
+    telefono2:        document.getElementById('p-tel2').value.trim(),
+    email:            document.getElementById('p-email').value.trim(),
+    direccion:        document.getElementById('p-dir').value.trim(),
+    codigo_postal:    document.getElementById('p-cp').value.trim(),
+    municipio:        document.getElementById('p-municipio').value.trim(),
+    notas:            document.getElementById('p-notas').value.trim(),
+    es_beca:          document.getElementById('p-beca').value,
+    consentimiento:   document.getElementById('p-consent').value,
+    fecha_alta:       document.getElementById('p-alta').value||null,
     terapeuta_principal: document.getElementById('p-terapeuta').value||null,
   };
   try {
@@ -1546,10 +1601,10 @@ function renderTerapeutas() {
 function abrirModalTerapeuta() {
   document.getElementById('tr-id').value='';
   document.getElementById('modal-ter-titulo').textContent='Nueva terapeuta';
-  ['tr-nombre','tr-especialidad','tr-email','tr-notas'].forEach(id=>document.getElementById(id).value='');
-  document.getElementById('tr-comision').value='60';
+  ['tr-nombre','tr-especialidad','tr-email','tr-notas','tr-cal'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('tr-pct-com').value='0.6';
   document.getElementById('tr-activa').value='Sí';
+  document.getElementById('tr-btn-eliminar').style.display='none';
   abrirModal('modal-terapeuta');
 }
 
@@ -1557,13 +1612,14 @@ function editarTerapeuta(id) {
   const t = G.terapeutas.find(x=>x.id_terapeuta===id); if (!t) return;
   document.getElementById('tr-id').value=id;
   document.getElementById('modal-ter-titulo').textContent='Editar — '+id;
-  document.getElementById('tr-nombre').value      = t.nombre||'';
-  document.getElementById('tr-especialidad').value= t.especialidad||'';
-  document.getElementById('tr-email').value       = t.email||'';
-  document.getElementById('tr-notas').value       = t.notas||'';
-  document.getElementById('tr-comision').value    = Math.round((parseFloat(t.pct_com)||0)*100);
-  document.getElementById('tr-pct-com').value     = t.pct_com||'0.6';
-  document.getElementById('tr-activa').value      = t.activa||'Sí';
+  document.getElementById('tr-nombre').value       = t.nombre||'';
+  document.getElementById('tr-especialidad').value = t.especialidad||'';
+  document.getElementById('tr-email').value        = t.email||'';
+  document.getElementById('tr-notas').value        = t.notas||'';
+  document.getElementById('tr-pct-com').value      = t.pct_com||'0.6';
+  document.getElementById('tr-activa').value       = t.activa||'Sí';
+  document.getElementById('tr-cal').value          = t.calendar_id||'';
+  document.getElementById('tr-btn-eliminar').style.display='inline-flex';
   abrirModal('modal-terapeuta');
 }
 
@@ -1571,14 +1627,14 @@ async function guardarTerapeuta() {
   const id     = document.getElementById('tr-id').value;
   const nombre = document.getElementById('tr-nombre').value.trim();
   if (!nombre) { toast('El nombre es obligatorio','err'); return; }
-  const pct = parseFloat(document.getElementById('tr-pct-com').value)||parseFloat(document.getElementById('tr-comision').value)/100||0;
   const datos = {
     nombre,
     especialidad: document.getElementById('tr-especialidad').value.trim(),
     email:        document.getElementById('tr-email').value.trim(),
     notas:        document.getElementById('tr-notas').value.trim(),
-    pct_com:      pct,
+    pct_com:      parseFloat(document.getElementById('tr-pct-com').value)||0,
     activa:       document.getElementById('tr-activa').value,
+    calendar_id:  document.getElementById('tr-cal').value.trim()||null,
   };
   try {
     if (id) {
@@ -1594,6 +1650,19 @@ async function guardarTerapeuta() {
       poblarSelectoresTerapeutas();
       toast('Terapeuta creada ✓','ok');
     }
+    cerrarModal('modal-terapeuta');
+    renderTerapeutas();
+  } catch(err) { toast('Error: '+err.message,'err'); }
+}
+
+async function eliminarTerapeuta() {
+  const id = document.getElementById('tr-id').value; if (!id) return;
+  if (!confirm('¿Eliminar terapeuta '+id+'? Comprueba que no tiene sesiones asociadas.')) return;
+  try {
+    await sd('terapeutas',`id_terapeuta=eq.${id}`);
+    G.terapeutas = G.terapeutas.filter(t=>t.id_terapeuta!==id);
+    poblarSelectoresTerapeutas();
+    toast('Terapeuta eliminada ✓','ok');
     cerrarModal('modal-terapeuta');
     renderTerapeutas();
   } catch(err) { toast('Error: '+err.message,'err'); }
@@ -1637,7 +1706,7 @@ function filtrarBonos() { renderBonos(); }
 function abrirModalBono() {
   document.getElementById('bn-id').value='';
   document.getElementById('modal-bon-titulo').textContent='Nuevo bono';
-  document.getElementById('bn-meta').textContent='';
+  const meta=document.getElementById('bn-meta'); meta.textContent=''; meta.style.display='none';
   document.getElementById('bn-paciente').value='';
   document.getElementById('bn-tipo').value='Sesión individual';
   document.getElementById('bn-estado').value='Activo';
@@ -1648,6 +1717,7 @@ function abrirModalBono() {
   document.getElementById('bn-fecha-compra').value=new Date().toISOString().split('T')[0];
   document.getElementById('bn-fecha-cad').value='';
   document.getElementById('bn-notas').value='';
+  document.getElementById('bn-btn-eliminar').style.display='none';
   calcularBono();
   abrirModal('modal-bono');
 }
@@ -1656,8 +1726,9 @@ function editarBono(id) {
   const b=G.bonos.find(x=>x.id_bono===id); if(!b) return;
   document.getElementById('bn-id').value=id;
   document.getElementById('modal-bon-titulo').textContent='Editar bono · '+id;
-  document.getElementById('bn-meta').textContent=id+' · '+nomPacFull(b.id_paciente);
-  document.getElementById('bn-paciente').value   = b.id_paciente||'';
+  const meta=document.getElementById('bn-meta');
+  meta.textContent=id+' · '+nomPacFull(b.id_paciente); meta.style.display='block';
+  document.getElementById('bn-paciente').value    = b.id_paciente||'';
   document.getElementById('bn-tipo').value        = b.tipo_bono||'';
   document.getElementById('bn-estado').value      = b.estado||'Activo';
   document.getElementById('bn-sesiones').value    = b.sesiones_totales||0;
@@ -1667,6 +1738,7 @@ function editarBono(id) {
   document.getElementById('bn-fecha-compra').value= b.fecha_compra||'';
   document.getElementById('bn-fecha-cad').value   = b.fecha_caducidad||'';
   document.getElementById('bn-notas').value       = b.notas||'';
+  document.getElementById('bn-btn-eliminar').style.display='inline-flex';
   calcularBono();
   abrirModal('modal-bono');
 }
@@ -1678,7 +1750,7 @@ function calcularBono() {
   const pend = Math.max(tot-cons,0);
   const valS = tot>0?imp/tot:0;
   const el1=document.getElementById('bn-pendientes'); if(el1) el1.textContent=pend;
-  const el2=document.getElementById('bn-valor-ses'); if(el2) el2.textContent=valS.toFixed(2);
+  const el2=document.getElementById('bn-valor-ses');  if(el2) el2.textContent=valS.toFixed(2);
 }
 
 async function guardarBono() {
@@ -1690,16 +1762,20 @@ async function guardarBono() {
   const pend   = Math.max(tot-cons,0);
   const valSes = tot>0?imp/tot:0;
   const datos  = {
-    id_paciente:      document.getElementById('bn-paciente').value,
-    tipo_bono:        document.getElementById('bn-tipo').value.trim(),
-    estado:           document.getElementById('bn-estado').value,
-    sesiones_totales: tot, sesiones_consumidas: cons, sesiones_pendientes: pend,
-    importe_anticipo: imp, valor_sesion: valSes,
-    importe_devengado: cons*valSes, importe_pendiente: pend*valSes,
-    cobrado:          document.getElementById('bn-cobrado').value,
-    fecha_compra:     document.getElementById('bn-fecha-compra').value||null,
-    fecha_caducidad:  document.getElementById('bn-fecha-cad').value||null,
-    notas:            document.getElementById('bn-notas').value.trim(),
+    id_paciente:       document.getElementById('bn-paciente').value,
+    tipo_bono:         document.getElementById('bn-tipo').value.trim(),
+    estado:            document.getElementById('bn-estado').value,
+    sesiones_totales:  tot,
+    sesiones_consumidas:cons,
+    sesiones_pendientes:pend,
+    importe_anticipo:  imp,
+    valor_sesion:      valSes,
+    importe_devengado: cons*valSes,
+    importe_pendiente: pend*valSes,
+    cobrado:           document.getElementById('bn-cobrado').value,
+    fecha_compra:      document.getElementById('bn-fecha-compra').value||null,
+    fecha_caducidad:   document.getElementById('bn-fecha-cad').value||null,
+    notas:             document.getElementById('bn-notas').value.trim(),
   };
   try {
     if(id) {
@@ -1719,6 +1795,18 @@ async function guardarBono() {
   } catch(err) { toast('Error: '+err.message,'err'); }
 }
 
+async function eliminarBono() {
+  const id = document.getElementById('bn-id').value; if (!id) return;
+  if (!confirm('¿Eliminar bono '+id+'? Las sesiones vinculadas no se borrarán.')) return;
+  try {
+    await sd('bonos',`id_bono=eq.${id}`);
+    G.bonos = G.bonos.filter(b=>b.id_bono!==id);
+    toast('Bono eliminado ✓','ok');
+    cerrarModal('modal-bono');
+    renderBonos();
+  } catch(err) { toast('Error: '+err.message,'err'); }
+}
+
 function exportarBonosXLSX() {
   const data=[['ID Bono','Paciente','Tipo','Anticipo','€/ses','Compra','Caducidad','Totales','Consumidas','Pendientes','Cobrado','Estado']];
   G.bonos.forEach(b=>data.push([b.id_bono,nomPacFull(b.id_paciente),b.tipo_bono,b.importe_anticipo,b.valor_sesion,b.fecha_compra,b.fecha_caducidad,b.sesiones_totales,b.sesiones_consumidas,b.sesiones_pendientes,b.cobrado,b.estado]));
@@ -1726,7 +1814,7 @@ function exportarBonosXLSX() {
 }
 
 // ═══════════════════════════════════════════════════════
-//  BECAS
+//  BECAS  (campo real: sesiones_total, sin entidad_financiadora)
 // ═══════════════════════════════════════════════════════
 function renderBecas() {
   const q   = (document.getElementById('bec-busq')?.value||'').toLowerCase();
@@ -1754,7 +1842,7 @@ function renderBecas() {
       <td class="mono">${fmtEur(b.importe_bruto)}</td>
       <td class="mono">${fmtEur(b.importe_neto)}</td>
       <td class="mono">${fmtEur(b.valor_sesion)}</td>
-      <td>${b.sesiones_autorizadas||b.sesiones_total||'—'}</td>
+      <td>${b.sesiones_total||'—'}</td>
       <td>${b.sesiones_consumidas||0}</td>
       <td><strong style="color:${parseInt(b.sesiones_pendientes)<=3?'var(--red)':'inherit'}">${b.sesiones_pendientes||0}</strong></td>
       <td>${badgeEstado(b.estado)}</td>
@@ -1773,8 +1861,8 @@ function calcularBeca() {
   const ses   = parseInt(document.getElementById('bc-sesiones')?.value)||1;
   const neto  = bruto - fee;
   const valS  = ses>0?neto/ses:0;
-  const el1=document.getElementById('bc-neto'); if(el1) el1.value=neto.toFixed(2);
-  const el2=document.getElementById('bc-valor-ses'); if(el2) el2.value=valS.toFixed(2);
+  const el1=document.getElementById('bc-neto');     if(el1) el1.value=neto.toFixed(2);
+  const el2=document.getElementById('bc-valor-ses');if(el2) el2.value=valS.toFixed(2);
 }
 
 function abrirModalBeca() {
@@ -1791,8 +1879,8 @@ function abrirModalBeca() {
   document.getElementById('bc-valor-ses').value='';
   document.getElementById('bc-cobrado').value='Pendiente_cobro';
   document.getElementById('bc-fecha-cobro').value='';
-  document.getElementById('bc-entidad').value='Junta de Andalucía';
   document.getElementById('bc-notas').value='';
+  document.getElementById('bc-btn-eliminar').style.display='none';
   abrirModal('modal-beca');
 }
 
@@ -1800,19 +1888,19 @@ function editarBeca(id) {
   const b=G.becas.find(x=>x.id_beca===id); if(!b) return;
   document.getElementById('bc-id').value=id;
   document.getElementById('modal-bec-titulo').textContent='Editar beca · '+id;
-  document.getElementById('bc-paciente').value   = b.id_paciente||'';
+  document.getElementById('bc-paciente').value    = b.id_paciente||'';
   document.getElementById('bc-anio').value        = b.anio||'2026';
   document.getElementById('bc-estado').value      = b.estado||'Activo';
   document.getElementById('bc-bruto').value       = b.importe_bruto||0;
   document.getElementById('bc-fee').value         = b.fee_gestion||0;
-  document.getElementById('bc-sesiones').value    = b.sesiones_autorizadas||b.sesiones_total||0;
+  document.getElementById('bc-sesiones').value    = b.sesiones_total||0;
   document.getElementById('bc-consumidas').value  = b.sesiones_consumidas||0;
   document.getElementById('bc-neto').value        = b.importe_neto||0;
   document.getElementById('bc-valor-ses').value   = b.valor_sesion||0;
   document.getElementById('bc-cobrado').value     = b.cobrado||'Pendiente_cobro';
   document.getElementById('bc-fecha-cobro').value = b.fecha_cobro||'';
-  document.getElementById('bc-entidad').value     = b.entidad_financiadora||'Junta de Andalucía';
   document.getElementById('bc-notas').value       = b.notas||'';
+  document.getElementById('bc-btn-eliminar').style.display='inline-flex';
   abrirModal('modal-beca');
 }
 
@@ -1827,16 +1915,19 @@ async function guardarBeca() {
   const valS = ses>0?neto/ses:0;
   const pend = Math.max(ses-cons,0);
   const datos = {
-    id_paciente:     document.getElementById('bc-paciente').value,
-    anio:            parseInt(document.getElementById('bc-anio').value),
-    estado:          document.getElementById('bc-estado').value,
-    importe_bruto:   bruto, fee_gestion: fee, importe_neto: neto,
-    sesiones_autorizadas: ses, sesiones_consumidas: cons, sesiones_pendientes: pend,
-    valor_sesion:    valS,
-    cobrado:         document.getElementById('bc-cobrado').value,
-    fecha_cobro:     document.getElementById('bc-fecha-cobro').value||null,
-    entidad_financiadora: document.getElementById('bc-entidad').value.trim(),
-    notas:           document.getElementById('bc-notas').value.trim(),
+    id_paciente:      document.getElementById('bc-paciente').value,
+    anio:             parseInt(document.getElementById('bc-anio').value),
+    estado:           document.getElementById('bc-estado').value,
+    importe_bruto:    bruto,
+    fee_gestion:      fee,
+    importe_neto:     neto,
+    sesiones_total:   ses,          // ← nombre real en la tabla
+    sesiones_consumidas: cons,
+    sesiones_pendientes: pend,
+    valor_sesion:     valS,
+    cobrado:          document.getElementById('bc-cobrado').value,
+    fecha_cobro:      document.getElementById('bc-fecha-cobro').value||null,
+    notas:            document.getElementById('bc-notas').value.trim(),
   };
   try {
     if(id) {
@@ -1856,9 +1947,21 @@ async function guardarBeca() {
   } catch(err) { toast('Error: '+err.message,'err'); }
 }
 
+async function eliminarBeca() {
+  const id = document.getElementById('bc-id').value; if (!id) return;
+  if (!confirm('¿Eliminar beca '+id+'? Las sesiones vinculadas conservarán su id_beca.')) return;
+  try {
+    await sd('becas',`id_beca=eq.${id}`);
+    G.becas = G.becas.filter(b=>b.id_beca!==id);
+    toast('Beca eliminada ✓','ok');
+    cerrarModal('modal-beca');
+    renderBecas();
+  } catch(err) { toast('Error: '+err.message,'err'); }
+}
+
 function exportarBecasXLSX() {
   const data=[['ID Beca','Año','Paciente','Bruto','Neto','€/ses','Ses. total','Consumidas','Pendientes','Estado','Cobrado']];
-  G.becas.forEach(b=>data.push([b.id_beca,b.anio,nomPacFull(b.id_paciente),b.importe_bruto,b.importe_neto,b.valor_sesion,b.sesiones_autorizadas,b.sesiones_consumidas,b.sesiones_pendientes,b.estado,b.cobrado]));
+  G.becas.forEach(b=>data.push([b.id_beca,b.anio,nomPacFull(b.id_paciente),b.importe_bruto,b.importe_neto,b.valor_sesion,b.sesiones_total,b.sesiones_consumidas,b.sesiones_pendientes,b.estado,b.cobrado]));
   descargarXLSX(data,'becas_ipse.xlsx');
 }
 
@@ -1894,6 +1997,7 @@ function abrirModalServicio() {
   document.getElementById('sv-tipo').value='Individual';
   document.getElementById('sv-iva').value='Sí';
   document.getElementById('sv-activo').value='Sí';
+  document.getElementById('sv-btn-eliminar').style.display='none';
   abrirModal('modal-servicio');
 }
 
@@ -1901,13 +2005,14 @@ function editarServicio(id) {
   const s=G.servicios.find(x=>x.id_servicio===id); if(!s) return;
   document.getElementById('sv-id').value=id;
   document.getElementById('modal-srv-titulo').textContent='Editar servicio · '+id;
-  document.getElementById('sv-tipo').value      = s.tipo||'Individual';
-  document.getElementById('sv-nombre').value    = s.servicio||'';
-  document.getElementById('sv-duracion').value  = s.duracion_min||50;
-  document.getElementById('sv-precio').value    = s.precio||0;
-  document.getElementById('sv-iva').value       = s.exento_iva||'Sí';
-  document.getElementById('sv-activo').value    = s.activo||'Sí';
-  document.getElementById('sv-notas').value     = s.notas||'';
+  document.getElementById('sv-tipo').value    = s.tipo||'Individual';
+  document.getElementById('sv-nombre').value  = s.servicio||'';
+  document.getElementById('sv-duracion').value= s.duracion_min||50;
+  document.getElementById('sv-precio').value  = s.precio||0;
+  document.getElementById('sv-iva').value     = s.exento_iva||'Sí';
+  document.getElementById('sv-activo').value  = s.activo||'Sí';
+  document.getElementById('sv-notas').value   = s.notas||'';
+  document.getElementById('sv-btn-eliminar').style.display='inline-flex';
   abrirModal('modal-servicio');
 }
 
@@ -1916,13 +2021,13 @@ async function guardarServicio() {
   const nombre = document.getElementById('sv-nombre').value.trim();
   if(!nombre){toast('El nombre es obligatorio','err');return;}
   const datos = {
-    tipo:        document.getElementById('sv-tipo').value,
-    servicio:    nombre,
-    duracion_min:parseInt(document.getElementById('sv-duracion').value)||50,
-    precio:      parseFloat(document.getElementById('sv-precio').value)||0,
-    exento_iva:  document.getElementById('sv-iva').value,
-    activo:      document.getElementById('sv-activo').value,
-    notas:       document.getElementById('sv-notas').value.trim(),
+    tipo:         document.getElementById('sv-tipo').value,
+    servicio:     nombre,
+    duracion_min: parseInt(document.getElementById('sv-duracion').value)||50,
+    precio:       parseFloat(document.getElementById('sv-precio').value)||0,
+    exento_iva:   document.getElementById('sv-iva').value,
+    activo:       document.getElementById('sv-activo').value,
+    notas:        document.getElementById('sv-notas').value.trim(),
   };
   try {
     if(id) {
@@ -1937,6 +2042,19 @@ async function guardarServicio() {
       poblarSelectoresServicios();
       toast('Servicio creado ✓','ok');
     }
+    cerrarModal('modal-servicio');
+    renderServicios();
+  } catch(err) { toast('Error: '+err.message,'err'); }
+}
+
+async function eliminarServicio() {
+  const id = document.getElementById('sv-id').value; if (!id) return;
+  if (!confirm('¿Eliminar servicio '+id+'?')) return;
+  try {
+    await sd('servicios',`id_servicio=eq.${id}`);
+    G.servicios = G.servicios.filter(s=>s.id_servicio!==id);
+    poblarSelectoresServicios();
+    toast('Servicio eliminado ✓','ok');
     cerrarModal('modal-servicio');
     renderServicios();
   } catch(err) { toast('Error: '+err.message,'err'); }
