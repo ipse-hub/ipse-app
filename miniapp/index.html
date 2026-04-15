@@ -263,7 +263,6 @@
     <button onclick="recargarAgenda()" style="background:rgba(255,255,255,.15);border:none;color:#fff;border-radius:6px;padding:5px 10px;cursor:pointer;font-size:12px;font-family:inherit;font-weight:500;">↺ Recargar</button>
     <button onclick="abrirModalPaciente()" style="background:rgba(0,181,226,.25);border:none;color:#fff;border-radius:6px;padding:5px 10px;cursor:pointer;font-size:12px;font-family:inherit;font-weight:500;">+ Paciente</button>
     <button onclick="abrirModalBono()" style="background:rgba(151,215,0,.25);border:none;color:#fff;border-radius:6px;padding:5px 10px;cursor:pointer;font-size:12px;font-family:inherit;font-weight:500;">+ Bono</button>
- 
     <button onclick="abrirPantallaRecordatorios()" style="background:rgba(0,181,226,.25);border:none;color:#fff;border-radius:6px;padding:5px 10px;cursor:pointer;font-size:12px;font-family:inherit;font-weight:500;">📲 Rec.</button>
     <button id="btn-admin" onclick="abrirAdmin()" style="display:none;background:rgba(218,41,28,.35);border:none;color:#fff;border-radius:6px;padding:5px 10px;cursor:pointer;font-size:12px;font-family:inherit;font-weight:600;">⚙️ Admin</button>
     <span id="topbar-nombre">—</span>
@@ -901,7 +900,6 @@ async function iniciarApp() {
     ]);
     G.terapeutas = terapeutas.map(t => ({ ID_Terapeuta: t.id_terapeuta, Nombre: t.nombre, Activa: t.activa, Pct_Com: t.pct_com, Email: t.email }));
     G.pacientes  = pacientesRaw.map(p => ({ ID_Paciente: p.id_paciente, Nombre: ((p.nombre||'') + ' ' + (p.apellidos||'')).trim(), Alias: p.alias || '', Tutor1: p.tutor1 || '', Tel1: (p.telefono||'').replace(/\D/g,''), Tel2: (p.telefono2||'').replace(/\D/g,'') }));
-    G.pacientes  = pacientesRaw.map(p => ({ ID_Paciente: p.id_paciente, Nombre: ((p.nombre||'') + ' ' + (p.apellidos||'')).trim(), Alias: p.alias || '', Tutor1: p.tutor1 || '', Tel1: (p.telefono||'').replace(/\D/g,''), Tel2: (p.telefono2||'').replace(/\D/g,'') }));
     G.servicios  = servicios.map(s => ({ ID_Servicio: s.id_servicio, Servicio: s.servicio, Precio: s.precio, DuraciónMin: s.duracion_min, Activo: s.activo, TipoConsumo: s.tipo_consumo_default || 'Privado' }));
     G.terapeutas.forEach((t, i) => { G.colores[t.ID_Terapeuta] = PALETTE[i % PALETTE.length]; });
     document.getElementById('topbar-nombre').textContent = G.miNombre;
@@ -941,7 +939,6 @@ function mapearCitas(rows) {
     NombrePaciente:  pacMap[r.id_paciente]  || r.id_paciente  || '',
     NombreTerapeuta: terMap[r.id_terapeuta] || r.id_terapeuta || '',
     NombreServicio:  srvMap[r.id_servicio]  || r.id_servicio  || '',
-    RecordatorioDiaAt: r.recordatorio_dia_at || '',
     RecordatorioDiaAt: r.recordatorio_dia_at || '',
   }));
 }
@@ -1009,7 +1006,8 @@ async function cargarSemana() {
 }
 async function cargarMes() {
   const pad = n => String(n).padStart(2,'0');
-  const pd = new Date(G.lunes); const dow = pd.getDay();
+  // Siempre partimos del día 1 del mes que muestra G.lunes
+  const pd = new Date(G.lunes); pd.setDate(1); const dow = pd.getDay();
   const ig = new Date(pd); ig.setDate(pd.getDate() + ((dow===0)?-6:1-dow));
   const fg = new Date(ig); fg.setDate(ig.getDate()+42);
   const fi = ig.getFullYear()+'-'+pad(ig.getMonth()+1)+'-'+pad(ig.getDate());
@@ -1113,7 +1111,7 @@ function renderizarLeyenda() {
 
 function renderizarMes(inicioGrid) {
   const hoy = new Date(); hoy.setHours(0,0,0,0);
-  const mes = G.lunes.getMonth(); const pad2 = n => String(n).padStart(2,'0');
+  const mesRef = new Date(inicioGrid); mesRef.setDate(inicioGrid.getDate()+15); const mes = mesRef.getMonth(); const pad2 = n => String(n).padStart(2,'0');
   const OCULTOS = ['Cancelada','Reprogramada'];
   document.getElementById('month-header').innerHTML = ['LUN','MAR','MIÉ','JUE','VIE','SÁB','DOM'].map(d=>`<div class="month-header-cell">${d}</div>`).join('');
   const body = document.getElementById('month-body'); body.innerHTML = '';
@@ -1462,7 +1460,6 @@ async function guardarEdicionPaciente() {
       notas: document.getElementById('ep-notas').value.trim(),
     });
     const pac = await supaGet('pacientes', 'order=nombre.asc');
-    G.pacientes = pac.map(p => ({ ID_Paciente: p.id_paciente, Nombre: ((p.nombre||'') + ' ' + (p.apellidos||'')).trim(), Alias: p.alias || '', Tutor1: p.tutor1 || '', Tel1: (p.telefono||'').replace(/\D/g,''), Tel2: (p.telefono2||'').replace(/\D/g,'') }));
     G.pacientes = pac.map(p => ({ ID_Paciente: p.id_paciente, Nombre: ((p.nombre||'') + ' ' + (p.apellidos||'')).trim(), Alias: p.alias || '', Tutor1: p.tutor1 || '', Tel1: (p.telefono||'').replace(/\D/g,''), Tel2: (p.telefono2||'').replace(/\D/g,'') }));
     toast('Paciente actualizado ✓', 'ok');
     cerrarModal('modal-editar-paciente');
