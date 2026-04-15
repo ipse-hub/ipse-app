@@ -99,8 +99,6 @@
   .day-slot { height: 48px; border-bottom: 1px solid var(--border); position: static; overflow: visible; }
   .day-slot:last-child { border-bottom: none; }
   .day-slot:hover { background: rgba(16,6,159,.04); }
-
-  /* ── CITA: fix altura y overflow ── */
   .cita {
     position: absolute;
     left: 2px; right: 2px;
@@ -153,8 +151,6 @@
     flex-shrink: 0;
     align-self: flex-start;
   }
-  /* ─────────────────────────────── */
-
   .cita.ajena { opacity: .5; cursor: default; }
   .cita.ajena:hover { opacity: .5; transform: none; }
   .cita.dragging { opacity: .35 !important; transform: scale(.97) !important; box-shadow: none !important; }
@@ -267,6 +263,7 @@
     <button onclick="recargarAgenda()" style="background:rgba(255,255,255,.15);border:none;color:#fff;border-radius:6px;padding:5px 10px;cursor:pointer;font-size:12px;font-family:inherit;font-weight:500;">↺ Recargar</button>
     <button onclick="abrirModalPaciente()" style="background:rgba(0,181,226,.25);border:none;color:#fff;border-radius:6px;padding:5px 10px;cursor:pointer;font-size:12px;font-family:inherit;font-weight:500;">+ Paciente</button>
     <button onclick="abrirModalBono()" style="background:rgba(151,215,0,.25);border:none;color:#fff;border-radius:6px;padding:5px 10px;cursor:pointer;font-size:12px;font-family:inherit;font-weight:500;">+ Bono</button>
+    <button onclick="abrirPantallaRecordatorios()" style="background:rgba(0,181,226,.25);border:none;color:#fff;border-radius:6px;padding:5px 10px;cursor:pointer;font-size:12px;font-family:inherit;font-weight:500;">📲 Rec.</button>
     <button id="btn-admin" onclick="abrirAdmin()" style="display:none;background:rgba(218,41,28,.35);border:none;color:#fff;border-radius:6px;padding:5px 10px;cursor:pointer;font-size:12px;font-family:inherit;font-weight:600;">⚙️ Admin</button>
     <span id="topbar-nombre">—</span>
     <div class="avatar" id="topbar-avatar">–</div>
@@ -422,8 +419,7 @@
         <div class="pac-lista" id="pac-lista-multi"></div>
       </div>
     </div>
-         <div class="form-group"><label class="form-label">Servicio *</label><select id="mm-servicio" class="form-control" onchange="onMultiServicioChange()"></select></div>
-          </div>
+    <div class="form-group"><label class="form-label">Servicio *</label><select id="mm-servicio" class="form-control" onchange="onMultiServicioChange()"></select></div>
     <div id="mm-bono-aviso" style="display:none;margin-bottom:10px"></div>
     <div style="margin-bottom:8px;font-size:12px;font-weight:600;color:var(--azul);text-transform:uppercase;letter-spacing:.5px">Fechas y horas</div>
     <div id="mm-lista-fechas" style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px;max-height:240px;overflow-y:auto"></div>
@@ -777,6 +773,34 @@
   </div>
 </div>
 
+<!-- PANTALLA RECORDATORIOS MENSUALES -->
+<div id="pantalla-recordatorios" style="display:none">
+  <div class="main">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;background:#fff;border:1px solid var(--border);border-radius:10px;padding:12px 16px">
+      <div style="font-size:16px;font-weight:700;color:var(--azul)">📲 Recordatorios mensuales</div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <input type="month" id="rec-mes-sel" class="form-control" style="width:160px" onchange="cargarRecordatoriosMensuales()">
+        <button onclick="cerrarPantallaRecordatorios()" class="btn btn-secondary">← Volver</button>
+      </div>
+    </div>
+    <div id="rec-lista-mensual"></div>
+  </div>
+</div>
+
+<!-- PANTALLA RECORDATORIOS DÍA -->
+<div id="pantalla-recordatorios-dia" style="display:none">
+  <div class="main">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;background:#fff;border:1px solid var(--border);border-radius:10px;padding:12px 16px">
+      <div style="font-size:16px;font-weight:700;color:var(--azul)">📲 Recordatorios del día</div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <span id="rec-dia-label" style="font-size:13px;color:var(--muted);font-weight:600"></span>
+        <button onclick="cerrarPantallaRecordatoriosDia()" class="btn btn-secondary">← Volver</button>
+      </div>
+    </div>
+    <div id="rec-lista-dia"></div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -875,7 +899,7 @@ async function iniciarApp() {
       supaGet('servicios',  'order=id_servicio.asc'),
     ]);
     G.terapeutas = terapeutas.map(t => ({ ID_Terapeuta: t.id_terapeuta, Nombre: t.nombre, Activa: t.activa, Pct_Com: t.pct_com, Email: t.email }));
-    G.pacientes  = pacientesRaw.map(p => ({ ID_Paciente: p.id_paciente, Nombre: ((p.nombre||'') + ' ' + (p.apellidos||'')).trim(), Alias: p.alias || '' }));
+    G.pacientes  = pacientesRaw.map(p => ({ ID_Paciente: p.id_paciente, Nombre: ((p.nombre||'') + ' ' + (p.apellidos||'')).trim(), Alias: p.alias || '', Tutor1: p.tutor1 || '', Tel1: (p.telefono||'').replace(/\D/g,''), Tel2: (p.telefono2||'').replace(/\D/g,'') }));
     G.servicios  = servicios.map(s => ({ ID_Servicio: s.id_servicio, Servicio: s.servicio, Precio: s.precio, DuraciónMin: s.duracion_min, Activo: s.activo, TipoConsumo: s.tipo_consumo_default || 'Privado' }));
     G.terapeutas.forEach((t, i) => { G.colores[t.ID_Terapeuta] = PALETTE[i % PALETTE.length]; });
     document.getElementById('topbar-nombre').textContent = G.miNombre;
@@ -915,6 +939,7 @@ function mapearCitas(rows) {
     NombrePaciente:  pacMap[r.id_paciente]  || r.id_paciente  || '',
     NombreTerapeuta: terMap[r.id_terapeuta] || r.id_terapeuta || '',
     NombreServicio:  srvMap[r.id_servicio]  || r.id_servicio  || '',
+    RecordatorioDiaAt: r.recordatorio_dia_at || '',
   }));
 }
 
@@ -1156,7 +1181,6 @@ function renderizarSemana() {
         const hm=parseHora(cita.Hora); if(hm===null)return;
         const offsetMin=hm-HORAS_INICIO*60; if(offsetMin<0)return;
         const top=(offsetMin/60)*SLOT_H;
-        // ── FIX ALTURA: exactamente proporcional a DURACION, sin mínimo que desborde ──
         const height=SLOT_H;
         const esMia=cita.ID_Terapeuta===G.miId; const color=G.colores[cita.ID_Terapeuta]||'#aaa';
         const pct=100/pos.totalCols;
@@ -1210,14 +1234,16 @@ function renderizarDia() {
       const hm=parseHora(cita.Hora);if(hm===null)return;
       const offsetMin=hm-HORAS_INICIO*60;if(offsetMin<0)return;
       const top=(offsetMin/60)*SLOT_H;
-      // ── FIX ALTURA: exactamente proporcional, sin mínimo que desborde ──
       const height=SLOT_H;
       const esMia=cita.ID_Terapeuta===G.miId;const color=G.colores[cita.ID_Terapeuta]||'#aaa';
       const pct=100/pos.totalCols;
       const div=document.createElement('div');div.className='cita'+(esMia?' propia':' ajena');
       div.style.cssText=`top:${top}px;height:${height - 1}px;left:calc(2px + ${pos.col*pct}%);right:calc(2px + ${(pos.totalCols-pos.col-1)*pct}%);background:${color};border-left-color:${darken(color)};color:${contrastColor(color)};opacity:${esMia?'1':'0.72'};`;
-      div.innerHTML=`<div class="cita-nombre">${cita.NombrePaciente||'—'}</div><div class="cita-servicio">${cita.NombreServicio||''}${!esMia?' · '+(cita.NombreTerapeuta||''):''}</div><div class="cita-servicio">${cita.Hora||''}</div><span class="cita-estado">${estadoLabel(cita.Estado)}</span>`;
-      // ── FIX BUG MÓVIL ADMIN: añadido ||esAdmin() ──
+      const recDiaAt=cita.RecordatorioDiaAt||'';
+      const badgeRec=recDiaAt
+        ?`<span style="display:block;margin-top:3px;font-size:9px;background:rgba(151,215,0,.3);color:#c8f57a;border-radius:3px;padding:1px 5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">✓ Rec. ${recDiaAt.slice(11,16)}</span>`
+        :(esMia?`<button data-id="${cita.ID_Cita}" onclick="event.stopPropagation();abrirSelectorTel(this)" style="display:block;margin-top:3px;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.35);color:#fff;border-radius:4px;padding:2px 6px;font-size:9px;font-family:inherit;font-weight:600;cursor:pointer;white-space:nowrap">📲 Rec.</button>`:'');
+      div.innerHTML=`<div class="cita-nombre">${cita.NombrePaciente||'—'}</div><div class="cita-servicio">${cita.NombreServicio||''}${!esMia?' · '+(cita.NombreTerapeuta||''):''}</div><div class="cita-servicio">${cita.Hora||''}</div><span class="cita-estado">${estadoLabel(cita.Estado)}</span>${badgeRec}`;
       if(esMia||esAdmin())div.onclick=()=>abrirModalCita(cita);
       else div.title=(cita.NombreTerapeuta||'')+' · '+(cita.NombrePaciente||'');
       dayCol.appendChild(div);
@@ -1252,12 +1278,6 @@ async function onServicioChange() {
   ocultarBonoAviso();
   if ((tipoFin === 'BONO' || tipoFin === 'BECA') && document.getElementById('n-paciente').value) {
     await verificarBonoDisponible(document.getElementById('n-paciente').value, tipoFin);
-  }
-}
-async function onTipoFinChange() {
-  const v = document.getElementById('n-tipofin').value; ocultarBonoAviso();
-  if ((v==='BONO'||v==='BECA') && document.getElementById('n-paciente').value) {
-    await verificarBonoDisponible(document.getElementById('n-paciente').value, v);
   }
 }
 async function guardarNuevaCita() {
@@ -1439,7 +1459,7 @@ async function guardarEdicionPaciente() {
       notas: document.getElementById('ep-notas').value.trim(),
     });
     const pac = await supaGet('pacientes', 'order=nombre.asc');
-    G.pacientes = pac.map(p => ({ ID_Paciente: p.id_paciente, Nombre: ((p.nombre||'') + ' ' + (p.apellidos||'')).trim(), Alias: p.alias || '' }));
+    G.pacientes = pac.map(p => ({ ID_Paciente: p.id_paciente, Nombre: ((p.nombre||'') + ' ' + (p.apellidos||'')).trim(), Alias: p.alias || '', Tutor1: p.tutor1 || '', Tel1: (p.telefono||'').replace(/\D/g,''), Tel2: (p.telefono2||'').replace(/\D/g,'') }));
     toast('Paciente actualizado ✓', 'ok');
     cerrarModal('modal-editar-paciente');
     if (G.citaActual && G.citaActual.ID_Paciente === idPaciente) {
@@ -1544,7 +1564,7 @@ function pacReset(ctx){const ids=PAC_CTX[ctx];document.getElementById(ids.txt).v
 // ═══════════════════════════════════════════════════════════════
 let mmFechas=[];
 function abrirModalMultiCita(){mmFechas=[];pacReset('multi');document.getElementById('mm-servicio').value='';document.getElementById('mm-bono-aviso').style.display='none';document.getElementById('mm-nueva-fecha').value='';document.getElementById('mm-nueva-hora').value='';mmRenderizarLista();abrirOverlay('modal-multicita');}
-async function onMultiTipoFinChange(){const tipo=document.getElementById('mm-tipofin').value;const idPac=document.getElementById('mm-paciente').value;const av=document.getElementById('mm-bono-aviso');av.style.display='none';if((tipo==='BONO'||tipo==='BECA')&&idPac){try{const tabla=tipo==='BONO'?'bonos':'becas';const idC=tipo==='BONO'?'id_bono':'id_beca';const rows=await supaGet(tabla,`id_paciente=eq.${idPac}&estado=eq.Activo&sesiones_pendientes=gt.0&limit=1`);av.style.display='block';if(rows.length){av.style.cssText='display:block;background:#f0fff4;border:1px solid #97D700;border-radius:6px;padding:8px 12px;font-size:12px;color:#3a6600;margin-bottom:10px';av.textContent='✓ '+rows[0][idC]+' · '+rows[0].sesiones_pendientes+' ses. pendientes';}else{av.style.cssText='display:block;background:#fff3cd;border:1px solid #f0c040;border-radius:6px;padding:8px 12px;font-size:12px;color:#7a5c00;margin-bottom:10px';av.textContent='⚠️ Sin '+tipo.toLowerCase()+' activo para este paciente.';}}catch(e){}}}
+async function onMultiServicioChange(){const idServicio=document.getElementById('mm-servicio').value;const tipoFin=derivarTipoFin(idServicio);const idPac=document.getElementById('mm-paciente').value;const av=document.getElementById('mm-bono-aviso');av.style.display='none';if((tipoFin==='BONO'||tipoFin==='BECA')&&idPac){try{const tabla=tipoFin==='BONO'?'bonos':'becas';const idC=tipoFin==='BONO'?'id_bono':'id_beca';const rows=await supaGet(tabla,`id_paciente=eq.${idPac}&estado=eq.Activo&sesiones_pendientes=gt.0&limit=1`);av.style.display='block';if(rows.length){av.style.cssText='display:block;background:#f0fff4;border:1px solid #97D700;border-radius:6px;padding:8px 12px;font-size:12px;color:#3a6600;margin-bottom:10px';av.textContent='✓ '+rows[0][idC]+' · '+rows[0].sesiones_pendientes+' ses. pendientes';}else{av.style.cssText='display:block;background:#fff3cd;border:1px solid #f0c040;border-radius:6px;padding:8px 12px;font-size:12px;color:#7a5c00;margin-bottom:10px';av.textContent='⚠️ Sin '+tipoFin.toLowerCase()+' activo para este paciente.';}}catch(e){}}}
 function mmAnadirFecha(){const fecha=document.getElementById('mm-nueva-fecha').value;const hora=document.getElementById('mm-nueva-hora').value;if(!fecha){toast('Indica la fecha','err');return;}if(!hora){toast('Indica la hora','err');return;}mmFechas.push({fecha,hora});document.getElementById('mm-nueva-fecha').value='';mmRenderizarLista();}
 function mmEliminarFecha(idx){mmFechas.splice(idx,1);mmRenderizarLista();}
 function mmRenderizarLista(){const c=document.getElementById('mm-lista-fechas');const r=document.getElementById('mm-resumen');if(!mmFechas.length){c.innerHTML='<div style="color:var(--muted);font-size:12px;padding:6px 0">Añade al menos una fecha.</div>';r.style.display='none';return;}c.innerHTML=mmFechas.map((f,i)=>{const d=new Date(f.fecha+'T12:00:00');return`<div style="display:flex;align-items:center;justify-content:space-between;background:#fafbff;border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-size:13px"><span><strong>${DIAS_ES[d.getDay()]} ${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()}</strong> · ${f.hora}</span><button onclick="mmEliminarFecha(${i})" style="background:none;border:none;cursor:pointer;color:#DA291C;font-size:16px;line-height:1;padding:0 4px">✕</button></div>`;}).join('');r.style.display='block';r.textContent=mmFechas.length+' cita'+(mmFechas.length>1?'s':'')+' programada'+(mmFechas.length>1?'s':'');}
@@ -1825,6 +1845,232 @@ if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/ipse-app/miniapp/sw.js');
   });
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  RECORDATORIOS
+// ═══════════════════════════════════════════════════════════════
+
+// ── Punto de entrada contextual: día → pantalla día | resto → pantalla mensual ──
+function abrirPantallaRecordatorios() {
+  if (G.vista === 'dia') {
+    abrirPantallaRecordatoriosDia();
+  } else {
+    document.getElementById('pantalla-recordatorios').style.display = 'block';
+    document.getElementById('contenido-principal').style.display = 'none';
+    const hoy = new Date();
+    document.getElementById('rec-mes-sel').value = hoy.getFullYear() + '-' + String(hoy.getMonth() + 1).padStart(2, '0');
+    cargarRecordatoriosMensuales();
+  }
+}
+
+function cerrarPantallaRecordatorios() {
+  document.getElementById('pantalla-recordatorios').style.display = 'none';
+  document.getElementById('contenido-principal').style.display = 'block';
+}
+
+// ── Pantalla recordatorios DÍA ──
+function abrirPantallaRecordatoriosDia() {
+  const d = G.diaActual || new Date();
+  document.getElementById('rec-dia-label').textContent =
+    DIAS_ES[d.getDay()] + ' ' + d.getDate() + ' de ' + MESES_ES[d.getMonth()] + ' ' + d.getFullYear();
+  document.getElementById('pantalla-recordatorios-dia').style.display = 'block';
+  document.getElementById('contenido-principal').style.display = 'none';
+  cargarRecordatoriosDia();
+}
+
+function cerrarPantallaRecordatoriosDia() {
+  document.getElementById('pantalla-recordatorios-dia').style.display = 'none';
+  document.getElementById('contenido-principal').style.display = 'block';
+}
+
+async function cargarRecordatoriosDia() {
+  const d = G.diaActual || new Date();
+  const pad = n => String(n).padStart(2, '0');
+  const fechaStr = d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+  const lista = document.getElementById('rec-lista-dia');
+  lista.innerHTML = '<div style="color:var(--muted);font-size:13px;padding:20px 0">Cargando…</div>';
+  try {
+    const citas = G.citas.filter(c =>
+      c.Fecha === fechaStr &&
+      c.ID_Terapeuta === G.miId &&
+      c.EstadoAgenda === 'Programada'
+    ).sort((a, b) => (a.Hora || '').localeCompare(b.Hora || ''));
+
+    if (!citas.length) {
+      lista.innerHTML = '<div style="color:var(--muted);font-size:13px;padding:20px 0">Sin citas programadas para este día.</div>';
+      return;
+    }
+
+    lista.innerHTML = citas.map(cita => {
+      const pac = G.pacientes.find(p => p.ID_Paciente === cita.ID_Paciente);
+      const tutor1 = pac?.Tutor1 || '';
+      const tel1 = pac?.Tel1 || '';
+      const tel2 = pac?.Tel2 || '';
+      const yaEnviado = !!cita.RecordatorioDiaAt;
+      const cuandoEnviado = cita.RecordatorioDiaAt;
+      const badgeHtml = yaEnviado
+        ? `<span style="font-size:11px;background:#f0fff0;border:1px solid #97D700;color:#3a6600;border-radius:6px;padding:3px 10px">✓ Enviado ${new Date(cuandoEnviado).toLocaleTimeString('es-ES', {hour:'2-digit',minute:'2-digit'})}</span>`
+        : (tel1 || tel2)
+          ? `<button onclick="enviarRecordatorioDiaDesdePantalla('${cita.ID_Cita}',this)" style="font-size:12px;background:#10069F;color:#fff;border:none;border-radius:6px;padding:5px 12px;cursor:pointer;font-family:inherit;font-weight:600">📲 Enviar</button>`
+          : `<span style="font-size:11px;color:var(--rojo)">Sin teléfono</span>`;
+      return `<div style="background:#fff;border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:10px">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">
+          <div>
+            <div style="font-size:14px;font-weight:600">${cita.NombrePaciente}</div>
+            <div style="font-size:12px;color:var(--muted)">${cita.Hora || ''} · ${cita.NombreServicio || ''}</div>
+            <div style="font-size:12px;color:var(--muted)">${tutor1}${tel1 ? ' · ' + tel1 : ''}</div>
+          </div>
+          ${badgeHtml}
+        </div>
+        ${(tel1 && tel2) ? `<div style="margin-top:6px;font-size:11px;color:#10069F;cursor:pointer" onclick="toggleTelDia(this,'${cita.ID_Cita}','${tel1}','${tel2}')">▸ Cambiar a tutor 2 (${tel2})</div>` : ''}
+        <input type="hidden" id="rec-dia-tel-${cita.ID_Cita}" value="${tel1}">
+      </div>`;
+    }).join('');
+  } catch (err) {
+    lista.innerHTML = `<div style="color:var(--rojo);font-size:13px">Error: ${err.message}</div>`;
+  }
+}
+
+function toggleTelDia(el, idCita, tel1, tel2) {
+  const input = document.getElementById('rec-dia-tel-' + idCita);
+  const usandoTel2 = input.value === tel2;
+  input.value = usandoTel2 ? tel1 : tel2;
+  el.textContent = usandoTel2 ? `▸ Cambiar a tutor 2 (${tel2})` : `▸ Volver a tutor 1 (${tel1})`;
+}
+
+async function enviarRecordatorioDiaDesdePantalla(idCita, btn) {
+  const cita = G.citas.find(c => c.ID_Cita === idCita); if (!cita) return;
+  const pac = G.pacientes.find(p => p.ID_Paciente === cita.ID_Paciente);
+  const tel = document.getElementById('rec-dia-tel-' + idCita)?.value;
+  if (!tel) { toast('Sin teléfono para este paciente', 'err'); return; }
+  const nombrePac = cita.NombrePaciente || 'su hij@';
+  const tutorNombre = pac?.Tutor1 ? pac.Tutor1.split(' ')[0] : '';
+  const saludo = tutorNombre ? `Hola ${tutorNombre},` : 'Hola,';
+  const fechaObj = new Date(cita.Fecha + 'T12:00:00');
+  const diasEs = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
+  const texto = encodeURIComponent(
+    `${saludo} le recordamos que mañana ${diasEs[fechaObj.getDay()]} ${fechaObj.getDate()} de ${MESES_ES[fechaObj.getMonth()]} tiene cita para ${nombrePac} a las ${cita.Hora || ''} con ${cita.NombreTerapeuta || G.miNombre} en IPSE.\n\nSi necesita cancelar o cambiar la cita, por favor contáctenos con antelación.\n\nGracias. 🙏`
+  );
+  const telLimpio = '34' + tel.replace(/\D/g, '').replace(/^34/, '');
+  window.open(`https://wa.me/${telLimpio}?text=${texto}`, '_blank');
+  btn.disabled = true; btn.textContent = '⏳';
+  try {
+    const ahora = new Date().toISOString();
+    await supaPatch('agenda_datos', `id_cita=eq.${idCita}`, { recordatorio_dia_at: ahora });
+    const idx = G.citas.findIndex(c => c.ID_Cita === idCita);
+    if (idx >= 0) G.citas[idx].RecordatorioDiaAt = ahora;
+    toast('Recordatorio registrado ✓', 'ok');
+    cargarRecordatoriosDia();
+  } catch (err) {
+    toast('WhatsApp abierto · Error al registrar: ' + err.message, 'err');
+    btn.disabled = false; btn.textContent = '📲 Enviar';
+  }
+}
+
+// ── Botón inline en cita (vista día) — selector de número ──
+function abrirSelectorTel(btn) {
+  const idCita=btn.dataset.id;const cita=G.citas.find(c=>c.ID_Cita===idCita);if(!cita)return;
+  const pac=G.pacientes.find(p=>p.ID_Paciente===cita.ID_Paciente);if(!pac){toast('Sin datos de paciente','err');return;}
+  document.querySelectorAll('.sel-tel-popup').forEach(el=>el.remove());
+  const tel1=pac.Tel1,tel2=pac.Tel2,tutor1=pac.Tutor1||'Tutor 1';
+  if(!tel1&&!tel2){toast('Sin teléfono registrado','err');return;}
+  const opciones=[];
+  if(tel1)opciones.push({tel:tel1,label:`${tutor1} — ${pac.Tel1}`});
+  if(tel2)opciones.push({tel:tel2,label:`Tutor 2 — ${pac.Tel2}`});
+  const popup=document.createElement('div');popup.className='sel-tel-popup';
+  popup.style.cssText='position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#fff;border-radius:12px;padding:18px 20px;width:290px;box-shadow:0 8px 32px rgba(0,0,0,.22);z-index:999;font-family:\'DM Sans\',sans-serif';
+  popup.innerHTML=`<div style="font-size:13px;font-weight:700;color:#10069F;margin-bottom:12px">📲 Enviar recordatorio</div><div style="font-size:12px;color:#6B7280;margin-bottom:10px">¿A qué número enviamos?</div><div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px">${opciones.map((o,i)=>`<label style="display:flex;align-items:center;gap:10px;font-size:13px;cursor:pointer;padding:8px 10px;border:1.5px solid ${i===0?'#10069F':'#E2E4EE'};border-radius:8px;background:${i===0?'#f0eeff':'#fafbff'}"><input type="radio" name="sel-tel-radio" value="${o.tel}" ${i===0?'checked':''}> <span>${o.label}</span></label>`).join('')}</div><button onclick="enviarRecordatorioDia('${idCita}',this)" style="width:100%;background:#10069F;color:#fff;border:none;border-radius:8px;padding:9px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer">Abrir WhatsApp</button><button onclick="this.parentElement.remove()" style="width:100%;background:none;border:none;margin-top:6px;font-family:inherit;font-size:12px;color:#6B7280;cursor:pointer;padding:4px">Cancelar</button>`;
+  document.body.appendChild(popup);
+  setTimeout(()=>{document.addEventListener('click',function cerrar(e){if(!popup.contains(e.target)){popup.remove();document.removeEventListener('click',cerrar);}});},50);
+}
+
+async function enviarRecordatorioDia(idCita,btn) {
+  const radio=document.querySelector('input[name="sel-tel-radio"]:checked');if(!radio)return;
+  const tel=radio.value;const cita=G.citas.find(c=>c.ID_Cita===idCita);if(!cita)return;
+  const pac=G.pacientes.find(p=>p.ID_Paciente===cita.ID_Paciente);
+  const nombrePac=cita.NombrePaciente||'su hij@';
+  const tutorNombre=pac?.Tutor1?pac.Tutor1.split(' ')[0]:'';
+  const saludo=tutorNombre?`Hola ${tutorNombre},`:'Hola,';
+  const fechaObj=new Date(cita.Fecha+'T12:00:00');
+  const diasEs=['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
+  const texto=encodeURIComponent(`${saludo} le recordamos que mañana ${diasEs[fechaObj.getDay()]} ${fechaObj.getDate()} de ${MESES_ES[fechaObj.getMonth()]} tiene cita para ${nombrePac} a las ${cita.Hora||''} con ${cita.NombreTerapeuta||G.miNombre} en IPSE.\n\nSi necesita cancelar o cambiar la cita, por favor contáctenos con antelación.\n\nGracias. 🙏`);
+  const telLimpio='34'+tel.replace(/\D/g,'').replace(/^34/,'');
+  window.open(`https://wa.me/${telLimpio}?text=${texto}`,'_blank');
+  btn.textContent='⏳';btn.disabled=true;
+  try {
+    const ahora=new Date().toISOString();
+    await supaPatch('agenda_datos',`id_cita=eq.${idCita}`,{recordatorio_dia_at:ahora});
+    const idx=G.citas.findIndex(c=>c.ID_Cita===idCita);
+    if(idx>=0)G.citas[idx].RecordatorioDiaAt=ahora;
+    toast('Recordatorio registrado ✓','ok');
+    document.querySelector('.sel-tel-popup')?.remove();
+    renderizarDia();
+  } catch(err){toast('WhatsApp abierto · Error al registrar: '+err.message,'err');document.querySelector('.sel-tel-popup')?.remove();}
+}
+
+// ── Pantalla recordatorios MES ──
+async function cargarRecordatoriosMensuales() {
+  const val=document.getElementById('rec-mes-sel').value;if(!val)return;
+  const [anio,mes]=val.split('-').map(Number);
+  const pad=n=>String(n).padStart(2,'0');
+  const fi=`${anio}-${pad(mes)}-01`;const fd=new Date(anio,mes,1);
+  const ff=`${fd.getFullYear()}-${pad(fd.getMonth()+1)}-01`;
+  const lista=document.getElementById('rec-lista-mensual');
+  lista.innerHTML='<div style="color:var(--muted);font-size:13px;padding:20px 0">Cargando…</div>';
+  try {
+    const rows=await supaGet('sesiones',`id_terapeuta=eq.${G.miId}&fecha=gte.${fi}&fecha=lt.${ff}&estado=eq.Hecha&order=fecha.asc`);
+    if(!rows.length){lista.innerHTML='<div style="color:var(--muted);font-size:13px;padding:20px 0">Sin sesiones en ese período.</div>';return;}
+    const grupos={};
+    rows.forEach(r=>{if(!grupos[r.id_paciente])grupos[r.id_paciente]=[];grupos[r.id_paciente].push(r);});
+    lista.innerHTML=Object.entries(grupos).map(([idPac,sesiones])=>{
+      const pac=G.pacientes.find(p=>p.ID_Paciente===idPac);
+      const nombre=pac?(pac.Alias||pac.Nombre):idPac;
+      const tutor1=pac?.Tutor1||'';const tel1=pac?.Tel1||'';const tel2=pac?.Tel2||'';
+      const yaEnviado=sesiones.some(s=>s.recordatorio_mes_at);
+      const cuandoEnviado=sesiones.find(s=>s.recordatorio_mes_at)?.recordatorio_mes_at;
+      const fechasTexto=sesiones.map(s=>{const d=new Date(s.fecha+'T12:00:00');return`${d.getDate()} de ${MESES_ES[d.getMonth()]}`+(s.hora?` a las ${s.hora.slice(0,5)}` :'');}).join(', ');
+      const badgeHtml=yaEnviado
+        ?`<span style="font-size:11px;background:#f0fff0;border:1px solid #97D700;color:#3a6600;border-radius:6px;padding:3px 10px">✓ Enviado ${new Date(cuandoEnviado).toLocaleDateString('es-ES')}</span>`
+        :`<button onclick="enviarRecordatorioMes('${idPac}',this)" style="font-size:12px;background:#10069F;color:#fff;border:none;border-radius:6px;padding:5px 12px;cursor:pointer;font-family:inherit;font-weight:600">📲 Enviar</button>`;
+      return`<div style="background:#fff;border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:10px"><div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px"><div><div style="font-size:14px;font-weight:600">${nombre}</div><div style="font-size:12px;color:var(--muted)">${tutor1}${tel1?' · '+tel1:''}</div></div>${badgeHtml}</div><div style="font-size:12px;color:var(--muted)">${sesiones.length} sesión${sesiones.length>1?'es':''} — ${fechasTexto}</div>${(tel1&&tel2)?`<div style="margin-top:8px;font-size:11px;color:#10069F;cursor:pointer" onclick="toggleTel2Mensual(this,'${idPac}')">▸ Cambiar a tutor 2 (${tel2})</div>`:''}<input type="hidden" id="rec-tel-${idPac}" value="${tel1}"></div>`;
+    }).join('');
+  } catch(err){lista.innerHTML=`<div style="color:var(--rojo);font-size:13px">Error: ${err.message}</div>`;}
+}
+
+function toggleTel2Mensual(el,idPac) {
+  const pac=G.pacientes.find(p=>p.ID_Paciente===idPac);if(!pac)return;
+  const input=document.getElementById('rec-tel-'+idPac);
+  const usandoTel2=input.value===pac.Tel2;
+  input.value=usandoTel2?pac.Tel1:pac.Tel2;
+  el.textContent=usandoTel2?`▸ Cambiar a tutor 2 (${pac.Tel2})`:`▸ Volver a tutor 1 (${pac.Tel1})`;
+}
+
+async function enviarRecordatorioMes(idPac,btn) {
+  const pac=G.pacientes.find(p=>p.ID_Paciente===idPac);if(!pac)return;
+  const tel=document.getElementById('rec-tel-'+idPac)?.value;
+  if(!tel){toast('Sin teléfono para este paciente','err');return;}
+  const val=document.getElementById('rec-mes-sel').value;
+  const [anio,mes]=val.split('-').map(Number);
+  const pad=n=>String(n).padStart(2,'0');
+  const fi=`${anio}-${pad(mes)}-01`;const fd=new Date(anio,mes,1);
+  const ff=`${fd.getFullYear()}-${pad(fd.getMonth()+1)}-01`;
+  const rows=await supaGet('sesiones',`id_terapeuta=eq.${G.miId}&id_paciente=eq.${idPac}&fecha=gte.${fi}&fecha=lt.${ff}&estado=eq.Hecha`);
+  const nombrePac=pac.Alias||pac.Nombre;
+  const tutorNombre=pac.Tutor1?pac.Tutor1.split(' ')[0]:'';
+  const saludo=tutorNombre?`Hola ${tutorNombre},`:'Hola,';
+  const diasEs=['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
+  const fechasTexto=rows.map(s=>{const d=new Date(s.fecha+'T12:00:00');return`- ${diasEs[d.getDay()]} ${d.getDate()}${s.hora?' a las '+s.hora.slice(0,5):''}`;}).join('\n');
+  const texto=encodeURIComponent(`${saludo} le enviamos el resumen de sesiones de ${nombrePac} en ${MESES_ES[mes-1]} de ${anio}:\n\n${fechasTexto}\n\nGracias por confiar en IPSE. 🙏`);
+  const telLimpio='34'+tel.replace(/\D/g,'').replace(/^34/,'');
+  window.open(`https://wa.me/${telLimpio}?text=${texto}`,'_blank');
+  btn.disabled=true;btn.textContent='⏳';
+  try {
+    const ahora=new Date().toISOString();
+    await supaPatch('sesiones',`id_terapeuta=eq.${G.miId}&id_paciente=eq.${idPac}&fecha=gte.${fi}&fecha=lt.${ff}`,{recordatorio_mes_at:ahora});
+    toast('Recordatorio mensual registrado ✓','ok');
+    cargarRecordatoriosMensuales();
+  } catch(err){toast('WhatsApp abierto · Error al registrar: '+err.message,'err');btn.disabled=false;btn.textContent='📲 Enviar';}
 }
 </script>
 </body>
