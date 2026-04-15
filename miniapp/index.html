@@ -264,6 +264,7 @@
     <button onclick="abrirModalPaciente()" style="background:rgba(0,181,226,.25);border:none;color:#fff;border-radius:6px;padding:5px 10px;cursor:pointer;font-size:12px;font-family:inherit;font-weight:500;">+ Paciente</button>
     <button onclick="abrirModalBono()" style="background:rgba(151,215,0,.25);border:none;color:#fff;border-radius:6px;padding:5px 10px;cursor:pointer;font-size:12px;font-family:inherit;font-weight:500;">+ Bono</button>
     <button onclick="abrirPantallaRecordatorios()" style="background:rgba(0,181,226,.25);border:none;color:#fff;border-radius:6px;padding:5px 10px;cursor:pointer;font-size:12px;font-family:inherit;font-weight:500;">📲 Rec.</button>
+    <button onclick="abrirPantallaRecordatorios()" style="background:rgba(0,181,226,.25);border:none;color:#fff;border-radius:6px;padding:5px 10px;cursor:pointer;font-size:12px;font-family:inherit;font-weight:500;">📲 Rec.</button>
     <button id="btn-admin" onclick="abrirAdmin()" style="display:none;background:rgba(218,41,28,.35);border:none;color:#fff;border-radius:6px;padding:5px 10px;cursor:pointer;font-size:12px;font-family:inherit;font-weight:600;">⚙️ Admin</button>
     <span id="topbar-nombre">—</span>
     <div class="avatar" id="topbar-avatar">–</div>
@@ -900,6 +901,7 @@ async function iniciarApp() {
     ]);
     G.terapeutas = terapeutas.map(t => ({ ID_Terapeuta: t.id_terapeuta, Nombre: t.nombre, Activa: t.activa, Pct_Com: t.pct_com, Email: t.email }));
     G.pacientes  = pacientesRaw.map(p => ({ ID_Paciente: p.id_paciente, Nombre: ((p.nombre||'') + ' ' + (p.apellidos||'')).trim(), Alias: p.alias || '', Tutor1: p.tutor1 || '', Tel1: (p.telefono||'').replace(/\D/g,''), Tel2: (p.telefono2||'').replace(/\D/g,'') }));
+    G.pacientes  = pacientesRaw.map(p => ({ ID_Paciente: p.id_paciente, Nombre: ((p.nombre||'') + ' ' + (p.apellidos||'')).trim(), Alias: p.alias || '', Tutor1: p.tutor1 || '', Tel1: (p.telefono||'').replace(/\D/g,''), Tel2: (p.telefono2||'').replace(/\D/g,'') }));
     G.servicios  = servicios.map(s => ({ ID_Servicio: s.id_servicio, Servicio: s.servicio, Precio: s.precio, DuraciónMin: s.duracion_min, Activo: s.activo, TipoConsumo: s.tipo_consumo_default || 'Privado' }));
     G.terapeutas.forEach((t, i) => { G.colores[t.ID_Terapeuta] = PALETTE[i % PALETTE.length]; });
     document.getElementById('topbar-nombre').textContent = G.miNombre;
@@ -939,6 +941,7 @@ function mapearCitas(rows) {
     NombrePaciente:  pacMap[r.id_paciente]  || r.id_paciente  || '',
     NombreTerapeuta: terMap[r.id_terapeuta] || r.id_terapeuta || '',
     NombreServicio:  srvMap[r.id_servicio]  || r.id_servicio  || '',
+    RecordatorioDiaAt: r.recordatorio_dia_at || '',
     RecordatorioDiaAt: r.recordatorio_dia_at || '',
   }));
 }
@@ -1459,6 +1462,7 @@ async function guardarEdicionPaciente() {
       notas: document.getElementById('ep-notas').value.trim(),
     });
     const pac = await supaGet('pacientes', 'order=nombre.asc');
+    G.pacientes = pac.map(p => ({ ID_Paciente: p.id_paciente, Nombre: ((p.nombre||'') + ' ' + (p.apellidos||'')).trim(), Alias: p.alias || '', Tutor1: p.tutor1 || '', Tel1: (p.telefono||'').replace(/\D/g,''), Tel2: (p.telefono2||'').replace(/\D/g,'') }));
     G.pacientes = pac.map(p => ({ ID_Paciente: p.id_paciente, Nombre: ((p.nombre||'') + ' ' + (p.apellidos||'')).trim(), Alias: p.alias || '', Tutor1: p.tutor1 || '', Tel1: (p.telefono||'').replace(/\D/g,''), Tel2: (p.telefono2||'').replace(/\D/g,'') }));
     toast('Paciente actualizado ✓', 'ok');
     cerrarModal('modal-editar-paciente');
