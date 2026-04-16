@@ -330,17 +330,21 @@
         <input type="text" id="mp-nombre" class="form-control" placeholder="Nombre" oninput="comprobarPacienteSimilar()">
       </div>
       <div class="form-group">
-        <label class="form-label">Apellidos</label>
+        <label class="form-label">Apellidos *</label>
         <input type="text" id="mp-apellidos" class="form-control" placeholder="Apellidos" oninput="comprobarPacienteSimilar()">
       </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Alias <span style="font-weight:400;text-transform:none;font-size:11px">(nombre corto en agenda)</span></label>
+      <input type="text" id="mp-alias" class="form-control" placeholder="Ej: Juanito">
     </div>
     <div id="mp-aviso-similar" style="display:none;background:#fff3cd;border:1px solid #f0c040;border-radius:6px;padding:10px 12px;margin-bottom:10px;font-size:13px;color:#7a5c00;">
       <strong>⚠️ Posible duplicado</strong> — ya existe un paciente con nombre similar:
       <div id="mp-aviso-lista" style="margin-top:6px;line-height:1.7"></div>
     </div>
     <div class="form-row">
-      <div class="form-group"><label class="form-label">Tutor 1 *</label><input type="text" id="mp-tutor1" class="form-control" placeholder="Nombre tutor"></div>
-      <div class="form-group"><label class="form-label">Teléfono *</label><input type="tel" id="mp-tel" class="form-control" placeholder="600 000 000"></div>
+      <div class="form-group"><label class="form-label">Tutor 1</label><input type="text" id="mp-tutor1" class="form-control" placeholder="Nombre tutor"></div>
+      <div class="form-group"><label class="form-label">Teléfono</label><input type="tel" id="mp-tel" class="form-control" placeholder="600 000 000"></div>
     </div>
     <div class="form-row">
       <div class="form-group"><label class="form-label">Tutor 2</label><input type="text" id="mp-tutor2" class="form-control" placeholder="Nombre tutor 2"></div>
@@ -1492,7 +1496,7 @@ async function verificarBonoDisponible(idPaciente, tipoFin) {
 //  MODAL NUEVO PACIENTE
 // ═══════════════════════════════════════════════════════════════
 function abrirModalPaciente() {
-  ['mp-nombre','mp-apellidos','mp-tutor1','mp-tel','mp-tutor2','mp-tel2','mp-email','mp-notas'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  ['mp-nombre','mp-apellidos','mp-alias','mp-tutor1','mp-tel','mp-tutor2','mp-tel2','mp-email','mp-notas'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   document.getElementById('mp-beca').value='No'; document.getElementById('mp-consent').value='Pendiente';
   const sel=document.getElementById('mp-terapeuta');
   sel.innerHTML='<option value="">— Selecciona terapeuta —</option>'+G.terapeutas.filter(t=>t.Activa==='Sí').map(t=>`<option value="${t.ID_Terapeuta}"${t.ID_Terapeuta===G.miId?' selected':''}>${t.Nombre}</option>`).join('');
@@ -1501,7 +1505,9 @@ function abrirModalPaciente() {
 }
 async function guardarNuevoPaciente() {
   const nombre=document.getElementById('mp-nombre').value.trim();
-  if(!nombre){toast('El nombre es obligatorio','err');return;}
+  if(!nombre){toast('El nombre es obligatorio','err');document.getElementById('mp-nombre').focus();return;}
+  const apellidos=document.getElementById('mp-apellidos').value.trim();
+  if(!apellidos){toast('Los apellidos son obligatorios','err');document.getElementById('mp-apellidos').focus();return;}
   const tutor1=document.getElementById('mp-tutor1').value.trim();
   if(!tutor1){toast('El tutor/responsable es obligatorio','err');document.getElementById('mp-tutor1').focus();return;}
   const tel=document.getElementById('mp-tel').value.trim();
@@ -1509,7 +1515,8 @@ async function guardarNuevoPaciente() {
   const btn=document.getElementById('btn-guardar-paciente'); btn.disabled=true; btn.textContent='⏳ Creando…';
   try {
     const id=await generarId('pacientes','id_paciente','P');
-    await supaPost('pacientes',{id_paciente:id,nombre,apellidos:document.getElementById('mp-apellidos').value.trim(),tutor1:document.getElementById('mp-tutor1').value.trim(),telefono:document.getElementById('mp-tel').value.trim(),tutor2:document.getElementById('mp-tutor2').value.trim(),telefono2:document.getElementById('mp-tel2').value.trim(),email:document.getElementById('mp-email').value.trim(),fecha_alta:new Date().toISOString().split('T')[0],terapeuta_principal:document.getElementById('mp-terapeuta').value,es_beca:document.getElementById('mp-beca').value,consentimiento:document.getElementById('mp-consent').value,notas:document.getElementById('mp-notas').value.trim(),alias:''});
+    const alias=document.getElementById('mp-alias').value.trim();
+    await supaPost('pacientes',{id_paciente:id,nombre,apellidos,tutor1,telefono:tel,tutor2:document.getElementById('mp-tutor2').value.trim(),telefono2:document.getElementById('mp-tel2').value.trim(),email:document.getElementById('mp-email').value.trim(),fecha_alta:new Date().toISOString().split('T')[0],terapeuta_principal:document.getElementById('mp-terapeuta').value,es_beca:document.getElementById('mp-beca').value,consentimiento:document.getElementById('mp-consent').value,notas:document.getElementById('mp-notas').value.trim(),alias});
     toast('Paciente creado — '+id,'ok'); cerrarModal('modal-paciente');
     const pac=await supaGet('pacientes','order=apellidos.asc,nombre.asc');
     G.pacientes=pac.map(p=>({ID_Paciente:p.id_paciente,Nombre:((p.nombre||'')+' '+(p.apellidos||'')).trim(),Alias:p.alias||''}));
