@@ -339,8 +339,8 @@
       <div id="mp-aviso-lista" style="margin-top:6px;line-height:1.7"></div>
     </div>
     <div class="form-row">
-      <div class="form-group"><label class="form-label">Tutor 1</label><input type="text" id="mp-tutor1" class="form-control" placeholder="Nombre tutor"></div>
-      <div class="form-group"><label class="form-label">Teléfono</label><input type="tel" id="mp-tel" class="form-control" placeholder="600 000 000"></div>
+      <div class="form-group"><label class="form-label">Tutor 1 *</label><input type="text" id="mp-tutor1" class="form-control" placeholder="Nombre tutor"></div>
+      <div class="form-group"><label class="form-label">Teléfono *</label><input type="tel" id="mp-tel" class="form-control" placeholder="600 000 000"></div>
     </div>
     <div class="form-row">
       <div class="form-group"><label class="form-label">Tutor 2</label><input type="text" id="mp-tutor2" class="form-control" placeholder="Nombre tutor 2"></div>
@@ -1502,6 +1502,10 @@ function abrirModalPaciente() {
 async function guardarNuevoPaciente() {
   const nombre=document.getElementById('mp-nombre').value.trim();
   if(!nombre){toast('El nombre es obligatorio','err');return;}
+  const tutor1=document.getElementById('mp-tutor1').value.trim();
+  if(!tutor1){toast('El tutor/responsable es obligatorio','err');document.getElementById('mp-tutor1').focus();return;}
+  const tel=document.getElementById('mp-tel').value.trim();
+  if(!tel){toast('El teléfono de contacto es obligatorio','err');document.getElementById('mp-tel').focus();return;}
   const btn=document.getElementById('btn-guardar-paciente'); btn.disabled=true; btn.textContent='⏳ Creando…';
   try {
     const id=await generarId('pacientes','id_paciente','P');
