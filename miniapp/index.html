@@ -564,9 +564,12 @@
       </div>
       <div id="mc-cobro-panel" style="display:none;background:#f0f7f0;border:1px solid #97D700;border-radius:8px;padding:12px;margin-bottom:8px;">
         <div style="font-size:12px;font-weight:600;color:#4a6a00;margin-bottom:8px;">💶 Cobro en consulta</div>
-        <div class="form-row" style="margin-bottom:0">
-          <div class="form-group" style="margin-bottom:0"><label class="form-label">¿Cobrado?</label><select id="mc-cobrado" class="form-control"><option value="No">No — pendiente</option><option value="Sí">Sí — cobrado ahora</option></select></div>
+        <div class="form-row" style="margin-bottom:8px">
+          <div class="form-group" style="margin-bottom:0"><label class="form-label">¿Cobrado?</label><select id="mc-cobrado" class="form-control" onchange="onCobradoChange()"><option value="No">No — pendiente</option><option value="Sí">Sí — cobrado ahora</option></select></div>
           <div class="form-group" style="margin-bottom:0"><label class="form-label">Método</label><select id="mc-metodo-cobro" class="form-control"><option value="Efectivo">Efectivo</option><option value="Bizum">Bizum</option><option value="Transferencia">Transferencia</option></select></div>
+        </div>
+        <div id="mc-cobro-fecha-row" style="display:none">
+          <div class="form-group" style="margin-bottom:0"><label class="form-label">Fecha de cobro</label><input type="date" id="mc-fecha-cobro" class="form-control"></div>
         </div>
       </div>
       <div class="form-group"><label class="form-label">Notas</label><input type="text" id="mc-notas" class="form-control" placeholder="Opcional"></div>
@@ -1341,6 +1344,18 @@ function abrirModalCita(cita) {
   document.getElementById('mc-btn-editar-pac').style.display = cita.ID_Paciente ? 'inline-flex' : 'none';
   actualizarBotonesEstado(); abrirOverlay('modal-cita');
 }
+function onCobradoChange() {
+  const cobrado = document.getElementById('mc-cobrado').value;
+  const row = document.getElementById('mc-cobro-fecha-row');
+  const fechaEl = document.getElementById('mc-fecha-cobro');
+  if (cobrado === 'Sí') {
+    row.style.display = 'block';
+    if (!fechaEl.value) fechaEl.value = new Date().toISOString().split('T')[0];
+  } else {
+    row.style.display = 'none';
+    fechaEl.value = '';
+  }
+}
 function selEstado(estado) {
   G.estadoSel=estado; actualizarBotonesEstado();
   const panel=document.getElementById('mc-reprog-panel');
@@ -1350,7 +1365,7 @@ function selEstado(estado) {
   else{panel.classList.remove('visible');btn.textContent='Guardar';}
   const tipoFin=G.citaActual?(G.citaActual.ID_Bono?'BONO':(G.citaActual.ID_Beca?'BECA':'SUELTA')):'SUELTA';
   panelCobro.style.display=(estado==='Hecha'&&tipoFin==='SUELTA')?'':'none';
-  if(panelCobro.style.display==='none')document.getElementById('mc-cobrado').value='No';
+  if(panelCobro.style.display==='none'){document.getElementById('mc-cobrado').value='No';document.getElementById('mc-cobro-fecha-row').style.display='none';document.getElementById('mc-fecha-cobro').value='';}
 }
 function actualizarBotonesEstado() {
   const estadoOrig=G.citaActual?(G.citaActual.EstadoAgenda||G.citaActual.Estado||''):'';
@@ -1394,7 +1409,8 @@ async function guardarEstadoCita() {
           if(tipoFin==='BECA'&&idFin)await actualizarBeca(idFin,1);
           if(tipoFin==='SUELTA'&&document.getElementById('mc-cobrado').value==='Sí'){
             const idCobro=await generarId('cobros','id_cobro','C');
-            await supaPost('cobros',{id_cobro:idCobro,fecha:new Date().toISOString().split('T')[0],id_paciente:G.citaActual.ID_Paciente,id_sesion:idSes,importe:importe,metodo_pago:document.getElementById('mc-metodo-cobro').value||'Efectivo',estado:'Confirmado',notas:'Cobro desde MiniApp'});
+            const fechaCobro=document.getElementById('mc-fecha-cobro').value||new Date().toISOString().split('T')[0];
+            await supaPost('cobros',{id_cobro:idCobro,fecha:fechaCobro,id_paciente:G.citaActual.ID_Paciente,id_sesion:idSes,importe:importe,metodo_pago:document.getElementById('mc-metodo-cobro').value||'Efectivo',estado:'Confirmado',notas:'Cobro desde MiniApp'});
           }
         }
         if(G.estadoSel==='No-show'&&tipoFin==='BECA'&&idFin)await actualizarBeca(idFin,1);
