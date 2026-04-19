@@ -330,13 +330,9 @@
         <input type="text" id="mp-nombre" class="form-control" placeholder="Nombre" oninput="comprobarPacienteSimilar()">
       </div>
       <div class="form-group">
-        <label class="form-label">Apellidos *</label>
+        <label class="form-label">Apellidos</label>
         <input type="text" id="mp-apellidos" class="form-control" placeholder="Apellidos" oninput="comprobarPacienteSimilar()">
       </div>
-    </div>
-    <div class="form-group">
-      <label class="form-label">Alias <span style="font-weight:400;text-transform:none;font-size:11px">(nombre corto en agenda)</span></label>
-      <input type="text" id="mp-alias" class="form-control" placeholder="Ej: Juanito">
     </div>
     <div id="mp-aviso-similar" style="display:none;background:#fff3cd;border:1px solid #f0c040;border-radius:6px;padding:10px 12px;margin-bottom:10px;font-size:13px;color:#7a5c00;">
       <strong>⚠️ Posible duplicado</strong> — ya existe un paciente con nombre similar:
@@ -564,12 +560,9 @@
       </div>
       <div id="mc-cobro-panel" style="display:none;background:#f0f7f0;border:1px solid #97D700;border-radius:8px;padding:12px;margin-bottom:8px;">
         <div style="font-size:12px;font-weight:600;color:#4a6a00;margin-bottom:8px;">💶 Cobro en consulta</div>
-        <div class="form-row" style="margin-bottom:8px">
-          <div class="form-group" style="margin-bottom:0"><label class="form-label">¿Cobrado?</label><select id="mc-cobrado" class="form-control" onchange="onCobradoChange()"><option value="No">No — pendiente</option><option value="Sí">Sí — cobrado ahora</option></select></div>
+        <div class="form-row" style="margin-bottom:0">
+          <div class="form-group" style="margin-bottom:0"><label class="form-label">¿Cobrado?</label><select id="mc-cobrado" class="form-control"><option value="No">No — pendiente</option><option value="Sí">Sí — cobrado ahora</option></select></div>
           <div class="form-group" style="margin-bottom:0"><label class="form-label">Método</label><select id="mc-metodo-cobro" class="form-control"><option value="Efectivo">Efectivo</option><option value="Bizum">Bizum</option><option value="Transferencia">Transferencia</option></select></div>
-        </div>
-        <div id="mc-cobro-fecha-row" style="display:none">
-          <div class="form-group" style="margin-bottom:0"><label class="form-label">Fecha de cobro</label><input type="date" id="mc-fecha-cobro" class="form-control"></div>
         </div>
       </div>
       <div class="form-group"><label class="form-label">Notas</label><input type="text" id="mc-notas" class="form-control" placeholder="Opcional"></div>
@@ -1344,18 +1337,6 @@ function abrirModalCita(cita) {
   document.getElementById('mc-btn-editar-pac').style.display = cita.ID_Paciente ? 'inline-flex' : 'none';
   actualizarBotonesEstado(); abrirOverlay('modal-cita');
 }
-function onCobradoChange() {
-  const cobrado = document.getElementById('mc-cobrado').value;
-  const row = document.getElementById('mc-cobro-fecha-row');
-  const fechaEl = document.getElementById('mc-fecha-cobro');
-  if (cobrado === 'Sí') {
-    row.style.display = 'block';
-    if (!fechaEl.value) fechaEl.value = new Date().toISOString().split('T')[0];
-  } else {
-    row.style.display = 'none';
-    fechaEl.value = '';
-  }
-}
 function selEstado(estado) {
   G.estadoSel=estado; actualizarBotonesEstado();
   const panel=document.getElementById('mc-reprog-panel');
@@ -1365,7 +1346,7 @@ function selEstado(estado) {
   else{panel.classList.remove('visible');btn.textContent='Guardar';}
   const tipoFin=G.citaActual?(G.citaActual.ID_Bono?'BONO':(G.citaActual.ID_Beca?'BECA':'SUELTA')):'SUELTA';
   panelCobro.style.display=(estado==='Hecha'&&tipoFin==='SUELTA')?'':'none';
-  if(panelCobro.style.display==='none'){document.getElementById('mc-cobrado').value='No';document.getElementById('mc-cobro-fecha-row').style.display='none';document.getElementById('mc-fecha-cobro').value='';}
+  if(panelCobro.style.display==='none')document.getElementById('mc-cobrado').value='No';
 }
 function actualizarBotonesEstado() {
   const estadoOrig=G.citaActual?(G.citaActual.EstadoAgenda||G.citaActual.Estado||''):'';
@@ -1409,8 +1390,7 @@ async function guardarEstadoCita() {
           if(tipoFin==='BECA'&&idFin)await actualizarBeca(idFin,1);
           if(tipoFin==='SUELTA'&&document.getElementById('mc-cobrado').value==='Sí'){
             const idCobro=await generarId('cobros','id_cobro','C');
-            const fechaCobro=document.getElementById('mc-fecha-cobro').value||new Date().toISOString().split('T')[0];
-            await supaPost('cobros',{id_cobro:idCobro,fecha:fechaCobro,id_paciente:G.citaActual.ID_Paciente,id_sesion:idSes,importe:importe,metodo_pago:document.getElementById('mc-metodo-cobro').value||'Efectivo',estado:'Confirmado',notas:'Cobro desde MiniApp'});
+            await supaPost('cobros',{id_cobro:idCobro,fecha:new Date().toISOString().split('T')[0],id_paciente:G.citaActual.ID_Paciente,id_sesion:idSes,importe:importe,metodo_pago:document.getElementById('mc-metodo-cobro').value||'Efectivo',estado:'Confirmado',notas:'Cobro desde MiniApp'});
           }
         }
         if(G.estadoSel==='No-show'&&tipoFin==='BECA'&&idFin)await actualizarBeca(idFin,1);
@@ -1512,7 +1492,7 @@ async function verificarBonoDisponible(idPaciente, tipoFin) {
 //  MODAL NUEVO PACIENTE
 // ═══════════════════════════════════════════════════════════════
 function abrirModalPaciente() {
-  ['mp-nombre','mp-apellidos','mp-alias','mp-tutor1','mp-tel','mp-tutor2','mp-tel2','mp-email','mp-notas'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  ['mp-nombre','mp-apellidos','mp-tutor1','mp-tel','mp-tutor2','mp-tel2','mp-email','mp-notas'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   document.getElementById('mp-beca').value='No'; document.getElementById('mp-consent').value='Pendiente';
   const sel=document.getElementById('mp-terapeuta');
   sel.innerHTML='<option value="">— Selecciona terapeuta —</option>'+G.terapeutas.filter(t=>t.Activa==='Sí').map(t=>`<option value="${t.ID_Terapeuta}"${t.ID_Terapeuta===G.miId?' selected':''}>${t.Nombre}</option>`).join('');
@@ -1521,18 +1501,11 @@ function abrirModalPaciente() {
 }
 async function guardarNuevoPaciente() {
   const nombre=document.getElementById('mp-nombre').value.trim();
-  if(!nombre){toast('El nombre es obligatorio','err');document.getElementById('mp-nombre').focus();return;}
-  const apellidos=document.getElementById('mp-apellidos').value.trim();
-  if(!apellidos){toast('Los apellidos son obligatorios','err');document.getElementById('mp-apellidos').focus();return;}
-  const tutor1=document.getElementById('mp-tutor1').value.trim();
-  if(!tutor1){toast('El tutor/responsable es obligatorio','err');document.getElementById('mp-tutor1').focus();return;}
-  const tel=document.getElementById('mp-tel').value.trim();
-  if(!tel){toast('El teléfono de contacto es obligatorio','err');document.getElementById('mp-tel').focus();return;}
+  if(!nombre){toast('El nombre es obligatorio','err');return;}
   const btn=document.getElementById('btn-guardar-paciente'); btn.disabled=true; btn.textContent='⏳ Creando…';
   try {
     const id=await generarId('pacientes','id_paciente','P');
-    const alias=document.getElementById('mp-alias').value.trim();
-    await supaPost('pacientes',{id_paciente:id,nombre,apellidos,tutor1,telefono:tel,tutor2:document.getElementById('mp-tutor2').value.trim(),telefono2:document.getElementById('mp-tel2').value.trim(),email:document.getElementById('mp-email').value.trim(),fecha_alta:new Date().toISOString().split('T')[0],terapeuta_principal:document.getElementById('mp-terapeuta').value,es_beca:document.getElementById('mp-beca').value,consentimiento:document.getElementById('mp-consent').value,notas:document.getElementById('mp-notas').value.trim(),alias});
+    await supaPost('pacientes',{id_paciente:id,nombre,apellidos:document.getElementById('mp-apellidos').value.trim(),tutor1:document.getElementById('mp-tutor1').value.trim(),telefono:document.getElementById('mp-tel').value.trim(),tutor2:document.getElementById('mp-tutor2').value.trim(),telefono2:document.getElementById('mp-tel2').value.trim(),email:document.getElementById('mp-email').value.trim(),fecha_alta:new Date().toISOString().split('T')[0],terapeuta_principal:document.getElementById('mp-terapeuta').value,es_beca:document.getElementById('mp-beca').value,consentimiento:document.getElementById('mp-consent').value,notas:document.getElementById('mp-notas').value.trim(),alias:''});
     toast('Paciente creado — '+id,'ok'); cerrarModal('modal-paciente');
     const pac=await supaGet('pacientes','order=apellidos.asc,nombre.asc');
     G.pacientes=pac.map(p=>({ID_Paciente:p.id_paciente,Nombre:((p.nombre||'')+' '+(p.apellidos||'')).trim(),Alias:p.alias||''}));
@@ -1972,16 +1945,15 @@ async function enviarRecordatorioDiaDesdePantalla(idCita, btn) {
   const pac = G.pacientes.find(p => p.ID_Paciente === cita.ID_Paciente);
   const tel = document.getElementById('rec-dia-tel-' + idCita)?.value;
   if (!tel) { toast('Sin teléfono para este paciente', 'err'); return; }
-  const nombrePac = cita.NombrePaciente || 'su hij@';
-  const tutorNombre = pac?.Tutor1 ? pac.Tutor1.split(' ')[0] : '';
-  const saludo = tutorNombre ? `Hola ${tutorNombre},` : 'Hola,';
   const fechaObj = new Date(cita.Fecha + 'T12:00:00');
-  const diasEs = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
-  const texto = encodeURIComponent(
-    `${saludo} le recordamos que mañana ${diasEs[fechaObj.getDay()]} ${fechaObj.getDate()} de ${MESES_ES[fechaObj.getMonth()]} tiene cita para ${nombrePac} a las ${cita.Hora || ''} con ${cita.NombreTerapeuta || G.miNombre} en IPSE.\n\nSi necesita cancelar o cambiar la cita, por favor contáctenos con antelación.\n\nGracias. 🙏`
-  );
+  const diaNum = fechaObj.getDate();
+  const mesNom = MESES_ES[fechaObj.getMonth()];
+  const hora = cita.Hora || '';
+  const msgBase = `¡Hola! Le recordamos su sesión en Centro IPSE de mañana día ${diaNum} de ${mesNom} a las ${hora}.\n\nSi no puede asistir, avise con antelación suficiente hoy o con cuatro horas de antelación a la cita.\nEn caso contrario, se procederá a anular la sesión considerándose dada.\n\n¡Un saludo!`;
+  const msgEditado = prompt('Edita el mensaje si lo necesitas:', msgBase);
+  if (msgEditado === null) return;
   const telLimpio = '34' + tel.replace(/\D/g, '').replace(/^34/, '');
-  window.open(`https://wa.me/${telLimpio}?text=${texto}`, '_blank');
+  window.open(`https://wa.me/${telLimpio}?text=${encodeURIComponent(msgEditado)}`, '_blank');
   btn.disabled = true; btn.textContent = '⏳';
   try {
     const ahora = new Date().toISOString();
@@ -2017,14 +1989,15 @@ async function enviarRecordatorioDia(idCita,btn) {
   const radio=document.querySelector('input[name="sel-tel-radio"]:checked');if(!radio)return;
   const tel=radio.value;const cita=G.citas.find(c=>c.ID_Cita===idCita);if(!cita)return;
   const pac=G.pacientes.find(p=>p.ID_Paciente===cita.ID_Paciente);
-  const nombrePac=cita.NombrePaciente||'su hij@';
-  const tutorNombre=pac?.Tutor1?pac.Tutor1.split(' ')[0]:'';
-  const saludo=tutorNombre?`Hola ${tutorNombre},`:'Hola,';
   const fechaObj=new Date(cita.Fecha+'T12:00:00');
-  const diasEs=['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
-  const texto=encodeURIComponent(`${saludo} le recordamos que mañana ${diasEs[fechaObj.getDay()]} ${fechaObj.getDate()} de ${MESES_ES[fechaObj.getMonth()]} tiene cita para ${nombrePac} a las ${cita.Hora||''} con ${cita.NombreTerapeuta||G.miNombre} en IPSE.\n\nSi necesita cancelar o cambiar la cita, por favor contáctenos con antelación.\n\nGracias. 🙏`);
+  const diaNum=fechaObj.getDate();
+  const mesNom=MESES_ES[fechaObj.getMonth()];
+  const hora=cita.Hora||'';
+  const msgBase=`¡Hola! Le recordamos su sesión en Centro IPSE de mañana día ${diaNum} de ${mesNom} a las ${hora}.\n\nSi no puede asistir, avise con antelación suficiente hoy o con cuatro horas de antelación a la cita.\nEn caso contrario, se procederá a anular la sesión considerándose dada.\n\n¡Un saludo!`;
+  const msgEditado=prompt('Edita el mensaje si lo necesitas:',msgBase);
+  if(msgEditado===null)return;
   const telLimpio='34'+tel.replace(/\D/g,'').replace(/^34/,'');
-  window.open(`https://wa.me/${telLimpio}?text=${texto}`,'_blank');
+  window.open(`https://wa.me/${telLimpio}?text=${encodeURIComponent(msgEditado)}`,'_blank');
   btn.textContent='⏳';btn.disabled=true;
   try {
     const ahora=new Date().toISOString();
@@ -2084,14 +2057,13 @@ async function enviarRecordatorioMes(idPac,btn) {
   const fi=`${anio}-${pad(mes)}-01`;const fd=new Date(anio,mes,1);
   const ff=`${fd.getFullYear()}-${pad(fd.getMonth()+1)}-01`;
   const rows=await supaGet('sesiones',`id_terapeuta=eq.${G.miId}&id_paciente=eq.${idPac}&fecha=gte.${fi}&fecha=lt.${ff}&estado=eq.Hecha`);
-  const nombrePac=pac.Alias||pac.Nombre;
-  const tutorNombre=pac.Tutor1?pac.Tutor1.split(' ')[0]:'';
-  const saludo=tutorNombre?`Hola ${tutorNombre},`:'Hola,';
   const diasEs=['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
   const fechasTexto=rows.map(s=>{const d=new Date(s.fecha+'T12:00:00');return`- ${diasEs[d.getDay()]} ${d.getDate()}${s.hora?' a las '+s.hora.slice(0,5):''}`;}).join('\n');
-  const texto=encodeURIComponent(`${saludo} le enviamos el resumen de sesiones de ${nombrePac} en ${MESES_ES[mes-1]} de ${anio}:\n\n${fechasTexto}\n\nGracias por confiar en IPSE. 🙏`);
+  const msgBase=`¡Hola! Le enviamos el resumen de sesiones en Centro IPSE de ${MESES_ES[mes-1]} de ${anio}:\n\n${fechasTexto}\n\nGracias por confiar en IPSE. 🙏`;
+  const msgEditado=prompt('Edita el mensaje si lo necesitas:',msgBase);
+  if(msgEditado===null)return;
   const telLimpio='34'+tel.replace(/\D/g,'').replace(/^34/,'');
-  window.open(`https://wa.me/${telLimpio}?text=${texto}`,'_blank');
+  window.open(`https://wa.me/${telLimpio}?text=${encodeURIComponent(msgEditado)}`,'_blank');
   btn.disabled=true;btn.textContent='⏳';
   try {
     const ahora=new Date().toISOString();
