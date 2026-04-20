@@ -212,6 +212,78 @@ body { font-family: 'Inter', sans-serif; background: var(--cream); color: var(--
 .pac-search-item { padding: 9px 13px; font-size: 13px; cursor: pointer; color: var(--ink); }
 .pac-search-item:hover { background: var(--blue-pale); color: var(--blue); }
 .pac-search-item .pac-id { font-size: 11px; color: var(--ink-muted); margin-left: 6px; font-family: monospace; }
+
+/* ── PACIENTE 360° ── */
+.p360-back-btn { display: inline-flex; align-items: center; gap: 6px; background: none; border: 1px solid var(--border); border-radius: 7px; padding: 6px 12px; font-size: 12px; color: var(--ink-muted); cursor: pointer; font-family: inherit; transition: all .15s; margin-bottom: 16px; }
+.p360-back-btn:hover { background: var(--cream); color: var(--ink); }
+.p360-header { display: flex; align-items: center; gap: 14px; margin-bottom: 20px; background: var(--white); border: 1px solid var(--border); border-radius: 12px; padding: 16px 20px; }
+.p360-hav { width: 52px; height: 52px; background: var(--blue-pale); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 700; color: var(--blue); flex-shrink: 0; }
+.p360-hinfo { flex: 1; }
+.p360-hname { font-size: 18px; font-weight: 700; color: var(--ink); }
+.p360-hmeta { font-size: 12px; color: var(--ink-muted); margin-top: 3px; }
+.p360-hbadges { display: flex; gap: 6px; margin-top: 7px; flex-wrap: wrap; }
+.p360-hactions { display: flex; gap: 8px; flex-shrink: 0; }
+.p360-tabs { display: flex; gap: 2px; background: var(--cream); border-radius: 10px; padding: 3px; margin-bottom: 20px; width: fit-content; border: 1px solid var(--border); }
+.p360-tab { padding: 7px 18px; border-radius: 7px; font-size: 13px; font-weight: 500; cursor: pointer; color: var(--ink-muted); transition: all .15s; }
+.p360-tab:hover { color: var(--blue); }
+.p360-tab.active { background: var(--white); color: var(--blue); font-weight: 600; box-shadow: 0 1px 6px rgba(16,6,159,.1); }
+.p360-panel { display: none; }
+.p360-panel.active { display: block; }
+.p360-card { background: var(--white); border: 1px solid var(--border); border-radius: 12px; padding: 18px 20px; margin-bottom: 14px; }
+.p360-stitle { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--blue); margin-bottom: 14px; padding-bottom: 8px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+.p360-fg { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 24px; }
+.p360-fg3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px 24px; }
+.p360-fl { font-size: 11px; color: var(--ink-muted); margin-bottom: 2px; }
+.p360-fv { font-size: 13px; color: var(--ink); font-weight: 500; }
+.p360-fv.empty { color: var(--ink-muted); font-weight: 400; font-style: italic; }
+.p360-kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 14px; }
+.p360-kpi { background: var(--cream); border-radius: 8px; padding: 13px 15px; }
+.p360-kpi-l { font-size: 10px; text-transform: uppercase; letter-spacing: .06em; color: var(--ink-muted); margin-bottom: 4px; }
+.p360-kpi-v { font-size: 24px; font-weight: 300; color: var(--ink); line-height: 1; }
+.p360-kpi-s { font-size: 11px; color: var(--ink-muted); margin-top: 3px; }
+.p360-kpi.green .p360-kpi-v { color: var(--green-dark); }
+.p360-kpi.red .p360-kpi-v { color: var(--red); }
+.p360-kpi.blue .p360-kpi-v { color: var(--blue); }
+.nota-item { padding: 11px 0; border-bottom: 1px solid var(--border); }
+.nota-item:last-child { border-bottom: none; }
+.nota-meta { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; flex-wrap: wrap; }
+.nota-date { font-size: 11px; font-weight: 600; color: var(--blue); }
+.nota-ter { font-size: 11px; color: var(--ink-muted); }
+.nota-text { font-size: 13px; color: var(--ink); line-height: 1.55; }
+.nota-add { display: flex; align-items: center; gap: 6px; background: none; border: 1px dashed var(--border); border-radius: 7px; width: 100%; padding: 9px 14px; color: var(--ink-muted); font-size: 13px; cursor: pointer; margin-top: 10px; font-family: inherit; }
+.nota-add:hover { border-color: var(--blue); color: var(--blue); background: var(--blue-pale); }
+.tl-item { display: flex; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); align-items: flex-start; }
+.tl-item:last-child { border-bottom: none; }
+.tl-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; margin-top: 3px; }
+.tl-dot.hecha { background: var(--green-dark); }
+.tl-dot.noshow { background: var(--red); }
+.tl-dot.programada { background: var(--cyan); }
+.tl-dot.cancelada { background: var(--ink-muted); }
+.tl-body { flex: 1; }
+.tl-top { display: flex; align-items: center; gap: 8px; margin-bottom: 2px; flex-wrap: wrap; }
+.tl-fecha { font-size: 12px; font-weight: 600; color: var(--ink); }
+.tl-srv { font-size: 12px; color: var(--ink-muted); }
+.tl-ter { font-size: 11px; color: var(--blue); }
+.fin2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px; }
+.fin-blk { background: var(--cream); border-radius: 8px; padding: 13px 15px; }
+.fin-lbl { font-size: 10px; text-transform: uppercase; letter-spacing: .06em; color: var(--ink-muted); margin-bottom: 4px; }
+.fin-val { font-size: 20px; font-weight: 300; color: var(--ink); }
+.fin-val.warn { color: #8A6A00; }
+.fin-val.ok { color: var(--green-dark); }
+.cobro-r { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+.cobro-r:last-child { border-bottom: none; }
+.cobro-imp { font-weight: 600; color: var(--green-dark); }
+.bono360 { display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: var(--blue-pale); border-radius: 8px; margin-bottom: 8px; }
+.bono360-name { font-size: 13px; font-weight: 600; color: var(--blue); }
+.bono360-det { font-size: 11px; color: var(--ink-muted); margin-top: 2px; }
+.bono360-frac { font-size: 14px; font-weight: 600; color: var(--blue); text-align: right; }
+.bono360-bar { width: 80px; height: 4px; background: rgba(16,6,159,.15); border-radius: 2px; margin-top: 4px; }
+.bono360-fill { height: 100%; border-radius: 2px; background: var(--blue); }
+.beca360 { display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: var(--green-pale); border-radius: 8px; margin-bottom: 8px; }
+.beca360-name { font-size: 13px; font-weight: 600; color: var(--green-dark); }
+.beca360-det { font-size: 11px; color: var(--ink-muted); margin-top: 2px; }
+.pac-saldo-warn { color: #8A6A00; font-weight: 600; }
+.pac-saldo-zero { color: var(--ink-muted); }
 </style>
 </head>
 <body>
@@ -412,24 +484,35 @@ body { font-family: 'Inter', sans-serif; background: var(--cream); color: var(--
     </div>
 
     <!-- ══ PACIENTES ══ -->
+    <!-- ══ LISTADO PACIENTES ══ -->
     <div class="page" id="page-pacientes">
       <div class="page-header">
         <div><h1>Pacientes</h1><p>Expedientes clínicos</p></div>
         <button class="btn btn-primary" onclick="abrirModalPaciente()">+ Nuevo paciente</button>
       </div>
       <div class="table-toolbar">
-        <input class="search-input" placeholder="🔍 Nombre, alias, teléfono…" oninput="filtrarPacientes()" id="pac-busq">
+        <input class="search-input" placeholder="🔍 Nombre, apellidos, ID…" oninput="filtrarPacientes()" id="pac-busq" style="width:260px">
         <select class="filter-select" id="pac-ter" onchange="filtrarPacientes()"><option value="">Todas terapeutas</option></select>
+        <select class="filter-select" id="pac-estado-fil" onchange="filtrarPacientes()">
+          <option value="">Todos estados</option>
+          <option value="activo">Activos</option>
+          <option value="baja">Baja</option>
+        </select>
         <select class="filter-select" id="pac-beca" onchange="filtrarPacientes()">
           <option value="">Beca: todos</option><option value="Sí">Con beca</option><option value="No">Sin beca</option>
         </select>
-        <span id="pac-count" style="font-size:12px;color:var(--ink-muted)"></span>
+        <span id="pac-count" style="font-size:12px;color:var(--ink-muted);margin-left:4px"></span>
       </div>
       <div class="data-table-wrap">
         <table class="data-table">
           <thead><tr>
-            <th>ID</th><th>Nombre</th><th>Alias</th><th>Tutor</th><th>Teléfono</th>
-            <th>Alta</th><th>Terapeuta</th><th>Beca</th><th>Consentimiento</th><th></th>
+            <th>ID</th>
+            <th>Nombre</th>
+            <th>Terapeuta</th>
+            <th>Estado</th>
+            <th>Última sesión</th>
+            <th>Saldo pendiente</th>
+            <th></th>
           </tr></thead>
           <tbody id="tbody-pacientes"></tbody>
         </table>
@@ -438,6 +521,100 @@ body { font-family: 'Inter', sans-serif; background: var(--cream); color: var(--
           <div id="pag-pacientes" style="display:flex;gap:4px"></div>
         </div>
       </div>
+    </div>
+
+    <!-- ══ PACIENTE 360° ══ -->
+    <div class="page" id="page-p360">
+      <button class="p360-back-btn" onclick="navigate('pacientes')">← Volver a Pacientes</button>
+
+      <!-- Cabecera del paciente -->
+      <div class="p360-header" id="p360-header">
+        <div class="p360-hav" id="p360-avatar">—</div>
+        <div class="p360-hinfo">
+          <div class="p360-hname" id="p360-nombre">—</div>
+          <div class="p360-hmeta" id="p360-meta">—</div>
+          <div class="p360-hbadges" id="p360-badges"></div>
+        </div>
+        <div class="p360-hactions">
+          <button class="btn btn-secondary btn-sm" onclick="editarPacienteActual()">✏️ Editar</button>
+        </div>
+      </div>
+
+      <!-- Pestañas -->
+      <div class="p360-tabs">
+        <div class="p360-tab active" onclick="p360Tab('personal',this)">Personal</div>
+        <div class="p360-tab" onclick="p360Tab('clinico',this)">Clínico</div>
+        <div class="p360-tab" onclick="p360Tab('economico',this)">Económico</div>
+        <div class="p360-tab" onclick="p360Tab('actividad',this)">Actividad</div>
+      </div>
+
+      <!-- ▸ PERSONAL -->
+      <div class="p360-panel active" id="p360-personal">
+        <div class="p360-card">
+          <div class="p360-stitle">Ficha de identidad</div>
+          <div class="p360-fg" id="p360-ficha"></div>
+        </div>
+        <div class="p360-card">
+          <div class="p360-stitle">Contacto y tutor/a</div>
+          <div class="p360-fg" id="p360-contacto"></div>
+        </div>
+        <div class="p360-card">
+          <div class="p360-stitle">Consentimiento informado</div>
+          <div id="p360-consent"></div>
+        </div>
+      </div>
+
+      <!-- ▸ CLÍNICO -->
+      <div class="p360-panel" id="p360-clinico">
+        <div class="p360-card">
+          <div class="p360-stitle">Ficha clínica</div>
+          <div class="p360-fg" id="p360-clinica-datos"></div>
+        </div>
+        <div class="p360-card">
+          <div class="p360-stitle">
+            <span>Notas clínicas por sesión</span>
+            <button class="btn btn-secondary btn-sm" onclick="p360NuevaNotaModal()">+ Nota</button>
+          </div>
+          <div id="p360-notas-list"><div class="empty-state">Sin notas registradas</div></div>
+        </div>
+      </div>
+
+      <!-- ▸ ECONÓMICO -->
+      <div class="p360-panel" id="p360-economico">
+        <div class="p360-kpis" id="p360-kpis-eco"></div>
+        <div class="p360-card">
+          <div class="p360-stitle">Resumen financiero</div>
+          <div class="fin2" id="p360-fin-resumen"></div>
+          <div>
+            <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-muted);margin-bottom:8px">Últimos cobros</div>
+            <div id="p360-cobros-list"><div class="empty-state">Sin cobros registrados</div></div>
+          </div>
+        </div>
+        <div class="p360-card" id="p360-bonos-card" style="display:none">
+          <div class="p360-stitle">Bonos activos</div>
+          <div id="p360-bonos-list"></div>
+        </div>
+        <div class="p360-card" id="p360-becas-card" style="display:none">
+          <div class="p360-stitle">Becas activas</div>
+          <div id="p360-becas-list"></div>
+        </div>
+      </div>
+
+      <!-- ▸ ACTIVIDAD -->
+      <div class="p360-panel" id="p360-actividad">
+        <div class="p360-kpis" id="p360-kpis-act"></div>
+        <div class="p360-card">
+          <div class="p360-stitle">
+            <span>Próximas citas</span>
+          </div>
+          <div id="p360-proximas"><div class="empty-state">Sin citas próximas</div></div>
+        </div>
+        <div class="p360-card">
+          <div class="p360-stitle">Historial de sesiones y notas</div>
+          <div id="p360-historial"><div class="empty-state">Sin historial</div></div>
+        </div>
+      </div>
+
     </div>
 
     <!-- ══ TERAPEUTAS ══ -->
@@ -1208,8 +1385,14 @@ function navigate(page) {
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   document.getElementById('page-'+page).classList.add('active');
-  document.querySelector(`.nav-item[onclick*="${page}"]`).classList.add('active');
-  const titles = {dashboard:'Dashboard',produccion:'Producción',cobros:'Cobros',pacientes:'Pacientes',terapeutas:'Terapeutas',bonos:'Bonos',becas:'Becas',servicios:'Servicios',facturas:'Facturas'};
+  const navEl = document.querySelector(`.nav-item[onclick*="${page}"]`);
+  if (navEl) navEl.classList.add('active');
+  else {
+    // p360 highlights Pacientes
+    const pacNav = document.querySelector(`.nav-item[onclick*="pacientes"]`);
+    if (pacNav) pacNav.classList.add('active');
+  }
+  const titles = {dashboard:'Dashboard',produccion:'Producción',cobros:'Cobros',pacientes:'Pacientes',p360:'Expediente',terapeutas:'Terapeutas',bonos:'Bonos',becas:'Becas',servicios:'Servicios',facturas:'Facturas'};
   document.getElementById('topbar-title').textContent = titles[page]||page;
   if (page==='produccion') cargarSesiones();
   if (page==='cobros') cargarCobros();
@@ -1678,21 +1861,24 @@ function exportarCobrosXLSX() {
 }
 
 // ═══════════════════════════════════════════════════════
-//  PACIENTES
+//  PACIENTES — LISTADO
 // ═══════════════════════════════════════════════════════
 let pacFiltrados = [];
 let pacPag = 0;
 
 function filtrarPacientes() {
-  const q   = (document.getElementById('pac-busq')?.value||'').toLowerCase();
-  const ter = document.getElementById('pac-ter')?.value||'';
-  const bec = document.getElementById('pac-beca')?.value||'';
+  const q    = (document.getElementById('pac-busq')?.value||'').toLowerCase();
+  const ter  = document.getElementById('pac-ter')?.value||'';
+  const bec  = document.getElementById('pac-beca')?.value||'';
+  const est  = document.getElementById('pac-estado-fil')?.value||'';
 
   pacFiltrados = G.pacientes.filter(p=>{
-    const nom = ((p.nombre||'')+' '+(p.apellidos||'')+' '+(p.alias||'')+' '+(p.tutor1||'')+' '+(p.telefono||'')).toLowerCase();
+    const nom = ((p.nombre||'')+' '+(p.apellidos||'')+' '+(p.alias||'')+' '+(p.id_paciente||'')).toLowerCase();
     if (q && !nom.includes(q)) return false;
     if (ter && p.terapeuta_principal!==ter) return false;
     if (bec && p.es_beca!==bec) return false;
+    if (est==='activo' && p.activo==='No') return false;
+    if (est==='baja'   && p.activo!=='No') return false;
     return true;
   });
   pacPag=0;
@@ -1700,32 +1886,324 @@ function filtrarPacientes() {
 }
 
 function renderPacientes() {
-  _renderPacientesTable();
+  filtrarPacientes();
 }
 
 function _renderPacientesTable() {
   const inicio = pacPag*G.paginaSize;
   const pagina = pacFiltrados.slice(inicio,inicio+G.paginaSize);
-  const tbody = document.getElementById('tbody-pacientes');
-  if (!pagina.length) { tbody.innerHTML='<tr><td colspan="10" class="empty-state">Sin pacientes</td></tr>'; }
-  else {
-    tbody.innerHTML = pagina.map(p=>`
-      <tr onclick="editarPaciente('${p.id_paciente}')">
-        <td class="mono">${p.id_paciente}</td>
-        <td class="strong">${((p.nombre||'')+' '+(p.apellidos||'')).trim()}</td>
-        <td class="muted">${p.alias||''}</td>
-        <td>${p.tutor1||'—'}</td>
-        <td>${p.telefono||'—'}</td>
-        <td class="muted">${fmtFecha(p.fecha_alta)}</td>
-        <td>${nomTer(p.terapeuta_principal)}</td>
-        <td>${p.es_beca==='Sí'?'<span class="badge badge-beca">Beca</span>':''}</td>
-        <td>${badgeEstado(p.consentimiento==='Firmado'?'Cobrado':'Pendiente')}</td>
-        <td><button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();editarPaciente('${p.id_paciente}')">✏️</button></td>
-      </tr>`).join('');
+  const tbody  = document.getElementById('tbody-pacientes');
+  if (!pagina.length) {
+    tbody.innerHTML='<tr><td colspan="7" class="empty-state">Sin pacientes</td></tr>';
+  } else {
+    tbody.innerHTML = pagina.map(p=>{
+      // Última sesión del paciente
+      const sesPac = G.sesiones.filter(s=>s.id_paciente===p.id_paciente && s.estado==='Hecha')
+                               .sort((a,b)=>b.fecha.localeCompare(a.fecha));
+      const ultSes = sesPac.length ? fmtFecha(sesPac[0].fecha) : '<span style="color:var(--ink-muted)">—</span>';
+      // Saldo pendiente = sesiones hechas no cobradas
+      const saldo = G.sesiones
+        .filter(s=>s.id_paciente===p.id_paciente && s.estado==='Hecha' && s.cobrado!=='Sí' && s.financiacion!=='BONO' && s.financiacion!=='BECA')
+        .reduce((sum,s)=>sum+(parseFloat(s.importe)||0),0);
+      const saldoHtml = saldo>0
+        ? `<span class="pac-saldo-warn">${fmtEur(saldo)}</span>`
+        : `<span class="pac-saldo-zero">0 €</span>`;
+      // Badges estado
+      const activo = p.activo!=='No';
+      const estadoBadge = activo
+        ? '<span class="badge badge-hecha">Activo</span>'
+        : '<span class="badge badge-cancelada">Baja</span>';
+      const becaBadge = p.es_beca==='Sí' ? ' <span class="badge badge-beca">Beca</span>' : '';
+      const initials = ((p.nombre||'').charAt(0)+(p.apellidos||'').charAt(0)).toUpperCase()||'?';
+      return `
+        <tr onclick="abrirP360('${p.id_paciente}')" style="cursor:pointer">
+          <td class="mono">${p.id_paciente}</td>
+          <td>
+            <div style="display:flex;align-items:center;gap:10px">
+              <div style="width:30px;height:30px;background:var(--blue-pale);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--blue);flex-shrink:0">${initials}</div>
+              <div>
+                <div style="font-weight:500;color:var(--ink)">${((p.nombre||'')+' '+(p.apellidos||'')).trim()}</div>
+                ${p.alias ? `<div style="font-size:11px;color:var(--ink-muted)">${p.alias}</div>` : ''}
+              </div>
+            </div>
+          </td>
+          <td>${nomTer(p.terapeuta_principal)}</td>
+          <td>${estadoBadge}${becaBadge}</td>
+          <td class="muted">${ultSes}</td>
+          <td>${saldoHtml}</td>
+          <td><button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();editarPaciente('${p.id_paciente}')">✏️</button></td>
+        </tr>`;
+    }).join('');
   }
   document.getElementById('pac-footer').textContent = pacFiltrados.length+' pacientes';
   document.getElementById('pac-count').textContent  = pacFiltrados.length+' pacientes';
   renderPaginacion('pag-pacientes',pacFiltrados.length,G.paginaSize,pacPag,(p)=>{ pacPag=p; _renderPacientesTable(); });
+}
+
+// ═══════════════════════════════════════════════════════
+//  PACIENTE 360°
+// ═══════════════════════════════════════════════════════
+let P360 = { id: null, sesiones: [], cobros: [] };
+
+function p360Field(label, value, empty) {
+  const v = value || '';
+  return `<div><div class="p360-fl">${label}</div><div class="p360-fv${v?'':' empty'}">${v || (empty||'—')}</div></div>`;
+}
+
+function p360Tab(name, el) {
+  document.querySelectorAll('.p360-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.p360-panel').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('p360-'+name).classList.add('active');
+}
+
+async function abrirP360(idPaciente) {
+  P360.id = idPaciente;
+  navigate('p360');
+
+  const p = G.pacientes.find(x=>x.id_paciente===idPaciente);
+  if (!p) { toast('Paciente no encontrado','err'); return; }
+
+  // — Cabecera —
+  const initials = ((p.nombre||'').charAt(0)+(p.apellidos||'').charAt(0)).toUpperCase()||'?';
+  document.getElementById('p360-avatar').textContent = initials;
+  document.getElementById('p360-nombre').textContent = ((p.nombre||'')+' '+(p.apellidos||'')).trim();
+
+  const ter = G.terapeutas.find(t=>t.id_terapeuta===p.terapeuta_principal);
+  const edad = p.fecha_nacimiento ? calcEdad(p.fecha_nacimiento)+' años' : '';
+  document.getElementById('p360-meta').textContent =
+    [p.id_paciente, edad, ter?ter.nombre:'', p.municipio].filter(Boolean).join(' · ');
+
+  const badges = [];
+  if (p.activo!=='No') badges.push('<span class="badge badge-hecha">Activo</span>');
+  else badges.push('<span class="badge badge-cancelada">Baja</span>');
+  if (p.es_beca==='Sí') badges.push('<span class="badge badge-beca">Beca</span>');
+  if (p.consentimiento==='Firmado') badges.push('<span class="badge badge-hecha">Consentimiento firmado</span>');
+  else badges.push('<span class="badge badge-pendiente">Consentimiento pendiente</span>');
+  document.getElementById('p360-badges').innerHTML = badges.join('');
+
+  // Reset tabs to Personal
+  document.querySelectorAll('.p360-tab').forEach((t,i)=>t.classList.toggle('active',i===0));
+  document.querySelectorAll('.p360-panel').forEach((t,i)=>t.classList.toggle('active',i===0));
+
+  // — Pestaña Personal —
+  document.getElementById('p360-ficha').innerHTML = [
+    p360Field('Nombre completo', ((p.nombre||'')+' '+(p.apellidos||'')).trim()),
+    p360Field('Alias', p.alias),
+    p360Field('Fecha de nacimiento', p.fecha_nacimiento ? fmtFecha(p.fecha_nacimiento)+(edad?' ('+edad+')':'') : ''),
+    p360Field('DNI / NIE', p.dni_paciente),
+    p360Field('Dirección', [p.direccion, p.codigo_postal, p.municipio].filter(Boolean).join(', ')),
+    p360Field('Fecha de alta', fmtFecha(p.fecha_alta)),
+  ].join('');
+
+  document.getElementById('p360-contacto').innerHTML = [
+    p360Field('Tutor/a principal', p.tutor1),
+    p360Field('Teléfono', p.telefono),
+    p360Field('Email', p.email),
+    p360Field('Tutor/a secundario/a', p.tutor2),
+    p360Field('Teléfono 2', p.telefono2),
+    p360Field('DNI tutor 1', p.dni_tutor1),
+  ].join('');
+
+  const consent = p.consentimiento==='Firmado';
+  document.getElementById('p360-consent').innerHTML = `
+    <div style="display:flex;align-items:center;gap:10px">
+      <div style="width:10px;height:10px;border-radius:50%;background:${consent?'var(--green-dark)':'var(--ink-muted)'}"></div>
+      <span style="font-size:13px;font-weight:600;color:var(--ink)">${p.consentimiento||'Pendiente'}</span>
+      ${p.fecha_alta?`<span style="font-size:12px;color:var(--ink-muted)">— alta ${fmtFecha(p.fecha_alta)}</span>`:''}
+    </div>`;
+
+  // — Pestaña Clínica (ficha) —
+  document.getElementById('p360-clinica-datos').innerHTML = [
+    p360Field('Terapeuta principal', ter?ter.nombre:''),
+    p360Field('Especialidad', ter?ter.especialidad:''),
+    p360Field('Primera sesión', ''),  // se rellena tras cargar sesiones
+    p360Field('Notas clínicas', p.notas),
+  ].join('');
+
+  // — Carga async de sesiones y cobros —
+  p360CargarDatos(idPaciente, p);
+}
+
+async function p360CargarDatos(idPaciente, p) {
+  try {
+    const [sesiones, cobros] = await Promise.all([
+      sg('sesiones', `id_paciente=eq.${idPaciente}&order=fecha.desc`),
+      sg('cobros',   `id_paciente=eq.${idPaciente}&order=fecha.desc&limit=50`),
+    ]);
+    P360.sesiones = sesiones;
+    P360.cobros   = cobros;
+
+    p360RenderEconomico(p, sesiones, cobros);
+    p360RenderActividad(sesiones);
+    p360RenderNotas(sesiones);
+
+    // Primera sesión en ficha clínica
+    const primera = [...sesiones].filter(s=>s.estado==='Hecha').sort((a,b)=>a.fecha.localeCompare(b.fecha))[0];
+    if (primera) {
+      const cells = document.querySelectorAll('#p360-clinica-datos .p360-fv');
+      if (cells[2]) cells[2].textContent = fmtFecha(primera.fecha);
+    }
+  } catch(e) {
+    toast('Error cargando datos del expediente: '+e.message,'err');
+  }
+}
+
+function p360RenderEconomico(p, sesiones, cobros) {
+  const hechas    = sesiones.filter(s=>s.estado==='Hecha');
+  const noShows   = sesiones.filter(s=>s.estado==='No-show');
+  const total     = sesiones.length;
+  const asistPct  = total>0 ? Math.round(hechas.length/total*100) : 0;
+  const ultSes    = hechas.sort((a,b)=>b.fecha.localeCompare(a.fecha))[0];
+  const devengo   = hechas.reduce((s,x)=>s+(parseFloat(x.importe)||0),0);
+  const cobrado   = cobros.filter(c=>c.estado==='Confirmado').reduce((s,x)=>s+(parseFloat(x.importe)||0),0);
+  const pendiente = Math.max(0, devengo - cobrado);
+
+  document.getElementById('p360-kpis-eco').innerHTML = `
+    <div class="p360-kpi"><div class="p360-kpi-l">Total sesiones</div><div class="p360-kpi-v">${hechas.length}</div><div class="p360-kpi-s">realizadas</div></div>
+    <div class="p360-kpi green"><div class="p360-kpi-l">Asistencia</div><div class="p360-kpi-v">${asistPct}%</div><div class="p360-kpi-s">${hechas.length} de ${total}</div></div>
+    <div class="p360-kpi red"><div class="p360-kpi-l">No-shows</div><div class="p360-kpi-v">${noShows.length}</div><div class="p360-kpi-s">total acumulado</div></div>
+    <div class="p360-kpi blue"><div class="p360-kpi-l">Última sesión</div><div class="p360-kpi-v" style="font-size:15px;font-weight:500;padding-top:4px">${ultSes?fmtFecha(ultSes.fecha):'—'}</div><div class="p360-kpi-s">&nbsp;</div></div>`;
+
+  document.getElementById('p360-fin-resumen').innerHTML = `
+    <div class="fin-blk"><div class="fin-lbl">Total devengado</div><div class="fin-val">${fmtEur(devengo)}</div></div>
+    <div class="fin-blk"><div class="fin-lbl">Saldo pendiente</div><div class="fin-val ${pendiente>0?'warn':'ok'}">${fmtEur(pendiente)}</div></div>`;
+
+  const ultCobros = cobros.slice(0,6);
+  document.getElementById('p360-cobros-list').innerHTML = ultCobros.length
+    ? ultCobros.map(c=>`
+        <div class="cobro-r">
+          <div><div style="font-size:13px">${c.notas||'Cobro'}</div><div style="font-size:11px;color:var(--ink-muted)">${fmtFecha(c.fecha)} · ${c.metodo_pago||''}</div></div>
+          <div class="cobro-imp">+${fmtEur(parseFloat(c.importe)||0)}</div>
+        </div>`).join('')
+    : '<div class="empty-state" style="padding:16px">Sin cobros registrados</div>';
+
+  // Bonos
+  const bonos = G.bonos.filter(b=>b.id_paciente===p.id_paciente && b.estado==='Activo');
+  const bonosCard = document.getElementById('p360-bonos-card');
+  if (bonos.length) {
+    bonosCard.style.display='block';
+    document.getElementById('p360-bonos-list').innerHTML = bonos.map(b=>{
+      const total = parseInt(b.sesiones_totales)||0;
+      const cons  = parseInt(b.sesiones_consumidas)||0;
+      const pend  = total-cons;
+      const pct   = total>0?Math.round(cons/total*100):0;
+      return `<div class="bono360">
+        <div><div class="bono360-name">${b.tipo||'Bono'}</div><div class="bono360-det">${b.id_bono} · ${cons}/${total} sesiones · vence ${fmtFecha(b.fecha_caducidad)}</div></div>
+        <div><div class="bono360-frac">${pend} pendientes</div><div class="bono360-bar"><div class="bono360-fill" style="width:${pct}%"></div></div></div>
+      </div>`;
+    }).join('');
+  } else { bonosCard.style.display='none'; }
+
+  // Becas
+  const becas = G.becas.filter(b=>b.id_paciente===p.id_paciente && b.estado==='Activo');
+  const becasCard = document.getElementById('p360-becas-card');
+  if (becas.length) {
+    becasCard.style.display='block';
+    document.getElementById('p360-becas-list').innerHTML = becas.map(b=>{
+      const ses  = parseInt(b.sesiones_objetivo)||0;
+      const cons = parseInt(b.sesiones_consumidas)||0;
+      return `<div class="beca360">
+        <div><div class="beca360-name">Beca ${b.anio}</div><div class="beca360-det">${b.id_beca} · ${cons}/${ses} sesiones · ${fmtEur(parseFloat(b.importe_neto)||0)}</div></div>
+        <div style="font-size:13px;font-weight:600;color:var(--green-dark)">${ses-cons} pendientes</div>
+      </div>`;
+    }).join('');
+  } else { becasCard.style.display='none'; }
+}
+
+function p360RenderActividad(sesiones) {
+  const hoy = new Date().toISOString().split('T')[0];
+  const proximas  = sesiones.filter(s=>s.estado==='Programada' && s.fecha>=hoy).sort((a,b)=>a.fecha.localeCompare(b.fecha));
+  const historico = sesiones.filter(s=>s.estado!=='Programada' || s.fecha<hoy).sort((a,b)=>b.fecha.localeCompare(a.fecha));
+
+  const total   = sesiones.length;
+  const hechas  = sesiones.filter(s=>s.estado==='Hecha');
+  const noShows = sesiones.filter(s=>s.estado==='No-show');
+  const asistPct= total>0?Math.round(hechas.length/total*100):0;
+  const proxNext= proximas[0];
+
+  document.getElementById('p360-kpis-act').innerHTML = `
+    <div class="p360-kpi"><div class="p360-kpi-l">Total citas</div><div class="p360-kpi-v">${total}</div><div class="p360-kpi-s">registradas</div></div>
+    <div class="p360-kpi green"><div class="p360-kpi-l">Asistencia</div><div class="p360-kpi-v">${asistPct}%</div><div class="p360-kpi-s">${hechas.length} hechas</div></div>
+    <div class="p360-kpi red"><div class="p360-kpi-l">No-shows</div><div class="p360-kpi-v">${noShows.length}</div><div class="p360-kpi-s">acumulados</div></div>
+    <div class="p360-kpi blue"><div class="p360-kpi-l">Próxima cita</div><div class="p360-kpi-v" style="font-size:15px;font-weight:500;padding-top:4px">${proxNext?fmtFecha(proxNext.fecha):'—'}</div><div class="p360-kpi-s">&nbsp;</div></div>`;
+
+  document.getElementById('p360-proximas').innerHTML = proximas.length
+    ? proximas.slice(0,5).map(s=>tlItem(s)).join('')
+    : '<div class="empty-state" style="padding:14px">Sin citas próximas</div>';
+
+  document.getElementById('p360-historial').innerHTML = historico.length
+    ? historico.slice(0,20).map(s=>tlItemConNota(s)).join('')
+    : '<div class="empty-state" style="padding:14px">Sin historial</div>';
+}
+
+function p360RenderNotas(sesiones) {
+  const conNotas = sesiones.filter(s=>s.estado==='Hecha' && s.notas && s.notas.trim())
+                           .sort((a,b)=>b.fecha.localeCompare(a.fecha));
+  document.getElementById('p360-notas-list').innerHTML = conNotas.length
+    ? conNotas.map(s=>`
+        <div class="nota-item">
+          <div class="nota-meta">
+            <span class="nota-date">${fmtFecha(s.fecha)}</span>
+            <span class="nota-ter">${nomTer(s.id_terapeuta)}</span>
+            ${s.servicio?`<span class="badge badge-programada" style="font-size:9px">${s.servicio}</span>`:''}
+          </div>
+          <div class="nota-text">${s.notas}</div>
+        </div>`).join('')+
+      `<button class="nota-add" onclick="p360NuevaNotaModal()">+ Añadir nota clínica</button>`
+    : `<div style="color:var(--ink-muted);font-size:13px;padding:8px 0">Sin notas registradas en sesiones.</div>
+       <button class="nota-add" onclick="p360NuevaNotaModal()">+ Añadir nota a una sesión</button>`;
+}
+
+function tlItem(s) {
+  const dotClass = s.estado==='Hecha'?'hecha':s.estado==='No-show'?'noshow':s.estado==='Programada'?'programada':'cancelada';
+  const badge = s.estado==='Hecha'?'badge-hecha':s.estado==='No-show'?'badge-noshow':s.estado==='Programada'?'badge-programada':'badge-cancelada';
+  return `<div class="tl-item">
+    <div class="tl-dot ${dotClass}"></div>
+    <div class="tl-body">
+      <div class="tl-top">
+        <span class="tl-fecha">${fmtFecha(s.fecha)}${s.hora?' · '+s.hora.slice(0,5):''}</span>
+        <span class="tl-srv">${s.servicio||''}</span>
+        <span class="badge ${badge}" style="font-size:10px">${s.estado}</span>
+      </div>
+      <div class="tl-ter">${nomTer(s.id_terapeuta)}</div>
+    </div>
+  </div>`;
+}
+
+function tlItemConNota(s) {
+  const dotClass = s.estado==='Hecha'?'hecha':s.estado==='No-show'?'noshow':s.estado==='Programada'?'programada':'cancelada';
+  const badge = s.estado==='Hecha'?'badge-hecha':s.estado==='No-show'?'badge-noshow':s.estado==='Programada'?'badge-programada':'badge-cancelada';
+  return `<div class="tl-item">
+    <div class="tl-dot ${dotClass}"></div>
+    <div class="tl-body">
+      <div class="tl-top">
+        <span class="tl-fecha">${fmtFecha(s.fecha)}${s.hora?' · '+s.hora.slice(0,5):''}</span>
+        <span class="tl-srv">${s.servicio||''}</span>
+        <span class="badge ${badge}" style="font-size:10px">${s.estado}</span>
+        ${s.financiacion&&s.financiacion!=='SUELTA'?`<span class="badge badge-bono" style="font-size:9px">${s.financiacion}</span>`:''}
+      </div>
+      <div class="tl-ter">${nomTer(s.id_terapeuta)}</div>
+      ${s.notas?`<div style="font-size:12px;color:var(--ink-muted);margin-top:3px;font-style:italic">${s.notas}</div>`:''}
+    </div>
+  </div>`;
+}
+
+function p360NuevaNotaModal() {
+  toast('Las notas se añaden desde el campo Notas al editar una sesión','ok');
+}
+
+function editarPacienteActual() {
+  if (P360.id) editarPaciente(P360.id);
+}
+
+function calcEdad(fechaNac) {
+  const hoy = new Date();
+  const nac = new Date(fechaNac);
+  let edad = hoy.getFullYear()-nac.getFullYear();
+  const m = hoy.getMonth()-nac.getMonth();
+  if (m<0||(m===0&&hoy.getDate()<nac.getDate())) edad--;
+  return edad;
 }
 
 function abrirModalPaciente() {
