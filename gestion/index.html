@@ -1271,18 +1271,20 @@ window.addEventListener('DOMContentLoaded', () => {
 // ═══════════════════════════════════════════════════════
 async function iniciarApp() {
   try {
-    const [ters, pacs, srvs, bonos, becas] = await Promise.all([
+    const [ters, pacs, srvs, bonos, becas, sesiones] = await Promise.all([
       sg('terapeutas','order=id_terapeuta.asc'),
       sg('pacientes','order=apellidos.asc,nombre.asc'),
       sg('servicios','order=id_servicio.asc'),
       sg('bonos','order=fecha_compra.desc'),
       sg('becas','order=anio.desc,id_paciente.asc'),
+      sg('sesiones','order=fecha.desc&limit=2000'),
     ]);
     G.terapeutas = ters;
     G.pacientes  = pacs;
     G.servicios  = srvs;
     G.bonos      = bonos;
     G.becas      = becas;
+    G.sesiones   = sesiones;
     G.terapeutas.forEach((t,i) => G.colores[t.id_terapeuta] = PALETTE[i%PALETTE.length]);
     poblarSelectoresTerapeutas();
     poblarSelectoresPacientes();
