@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>IPSE — Panel de Gestión</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
@@ -29,7 +29,7 @@
   --shadow-lg:  0 8px 32px rgba(16,6,159,.12);
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: 'Inter', sans-serif; background: var(--cream); color: var(--ink); min-height: 100vh; display: flex; }
+body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(--ink); min-height: 100vh; display: flex; }
 
 /* ── SIDEBAR ── */
 .sidebar { width: 220px; min-height: 100vh; background: var(--cyan); display: flex; flex-direction: column; position: fixed; left: 0; top: 0; z-index: 100; box-shadow: 4px 0 20px rgba(0,120,180,.15); }
@@ -46,13 +46,13 @@ body { font-family: 'Inter', sans-serif; background: var(--cream); color: var(--
 
 /* ── MAIN ── */
 .main { margin-left: 220px; flex: 1; min-height: 100vh; display: flex; flex-direction: column; }
-.topbar { background: var(--white); border-bottom: 1px solid var(--border); padding: 0 32px; height: 60px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 50; }
-.topbar-title { font-weight: 700; font-size: 20px; color: var(--ink); }
+.topbar { background: var(--blue); border-bottom: none; padding: 0 32px; height: 60px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 50; box-shadow: 0 2px 16px rgba(16,6,159,.25); }
+.topbar-title { font-weight: 700; font-size: 20px; color: #fff; letter-spacing: -.2px; }
 .topbar-right { display: flex; align-items: center; gap: 14px; }
-.topbar-date { font-size: 13px; color: var(--ink-muted); }
-.topbar-miniapp { font-size: 12px; color: var(--blue); text-decoration: none; font-weight: 500; }
-.topbar-miniapp:hover { text-decoration: underline; }
-.avatar { width: 34px; height: 34px; background: var(--blue); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 13px; font-weight: 600; }
+.topbar-date { font-size: 13px; color: rgba(255,255,255,.65); }
+.topbar-miniapp { font-size: 12px; color: var(--cyan); text-decoration: none; font-weight: 500; opacity: .9; }
+.topbar-miniapp:hover { opacity: 1; text-decoration: underline; }
+.avatar { width: 34px; height: 34px; background: var(--cyan); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--blue); font-size: 13px; font-weight: 700; }
 .content { padding: 28px 32px; flex: 1; }
 
 /* ── PAGES ── */
@@ -146,6 +146,7 @@ body { font-family: 'Inter', sans-serif; background: var(--cream); color: var(--
 .modal { background: var(--white); border-radius: 16px; box-shadow: var(--shadow-lg); width: 760px; max-width: 96vw; max-height: 92vh; overflow-y: auto; animation: modalIn .25s ease; }
 .modal-sm { width: 520px; }
 .modal-lg { width: 900px; }
+.modal-sesion-wide { width: 860px; }
 @keyframes modalIn { from { transform: translateY(20px) scale(.97); opacity: 0; } to { transform: none; opacity: 1; } }
 .modal-header { padding: 22px 26px 18px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
 .modal-title { font-weight: 700; font-size: 18px; }
@@ -313,7 +314,7 @@ textarea.form-control { min-height: 72px; transition: border-color .2s; }
     <div class="nav-item" onclick="navigate('produccion')"><span class="icon">⚡</span><span>Producción</span></div>
     <div class="nav-item" onclick="navigate('cobros')"><span class="icon">💶</span><span>Cobros</span></div>
     <div class="nav-section">Gestión</div>
-    <div class="nav-item" onclick="navigate('pacientes')"><span class="icon">👤</span><span>Pacientes</span></div>
+    <div class="nav-item" onclick="navigate('pacientes')"><span class="icon">👤</span><span>Paciente 360°</span></div>
     <div class="nav-item" onclick="navigate('terapeutas')"><span class="icon">🧑‍⚕️</span><span>Terapeutas</span></div>
     <div class="nav-item" onclick="navigate('bonos')"><span class="icon">🎫</span><span>Bonos</span></div>
     <div class="nav-item" onclick="navigate('becas')"><span class="icon">🏛️</span><span>Becas</span></div>
@@ -326,7 +327,20 @@ textarea.form-control { min-height: 72px; transition: border-color .2s; }
 <!-- MAIN -->
 <main class="main">
   <header class="topbar">
-    <div class="topbar-title" id="topbar-title">Dashboard</div>
+    <div style="display:flex;align-items:center;gap:16px">
+      <div style="display:flex;align-items:center;gap:9px">
+        <svg width="28" height="28" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+          <rect width="100" height="100" rx="18" fill="#00B5E2"/>
+          <rect x="20" y="18" width="60" height="12" rx="6" fill="#10069F"/>
+          <rect x="20" y="72" width="60" height="12" rx="6" fill="#10069F"/>
+          <rect x="42" y="30" width="16" height="42" rx="5" fill="#10069F"/>
+          <circle cx="74" cy="24" r="9" fill="#97D700"/>
+        </svg>
+        <span style="font-size:17px;font-weight:700;color:#fff;letter-spacing:-.3px">IPSE <span style="color:var(--cyan);font-weight:400">·</span> Gestión</span>
+      </div>
+      <div style="width:1px;height:20px;background:rgba(255,255,255,.2)"></div>
+      <div id="topbar-title" style="font-size:13px;color:rgba(255,255,255,.7);font-weight:500">Dashboard</div>
+    </div>
     <div class="topbar-right">
       <span class="topbar-date" id="topbar-date"></span>
       <a href="../miniapp/" class="topbar-miniapp">← MiniApp</a>
@@ -488,44 +502,89 @@ textarea.form-control { min-height: 72px; transition: border-color .2s; }
     <!-- ══ LISTADO PACIENTES ══ -->
     <div class="page" id="page-pacientes">
       <div class="page-header">
-        <div><h1>Pacientes</h1><p>Expedientes clínicos</p></div>
+        <div><h1>Paciente 360°</h1><p>Busca un paciente para ver su expediente completo</p></div>
         <button class="btn btn-primary" onclick="abrirModalPaciente()">+ Nuevo paciente</button>
       </div>
-      <div class="table-toolbar">
-        <input class="search-input" placeholder="🔍 Nombre, apellidos, ID…" oninput="filtrarPacientes()" id="pac-busq" style="width:260px">
-        <select class="filter-select" id="pac-ter" onchange="filtrarPacientes()"><option value="">Todas terapeutas</option></select>
-        <select class="filter-select" id="pac-estado-fil" onchange="filtrarPacientes()">
-          <option value="">Todos estados</option>
-          <option value="activo">Activos</option>
-          <option value="baja">Baja</option>
-        </select>
-        <select class="filter-select" id="pac-beca" onchange="filtrarPacientes()">
-          <option value="">Beca: todos</option><option value="Sí">Con beca</option><option value="No">Sin beca</option>
-        </select>
-        <span id="pac-count" style="font-size:12px;color:var(--ink-muted);margin-left:4px"></span>
+
+      <!-- Buscador central -->
+      <div id="pac-buscador-central" style="max-width:680px;margin:0 auto 32px">
+        <div style="background:var(--white);border:1px solid var(--border);border-radius:16px;padding:28px 32px;box-shadow:var(--shadow-lg)">
+          <div style="text-align:center;margin-bottom:24px">
+            <div style="font-size:32px;margin-bottom:8px">🔍</div>
+            <div style="font-size:16px;font-weight:600;color:var(--ink)">Buscar paciente</div>
+            <div style="font-size:13px;color:var(--ink-muted);margin-top:4px">Escribe en cualquier campo para filtrar</div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:12px">
+            <div style="position:relative">
+              <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:15px;pointer-events:none">👤</span>
+              <input class="form-control" id="pac-busq-nombre" placeholder="Nombre, apellidos o alias…"
+                oninput="buscarPacientes()" autocomplete="off"
+                style="padding-left:38px;font-size:14px;height:44px">
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+              <div style="position:relative">
+                <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:15px;pointer-events:none">🧑‍⚕️</span>
+                <select class="form-control" id="pac-busq-ter" onchange="buscarPacientes()"
+                  style="padding-left:38px;font-size:14px;height:44px">
+                  <option value="">Todas las terapeutas</option>
+                </select>
+              </div>
+              <div style="position:relative">
+                <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:15px;pointer-events:none">📱</span>
+                <input class="form-control" id="pac-busq-tel" placeholder="Teléfono…"
+                  oninput="buscarPacientes()" autocomplete="off"
+                  style="padding-left:38px;font-size:14px;height:44px">
+              </div>
+              <div style="position:relative">
+                <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:15px;pointer-events:none">🏷️</span>
+                <select class="form-control" id="pac-busq-estado" onchange="buscarPacientes()"
+                  style="padding-left:38px;font-size:14px;height:44px">
+                  <option value="">Todos los estados</option>
+                  <option value="activo">Activos</option>
+                  <option value="baja">Baja</option>
+                </select>
+              </div>
+              <div style="position:relative">
+                <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:15px;pointer-events:none">🏛️</span>
+                <select class="form-control" id="pac-busq-beca" onchange="buscarPacientes()"
+                  style="padding-left:38px;font-size:14px;height:44px">
+                  <option value="">Beca: todos</option>
+                  <option value="Sí">Con beca</option>
+                  <option value="No">Sin beca</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-top:14px">
+            <span id="pac-busq-count" style="font-size:12px;color:var(--ink-muted)"></span>
+            <button class="btn btn-secondary btn-sm" onclick="limpiarBuscadorPacientes()">✕ Limpiar</button>
+          </div>
+        </div>
       </div>
-      <div class="data-table-wrap">
-        <table class="data-table">
-          <thead><tr>
-            <th>ID</th>
-            <th>Nombre</th>
-            <th>Terapeuta</th>
-            <th>Estado</th>
-            <th>Última sesión</th>
-            <th>Saldo pendiente</th>
-            <th></th>
-          </tr></thead>
-          <tbody id="tbody-pacientes"></tbody>
-        </table>
-        <div class="table-footer">
-          <span id="pac-footer">—</span>
-          <div id="pag-pacientes" style="display:flex;gap:4px"></div>
+
+      <!-- Resultados -->
+      <div id="pac-resultados" style="display:none;max-width:860px;margin:0 auto">
+        <div class="data-table-wrap">
+          <table class="data-table">
+            <thead><tr>
+              <th>ID</th>
+              <th>Nombre</th>
+              <th>Terapeuta</th>
+              <th>Estado</th>
+              <th>Última sesión</th>
+              <th>Saldo pendiente</th>
+              <th></th>
+            </tr></thead>
+            <tbody id="tbody-pacientes"></tbody>
+          </table>
+          <div class="table-footer">
+            <span id="pac-footer">—</span>
+            <div id="pag-pacientes" style="display:flex;gap:4px"></div>
+          </div>
         </div>
       </div>
     </div>
 
-    <!-- ══ PACIENTE 360° ══ -->
-    <div class="page" id="page-p360">
       <button class="p360-back-btn" onclick="navigate('pacientes')">← Volver a Pacientes</button>
 
       <!-- Cabecera del paciente -->
@@ -768,44 +827,57 @@ textarea.form-control { min-height: 72px; transition: border-color .2s; }
 
 <!-- MODAL SESIÓN -->
 <div class="modal-overlay" id="modal-sesion">
-  <div class="modal">
+  <div class="modal modal-sesion-wide">
     <div class="modal-header">
       <div class="modal-title" id="modal-sesion-titulo">Registrar sesión</div>
       <button class="modal-close" onclick="cerrarModal('modal-sesion')">×</button>
     </div>
-    <div class="modal-body">
+    <div class="modal-body" style="padding:0">
       <input type="hidden" id="s-id">
-      <div class="form-grid">
-        <div class="form-group"><label class="form-label">Fecha *</label><input type="date" class="form-control" id="s-fecha"></div>
-        <div class="form-group"><label class="form-label">Hora</label><input type="time" class="form-control" id="s-hora" step="300"></div>
-        <div class="form-group"><label class="form-label">Paciente *</label>
-          <div class="pac-search-wrap" id="psw-sesion">
-            <input type="text" class="form-control" id="s-paciente-txt" placeholder="Escribe nombre…" oninput="pacSearch(this,'s-paciente','psd-sesion')" autocomplete="off" onblur="setTimeout(()=>hidePacDrop('psd-sesion'),200)">
-            <input type="hidden" id="s-paciente">
-            <div class="pac-search-drop" id="psd-sesion"></div>
+      <!-- Bloque administrativo -->
+      <div style="padding:20px 26px 16px;border-bottom:1px solid var(--border)">
+        <div class="form-grid">
+          <div class="form-group"><label class="form-label">Fecha *</label><input type="date" class="form-control" id="s-fecha"></div>
+          <div class="form-group"><label class="form-label">Hora</label><input type="time" class="form-control" id="s-hora" step="300"></div>
+          <div class="form-group"><label class="form-label">Paciente *</label>
+            <div class="pac-search-wrap" id="psw-sesion">
+              <input type="text" class="form-control" id="s-paciente-txt" placeholder="Escribe nombre…" oninput="pacSearch(this,'s-paciente','psd-sesion')" autocomplete="off" onblur="setTimeout(()=>hidePacDrop('psd-sesion'),200)">
+              <input type="hidden" id="s-paciente">
+              <div class="pac-search-drop" id="psd-sesion"></div>
+            </div>
           </div>
+          <div class="form-group"><label class="form-label">Terapeuta</label><select class="form-control" id="s-terapeuta"></select></div>
+          <div class="form-group"><label class="form-label">Servicio</label><select class="form-control" id="s-servicio"></select></div>
+          <div class="form-group"><label class="form-label">Estado</label>
+            <select class="form-control" id="s-estado">
+              <option>Programada</option><option>Hecha</option><option>Cancelada</option><option>No-show</option>
+            </select>
+          </div>
+          <div class="form-group"><label class="form-label">Financiación</label>
+            <select class="form-control" id="s-fin">
+              <option value="SUELTA">Particular</option><option value="BONO">Bono</option>
+              <option value="BECA">Beca Junta</option><option value="ADECCO">ADECCO</option>
+            </select>
+          </div>
+          <div class="form-group"><label class="form-label">¿Cobrado?</label>
+            <select class="form-control" id="s-cobrado"><option value="No">No</option><option value="Sí">Sí</option></select>
+          </div>
+          <div class="form-group"><label class="form-label">Importe (€)</label><input type="number" class="form-control" id="s-importe" step="0.01"></div>
+          <div class="form-group"><label class="form-label">ID Bono vinculado</label><input type="text" class="form-control" id="s-bono" placeholder="Ej: B001"></div>
+          <div class="form-group"><label class="form-label">ID Beca vinculada</label><input type="text" class="form-control" id="s-beca" placeholder="Ej: BCA001"></div>
+          <div class="form-group"><label class="form-label">Fecha cierre</label><input type="date" class="form-control" id="s-fecha-cierre"></div>
         </div>
-        <div class="form-group"><label class="form-label">Terapeuta</label><select class="form-control" id="s-terapeuta"></select></div>
-        <div class="form-group"><label class="form-label">Servicio</label><select class="form-control" id="s-servicio"></select></div>
-        <div class="form-group"><label class="form-label">Estado</label>
-          <select class="form-control" id="s-estado">
-            <option>Programada</option><option>Hecha</option><option>Cancelada</option><option>No-show</option>
-          </select>
+      </div>
+      <!-- Bloque notas clínicas tipo folio -->
+      <div style="padding:16px 26px 20px;background:var(--cream)">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <label class="form-label" style="margin:0;font-size:11px;color:var(--blue)">📋 NOTAS CLÍNICAS</label>
+          <span style="font-size:11px;color:var(--ink-muted)" id="s-notas-chars">0 caracteres</span>
         </div>
-        <div class="form-group"><label class="form-label">Financiación</label>
-          <select class="form-control" id="s-fin">
-            <option value="SUELTA">Particular</option><option value="BONO">Bono</option>
-            <option value="BECA">Beca Junta</option><option value="ADECCO">ADECCO</option>
-          </select>
-        </div>
-        <div class="form-group"><label class="form-label">¿Cobrado?</label>
-          <select class="form-control" id="s-cobrado"><option value="No">No</option><option value="Sí">Sí</option></select>
-        </div>
-        <div class="form-group"><label class="form-label">Importe (€)</label><input type="number" class="form-control" id="s-importe" step="0.01"></div>
-        <div class="form-group"><label class="form-label">ID Bono vinculado</label><input type="text" class="form-control" id="s-bono" placeholder="Ej: B001"></div>
-        <div class="form-group"><label class="form-label">ID Beca vinculada</label><input type="text" class="form-control" id="s-beca" placeholder="Ej: BCA001"></div>
-        <div class="form-group"><label class="form-label">Fecha cierre</label><input type="date" class="form-control" id="s-fecha-cierre"></div>
-        <div class="form-group span2"><label class="form-label">Notas clínicas</label><textarea class="form-control" id="s-notas" rows="3" placeholder="Observaciones clínicas, evolución, objetivos trabajados…" style="resize:none;overflow:hidden;line-height:1.5"></textarea></div>
+        <textarea class="form-control" id="s-notas" rows="10"
+          placeholder="Observaciones clínicas, evolución de la sesión, objetivos trabajados, respuesta del paciente, propuestas para próxima sesión…"
+          style="resize:vertical;min-height:200px;line-height:1.7;font-size:14px;background:#fff;border-color:var(--border);font-family:'DM Sans',sans-serif"
+          oninput="autoExpand(this);document.getElementById('s-notas-chars').textContent=this.value.length+' caracteres'"></textarea>
       </div>
     </div>
     <div class="modal-footer">
@@ -1373,7 +1445,7 @@ function poblarSelectoresTerapeutas() {
   const opts = '<option value="">— Selecciona —</option>'+G.terapeutas.map(t=>`<option value="${t.id_terapeuta}">${t.nombre}</option>`).join('');
   ['s-terapeuta','p-terapeuta'].forEach(id=>{ const el=document.getElementById(id); if(el) el.innerHTML=opts; });
   const filtros = '<option value="">Todas terapeutas</option>'+G.terapeutas.map(t=>`<option value="${t.id_terapeuta}">${t.nombre}</option>`).join('');
-  ['ses-ter','pac-ter'].forEach(id=>{ const el=document.getElementById(id); if(el) el.innerHTML=filtros; });
+  ['ses-ter','pac-ter','pac-busq-ter'].forEach(id=>{ const el=document.getElementById(id); if(el) el.innerHTML=filtros; });
 }
 function poblarSelectoresPacientes() {
   // noop — los dropdowns se generan dinámicamente en pacSearch
@@ -1436,7 +1508,7 @@ function navigate(page) {
     const pacNav = document.querySelector(`.nav-item[onclick*="pacientes"]`);
     if (pacNav) pacNav.classList.add('active');
   }
-  const titles = {dashboard:'Dashboard',produccion:'Producción',cobros:'Cobros',pacientes:'Pacientes',p360:'Expediente',terapeutas:'Terapeutas',bonos:'Bonos',becas:'Becas',servicios:'Servicios',facturas:'Facturas'};
+  const titles = {dashboard:'Dashboard',produccion:'Producción',cobros:'Cobros',pacientes:'Paciente 360°',p360:'Expediente',terapeutas:'Terapeutas',bonos:'Bonos',becas:'Becas',servicios:'Servicios',facturas:'Facturas'};
   document.getElementById('topbar-title').textContent = titles[page]||page;
   if (page==='produccion') cargarSesiones();
   if (page==='cobros') cargarCobros();
@@ -1689,6 +1761,7 @@ function abrirModalSesion() {
   document.getElementById('s-importe').value='';
   document.getElementById('s-notas').value='';
   autoExpand(document.getElementById('s-notas'));
+  document.getElementById('s-notas-chars').textContent='0 caracteres';
   setPacienteEnModal('s-paciente-txt','s-paciente','');
   document.getElementById('s-paciente-txt').value='';
   document.getElementById('s-terapeuta').value='';
@@ -1718,6 +1791,7 @@ function editarSesion(id) {
   document.getElementById('s-fecha-cierre').value=s.fecha_cierre||'';
   document.getElementById('s-notas').value=s.notas||'';
   autoExpand(document.getElementById('s-notas'));
+  document.getElementById('s-notas-chars').textContent=(s.notas||'').length+' caracteres';
   document.getElementById('s-btn-eliminar').style.display='inline-flex';
   abrirModal('modal-sesion');
 }
@@ -1907,33 +1981,54 @@ function exportarCobrosXLSX() {
 }
 
 // ═══════════════════════════════════════════════════════
-//  PACIENTES — LISTADO
+//  PACIENTES — BUSCADOR CENTRAL
 // ═══════════════════════════════════════════════════════
 let pacFiltrados = [];
 let pacPag = 0;
 
-function filtrarPacientes() {
-  const q    = (document.getElementById('pac-busq')?.value||'').toLowerCase();
-  const ter  = document.getElementById('pac-ter')?.value||'';
-  const bec  = document.getElementById('pac-beca')?.value||'';
-  const est  = document.getElementById('pac-estado-fil')?.value||'';
+function buscarPacientes() {
+  const q   = (document.getElementById('pac-busq-nombre')?.value||'').toLowerCase();
+  const ter = document.getElementById('pac-busq-ter')?.value||'';
+  const tel = (document.getElementById('pac-busq-tel')?.value||'').toLowerCase();
+  const est = document.getElementById('pac-busq-estado')?.value||'';
+  const bec = document.getElementById('pac-busq-beca')?.value||'';
 
+  const hayFiltro = q||ter||tel||est||bec;
+  if (!hayFiltro) {
+    document.getElementById('pac-resultados').style.display='none';
+    document.getElementById('pac-busq-count').textContent='';
+    return;
+  }
   pacFiltrados = G.pacientes.filter(p=>{
     const nom = ((p.nombre||'')+' '+(p.apellidos||'')+' '+(p.alias||'')+' '+(p.id_paciente||'')).toLowerCase();
     if (q && !nom.includes(q)) return false;
     if (ter && p.terapeuta_principal!==ter) return false;
-    if (bec && p.es_beca!==bec) return false;
+    if (tel) {
+      const telPac = ((p.telefono||'')+(p.telefono2||'')).toLowerCase();
+      if (!telPac.includes(tel)) return false;
+    }
     if (est==='activo' && p.activo==='No') return false;
     if (est==='baja'   && p.activo!=='No') return false;
+    if (bec && p.es_beca!==bec) return false;
     return true;
   });
   pacPag=0;
-  _renderPacientesTable();
+  const n = pacFiltrados.length;
+  document.getElementById('pac-busq-count').textContent = n ? n+' resultado'+(n!==1?'s':'') : 'Sin resultados';
+  document.getElementById('pac-resultados').style.display = n ? 'block' : 'none';
+  if (n) _renderPacientesTable();
 }
 
-function renderPacientes() {
-  filtrarPacientes();
+function limpiarBuscadorPacientes() {
+  ['pac-busq-nombre','pac-busq-tel'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  ['pac-busq-ter','pac-busq-estado','pac-busq-beca'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  document.getElementById('pac-resultados').style.display='none';
+  document.getElementById('pac-busq-count').textContent='';
 }
+
+// Aliases para compatibilidad interna
+function filtrarPacientes() { buscarPacientes(); }
+function renderPacientes()  { /* buscador parte en blanco */ }
 
 function _renderPacientesTable() {
   const inicio = pacPag*G.paginaSize;
@@ -1982,7 +2077,6 @@ function _renderPacientesTable() {
     }).join('');
   }
   document.getElementById('pac-footer').textContent = pacFiltrados.length+' pacientes';
-  document.getElementById('pac-count').textContent  = pacFiltrados.length+' pacientes';
   renderPaginacion('pag-pacientes',pacFiltrados.length,G.paginaSize,pacPag,(p)=>{ pacPag=p; _renderPacientesTable(); });
 }
 
