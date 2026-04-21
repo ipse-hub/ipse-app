@@ -164,6 +164,7 @@ body { font-family: 'Inter', sans-serif; background: var(--cream); color: var(--
 .form-control { padding: 8px 11px; border: 1px solid var(--border); border-radius: 8px; font-family: inherit; font-size: 14px; color: var(--ink); background: var(--white); outline: none; transition: border-color .2s; width: 100%; }
 .form-control:focus { border-color: var(--blue); }
 .form-control[readonly] { background: var(--cream); color: var(--ink-muted); }
+textarea.form-control { min-height: 72px; transition: border-color .2s; }
 .form-section { font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-muted); margin: 16px 0 4px; grid-column: 1 / -1; border-top: 1px solid var(--border); padding-top: 14px; }
 
 /* ── TER ROWS ── */
@@ -627,7 +628,7 @@ body { font-family: 'Inter', sans-serif; background: var(--cream); color: var(--
         <table class="data-table">
           <thead><tr>
             <th>ID</th><th>Nombre</th><th>Especialidad</th><th>% Com.</th>
-            <th>Email</th><th>Activa</th><th></th>
+            <th>Email</th><th>Acceso</th><th>Activa</th><th></th>
           </tr></thead>
           <tbody id="tbody-terapeutas"></tbody>
         </table>
@@ -804,7 +805,7 @@ body { font-family: 'Inter', sans-serif; background: var(--cream); color: var(--
         <div class="form-group"><label class="form-label">ID Bono vinculado</label><input type="text" class="form-control" id="s-bono" placeholder="Ej: B001"></div>
         <div class="form-group"><label class="form-label">ID Beca vinculada</label><input type="text" class="form-control" id="s-beca" placeholder="Ej: BCA001"></div>
         <div class="form-group"><label class="form-label">Fecha cierre</label><input type="date" class="form-control" id="s-fecha-cierre"></div>
-        <div class="form-group span2"><label class="form-label">Notas</label><input type="text" class="form-control" id="s-notas"></div>
+        <div class="form-group span2"><label class="form-label">Notas clínicas</label><textarea class="form-control" id="s-notas" rows="3" placeholder="Observaciones clínicas, evolución, objetivos trabajados…" style="resize:none;overflow:hidden;line-height:1.5"></textarea></div>
       </div>
     </div>
     <div class="modal-footer">
@@ -920,6 +921,9 @@ body { font-family: 'Inter', sans-serif; background: var(--cream); color: var(--
           <select class="form-control" id="tr-activa"><option value="Sí">Sí</option><option value="No">No</option></select>
         </div>
         <div class="form-group"><label class="form-label">Pct_Com (0–1)</label><input type="number" class="form-control" id="tr-pct-com" step="0.01" min="0" max="1" placeholder="0.6"></div>
+        <div class="form-group"><label class="form-label">Acceso a Gestión</label>
+          <select class="form-control" id="tr-acceso"><option value="No">No</option><option value="Sí">Sí</option></select>
+        </div>
         <div class="form-group"><label class="form-label">Calendar ID</label><input type="text" class="form-control" id="tr-cal"></div>
         <div class="form-group span2"><label class="form-label">Notas</label><input type="text" class="form-control" id="tr-notas"></div>
       </div>
@@ -1249,21 +1253,52 @@ const MESES_CORTO = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct'
 // ═══════════════════════════════════════════════════════
 //  LOGIN
 // ═══════════════════════════════════════════════════════
-function loginEntrar() {
+async function loginEntrar() {
   const email = document.getElementById('login-email').value.trim().toLowerCase();
   if (!email) { document.getElementById('login-error').textContent='Introduce tu email.'; return; }
-  if (email !== ADMIN_EMAIL) { document.getElementById('login-error').textContent='Acceso restringido.'; return; }
-  G.email = email;
-  sessionStorage.setItem('ipse_gestion_email', email);
-  document.getElementById('login-screen').classList.remove('show');
-  iniciarApp();
+  const btn = document.querySelector('#login-screen .btn-primary');
+  btn.textContent='Verificando…'; btn.disabled=true;
+  document.getElementById('login-error').textContent='';
+  try {
+    const permitido = await verificarAcceso(email);
+    if (!permitido) {
+      document.getElementById('login-error').textContent='Acceso restringido.';
+      btn.textContent='Entrar'; btn.disabled=false;
+      return;
+    }
+    G.email = email;
+    sessionStorage.setItem('ipse_gestion_email', email);
+    document.getElementById('login-screen').classList.remove('show');
+    iniciarApp();
+  } catch(err) {
+    document.getElementById('login-error').textContent='Error de conexión. Inténtalo de nuevo.';
+    btn.textContent='Entrar'; btn.disabled=false;
+  }
+}
+
+// Devuelve true si el email es ADMIN o está en terapeutas con acceso_gestion='Sí'
+async function verificarAcceso(email) {
+  if (email === ADMIN_EMAIL) return true;
+  const rows = await sg('terapeutas', `email=eq.${encodeURIComponent(email)}&acceso_gestion=eq.Sí&select=id_terapeuta,nombre`);
+  return rows && rows.length > 0;
 }
 
 window.addEventListener('DOMContentLoaded', () => {
   document.getElementById('topbar-date').textContent = new Date().toLocaleDateString('es-ES', {weekday:'long',day:'numeric',month:'long'});
+  // Auto-expand para textareas
+  document.querySelectorAll('textarea.form-control').forEach(ta=>{
+    ta.addEventListener('input', ()=>autoExpand(ta));
+  });
   const saved = sessionStorage.getItem('ipse_gestion_email');
-  if (saved === ADMIN_EMAIL) { G.email = saved; iniciarApp(); }
-  else document.getElementById('login-screen').classList.add('show');
+  if (saved) {
+    // Re-verificar en Supabase para que cambios de acceso surtan efecto
+    verificarAcceso(saved).then(ok => {
+      if (ok) { G.email = saved; iniciarApp(); }
+      else { sessionStorage.removeItem('ipse_gestion_email'); document.getElementById('login-screen').classList.add('show'); }
+    }).catch(()=>{ document.getElementById('login-screen').classList.add('show'); });
+  } else {
+    document.getElementById('login-screen').classList.add('show');
+  }
 });
 
 // ═══════════════════════════════════════════════════════
@@ -1289,6 +1324,13 @@ async function iniciarApp() {
     poblarSelectoresTerapeutas();
     poblarSelectoresPacientes();
     poblarSelectoresServicios();
+    // Actualizar avatar topbar con el usuario logado
+    const terLogada = G.terapeutas.find(t=>(t.email||'').toLowerCase()===G.email.toLowerCase());
+    if (terLogada) {
+      const iniciales = terLogada.nombre.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+      document.querySelector('.avatar').textContent = iniciales;
+      document.querySelector('.avatar').title = terLogada.nombre;
+    }
     await cargarDashboard();
   } catch(err) {
     toast('Error al cargar: '+err.message, 'err');
@@ -1646,6 +1688,7 @@ function abrirModalSesion() {
   document.getElementById('s-cobrado').value='No';
   document.getElementById('s-importe').value='';
   document.getElementById('s-notas').value='';
+  autoExpand(document.getElementById('s-notas'));
   setPacienteEnModal('s-paciente-txt','s-paciente','');
   document.getElementById('s-paciente-txt').value='';
   document.getElementById('s-terapeuta').value='';
@@ -1674,6 +1717,7 @@ function editarSesion(id) {
   document.getElementById('s-beca').value=s.id_beca||'';
   document.getElementById('s-fecha-cierre').value=s.fecha_cierre||'';
   document.getElementById('s-notas').value=s.notas||'';
+  autoExpand(document.getElementById('s-notas'));
   document.getElementById('s-btn-eliminar').style.display='inline-flex';
   abrirModal('modal-sesion');
 }
@@ -2160,7 +2204,7 @@ function p360RenderNotas(sesiones) {
 function tlItem(s) {
   const dotClass = s.estado==='Hecha'?'hecha':s.estado==='No-show'?'noshow':s.estado==='Programada'?'programada':'cancelada';
   const badge = s.estado==='Hecha'?'badge-hecha':s.estado==='No-show'?'badge-noshow':s.estado==='Programada'?'badge-programada':'badge-cancelada';
-  return `<div class="tl-item">
+  return `<div class="tl-item" onclick="editarSesion('${s.id_cita}')" style="cursor:pointer" title="Editar sesión ${s.id_cita}">
     <div class="tl-dot ${dotClass}"></div>
     <div class="tl-body">
       <div class="tl-top">
@@ -2176,7 +2220,7 @@ function tlItem(s) {
 function tlItemConNota(s) {
   const dotClass = s.estado==='Hecha'?'hecha':s.estado==='No-show'?'noshow':s.estado==='Programada'?'programada':'cancelada';
   const badge = s.estado==='Hecha'?'badge-hecha':s.estado==='No-show'?'badge-noshow':s.estado==='Programada'?'badge-programada':'badge-cancelada';
-  return `<div class="tl-item">
+  return `<div class="tl-item" onclick="editarSesion('${s.id_cita}')" style="cursor:pointer" title="Editar sesión ${s.id_cita}">
     <div class="tl-dot ${dotClass}"></div>
     <div class="tl-body">
       <div class="tl-top">
@@ -2317,6 +2361,7 @@ function renderTerapeutas() {
       <td class="muted">${t.especialidad||'—'}</td>
       <td>${Math.round((parseFloat(t.pct_com)||0)*100)}%</td>
       <td class="muted">${t.email||'—'}</td>
+      <td>${t.acceso_gestion==='Sí'?'<span class="badge badge-activo">Sí</span>':'<span class="badge badge-noshow">No</span>'}</td>
       <td>${badgeEstado(t.activa==='Sí'?'Activo':'Cancelada')}</td>
       <td><button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();editarTerapeuta('${t.id_terapeuta}')">✏️</button></td>
     </tr>`).join('');
@@ -2327,6 +2372,7 @@ function abrirModalTerapeuta() {
   document.getElementById('modal-ter-titulo').textContent='Nueva terapeuta';
   ['tr-nombre','tr-especialidad','tr-email','tr-notas','tr-cal'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('tr-pct-com').value='0.6';
+  document.getElementById('tr-acceso').value='No';
   document.getElementById('tr-activa').value='Sí';
   document.getElementById('tr-btn-eliminar').style.display='none';
   abrirModal('modal-terapeuta');
@@ -2341,6 +2387,7 @@ function editarTerapeuta(id) {
   document.getElementById('tr-email').value        = t.email||'';
   document.getElementById('tr-notas').value        = t.notas||'';
   document.getElementById('tr-pct-com').value      = t.pct_com||'0.6';
+  document.getElementById('tr-acceso').value        = t.acceso_gestion||'No';
   document.getElementById('tr-activa').value       = t.activa||'Sí';
   document.getElementById('tr-cal').value          = t.calendar_id||'';
   document.getElementById('tr-btn-eliminar').style.display='inline-flex';
@@ -2358,6 +2405,7 @@ async function guardarTerapeuta() {
     notas:        document.getElementById('tr-notas').value.trim(),
     pct_com:      parseFloat(document.getElementById('tr-pct-com').value)||0,
     activa:       document.getElementById('tr-activa').value,
+    acceso_gestion: document.getElementById('tr-acceso').value,
     calendar_id:  document.getElementById('tr-cal').value.trim()||null,
   };
   try {
@@ -2821,6 +2869,9 @@ function descargarXLSX(data, filename) {
 // ═══════════════════════════════════════════════════════
 function abrirModal(id) { document.getElementById(id).classList.add('open'); }
 function cerrarModal(id) { document.getElementById(id).classList.remove('open'); }
+
+// Auto-expand para textareas
+function autoExpand(el) { el.style.height='auto'; el.style.height=el.scrollHeight+'px'; }
 document.querySelectorAll('.modal-overlay').forEach(ov=>{
   ov.addEventListener('click',e=>{ if(e.target===ov) ov.classList.remove('open'); });
 });
