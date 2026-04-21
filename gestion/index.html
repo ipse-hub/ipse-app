@@ -1382,7 +1382,7 @@ async function iniciarApp() {
   try {
     const [ters, pacs, srvs, bonos, becas, sesiones] = await Promise.all([
       sg('terapeutas','order=id_terapeuta.asc'),
-      sg('pacientes','order=apellidos.asc,nombre.asc'),
+      sg('pacientes','order=apellidos.asc,nombre.asc&limit=2000'),
       sg('servicios','order=id_servicio.asc'),
       sg('bonos','order=fecha_compra.desc'),
       sg('becas','order=anio.desc,id_paciente.asc'),
@@ -2059,7 +2059,7 @@ function _renderPacientesTable() {
       const becaBadge = p.es_beca==='Sí' ? ' <span class="badge badge-beca">Beca</span>' : '';
       const initials = ((p.nombre||'').charAt(0)+(p.apellidos||'').charAt(0)).toUpperCase()||'?';
       return `
-        <tr onclick="abrirP360('${p.id_paciente}')" style="cursor:pointer">
+        <tr onclick="abrirP360(this.dataset.id)" data-id="${p.id_paciente}" style="cursor:pointer">
           <td class="mono">${p.id_paciente}</td>
           <td>
             <div style="display:flex;align-items:center;gap:10px">
@@ -2103,8 +2103,16 @@ async function abrirP360(idPaciente) {
   P360.id = idPaciente;
   navigate('p360');
 
-  const p = G.pacientes.find(x=>x.id_paciente===idPaciente);
-  if (!p) { toast('Paciente no encontrado','err'); return; }
+  let p = G.pacientes.find(x=>x.id_paciente===idPaciente);
+  if (!p) {
+    // Fallback: cargar directamente de Supabase
+    try {
+      const rows = await sg('pacientes', `id_paciente=eq.${idPaciente}`);
+      if (!rows || !rows.length) { toast('Paciente no encontrado','err'); return; }
+      p = rows[0];
+      G.pacientes.push(p); // añadir al caché local
+    } catch(e) { toast('Error cargando paciente','err'); return; }
+  }
 
   // — Cabecera —
   const initials = ((p.nombre||'').charAt(0)+(p.apellidos||'').charAt(0)).toUpperCase()||'?';
