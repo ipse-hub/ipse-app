@@ -1464,7 +1464,7 @@ async function guardarEstadoCita() {
             const idCobro=await generarId('cobros','id_cobro','C');
             const fechaCobro=document.getElementById('mc-fecha-cobro').value||new Date().toISOString().split('T')[0];
             await supaPost('cobros',{id_cobro:idCobro,fecha:fechaCobro,id_paciente:G.citaActual.ID_Paciente,id_sesion:idSes,importe:importe,metodo_pago:document.getElementById('mc-metodo-cobro').value||'Efectivo',estado:'Confirmado',notas:'Cobro desde MiniApp'});
-            await supaPatch('sesiones',`id_cita=eq.${idSes}`,{cobrado:'Sí'});
+
           }
         }
         if(G.estadoSel==='No-show'&&tipoFin==='BECA'&&idFin)await actualizarBeca(idFin,1);
@@ -1480,7 +1480,7 @@ async function guardarEstadoCita() {
             const idCobro=await generarId('cobros','id_cobro','C');
             const fechaCobro2=document.getElementById('mc-fecha-cobro').value||new Date().toISOString().split('T')[0];
             await supaPost('cobros',{id_cobro:idCobro,fecha:fechaCobro2,id_paciente:G.citaActual.ID_Paciente,id_sesion:sesId,importe:importe,metodo_pago:document.getElementById('mc-metodo-cobro').value||'Efectivo',estado:'Confirmado',notas:'Cobro desde MiniApp'});
-            await supaPatch('sesiones',`id_cita=eq.${sesId}`,{cobrado:'Sí'});
+
           }
         }
       }
