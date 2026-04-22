@@ -1391,10 +1391,10 @@ function abrirModalCita(cita) {
           document.getElementById('mc-fecha-cobro').value=new Date().toISOString().split('T')[0];
           document.getElementById('mc-cobro-panel').style.display='block';
         }
+        G.cobroGestionadoExternamente = false; // reset flag al terminar async
       })();
     }
   }
-  G.cobroGestionadoExternamente = false; // reset flag
   actualizarBotonesEstado(); abrirOverlay('modal-cita');
 }
 function selEstado(estado) {
