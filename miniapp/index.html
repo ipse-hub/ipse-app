@@ -558,10 +558,13 @@
           <button class="estado-btn" data-estado="Cancelada"    onclick="selEstado('Cancelada')" style="grid-column:span 4">❌ Cancelada</button>
         </div>
       </div>
-      <!-- Panel cobro retroactivo — aparece si Hecha y no cobrada -->
+      <!-- Panel cobro — aparece al marcar Hecha o al cobrar retroactivamente -->
       <div id="mc-cobro-panel" style="display:none;background:#f0f7f0;border:1px solid #97D700;border-radius:8px;padding:12px;margin-bottom:8px;">
-        <div style="font-size:12px;font-weight:700;color:#4a6a00;margin-bottom:10px;">💶 Registrar cobro — <span id="mc-cobro-importe" style="font-size:14px;">—</span></div>
+        <div style="font-size:12px;font-weight:700;color:#4a6a00;margin-bottom:10px;">💶 Cobro en consulta — <span id="mc-cobro-importe" style="font-size:14px;">—</span></div>
         <div class="form-row" style="margin-bottom:8px">
+          <div class="form-group" style="margin-bottom:0"><label class="form-label">¿Cobrado?</label>
+            <select id="mc-cobrado" class="form-control"><option value="No">No — pendiente</option><option value="Sí">Sí — cobrado ahora</option></select>
+          </div>
           <div class="form-group" style="margin-bottom:0"><label class="form-label">Método</label>
             <select id="mc-metodo-cobro" class="form-control"><option value="Efectivo">Efectivo</option><option value="Bizum">Bizum</option><option value="Transferencia">Transferencia</option></select>
           </div>
@@ -569,7 +572,6 @@
             <input type="date" id="mc-fecha-cobro" class="form-control">
           </div>
         </div>
-        <button class="btn btn-primary" style="width:100%" onclick="confirmarCobro()">✓ Confirmar cobro</button>
       </div>
       <!-- Badge cobrada -->
       <div id="mc-cobro-registrado" style="display:none;background:#f0f7f0;border:1px solid #97D700;border-radius:8px;padding:10px 12px;margin-bottom:8px;font-size:13px;color:#3a6a00;">
@@ -1415,11 +1417,20 @@ function selEstado(estado) {
   if(estado==='Reprogramada'){if(G.citaActual)document.getElementById('mc-reprog-hora').value=G.citaActual.Hora||'';panel.classList.add('visible');btn.textContent='🔄 Reprogramar y crear cita';}
   else{panel.classList.remove('visible');btn.textContent='Guardar';}
   const tipoFin=G.citaActual?(G.citaActual.ID_Bono?'BONO':(G.citaActual.ID_Beca?'BECA':'SUELTA')):'SUELTA';
-  // El panel de cobro lo gestiona abrirModalCita, no selEstado
   if(estado!=='Hecha'){
+    // Al cambiar a otro estado, ocultar todo lo de cobro
     panelCobro.style.display='none';
     document.getElementById('mc-cobro-registrado').style.display='none';
     document.getElementById('mc-btn-cobrar').style.display='none';
+  } else if(estado==='Hecha' && tipoFin==='SUELTA' && !G.sesionActualId){
+    // Primera vez Hecha — mostrar panel para cobrar ahora o dejar pendiente
+    calcularImporte(G.citaActual.ID_Servicio, tipoFin, '').then(imp=>{
+      const el=document.getElementById('mc-cobro-importe');
+      if(el) el.textContent = imp>0 ? imp.toFixed(2).replace('.',',')+' €' : '—';
+    });
+    document.getElementById('mc-cobrado').value = 'No';
+    document.getElementById('mc-fecha-cobro').value = new Date().toISOString().split('T')[0];
+    panelCobro.style.display = 'block';
   }
 }
 function actualizarBotonesEstado() {
@@ -1499,7 +1510,16 @@ async function guardarEstadoCita() {
         if(G.estadoSel==='Hecha'){
           if(tipoFin==='BONO'&&idFin)await actualizarBono(idFin,1);
           if(tipoFin==='BECA'&&idFin)await actualizarBeca(idFin,1);
-          // Cobro se gestiona por separado con botón Cobrar
+          if(tipoFin==='SUELTA'){
+            const panelVisible = document.getElementById('mc-cobro-panel').style.display !== 'none';
+            const cobradoVal = document.getElementById('mc-cobrado')?.value || 'No';
+            if(panelVisible && cobradoVal === 'Sí'){
+              const fechaCobro = document.getElementById('mc-fecha-cobro').value || new Date().toISOString().split('T')[0];
+              const metodo = document.getElementById('mc-metodo-cobro').value || 'Efectivo';
+              const idCobro = await generarId('cobros','id_cobro','C');
+              await supaPost('cobros',{id_cobro:idCobro,fecha:fechaCobro,id_paciente:G.citaActual.ID_Paciente,id_sesion:idSes,importe:importe,metodo_pago:metodo,estado:'Confirmado',notas:'Cobro desde MiniApp'});
+            }
+          }
         }
         if(G.estadoSel==='No-show'&&tipoFin==='BECA'&&idFin)await actualizarBeca(idFin,1);
       } else {
