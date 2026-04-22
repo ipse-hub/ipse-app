@@ -1369,6 +1369,7 @@ function abrirModalCita(cita) {
   if((cita.EstadoAgenda||cita.Estado)==='Hecha'){
     const tipoFin=cita.ID_Bono?'BONO':(cita.ID_Beca?'BECA':'SUELTA');
     if(tipoFin==='SUELTA'&&esMia){
+      G.cobroGestionadoExternamente=true; // señal para selEstado: no interferir
       (async()=>{
         // Buscar la sesión real por fecha+hora+paciente
         const ses=await supaGet('sesiones',`fecha=eq.${cita.Fecha}&id_paciente=eq.${cita.ID_Paciente}&hora=eq.${cita.Hora}`);
@@ -1391,6 +1392,7 @@ function abrirModalCita(cita) {
       })();
     }
   }
+  G.cobroGestionadoExternamente = false; // reset flag
   actualizarBotonesEstado(); abrirOverlay('modal-cita');
 }
 function selEstado(estado) {
@@ -1406,17 +1408,15 @@ function selEstado(estado) {
     panelCobro.style.display='none';
     document.getElementById('mc-cobro-registrado').style.display='none';
     document.getElementById('mc-cobrado').value='No';
-  } else {
-    // Comprobar si ya está cobrada (cobro-registrado visible) — si es así, no mostrar panel editable
-    const yaRegistrado=document.getElementById('mc-cobro-registrado').style.display!=='none';
-    if(!yaRegistrado){
-      panelCobro.style.display='block';
-      calcularImporte(G.citaActual.ID_Servicio,tipoFin,G.citaActual.ID_Bono||G.citaActual.ID_Beca||'').then(imp=>{
-        const el=document.getElementById('mc-cobro-importe');
-        if(el) el.textContent=imp>0?imp.toFixed(2).replace('.',',')+' €':'—';
-      });
-      document.getElementById('mc-fecha-cobro').value=new Date().toISOString().split('T')[0];
-    }
+    G.cobroGestionadoExternamente=false;
+  } else if(!G.cobroGestionadoExternamente){
+    // Solo mostrar panel si abrirModalCita no ha lanzado ya la comprobación async
+    panelCobro.style.display='block';
+    calcularImporte(G.citaActual.ID_Servicio,tipoFin,G.citaActual.ID_Bono||G.citaActual.ID_Beca||'').then(imp=>{
+      const el=document.getElementById('mc-cobro-importe');
+      if(el) el.textContent=imp>0?imp.toFixed(2).replace('.',',')+' €':'—';
+    });
+    document.getElementById('mc-fecha-cobro').value=new Date().toISOString().split('T')[0];
   }
 }
 function actualizarBotonesEstado() {
