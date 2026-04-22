@@ -1360,7 +1360,7 @@ function abrirModalCita(cita) {
   document.getElementById('mc-seccion-estado').style.display=esMia?'block':'none';
   document.getElementById('mc-solo-lectura').style.display=esMia?'none':'block';
   document.getElementById('mc-btn-repetir').style.display=esMia?'inline-flex':'none';
-  document.getElementById('mc-btn-eliminar').style.display=esMia?'inline-flex':'none';
+  document.getElementById('mc-btn-eliminar').style.display=(esMia||esAdmin())?'inline-flex':'none';
   document.getElementById('mc-btn-editar-pac').style.display = cita.ID_Paciente ? 'inline-flex' : 'none';
   // Resetear paneles de cobro
   document.getElementById('mc-cobro-registrado').style.display='none';
@@ -1372,7 +1372,8 @@ function abrirModalCita(cita) {
       G.cobroGestionadoExternamente=true; // señal para selEstado: no interferir
       (async()=>{
         // Buscar la sesión real por fecha+hora+paciente
-        const ses=await supaGet('sesiones',`fecha=eq.${cita.Fecha}&id_paciente=eq.${cita.ID_Paciente}&hora=eq.${cita.Hora}`);
+        const horaCorta=(cita.Hora||'').slice(0,5); // normalizar HH:MM
+        const ses=await supaGet('sesiones',`fecha=eq.${cita.Fecha}&id_paciente=eq.${cita.ID_Paciente}&hora=like.${horaCorta}%`);
         const sesId=ses&&ses.length?ses[0].id_cita:null;
         const cobrosExist=sesId?await supaGet('cobros',`id_sesion=eq.${sesId}`):[];
         if(cobrosExist&&cobrosExist.length){
@@ -1452,7 +1453,8 @@ async function guardarEstadoCita() {
       const tipoFin=G.citaActual.ID_Bono?'BONO':(G.citaActual.ID_Beca?'BECA':'SUELTA');
       const idFin=G.citaActual.ID_Bono||G.citaActual.ID_Beca||'';
       // Buscar sesión existente por fecha+paciente+terapeuta (el id_cita en sesiones es autogenerado, no coincide con agenda)
-      const sesExist=await supaGet('sesiones',`fecha=eq.${G.citaActual.Fecha}&id_paciente=eq.${G.citaActual.ID_Paciente}&id_terapeuta=eq.${G.miId}&hora=eq.${G.citaActual.Hora}`);
+      const horaCorta2=(G.citaActual.Hora||'').slice(0,5);
+      const sesExist=await supaGet('sesiones',`fecha=eq.${G.citaActual.Fecha}&id_paciente=eq.${G.citaActual.ID_Paciente}&id_terapeuta=eq.${G.miId}&hora=like.${horaCorta2}%`);
       if(!sesExist||!sesExist.length){
         const importe=G.estadoSel==='No-show'&&tipoFin!=='BECA'?0:await calcularImporte(G.citaActual.ID_Servicio,tipoFin,idFin);
         const idSes=await generarId('sesiones','id_cita','S');
