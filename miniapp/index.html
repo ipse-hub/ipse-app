@@ -896,8 +896,9 @@ async function iniciarApp() {
     const terRows = await supaGet('terapeutas', `email=eq.${encodeURIComponent(G.email)}&activa=eq.Sí`);
     if (!terRows || !terRows.length) throw new Error('Acceso no autorizado para: ' + G.email);
     const ter = terRows[0];
-    G.miId     = ter.id_terapeuta;
-    G.miNombre = ter.nombre;
+    G.miId          = ter.id_terapeuta;
+    G.miNombre      = ter.nombre;
+    G.miAccesoGestion = ter.acceso_gestion === 'Sí';
     const [terapeutas, pacientesRaw, servicios] = await Promise.all([
       supaGet('terapeutas', 'activa=eq.Sí&order=id_terapeuta.asc'),
       supaGet('pacientes',  'order=nombre.asc'),
@@ -1730,7 +1731,7 @@ let adminBonoEditando = null;
 let adminBecaEditando = null;
 let adminCitaEditando = null;
 
-function esAdmin() { return G.email === ADMIN_EMAIL; }
+function esAdmin() { return G.miAccesoGestion === true; }
 function adminMostrarBoton() {
   const btn = document.getElementById('btn-admin');
   if (btn) btn.style.display = esAdmin() ? 'inline-flex' : 'none';
