@@ -1374,7 +1374,7 @@ function abrirModalCita(cita) {
       (async()=>{
         // Buscar la sesión real por fecha+hora+paciente
         const horaCorta=(cita.Hora||'').slice(0,5); // normalizar HH:MM
-        const ses=await supaGet('sesiones',`fecha=eq.${cita.Fecha}&id_paciente=eq.${cita.ID_Paciente}&hora=like.${horaCorta}%`);
+        const ses=await supaGet('sesiones',`fecha=eq.${cita.Fecha}&id_paciente=eq.${cita.ID_Paciente}&hora=eq.${horaCorta}`);
         const sesId=ses&&ses.length?ses[0].id_cita:null;
         const cobrosExist=sesId?await supaGet('cobros',`id_sesion=eq.${sesId}`):[];
         if(cobrosExist&&cobrosExist.length){
@@ -1455,11 +1455,11 @@ async function guardarEstadoCita() {
       const idFin=G.citaActual.ID_Bono||G.citaActual.ID_Beca||'';
       // Buscar sesión existente por fecha+paciente+terapeuta (el id_cita en sesiones es autogenerado, no coincide con agenda)
       const horaCorta2=(G.citaActual.Hora||'').slice(0,5);
-      const sesExist=await supaGet('sesiones',`fecha=eq.${G.citaActual.Fecha}&id_paciente=eq.${G.citaActual.ID_Paciente}&id_terapeuta=eq.${G.miId}&hora=like.${horaCorta2}%`);
+      const sesExist=await supaGet('sesiones',`fecha=eq.${G.citaActual.Fecha}&id_paciente=eq.${G.citaActual.ID_Paciente}&id_terapeuta=eq.${G.miId}&hora=eq.${horaCorta2}`);
       if(!sesExist||!sesExist.length){
         const importe=G.estadoSel==='No-show'&&tipoFin!=='BECA'?0:await calcularImporte(G.citaActual.ID_Servicio,tipoFin,idFin);
         const idSes=await generarId('sesiones','id_cita','S');
-        await supaPost('sesiones',{id_cita:idSes,fecha:G.citaActual.Fecha,hora:G.citaActual.Hora,financiacion_tipo:tipoFin,id_paciente:G.citaActual.ID_Paciente,id_terapeuta:G.miId,id_servicio:G.citaActual.ID_Servicio,id_beca:tipoFin==='BECA'?idFin:'',id_bono:tipoFin==='BONO'?idFin:'',estado:G.estadoSel,importe:importe,cerrada:'No',fecha_cierre:'',notas:notas||G.citaActual.NotasAgenda||''});
+        await supaPost('sesiones',{id_cita:idSes,fecha:G.citaActual.Fecha,hora:(G.citaActual.Hora||'').slice(0,5),financiacion_tipo:tipoFin,id_paciente:G.citaActual.ID_Paciente,id_terapeuta:G.miId,id_servicio:G.citaActual.ID_Servicio,id_beca:tipoFin==='BECA'?idFin:'',id_bono:tipoFin==='BONO'?idFin:'',estado:G.estadoSel,importe:importe,cerrada:'No',fecha_cierre:'',notas:notas||G.citaActual.NotasAgenda||''});
         if(G.estadoSel==='Hecha'){
           if(tipoFin==='BONO'&&idFin)await actualizarBono(idFin,1);
           if(tipoFin==='BECA'&&idFin)await actualizarBeca(idFin,1);
