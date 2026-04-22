@@ -1515,9 +1515,26 @@ async function guardarEstadoCita() {
 }
 async function eliminarCita() {
   const cita=G.citaActual; if(!cita)return;
-  if(!window.confirm(`¿Eliminar la cita de ${cita.NombrePaciente||'este paciente'} el ${formatFecha(cita.Fecha)} a las ${cita.Hora}?\n\nEsta acción no se puede deshacer.`))return;
+  if(!window.confirm(`¿Eliminar la cita de ${cita.NombrePaciente||'este paciente'} el ${formatFecha(cita.Fecha)} a las ${cita.Hora}?\n\nSe eliminarán también la sesión y el cobro asociados si existen.`))return;
   const btn=document.getElementById('mc-btn-eliminar'); btn.disabled=true; btn.textContent='⏳';
-  try { await supaDelete('agenda_datos',`id_cita=eq.${cita.ID_Cita}`); toast('Cita eliminada ✓','ok'); cerrarModal('modal-cita'); recargarVista(); }
+  try {
+    // 1. Buscar sesión asociada por fecha+hora+paciente
+    const horaCorta=(cita.Hora||'').slice(0,5);
+    const ses=await supaGet('sesiones',`fecha=eq.${cita.Fecha}&id_paciente=eq.${cita.ID_Paciente}&hora=eq.${horaCorta}`);
+    if(ses&&ses.length){
+      const sesId=ses[0].id_cita;
+      // 2. Borrar cobros de esa sesión
+      await supaDelete('cobros',`id_sesion=eq.${sesId}`);
+      // 3. Revertir bono/beca si aplica
+      if(ses[0].financiacion_tipo==='BONO'&&ses[0].id_bono)await actualizarBono(ses[0].id_bono,-1);
+      if(ses[0].financiacion_tipo==='BECA'&&ses[0].id_beca)await actualizarBeca(ses[0].id_beca,-1);
+      // 4. Borrar sesión
+      await supaDelete('sesiones',`id_cita=eq.${sesId}`);
+    }
+    // 5. Borrar cita de agenda
+    await supaDelete('agenda_datos',`id_cita=eq.${cita.ID_Cita}`);
+    toast('Cita eliminada ✓','ok'); cerrarModal('modal-cita'); recargarVista();
+  }
   catch(err){toast('Error: '+err.message,'err');}
   finally{btn.disabled=false;btn.textContent='🗑 Eliminar';}
 }
