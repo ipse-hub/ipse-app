@@ -1513,7 +1513,7 @@ async function guardarEstadoCita() {
       const idFin=G.citaActual.ID_Bono||G.citaActual.ID_Beca||'';
       // Buscar sesión existente por fecha+paciente+terapeuta (el id_cita en sesiones es autogenerado, no coincide con agenda)
       const horaCorta2=(G.citaActual.Hora||'').slice(0,5);
-      const sesExist=await supaGet('sesiones',`fecha=eq.${G.citaActual.Fecha}&id_paciente=eq.${G.citaActual.ID_Paciente}&id_terapeuta=eq.${G.miId}&hora=eq.${horaCorta2}`);
+      const sesExist=await supaGet('sesiones',`fecha=eq.${G.citaActual.Fecha}&id_paciente=eq.${G.citaActual.ID_Paciente}&hora=eq.${horaCorta2}&id_terapeuta=eq.${G.citaActual.ID_Terapeuta||G.miId}`);
       if(!sesExist||!sesExist.length){
         const importe=G.estadoSel==='No-show'&&tipoFin!=='BECA'?0:await calcularImporte(G.citaActual.ID_Servicio,tipoFin,idFin);
         const idSes=await generarId('sesiones','id_cita','S');
