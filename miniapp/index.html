@@ -559,7 +559,7 @@
         </div>
       </div>
       <div id="mc-cobro-panel" style="display:none;background:#f0f7f0;border:1px solid #97D700;border-radius:8px;padding:12px;margin-bottom:8px;">
-        <div style="font-size:12px;font-weight:600;color:#4a6a00;margin-bottom:8px;">💶 Cobro en consulta</div>
+        <div style="font-size:12px;font-weight:600;color:#4a6a00;margin-bottom:8px;">💶 Cobro en consulta — <span id="mc-cobro-importe" style="font-size:14px;color:#2a5a00">—</span></div>
         <div class="form-row" style="margin-bottom:0">
           <div class="form-group" style="margin-bottom:0"><label class="form-label">¿Cobrado?</label><select id="mc-cobrado" class="form-control"><option value="No">No — pendiente</option><option value="Sí">Sí — cobrado ahora</option></select></div>
           <div class="form-group" style="margin-bottom:0"><label class="form-label">Método</label><select id="mc-metodo-cobro" class="form-control"><option value="Efectivo">Efectivo</option><option value="Bizum">Bizum</option><option value="Transferencia">Transferencia</option></select></div>
@@ -1368,7 +1368,14 @@ function selEstado(estado) {
   else{panel.classList.remove('visible');btn.textContent='Guardar';}
   const tipoFin=G.citaActual?(G.citaActual.ID_Bono?'BONO':(G.citaActual.ID_Beca?'BECA':'SUELTA')):'SUELTA';
   panelCobro.style.display=(estado==='Hecha'&&tipoFin==='SUELTA')?'':'none';
-  if(panelCobro.style.display==='none')document.getElementById('mc-cobrado').value='No';
+  if(panelCobro.style.display==='none'){document.getElementById('mc-cobrado').value='No';}
+  else{
+    // Mostrar importe calculado en el panel
+    calcularImporte(G.citaActual.ID_Servicio,tipoFin,G.citaActual.ID_Bono||G.citaActual.ID_Beca||'').then(imp=>{
+      const el=document.getElementById('mc-cobro-importe');
+      if(el) el.textContent=imp>0?imp.toFixed(2).replace('.',',')+' €':'—';
+    });
+  }
 }
 function actualizarBotonesEstado() {
   const estadoOrig=G.citaActual?(G.citaActual.EstadoAgenda||G.citaActual.Estado||''):'';
@@ -1402,7 +1409,8 @@ async function guardarEstadoCita() {
     if(G.estadoSel==='Hecha'||G.estadoSel==='No-show'){
       const tipoFin=G.citaActual.ID_Bono?'BONO':(G.citaActual.ID_Beca?'BECA':'SUELTA');
       const idFin=G.citaActual.ID_Bono||G.citaActual.ID_Beca||'';
-      const sesExist=await supaGet('sesiones',`id_cita=eq.${G.citaActual.ID_Cita}`);
+      // Buscar sesión existente por fecha+paciente+terapeuta (el id_cita en sesiones es autogenerado, no coincide con agenda)
+      const sesExist=await supaGet('sesiones',`fecha=eq.${G.citaActual.Fecha}&id_paciente=eq.${G.citaActual.ID_Paciente}&id_terapeuta=eq.${G.miId}&hora=eq.${G.citaActual.Hora}`);
       if(!sesExist||!sesExist.length){
         const importe=G.estadoSel==='No-show'&&tipoFin!=='BECA'?0:await calcularImporte(G.citaActual.ID_Servicio,tipoFin,idFin);
         const idSes=await generarId('sesiones','id_cita','S');
@@ -1417,7 +1425,18 @@ async function guardarEstadoCita() {
         }
         if(G.estadoSel==='No-show'&&tipoFin==='BECA'&&idFin)await actualizarBeca(idFin,1);
       } else {
-        await supaPatch('sesiones',`id_cita=eq.${G.citaActual.ID_Cita}`,{estado:G.estadoSel});
+        // Sesión ya existe — solo actualizar estado y gestionar cobro si procede
+        const sesId=sesExist[0].id_cita;
+        await supaPatch('sesiones',`id_cita=eq.${sesId}`,{estado:G.estadoSel,notas:notas||sesExist[0].notas||''});
+        if(G.estadoSel==='Hecha'&&tipoFin==='SUELTA'&&document.getElementById('mc-cobrado').value==='Sí'){
+          // Comprobar si ya hay cobro para esta sesión antes de crear uno nuevo
+          const cobroExist=await supaGet('cobros',`id_sesion=eq.${sesId}`);
+          if(!cobroExist||!cobroExist.length){
+            const importe=sesExist[0].importe||await calcularImporte(G.citaActual.ID_Servicio,tipoFin,idFin);
+            const idCobro=await generarId('cobros','id_cobro','C');
+            await supaPost('cobros',{id_cobro:idCobro,fecha:new Date().toISOString().split('T')[0],id_paciente:G.citaActual.ID_Paciente,id_sesion:sesId,importe:importe,metodo_pago:document.getElementById('mc-metodo-cobro').value||'Efectivo',estado:'Confirmado',notas:'Cobro desde MiniApp'});
+          }
+        }
       }
     }
     toast('Estado actualizado ✓','ok'); cerrarModal('modal-cita'); recargarVista();
