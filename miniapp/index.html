@@ -603,7 +603,7 @@
         <button class="btn btn-secondary" id="mc-btn-repetir" onclick="togglePanelRepetir()" style="background:var(--verde);border-color:var(--verde);color:#fff;display:none">🔁 Repetir</button>
         <button class="btn btn-secondary" id="mc-btn-eliminar" onclick="eliminarCita()" style="background:#fff;border-color:#DA291C;color:#DA291C;display:none">🗑 Eliminar</button>
         <button class="btn btn-primary" id="mc-btn-cobrar" onclick="togglePanelCobro()" style="display:none;background:#97D700;border-color:#6a9900;color:#fff">💶 Cobrar</button>
-        <button class="btn btn-primary" id="mc-btn-guardar" onclick="guardarEstadoCita()">Guardar</button>
+        <button class="btn btn-primary" id="mc-btn-guardar" onclick="guardarEstadoCita()">💾 Guardar</button>
       </div>
     </div>
     <div id="mc-solo-lectura" style="display:none">
@@ -1449,14 +1449,23 @@ function togglePanelCobro() {
 }
 
 async function confirmarCobro() {
-  if(!G.sesionActualId){ toast('Error: sesión no encontrada','err'); return; }
   const fecha = document.getElementById('mc-fecha-cobro').value || new Date().toISOString().split('T')[0];
   const metodo = document.getElementById('mc-metodo-cobro').value || 'Efectivo';
   const impEl = document.getElementById('mc-cobro-importe').textContent.replace('€','').replace(',','.').trim();
   const importe = parseFloat(impEl) || 0;
   const btn = document.querySelector('#mc-cobro-panel .btn-primary');
-  btn.disabled = true; btn.textContent = '⏳ Guardando…';
+  if(btn){ btn.disabled = true; btn.textContent = '⏳ Guardando…'; }
   try {
+    // Si no tenemos sesionActualId, buscarlo ahora
+    if(!G.sesionActualId && G.citaActual){
+      const horaCorta=(G.citaActual.Hora||'').slice(0,5);
+      const ses=await supaGet('sesiones',`fecha=eq.${G.citaActual.Fecha}&id_paciente=eq.${G.citaActual.ID_Paciente}&hora=eq.${horaCorta}`);
+      if(ses&&ses.length) G.sesionActualId=ses[0].id_cita;
+    }
+    if(!G.sesionActualId){ toast('Error: sesión no encontrada en base de datos','err'); return; }
+    // Comprobar que no existe ya un cobro
+    const cobrosExist=await supaGet('cobros',`id_sesion=eq.${G.sesionActualId}`);
+    if(cobrosExist&&cobrosExist.length){ toast('Esta sesión ya tiene un cobro registrado','err'); cerrarModal('modal-cita'); recargarVista(); return; }
     const idCobro = await generarId('cobros','id_cobro','C');
     await supaPost('cobros',{
       id_cobro: idCobro,
@@ -1473,7 +1482,7 @@ async function confirmarCobro() {
     recargarVista();
   } catch(err) {
     toast('Error al registrar cobro: '+err.message,'err');
-    btn.disabled = false; btn.textContent = '✓ Confirmar cobro';
+    if(btn){ btn.disabled = false; btn.textContent = '✓ Confirmar cobro'; }
   }
 }
 
