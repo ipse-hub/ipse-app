@@ -1446,6 +1446,8 @@ function togglePanelCobro() {
   const panel = document.getElementById('mc-cobro-panel');
   const visible = panel.style.display !== 'none';
   panel.style.display = visible ? 'none' : 'block';
+  // Ocultar botón Cobrar cuando el panel está abierto
+  document.getElementById('mc-btn-cobrar').style.display = visible ? 'inline-flex' : 'none';
 }
 
 async function confirmarCobro() {
@@ -1535,7 +1537,21 @@ async function guardarEstadoCita() {
         // Sesión ya existe — solo actualizar estado y gestionar cobro si procede
         const sesId=sesExist[0].id_cita;
         await supaPatch('sesiones',`id_cita=eq.${sesId}`,{estado:G.estadoSel,notas:notas||sesExist[0].notas||''});
-        // Cobro se gestiona por separado con botón Cobrar
+        // Si el panel de cobro está visible y dice Sí, registrar cobro
+        if(G.estadoSel==='Hecha'&&tipoFin==='SUELTA'){
+          const panelVisible=document.getElementById('mc-cobro-panel').style.display!=='none';
+          const cobradoVal=document.getElementById('mc-cobrado')?.value||'No';
+          if(panelVisible&&cobradoVal==='Sí'){
+            const cobroExist=await supaGet('cobros',`id_sesion=eq.${sesId}`);
+            if(!cobroExist||!cobroExist.length){
+              const impSes=sesExist[0].importe||await calcularImporte(G.citaActual.ID_Servicio,tipoFin,idFin);
+              const idCobro=await generarId('cobros','id_cobro','C');
+              const fechaCobro=document.getElementById('mc-fecha-cobro').value||new Date().toISOString().split('T')[0];
+              const metodo=document.getElementById('mc-metodo-cobro').value||'Efectivo';
+              await supaPost('cobros',{id_cobro:idCobro,fecha:fechaCobro,id_paciente:G.citaActual.ID_Paciente,id_sesion:sesId,importe:impSes,metodo_pago:metodo,estado:'Confirmado',notas:'Cobro desde MiniApp'});
+            }
+          }
+        }
       }
     }
     toast('Estado actualizado ✓','ok'); cerrarModal('modal-cita'); recargarVista();
