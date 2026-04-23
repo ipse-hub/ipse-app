@@ -3953,11 +3953,15 @@ function agIniciarSiNecesario() {
     AG.lunes = agLunesDe(hoy);
     AG.diaActual = new Date(hoy);
     AG.mesAnio = { mes: hoy.getMonth(), anio: hoy.getFullYear() };
-    // Activar vista semana (pone display:flex y marca botón)
-    agVista('semana');
-  } else {
-    agCargar();
+    // Activar display de la vista semana sin renderizar aún
+    ['semana','mes','dia'].forEach(x => {
+      document.getElementById('ag-btn-'+x).classList.toggle('ag-activo', x==='semana');
+      document.getElementById('ag-'+x).style.display = x==='semana' ? 'flex' : 'none';
+      if (x==='semana') document.getElementById('ag-'+x).style.flexDirection = 'column';
+    });
   }
+  // Siempre cargar datos de Supabase (cubre primer acceso y navegaciones posteriores)
+  agCargar();
 }
 
 function agLunesDe(d) {
