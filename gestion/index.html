@@ -4047,9 +4047,13 @@ async function agCargar() {
     AG.citas = [];
     toast('Error cargando agenda: '+e.message,'err');
   }
-  // DEBUG temporal
   console.log('[AGENDA] citas cargadas:', AG.citas.length, 'rango:', fi, '-', ff);
-  if (AG.citas.length > 0) console.log('[AGENDA] primera cita:', JSON.stringify(AG.citas[0]));
+  if (AG.citas.length > 0) {
+    console.log('[AGENDA] primera cita:', JSON.stringify(AG.citas[0]));
+    toast('Agenda: '+AG.citas.length+' citas cargadas','ok');
+  } else {
+    toast('Agenda: 0 citas en rango '+fi+' → '+ff,'err');
+  }
   agRender();
 }
 
