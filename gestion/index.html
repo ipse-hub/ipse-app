@@ -4050,9 +4050,15 @@ async function agCargar() {
   try {
     // Sin limit — igual que la MiniApp
     AG.citas = await sg('agenda_datos', `fecha=gte.${fi}&fecha=lt.${ff}&order=fecha.asc,hora.asc`);
+    console.log('[AG] filas:', AG.citas.length, 'fi:', fi, 'ff:', ff);
+    if (AG.citas.length > 0) console.log('[AG] muestra:', AG.citas[0].fecha, AG.citas[0].id_terapeuta);
+    // Comprobar si hay sesión Supabase Auth
+    const sesionKey = Object.keys(localStorage).find(k => k.includes('supabase') || k.includes('auth'));
+    console.log('[AG] sessionKey en localStorage:', sesionKey || 'NINGUNA');
   } catch(e) {
     AG.citas = [];
     toast('Error cargando agenda: '+e.message,'err');
+    console.error('[AG] error:', e);
   }
   agRender();
 }
