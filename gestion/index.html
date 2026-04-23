@@ -1392,9 +1392,9 @@ textarea.form-control { min-height: 72px; transition: border-color .2s; }
 
 
 <!-- ═══════════════════════════════ PAGE AGENDA ═══════════════════════════════ -->
-<div class="page" id="page-agenda">
+<div class="page" id="page-agenda" style="margin:-28px -32px;min-height:calc(100vh - 60px);display:flex;flex-direction:column">
   <!-- Barra de control agenda -->
-  <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px;flex-wrap:wrap">
+  <div style="display:flex;align-items:center;gap:10px;padding:16px 24px 14px;flex-wrap:wrap;border-bottom:1px solid var(--border);background:var(--white)">
     <div style="display:flex;gap:6px;background:var(--border);border-radius:8px;padding:3px">
       <button id="ag-btn-semana" class="ag-vista-btn ag-activo" onclick="agVista('semana')">Semana</button>
       <button id="ag-btn-mes"    class="ag-vista-btn"           onclick="agVista('mes')">Mes</button>
@@ -1413,21 +1413,21 @@ textarea.form-control { min-height: 72px; transition: border-color .2s; }
   </div>
 
   <!-- Vista semana -->
-  <div id="ag-semana" class="card" style="overflow:hidden">
-    <div id="ag-week-header" style="display:grid;background:var(--blue);color:#fff"></div>
-    <div id="ag-week-body"   style="display:grid;overflow-y:auto;max-height:calc(100vh - 260px)"></div>
+  <div id="ag-semana" style="overflow:hidden;flex:1;display:flex;flex-direction:column;background:var(--white)">
+    <div id="ag-week-header" style="display:grid;background:var(--blue);color:#fff;flex-shrink:0"></div>
+    <div id="ag-week-body"   style="display:grid;overflow-y:auto;flex:1"></div>
   </div>
 
   <!-- Vista mes -->
-  <div id="ag-mes" class="card" style="display:none;overflow:hidden">
-    <div id="ag-month-header" style="display:grid;grid-template-columns:repeat(7,1fr);background:var(--blue);color:#fff"></div>
-    <div id="ag-month-body"   style="display:grid;grid-template-columns:repeat(7,1fr)"></div>
+  <div id="ag-mes" style="display:none;overflow:hidden;flex:1;flex-direction:column;background:var(--white)">
+    <div id="ag-month-header" style="display:grid;grid-template-columns:repeat(7,1fr);background:var(--blue);color:#fff;flex-shrink:0"></div>
+    <div id="ag-month-body"   style="display:grid;grid-template-columns:repeat(7,1fr);flex:1"></div>
   </div>
 
   <!-- Vista día -->
-  <div id="ag-dia" class="card" style="display:none;overflow:hidden">
-    <div id="ag-day-header" style="background:var(--blue);color:#fff;padding:10px 16px;font-size:14px;font-weight:600"></div>
-    <div id="ag-day-body"   style="display:grid;overflow-y:auto;max-height:calc(100vh - 260px)"></div>
+  <div id="ag-dia" style="display:none;overflow:hidden;flex:1;flex-direction:column;background:var(--white)">
+    <div id="ag-day-header" style="background:var(--blue);color:#fff;padding:10px 16px;font-size:14px;font-weight:600;flex-shrink:0"></div>
+    <div id="ag-day-body"   style="display:grid;overflow-y:auto;flex:1"></div>
   </div>
 </div>
 
@@ -3940,8 +3940,11 @@ function agIniciarSiNecesario() {
     AG.lunes = agLunesDe(hoy);
     AG.diaActual = new Date(hoy);
     AG.mesAnio = { mes: hoy.getMonth(), anio: hoy.getFullYear() };
+    // Activar vista semana (pone display:flex y marca botón)
+    agVista('semana');
+  } else {
+    agCargar();
   }
-  agCargar();
 }
 
 function agLunesDe(d) {
@@ -3961,7 +3964,9 @@ function agVista(v) {
   AG.vista = v;
   ['semana','mes','dia'].forEach(x => {
     document.getElementById('ag-btn-'+x).classList.toggle('ag-activo', x===v);
-    document.getElementById('ag-'+x).style.display = x===v ? 'block' : 'none';
+    // semana y dia son flex column; mes también cuando está activo
+    document.getElementById('ag-'+x).style.display = x===v ? 'flex' : 'none';
+    if (x===v) document.getElementById('ag-'+x).style.flexDirection = 'column';
   });
   agActualizarLabel();
   agRender();
@@ -4013,16 +4018,18 @@ async function agCargar() {
     const dom = new Date(AG.lunes); dom.setDate(dom.getDate() + 6);
     ff = agFmtISO(dom);
   } else if (AG.vista === 'mes') {
+    // Mes completo + semanas parciales visibles al principio y al final
     const d1 = new Date(AG.mesAnio.anio, AG.mesAnio.mes, 1);
-    // incluir días visibles del mes anterior/siguiente
-    const d0 = new Date(d1); d0.setDate(d0.getDate() - 7);
-    const d2 = new Date(AG.mesAnio.anio, AG.mesAnio.mes+1, 7);
+    const d0 = new Date(d1); d0.setDate(d0.getDate() - 6);
+    const d2 = new Date(AG.mesAnio.anio, AG.mesAnio.mes + 1, 0 + 6);
     fi = agFmtISO(d0); ff = agFmtISO(d2);
   } else {
     fi = agFmtISO(AG.diaActual); ff = fi;
   }
   try {
-    AG.citas = await sg('agenda_datos', `fecha=gte.${fi}&fecha=lte.${ff}&order=fecha.asc,hora.asc&limit=500`);
+    // Sin limit para mes (puede haber muchas citas); 500 suficiente para semana/día
+    const lim = AG.vista === 'mes' ? 2000 : 500;
+    AG.citas = await sg('agenda_datos', `fecha=gte.${fi}&fecha=lte.${ff}&order=fecha.asc,hora.asc&limit=${lim}`);
   } catch(e) {
     AG.citas = [];
     toast('Error cargando agenda: '+e.message,'err');
@@ -4061,6 +4068,7 @@ function agRenderLeyenda() {
     ley = document.createElement('div');
     ley.id = 'ag-leyenda';
     ley.className = 'ag-leyenda';
+    ley.style.cssText = 'padding:10px 24px 2px;border-bottom:1px solid var(--border);background:var(--white);margin:0';
     document.getElementById('page-agenda').insertBefore(ley, document.getElementById('ag-semana'));
   }
   const ter = document.getElementById('ag-filtro-ter')?.value || '';
