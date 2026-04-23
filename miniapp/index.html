@@ -208,7 +208,14 @@
   .info-panel .info-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
   .info-panel .info-label { font-size: 11px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .4px; }
   .info-panel .info-val { font-size: 13px; font-weight: 500; }
-  .modal-footer { display: flex; justify-content: flex-end; gap: 10px; margin-top: 22px; padding-top: 18px; border-top: 1px solid var(--border); }
+  .modal-footer { display: flex; align-items: center; gap: 8px; margin-top: 22px; padding-top: 18px; border-top: 1px solid var(--border); flex-wrap: wrap; }
+  .modal-footer .spacer { flex: 1; min-width: 8px; }
+  .btn-icono { padding: 9px 11px; }
+  @media (max-width: 480px) {
+    .modal-footer { gap: 6px; }
+    .modal-footer .btn { font-size: 12px; padding: 8px 12px; }
+    .modal-footer .btn-icono { padding: 8px 10px; }
+  }
   .btn { padding: 9px 20px; border-radius: 8px; font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer; border: none; transition: all .15s; }
   .btn-primary { background: var(--azul); color: #fff; }
   .btn-primary:hover { background: #0b0580; }
@@ -600,10 +607,11 @@
       </div>
       <div class="modal-footer">
         <button class="btn btn-secondary" onclick="cerrarModal('modal-cita')">Cerrar</button>
+        <button class="btn btn-secondary btn-icono" id="mc-btn-eliminar" onclick="eliminarCita()" title="Eliminar cita" style="background:#fff;border:1.5px solid #DA291C;color:#DA291C;display:none">🗑</button>
+        <div class="spacer"></div>
         <button class="btn btn-secondary" id="mc-btn-repetir" onclick="togglePanelRepetir()" style="background:var(--verde);border-color:var(--verde);color:#fff;display:none">🔁 Repetir</button>
-        <button class="btn btn-secondary" id="mc-btn-eliminar" onclick="eliminarCita()" style="background:#fff;border-color:#DA291C;color:#DA291C;display:none">🗑 Eliminar</button>
-        <button class="btn btn-primary" id="mc-btn-cobrar" onclick="togglePanelCobro()" style="display:none;background:#97D700;border-color:#6a9900;color:#fff">💶 Cobrar</button>
         <button class="btn btn-primary" id="mc-btn-guardar" onclick="guardarEstadoCita()">💾 Guardar</button>
+        <button class="btn btn-primary" id="mc-btn-cobrar" onclick="togglePanelCobro()" style="display:none;background:#97D700;border-color:#6a9900;color:#fff;font-size:14px;padding:9px 22px">💶 Cobrar</button>
       </div>
     </div>
     <div id="mc-solo-lectura" style="display:none">
@@ -1411,7 +1419,13 @@ function abrirModalCita(cita) {
               const el=document.getElementById('mc-cobro-importe');
               if(el) el.textContent=imp>0?parseFloat(imp).toFixed(2).replace('.',',')+' €':'—';
               document.getElementById('mc-fecha-cobro').value=new Date().toISOString().split('T')[0];
+              // Cobrar es CTA principal: lo mostramos grande, Guardar pasa a secundario, Repetir se oculta
               document.getElementById('mc-btn-cobrar').style.display='inline-flex';
+              const btnG=document.getElementById('mc-btn-guardar');
+              btnG.textContent='💾 Notas';
+              btnG.className='btn btn-secondary';
+              btnG.style.background='';btnG.style.color='';btnG.style.borderColor='';
+              document.getElementById('mc-btn-repetir').style.display='none';
             }
           }
         } finally {
@@ -1419,7 +1433,10 @@ function abrirModalCita(cita) {
           G.cargandoCobro=false;
           document.querySelectorAll('.estado-btn').forEach(b=>b.disabled=false);
           const btnG=document.getElementById('mc-btn-guardar');
-          if(btnG.style.display!=='none'){btnG.disabled=false;btnG.textContent='Guardar';}
+          // Solo desbloquear — no sobreescribir textContent si ya fue personalizado (ej: cobro pendiente)
+          if(btnG.style.display!=='none') btnG.disabled=false;
+          // Si no se ha cambiado el texto aún (sigue siendo el placeholder de carga), restaurar
+          if(btnG.textContent==='⏳ Verificando…') btnG.textContent='Guardar';
         }
       })();
     }
@@ -1443,6 +1460,11 @@ function selEstado(estado) {
     panelCobro.style.display='none';
     document.getElementById('mc-cobro-registrado').style.display='none';
     document.getElementById('mc-btn-cobrar').style.display='none';
+    // Restaurar Guardar a estado primario normal
+    btn.className='btn btn-primary'; btn.style.background=''; btn.style.color=''; btn.style.borderColor='';
+    // Restaurar Repetir si corresponde (lo gestiona abrirModalCita, aquí solo asegurar visibilidad)
+    const esMiaLocal=G.citaActual&&(G.citaActual.ID_Terapeuta===G.miId||esAdmin());
+    document.getElementById('mc-btn-repetir').style.display=esMiaLocal?'inline-flex':'none';
   } else if(estado==='Hecha' && tipoFin==='SUELTA' && !G.sesionActualId){
     // Primera vez Hecha (sin sesión preexistente) — mostrar panel cobro
     calcularImporte(G.citaActual.ID_Servicio, tipoFin, '').then(imp=>{
@@ -1469,8 +1491,21 @@ function togglePanelCobro() {
   const panel = document.getElementById('mc-cobro-panel');
   const visible = panel.style.display !== 'none';
   panel.style.display = visible ? 'none' : 'block';
-  // Ocultar botón Cobrar cuando el panel está abierto
-  document.getElementById('mc-btn-cobrar').style.display = visible ? 'inline-flex' : 'none';
+  // Si abrimos el panel: Cobrar desaparece, Guardar pasa a primario normal (confirma cobro+notas)
+  // Si cerramos el panel: volvemos al estado de cobro pendiente (Cobrar=CTA, Guardar=secundario)
+  const btnCobrar = document.getElementById('mc-btn-cobrar');
+  const btnGuardar = document.getElementById('mc-btn-guardar');
+  if(visible){
+    // Panel se cierra — volvemos a cobro pendiente
+    btnCobrar.style.display='inline-flex';
+    btnGuardar.textContent='💾 Notas';
+    btnGuardar.className='btn btn-secondary';
+  } else {
+    // Panel se abre — Guardar es el CTA de confirmar
+    btnCobrar.style.display='none';
+    btnGuardar.textContent='💾 Guardar';
+    btnGuardar.className='btn btn-primary';
+  }
 }
 
 async function confirmarCobro() {
