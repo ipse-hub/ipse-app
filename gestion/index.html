@@ -4028,35 +4028,31 @@ function agActualizarLabel() {
 }
 
 async function agCargar() {
-  // Determinar rango de fechas a pedir
+  // Replicar exactamente la lógica de la MiniApp (sin limit, fecha=lt)
+  const pad = n => String(n).padStart(2,'0');
   let fi, ff;
   if (AG.vista === 'semana') {
     fi = agFmtISO(AG.lunes);
-    const dom = new Date(AG.lunes); dom.setDate(dom.getDate() + 6);
+    const dom = new Date(AG.lunes); dom.setDate(dom.getDate() + 7);
     ff = agFmtISO(dom);
   } else if (AG.vista === 'mes') {
-    // Mes completo + semanas parciales visibles al principio y al final
-    const d1 = new Date(AG.mesAnio.anio, AG.mesAnio.mes, 1);
-    const d0 = new Date(d1); d0.setDate(d0.getDate() - 6);
-    const d2 = new Date(AG.mesAnio.anio, AG.mesAnio.mes + 1, 0 + 6);
-    fi = agFmtISO(d0); ff = agFmtISO(d2);
+    // Igual que cargarMes() de la MiniApp
+    const pd = new Date(AG.mesAnio.anio, AG.mesAnio.mes, 1);
+    const dow = pd.getDay(); // 0=dom
+    const ig = new Date(pd); ig.setDate(pd.getDate() + (dow===0 ? -6 : 1-dow));
+    const fg = new Date(ig); fg.setDate(ig.getDate() + 42);
+    fi = agFmtISO(ig); ff = agFmtISO(fg);
   } else {
-    fi = agFmtISO(AG.diaActual); ff = fi;
+    fi = agFmtISO(AG.diaActual);
+    const fd = new Date(AG.diaActual); fd.setDate(fd.getDate()+1);
+    ff = agFmtISO(fd);
   }
   try {
-    // Sin limit para mes (puede haber muchas citas); 500 suficiente para semana/día
-    const lim = AG.vista === 'mes' ? 2000 : 500;
-    AG.citas = await sg('agenda_datos', `fecha=gte.${fi}&fecha=lte.${ff}&order=fecha.asc,hora.asc&limit=${lim}`);
+    // Sin limit — igual que la MiniApp
+    AG.citas = await sg('agenda_datos', `fecha=gte.${fi}&fecha=lt.${ff}&order=fecha.asc,hora.asc`);
   } catch(e) {
     AG.citas = [];
     toast('Error cargando agenda: '+e.message,'err');
-  }
-  console.log('[AGENDA] citas cargadas:', AG.citas.length, 'rango:', fi, '-', ff);
-  if (AG.citas.length > 0) {
-    console.log('[AGENDA] primera cita:', JSON.stringify(AG.citas[0]));
-    toast('Agenda: '+AG.citas.length+' citas cargadas','ok');
-  } else {
-    toast('Agenda: 0 citas en rango '+fi+' → '+ff,'err');
   }
   agRender();
 }
