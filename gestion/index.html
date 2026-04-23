@@ -6,6 +6,7 @@
 <title>IPSE — Panel de Gestión</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
 :root {
@@ -339,6 +340,30 @@ textarea.form-control { min-height: 72px; transition: border-color .2s; }
 .ag-leyenda { display:flex; gap:12px; flex-wrap:wrap; margin-bottom:14px; }
 .ag-leyenda-item { display:flex; align-items:center; gap:6px; font-size:12px; font-weight:500; color:var(--ink-muted); }
 .ag-leyenda-dot { width:10px; height:10px; border-radius:50%; }
+
+
+/* ── GRÁFICOS KPI ── */
+.kpi-graficos-section { margin-top: 8px; margin-bottom: 24px; }
+.kpi-graficos-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; }
+.kpi-grafico-card { background: var(--white); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; cursor: pointer; transition: all .2s; }
+.kpi-grafico-card:hover { box-shadow: 0 4px 20px rgba(16,6,159,.12); transform: translateY(-2px); border-color: var(--blue); }
+.kpi-grafico-title { font-size: 11px; font-weight: 700; color: var(--ink); margin-bottom: 2px; }
+.kpi-grafico-desc  { font-size: 10px; color: var(--ink-muted); margin-bottom: 10px; line-height: 1.4; }
+.kpi-grafico-mini  { height: 60px; position: relative; }
+/* Modal gráfico */
+.kpi-modal-overlay { display:none; position:fixed; inset:0; background:rgba(26,27,46,.6); z-index:2000; align-items:center; justify-content:center; padding:24px; backdrop-filter:blur(3px); }
+.kpi-modal-overlay.visible { display:flex; }
+.kpi-modal-box { background:var(--white); border-radius:16px; padding:28px; width:100%; max-width:800px; max-height:90vh; overflow-y:auto; box-shadow:0 24px 80px rgba(0,0,0,.2); animation:modalIn .2s ease; }
+.kpi-modal-header { display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:20px; }
+.kpi-modal-titulo { font-size:18px; font-weight:600; color:var(--ink); }
+.kpi-modal-desc   { font-size:12px; color:var(--ink-muted); margin-top:3px; }
+.kpi-modal-close  { background:none; border:none; cursor:pointer; font-size:22px; color:var(--ink-muted); padding:4px; border-radius:4px; line-height:1; }
+.kpi-modal-close:hover { background:var(--cream); color:var(--ink); }
+.kpi-modal-canvas-wrap { position:relative; height:320px; }
+.kpi-modal-stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:12px; margin-top:20px; padding-top:20px; border-top:1px solid var(--border); }
+.kpi-modal-stat { background:var(--cream); border-radius:8px; padding:10px 12px; }
+.kpi-modal-stat-label { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:var(--ink-muted); }
+.kpi-modal-stat-val { font-size:18px; font-weight:300; color:var(--ink); margin-top:2px; }
 
 /* ── KPIs PAGE ── */
 .kpi-page { max-width: 1400px; }
@@ -1532,6 +1557,24 @@ textarea.form-control { min-height: 72px; transition: border-color .2s; }
       <div class="kpi-loading"><div class="spinner"></div> Calculando KPIs…</div>
     </div>
 
+  </div>
+</div>
+
+
+<!-- MODAL GRÁFICO KPI -->
+<div class="kpi-modal-overlay" id="kpi-modal-overlay" onclick="if(event.target===this)cerrarKpiModal()">
+  <div class="kpi-modal-box">
+    <div class="kpi-modal-header">
+      <div>
+        <div class="kpi-modal-titulo" id="kpi-modal-titulo">Gráfico</div>
+        <div class="kpi-modal-desc"  id="kpi-modal-desc"></div>
+      </div>
+      <button class="kpi-modal-close" onclick="cerrarKpiModal()">✕</button>
+    </div>
+    <div class="kpi-modal-canvas-wrap">
+      <canvas id="kpi-modal-canvas"></canvas>
+    </div>
+    <div class="kpi-modal-stats" id="kpi-modal-stats"></div>
   </div>
 </div>
 
@@ -4809,6 +4852,20 @@ async function cargarKPIs() {
       </div>
     </div>
 
+    <!-- SECCIÓN GRÁFICOS -->
+    <div class="kpi-graficos-section">
+      <div class="kpi-section-title" style="margin-top:4px">📊 GRÁFICOS DISPONIBLES <span>Visualiza la evolución y profundiza en los datos clave</span></div>
+      <div class="kpi-graficos-grid" id="kpi-graficos-grid">
+        ${kpiGraficoCard('devengo_cobros','Evolución Devengo vs Cobros','Compara ingresos devengados y cobrados en el tiempo.','devengo_cobros')}
+        ${kpiGraficoCard('delta_caja','Δ Caja (Cobros – Devengo)','Evolución del diferencial entre lo generado y lo cobrado.','delta_caja')}
+        ${kpiGraficoCard('ocupacion','Ocupación','% de ocupación diaria semanal y mensual.','ocupacion')}
+        ${kpiGraficoCard('pasivo_op','Pasivo Operativo','Evolución de bonos y becas pendientes.','pasivo_op')}
+        ${kpiGraficoCard('margen_ses','Margen por Sesión','Evolución del margen medio por sesión.','margen_ses')}
+        ${kpiGraficoCard('breakeven','Break-even','Evolución del punto de equilibrio.','breakeven')}
+        ${kpiGraficoCard('conversion','Conversión a Caja','Evolución del % de cobro sobre devengo.','conversion')}
+      </div>
+    </div>
+
     <!-- NOTA PIE -->
     <div style="font-size:11px;color:var(--ink-muted);display:flex;align-items:center;gap:8px;padding:12px 0;border-top:1px solid var(--border)">
       <span>ℹ</span>
@@ -4818,11 +4875,398 @@ async function cargarKPIs() {
 
     document.getElementById('kpi-contenido').innerHTML = html;
 
+    // Iniciar gráficos tras render
+    KG.historial = null; // forzar recarga al cambiar período
+    kgIniciarTrasKPIs(anioS, mesS, pasivoBonos, pasivoBecas, pasivoMeses);
+
   } catch(e) {
     document.getElementById('kpi-contenido').innerHTML =
       `<div class="kpi-loading" style="color:var(--red)">Error al calcular KPIs: ${e.message}</div>`;
     console.error('KPIs error:', e);
   }
+}
+
+
+// ═══════════════════════════════════════════════════════
+//  KPIs — GRÁFICOS
+// ═══════════════════════════════════════════════════════
+
+let KG = {
+  historial: null,   // { meses: [...], devengo: [...], cobrado: [...], sesiones: [...], pasivo: [...] }
+  chartActivo: null, // instancia Chart.js activa en el modal
+};
+
+// ── Colores Chart.js consistentes con la paleta IPSE ──
+const KG_COLORS = {
+  azul:   '#10069F',
+  cyan:   '#00B5E2',
+  verde:  '#97D700',
+  rojo:   '#DA291C',
+  ambar:  '#F59E0B',
+  lila:   '#8B5CF6',
+  gris:   '#9CA3AF',
+};
+
+function kgAlpha(hex, a) {
+  const r = parseInt(hex.slice(1,3),16);
+  const g = parseInt(hex.slice(3,5),16);
+  const b = parseInt(hex.slice(5,7),16);
+  return `rgba(${r},${g},${b},${a})`;
+}
+
+// ── Cargar historial (últimos 12 meses) ───────────────
+async function kgCargarHistorial(mesActualAnio, mesActualMes) {
+  if (KG.historial) return; // ya cargado
+  const meses = [], labeles = [];
+  const MESES_CORTO2 = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  for (let i = 11; i >= 0; i--) {
+    let m = mesActualMes - i;
+    let a = mesActualAnio;
+    while (m < 0) { m += 12; a--; }
+    while (m > 11) { m -= 12; a++; }
+    meses.push({ anio: a, mes: m });
+    labeles.push(MESES_CORTO2[m] + ' ' + String(a).slice(2));
+  }
+
+  // Cargar sesiones y cobros para cada mes en paralelo (batches de 4)
+  const devengoArr = [], cobradoArr = [], sesionesArr = [];
+
+  for (let i = 0; i < meses.length; i += 4) {
+    const batch = meses.slice(i, i+4);
+    const results = await Promise.all(batch.map(({anio,mes}) => Promise.all([
+      sg('sesiones', `fecha=gte.${kpiFechaIni(anio,mes)}&fecha=lt.${kpiFechaFin(anio,mes)}&estado=eq.Hecha&select=importe`),
+      sg('cobros',   `fecha=gte.${kpiFechaIni(anio,mes)}&fecha=lt.${kpiFechaFin(anio,mes)}&select=importe`),
+    ])));
+    results.forEach(([ses, cob]) => {
+      const dev = ses.reduce((a,s)=>a+parseFloat(s.importe||0),0);
+      const cob2 = cob.reduce((a,c)=>a+parseFloat(c.importe||0),0);
+      devengoArr.push(dev);
+      cobradoArr.push(cob2);
+      sesionesArr.push(ses.length);
+    });
+  }
+
+  KG.historial = { labeles, meses, devengo: devengoArr, cobrado: cobradoArr, sesiones: sesionesArr };
+}
+
+// ── Mini sparkline SVG para las tarjetas ─────────────
+function kgSparkline(datos, color, filled=false) {
+  if (!datos || !datos.length) return '';
+  const W=180, H=52, pad=4;
+  const mn = Math.min(...datos), mx = Math.max(...datos);
+  const rng = mx - mn || 1;
+  const pts = datos.map((v,i) => {
+    const x = pad + (i/(datos.length-1||1))*(W-pad*2);
+    const y = H - pad - ((v-mn)/rng)*(H-pad*2);
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
+  }).join(' ');
+  const fillPath = filled ? `<polygon points="${pts} ${(W-pad).toFixed(1)},${H-pad} ${pad},${H-pad}" fill="${kgAlpha(color,0.15)}"/>` : '';
+  return `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">
+    ${fillPath}
+    <polyline points="${pts}" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>`;
+}
+
+function kgSparkBars(datos, colorPos, colorNeg='#DA291C') {
+  if (!datos || !datos.length) return '';
+  const W=180, H=52, pad=4;
+  const mx = Math.max(...datos.map(Math.abs), 1);
+  const barW = (W-pad*2)/datos.length - 2;
+  const bars = datos.map((v,i) => {
+    const x = pad + i*((W-pad*2)/datos.length) + 1;
+    const h = Math.max(2, (Math.abs(v)/mx)*(H/2-pad));
+    const y = v >= 0 ? H/2-h : H/2;
+    const col = v >= 0 ? colorPos : colorNeg;
+    return `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${barW.toFixed(1)}" height="${h.toFixed(1)}" fill="${col}" rx="1"/>`;
+  }).join('');
+  return `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
+    <line x1="${pad}" y1="${H/2}" x2="${W-pad}" y2="${H/2}" stroke="#E4E8F0" stroke-width="1"/>
+    ${bars}
+  </svg>`;
+}
+
+// ── Tarjeta gráfico mini ──────────────────────────────
+function kpiGraficoCard(id, titulo, desc, tipo) {
+  return `<div class="kpi-grafico-card" onclick="abrirKpiGrafico('${tipo}')">
+    <div class="kpi-grafico-title">${titulo}</div>
+    <div class="kpi-grafico-desc">${desc}</div>
+    <div class="kpi-grafico-mini" id="kgmini-${tipo}">
+      <div style="display:flex;align-items:center;justify-content:center;height:60px;color:var(--ink-muted);font-size:11px">Cargando…</div>
+    </div>
+  </div>`;
+}
+
+// ── Renderizar mini sparklines tras cargar historial ──
+async function kgRenderMinis() {
+  if (!KG.historial) return;
+  const { devengo, cobrado, sesiones } = KG.historial;
+  const delta = devengo.map((d,i) => cobrado[i] - d);
+  const conversion = devengo.map((d,i) => d > 0 ? (cobrado[i]/d)*100 : 0);
+  const margen = devengo.map((d,i) => sesiones[i] > 0 ? (d/sesiones[i])*0.4 : 0);
+
+  const minis = {
+    'devengo_cobros': kgSparkline(devengo, KG_COLORS.azul, true),
+    'delta_caja':     kgSparkBars(delta, KG_COLORS.verde, KG_COLORS.rojo),
+    'ocupacion':      kgSparkline(sesiones, KG_COLORS.cyan, true),
+    'pasivo_op':      kgSparkline(devengo.map((_,i)=>i), KG_COLORS.lila, true), // placeholder
+    'margen_ses':     kgSparkline(margen, KG_COLORS.azul),
+    'breakeven':      kgSparkline(devengo.map(()=>0), KG_COLORS.gris),
+    'conversion':     kgSparkline(conversion, KG_COLORS.verde),
+  };
+
+  Object.entries(minis).forEach(([tipo, svg]) => {
+    const el = document.getElementById('kgmini-'+tipo);
+    if (el) el.innerHTML = svg;
+  });
+}
+
+// ── Abrir modal con gráfico completo ─────────────────
+async function abrirKpiGrafico(tipo) {
+  // Asegurar historial cargado
+  const [anioS, mesS] = (document.getElementById('kpi-periodo')?.value||'').split('-').map(Number);
+  if (!KG.historial) {
+    await kgCargarHistorial(anioS, mesS);
+    kgRenderMinis();
+  }
+
+  const overlay = document.getElementById('kpi-modal-overlay');
+  overlay.classList.add('visible');
+
+  // Destruir chart anterior
+  if (KG.chartActivo) { KG.chartActivo.destroy(); KG.chartActivo = null; }
+
+  const canvas = document.getElementById('kpi-modal-canvas');
+  const ctx = canvas.getContext('2d');
+  const { labeles, devengo, cobrado, sesiones } = KG.historial;
+
+  const configs = {
+    devengo_cobros: {
+      titulo: 'Evolución Devengo vs Cobros',
+      desc: 'Comparativa mensual de ingresos generados vs dinero realmente cobrado.',
+      chart: {
+        type: 'bar',
+        data: {
+          labels: labeles,
+          datasets: [
+            { label: 'Devengo', data: devengo, backgroundColor: kgAlpha(KG_COLORS.azul, 0.85), borderRadius: 4 },
+            { label: 'Cobrado', data: cobrado, backgroundColor: kgAlpha(KG_COLORS.cyan, 0.85), borderRadius: 4 },
+          ]
+        },
+        options: kgOpts('€', true)
+      },
+      stats: [
+        { label: 'Devengo total', val: kpiFmt(devengo.reduce((a,v)=>a+v,0)) },
+        { label: 'Cobrado total', val: kpiFmt(cobrado.reduce((a,v)=>a+v,0)) },
+        { label: 'Media devengo/mes', val: kpiFmt(devengo.reduce((a,v)=>a+v,0)/devengo.length) },
+        { label: 'Media cobrado/mes', val: kpiFmt(cobrado.reduce((a,v)=>a+v,0)/cobrado.length) },
+      ]
+    },
+
+    delta_caja: {
+      titulo: 'Δ Caja (Cobros – Devengo)',
+      desc: 'Diferencia mensual entre lo cobrado y lo devengado. Positivo = cobras más de lo que generas; negativo = tienes pendiente.',
+      chart: {
+        type: 'bar',
+        data: {
+          labels: labeles,
+          datasets: [{
+            label: 'Δ Caja',
+            data: devengo.map((d,i) => cobrado[i]-d),
+            backgroundColor: devengo.map((d,i) => cobrado[i]-d >= 0 ? kgAlpha(KG_COLORS.verde,0.85) : kgAlpha(KG_COLORS.rojo,0.85)),
+            borderRadius: 4,
+          }]
+        },
+        options: kgOpts('€', false)
+      },
+      stats: [
+        { label: 'Δ acumulado', val: kpiFmt(devengo.reduce((a,d,i)=>a+(cobrado[i]-d),0)) },
+        { label: 'Mejor mes', val: kpiFmt(Math.max(...devengo.map((d,i)=>cobrado[i]-d))) },
+        { label: 'Peor mes', val: kpiFmt(Math.min(...devengo.map((d,i)=>cobrado[i]-d))) },
+        { label: 'Meses positivos', val: devengo.filter((d,i)=>cobrado[i]>=d).length + ' / ' + devengo.length },
+      ]
+    },
+
+    ocupacion: {
+      titulo: 'Ocupación',
+      desc: 'Sesiones realizadas por mes vs media histórica. La línea naranja marca el umbral del 80% (zona óptima).',
+      chart: (() => {
+        const media = sesiones.reduce((a,v)=>a+v,0)/sesiones.length || 1;
+        const pcts = sesiones.map(s => (s/media)*100);
+        return {
+          type: 'line',
+          data: {
+            labels: labeles,
+            datasets: [
+              { label: 'Ocupación %', data: pcts, borderColor: KG_COLORS.cyan, backgroundColor: kgAlpha(KG_COLORS.cyan,0.1), fill: true, tension: 0.3, pointRadius: 4 },
+              { label: 'Umbral 80%', data: labeles.map(()=>80), borderColor: KG_COLORS.ambar, borderDash: [6,3], pointRadius: 0, borderWidth: 1.5 },
+              { label: 'Umbral 95%', data: labeles.map(()=>95), borderColor: KG_COLORS.rojo, borderDash: [6,3], pointRadius: 0, borderWidth: 1.5 },
+            ]
+          },
+          options: kgOpts('%', false)
+        };
+      })(),
+      stats: [
+        { label: 'Media histórica/mes', val: kpiFmtN(sesiones.reduce((a,v)=>a+v,0)/sesiones.length,1) + ' ses.' },
+        { label: 'Máximo', val: Math.max(...sesiones) + ' ses.' },
+        { label: 'Mínimo', val: Math.min(...sesiones) + ' ses.' },
+        { label: 'Total sesiones', val: sesiones.reduce((a,v)=>a+v,0) + ' ses.' },
+      ]
+    },
+
+    margen_ses: {
+      titulo: 'Margen por Sesión',
+      desc: 'Evolución del margen neto medio por sesión (40% del precio medio). Umbral óptimo ≥ 40%.',
+      chart: (() => {
+        const margen = devengo.map((d,i) => sesiones[i]>0 ? (d/sesiones[i])*0.4 : 0);
+        const precio = devengo.map((d,i) => sesiones[i]>0 ? d/sesiones[i] : 0);
+        return {
+          type: 'line',
+          data: {
+            labels: labeles,
+            datasets: [
+              { label: 'Margen/sesión', data: margen, borderColor: KG_COLORS.azul, backgroundColor: kgAlpha(KG_COLORS.azul,0.1), fill: true, tension: 0.3, pointRadius: 4 },
+              { label: 'Precio medio', data: precio, borderColor: KG_COLORS.gris, borderDash: [4,3], pointRadius: 0, borderWidth: 1.5 },
+            ]
+          },
+          options: kgOpts('€', false)
+        };
+      })(),
+      stats: (() => {
+        const margen = devengo.map((d,i) => sesiones[i]>0 ? (d/sesiones[i])*0.4 : 0).filter(v=>v>0);
+        return [
+          { label: 'Margen medio', val: kpiFmt(margen.reduce((a,v)=>a+v,0)/(margen.length||1)) },
+          { label: 'Máximo', val: kpiFmt(Math.max(...margen,0)) },
+          { label: 'Mínimo', val: kpiFmt(Math.min(...margen,0)) },
+          { label: 'Tendencia', val: margen.length>1 && margen[margen.length-1]>margen[0] ? '↗ Al alza' : '↘ A la baja' },
+        ];
+      })()
+    },
+
+    conversion: {
+      titulo: 'Conversión a Caja',
+      desc: '% de ingresos devengados que efectivamente se cobran cada mes. Óptimo ≥ 90%.',
+      chart: (() => {
+        const conv = devengo.map((d,i) => d>0 ? (cobrado[i]/d)*100 : 0);
+        return {
+          type: 'line',
+          data: {
+            labels: labeles,
+            datasets: [
+              { label: 'Conversión %', data: conv, borderColor: KG_COLORS.verde, backgroundColor: kgAlpha(KG_COLORS.verde,0.12), fill: true, tension: 0.3, pointRadius: 4,
+                pointBackgroundColor: conv.map(v => v>=90?KG_COLORS.verde:v>=80?KG_COLORS.ambar:KG_COLORS.rojo) },
+              { label: 'Óptimo 90%', data: labeles.map(()=>90), borderColor: KG_COLORS.verde, borderDash: [6,3], pointRadius: 0, borderWidth: 1.5 },
+              { label: 'Alerta 80%', data: labeles.map(()=>80), borderColor: KG_COLORS.ambar, borderDash: [6,3], pointRadius: 0, borderWidth: 1.5 },
+            ]
+          },
+          options: kgOpts('%', false)
+        };
+      })(),
+      stats: (() => {
+        const conv = devengo.map((d,i) => d>0 ? (cobrado[i]/d)*100 : 0).filter((_,i)=>devengo[i]>0);
+        return [
+          { label: 'Media conversión', val: kpiFmtN(conv.reduce((a,v)=>a+v,0)/(conv.length||1),1)+'%' },
+          { label: 'Mejor mes', val: kpiFmtN(Math.max(...conv,0),1)+'%' },
+          { label: 'Peor mes', val: kpiFmtN(Math.min(...conv,100),1)+'%' },
+          { label: 'Meses ≥90%', val: conv.filter(v=>v>=90).length + ' / ' + conv.length },
+        ];
+      })()
+    },
+
+    delta_caja_alias: {}, // alias
+
+    pasivo_op: {
+      titulo: 'Pasivo Operativo',
+      desc: 'Evolución del importe pendiente de ejecutar en bonos y becas activos. Se actualiza con los datos actuales.',
+      chart: {
+        type: 'bar',
+        data: {
+          labels: ['Bonos activos', 'Becas activas'],
+          datasets: [{
+            label: 'Pendiente (€)',
+            data: [
+              (window._kpiPasivoBonos||0),
+              (window._kpiPasivoBecas||0),
+            ],
+            backgroundColor: [kgAlpha(KG_COLORS.lila,0.85), kgAlpha(KG_COLORS.ambar,0.85)],
+            borderRadius: 6,
+          }]
+        },
+        options: kgOpts('€', false)
+      },
+      stats: [
+        { label: 'Bonos pendientes', val: kpiFmt(window._kpiPasivoBonos||0) },
+        { label: 'Becas pendientes', val: kpiFmt(window._kpiPasivoBecas||0) },
+        { label: 'Total pasivo', val: kpiFmt((window._kpiPasivoBonos||0)+(window._kpiPasivoBecas||0)) },
+        { label: 'Meses pendientes', val: kpiFmtN(window._kpiPasivoMeses||0,1) + ' meses' },
+      ]
+    },
+
+    breakeven: {
+      titulo: 'Break-even',
+      desc: 'Sesiones mínimas necesarias para cubrir costes fijos. Pendiente de configurar la tabla de costes fijos.',
+      chart: {
+        type: 'bar',
+        data: {
+          labels: labeles,
+          datasets: [{
+            label: 'Sesiones realizadas',
+            data: sesiones,
+            backgroundColor: kgAlpha(KG_COLORS.azul, 0.7),
+            borderRadius: 4,
+          }]
+        },
+        options: kgOpts('ses.', false)
+      },
+      stats: [
+        { label: 'Break-even actual', val: '— (pendiente costes fijos)' },
+        { label: 'Sesiones mes actual', val: sesiones[sesiones.length-1] + ' ses.' },
+        { label: 'Media mensual', val: kpiFmtN(sesiones.reduce((a,v)=>a+v,0)/sesiones.length,1) + ' ses.' },
+        { label: 'Estado', val: '⚠ Requiere tabla costes_fijos' },
+      ]
+    },
+  };
+
+  const cfg = configs[tipo];
+  if (!cfg || !cfg.chart) return;
+
+  document.getElementById('kpi-modal-titulo').textContent = cfg.titulo;
+  document.getElementById('kpi-modal-desc').textContent = cfg.desc;
+  document.getElementById('kpi-modal-stats').innerHTML = (cfg.stats||[]).map(s =>
+    `<div class="kpi-modal-stat"><div class="kpi-modal-stat-label">${s.label}</div><div class="kpi-modal-stat-val">${s.val}</div></div>`
+  ).join('');
+
+  KG.chartActivo = new Chart(ctx, cfg.chart);
+}
+
+function cerrarKpiModal() {
+  document.getElementById('kpi-modal-overlay').classList.remove('visible');
+  if (KG.chartActivo) { KG.chartActivo.destroy(); KG.chartActivo = null; }
+}
+
+function kgOpts(unidad, stacked) {
+  return {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { position: 'bottom', labels: { font: { family: 'DM Sans', size: 11 }, boxWidth: 12, padding: 16 } },
+      tooltip: { callbacks: { label: ctx => ` ${ctx.dataset.label}: ${ctx.parsed.y?.toFixed(unidad==='%'?1:2)?.replace('.',',')} ${unidad}` } }
+    },
+    scales: {
+      x: { stacked, grid: { display: false }, ticks: { font: { family: 'DM Mono', size: 10 } } },
+      y: { stacked, grid: { color: '#F0F0F0' }, ticks: { font: { family: 'DM Mono', size: 10 }, callback: v => v?.toFixed(unidad==='%'?0:0)+' '+unidad } }
+    }
+  };
+}
+
+// ── Hook: llamar tras render de KPIs ─────────────────
+async function kgIniciarTrasKPIs(anioS, mesS, pasivoBonos, pasivoBecas, pasivoMeses) {
+  // Guardar datos de pasivo para el gráfico
+  window._kpiPasivoBonos = pasivoBonos;
+  window._kpiPasivoBecas = pasivoBecas;
+  window._kpiPasivoMeses = pasivoMeses;
+  // Cargar historial y renderizar minis
+  await kgCargarHistorial(anioS, mesS);
+  kgRenderMinis();
 }
 
 </script>
