@@ -4551,8 +4551,8 @@ async function cargarKPIs() {
     const [sesiones, cobros, bonos, becas, todas_sesiones] = await Promise.all([
       sg('sesiones', `fecha=gte.${kpiFechaIni(anioS,mesS)}&fecha=lt.${kpiFechaFin(anioS,mesS)}&select=id_cita,fecha,estado,importe,id_terapeuta,id_servicio,financiacion_tipo`),
       sg('cobros',   `fecha=gte.${kpiFechaIni(anioS,mesS)}&fecha=lt.${kpiFechaFin(anioS,mesS)}&select=importe,fecha`),
-      sg('bonos',    `estado=eq.Activo&select=sesiones_totales,sesiones_consumidas,importe`),
-      sg('becas',    `estado=eq.Activo&select=sesiones_autorizadas,sesiones_consumidas,valor_sesion`),
+      sg('bonos',    `estado=eq.Activo&select=sesiones_totales,sesiones_consumidas,importe_anticipo,valor_sesion`),
+      sg('becas',    `estado=eq.Activo&select=sesiones_autorizadas,sesiones_consumidas,valor_sesion,importe_neto`),
       sg('sesiones', `estado=eq.Hecha&select=fecha,importe&order=fecha.asc&limit=5000`),
     ]);
 
@@ -4569,7 +4569,9 @@ async function cargarKPIs() {
     // Pasivo operativo — sesiones pendientes en bonos activos
     const pasivoBonos = bonos.reduce((a,b) => {
       const pend = Math.max(0, (b.sesiones_totales||0) - (b.sesiones_consumidas||0));
-      const precSes = b.sesiones_totales > 0 ? parseFloat(b.importe||0) / b.sesiones_totales : 0;
+      // Usar valor_sesion si existe, sino calcular desde importe_anticipo / sesiones_totales
+      const precSes = parseFloat(b.valor_sesion||0) ||
+        (b.sesiones_totales > 0 ? parseFloat(b.importe_anticipo||0) / b.sesiones_totales : 0);
       return a + pend * precSes;
     }, 0);
     const pasivoBecas = becas.reduce((a,b) => {
