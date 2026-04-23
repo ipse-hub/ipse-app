@@ -1395,7 +1395,7 @@ textarea.form-control { min-height: 72px; transition: border-color .2s; }
 <!-- ═══════════════════════════════ PAGE AGENDA ═══════════════════════════════ -->
 <div class="page" id="page-agenda">
   <!-- Barra de control agenda -->
-  <div style="display:flex;align-items:center;gap:10px;padding:14px 20px 12px;flex-wrap:wrap;border-bottom:1px solid var(--border);background:var(--white);flex-shrink:0;position:sticky;top:60px;z-index:40">
+  <div style="display:flex;align-items:center;gap:10px;padding:14px 20px 12px;flex-wrap:wrap;border-bottom:1px solid var(--border);background:var(--white);flex-shrink:0">
     <div style="display:flex;gap:6px;background:var(--border);border-radius:8px;padding:3px">
       <button id="ag-btn-semana" class="ag-vista-btn ag-activo" onclick="agVista('semana')">Semana</button>
       <button id="ag-btn-mes"    class="ag-vista-btn"           onclick="agVista('mes')">Mes</button>
@@ -1415,20 +1415,20 @@ textarea.form-control { min-height: 72px; transition: border-color .2s; }
 
   <!-- Vista semana -->
   <div id="ag-semana" style="overflow:hidden;flex:1;display:flex;flex-direction:column;background:var(--white)">
-    <div id="ag-week-header" style="display:grid;background:var(--blue);color:#fff;flex-shrink:0"></div>
-    <div id="ag-week-body"   style="display:grid;overflow-y:auto;flex:1"></div>
+    <div id="ag-week-header" style="display:grid;background:var(--blue);color:#fff;flex-shrink:0;position:sticky;top:0;z-index:5"></div>
+    <div id="ag-week-body"   style="display:grid;overflow-y:auto;height:calc(100vh - 200px)"></div>
   </div>
 
   <!-- Vista mes -->
-  <div id="ag-mes" style="display:none;overflow:hidden;flex:1;flex-direction:column;background:var(--white)">
-    <div id="ag-month-header" style="display:grid;grid-template-columns:repeat(7,1fr);background:var(--blue);color:#fff;flex-shrink:0"></div>
-    <div id="ag-month-body"   style="display:grid;grid-template-columns:repeat(7,1fr);flex:1"></div>
+  <div id="ag-mes" style="display:none;overflow:auto;flex:1;flex-direction:column;background:var(--white)">
+    <div id="ag-month-header" style="display:grid;grid-template-columns:repeat(7,1fr);background:var(--blue);color:#fff;flex-shrink:0;position:sticky;top:0;z-index:5"></div>
+    <div id="ag-month-body"   style="display:grid;grid-template-columns:repeat(7,1fr);border-top:1px solid var(--border)"></div>
   </div>
 
   <!-- Vista día -->
   <div id="ag-dia" style="display:none;overflow:hidden;flex:1;flex-direction:column;background:var(--white)">
     <div id="ag-day-header" style="background:var(--blue);color:#fff;padding:10px 16px;font-size:14px;font-weight:600;flex-shrink:0"></div>
-    <div id="ag-day-body"   style="display:grid;overflow-y:auto;flex:1"></div>
+    <div id="ag-day-body"   style="display:grid;overflow-y:auto;height:calc(100vh - 200px)"></div>
   </div>
 </div>
 
@@ -4069,7 +4069,7 @@ function agRenderLeyenda() {
     ley = document.createElement('div');
     ley.id = 'ag-leyenda';
     ley.className = 'ag-leyenda';
-    ley.style.cssText = 'padding:10px 24px 2px;border-bottom:1px solid var(--border);background:var(--white);margin:0';
+    ley.style.cssText = 'padding:8px 24px 6px;border-bottom:1px solid var(--border);background:var(--white);margin:0;flex-shrink:0';
     document.getElementById('page-agenda').insertBefore(ley, document.getElementById('ag-semana'));
   }
   const ter = document.getElementById('ag-filtro-ter')?.value || '';
