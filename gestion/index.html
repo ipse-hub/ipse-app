@@ -54,11 +54,12 @@ body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(
 .topbar-miniapp:hover { opacity: 1; text-decoration: underline; }
 .avatar { width: 34px; height: 34px; background: var(--cyan); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--blue); font-size: 13px; font-weight: 700; }
 .content { padding: 28px 32px; flex: 1; }
+.content.content-agenda { padding: 0; display: flex; flex-direction: column; overflow: hidden; }
 
 /* ── PAGES ── */
 .page { display: none; }
 .page.active { display: block; }
-#page-agenda.active { display: flex !important; flex-direction: column; margin: -28px -32px; min-height: calc(100vh - 60px); }
+#page-agenda.active { display: flex; flex-direction: column; flex: 1; min-height: 0; }
 
 /* ── KPI GRID ── */
 .kpi-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; margin-bottom: 24px; }
@@ -1395,7 +1396,7 @@ textarea.form-control { min-height: 72px; transition: border-color .2s; }
 <!-- ═══════════════════════════════ PAGE AGENDA ═══════════════════════════════ -->
 <div class="page" id="page-agenda">
   <!-- Barra de control agenda -->
-  <div style="display:flex;align-items:center;gap:10px;padding:14px 20px 12px;flex-wrap:wrap;border-bottom:1px solid var(--border);background:var(--white);flex-shrink:0">
+  <div style="display:flex;align-items:center;gap:10px;padding:12px 20px;flex-wrap:wrap;border-bottom:1px solid var(--border);background:var(--white);flex-shrink:0">
     <div style="display:flex;gap:6px;background:var(--border);border-radius:8px;padding:3px">
       <button id="ag-btn-semana" class="ag-vista-btn ag-activo" onclick="agVista('semana')">Semana</button>
       <button id="ag-btn-mes"    class="ag-vista-btn"           onclick="agVista('mes')">Mes</button>
@@ -1414,21 +1415,21 @@ textarea.form-control { min-height: 72px; transition: border-color .2s; }
   </div>
 
   <!-- Vista semana -->
-  <div id="ag-semana" style="overflow:hidden;flex:1;display:flex;flex-direction:column;background:var(--white)">
+  <div id="ag-semana" style="flex:1;min-height:0;display:flex;flex-direction:column;background:var(--white)">
     <div id="ag-week-header" style="display:grid;background:var(--blue);color:#fff;flex-shrink:0;position:sticky;top:0;z-index:5"></div>
-    <div id="ag-week-body"   style="display:grid;overflow-y:auto;height:calc(100vh - 200px)"></div>
+    <div id="ag-week-body"   style="display:grid;overflow-y:auto;flex:1;min-height:0"></div>
   </div>
 
   <!-- Vista mes -->
-  <div id="ag-mes" style="display:none;overflow:auto;flex:1;flex-direction:column;background:var(--white)">
+  <div id="ag-mes" style="display:none;flex:1;min-height:0;flex-direction:column;background:var(--white);overflow-y:auto">
     <div id="ag-month-header" style="display:grid;grid-template-columns:repeat(7,1fr);background:var(--blue);color:#fff;flex-shrink:0;position:sticky;top:0;z-index:5"></div>
     <div id="ag-month-body"   style="display:grid;grid-template-columns:repeat(7,1fr);border-top:1px solid var(--border)"></div>
   </div>
 
   <!-- Vista día -->
-  <div id="ag-dia" style="display:none;overflow:hidden;flex:1;flex-direction:column;background:var(--white)">
+  <div id="ag-dia" style="display:none;flex:1;min-height:0;flex-direction:column;background:var(--white)">
     <div id="ag-day-header" style="background:var(--blue);color:#fff;padding:10px 16px;font-size:14px;font-weight:600;flex-shrink:0"></div>
-    <div id="ag-day-body"   style="display:grid;overflow-y:auto;height:calc(100vh - 200px)"></div>
+    <div id="ag-day-body"   style="display:grid;overflow-y:auto;flex:1;min-height:0"></div>
   </div>
 </div>
 
@@ -1686,6 +1687,8 @@ function navigate(page) {
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   document.getElementById('page-'+page).classList.add('active');
+  // Agenda ocupa todo el .content sin padding
+  document.querySelector('.content').classList.toggle('content-agenda', page==='agenda');
   const navEl = document.querySelector(`.nav-item[onclick*="${page}"]`);
   if (navEl) navEl.classList.add('active');
   else {
