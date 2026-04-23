@@ -54,12 +54,22 @@ body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(
 .topbar-miniapp:hover { opacity: 1; text-decoration: underline; }
 .avatar { width: 34px; height: 34px; background: var(--cyan); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--blue); font-size: 13px; font-weight: 700; }
 .content { padding: 28px 32px; flex: 1; }
-.content.content-agenda { padding: 0; display: flex; flex-direction: column; overflow: hidden; }
 
 /* ── PAGES ── */
 .page { display: none; }
 .page.active { display: block; }
-#page-agenda.active { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+#page-agenda.active {
+  display: flex !important;
+  flex-direction: column;
+  position: fixed;
+  left: 220px;
+  top: 60px;
+  right: 0;
+  bottom: 0;
+  z-index: 10;
+  background: var(--cream);
+  overflow: hidden;
+}
 
 /* ── KPI GRID ── */
 .kpi-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; margin-bottom: 24px; }
@@ -1687,8 +1697,7 @@ function navigate(page) {
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   document.getElementById('page-'+page).classList.add('active');
-  // Agenda ocupa todo el .content sin padding
-  document.querySelector('.content').classList.toggle('content-agenda', page==='agenda');
+
   const navEl = document.querySelector(`.nav-item[onclick*="${page}"]`);
   if (navEl) navEl.classList.add('active');
   else {
@@ -4038,6 +4047,9 @@ async function agCargar() {
     AG.citas = [];
     toast('Error cargando agenda: '+e.message,'err');
   }
+  // DEBUG temporal
+  console.log('[AGENDA] citas cargadas:', AG.citas.length, 'rango:', fi, '-', ff);
+  if (AG.citas.length > 0) console.log('[AGENDA] primera cita:', JSON.stringify(AG.citas[0]));
   agRender();
 }
 
