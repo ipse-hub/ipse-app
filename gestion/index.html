@@ -70,6 +70,18 @@ body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(
   background: var(--cream);
   overflow: hidden;
 }
+#page-kpis.active {
+  display: block;
+  position: fixed;
+  left: 220px;
+  top: 60px;
+  right: 0;
+  bottom: 0;
+  z-index: 10;
+  background: var(--cream);
+  overflow-y: auto;
+  padding: 28px 32px;
+}
 
 /* ── KPI GRID ── */
 .kpi-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; margin-bottom: 24px; }
@@ -4552,7 +4564,7 @@ async function cargarKPIs() {
       sg('sesiones', `fecha=gte.${kpiFechaIni(anioS,mesS)}&fecha=lt.${kpiFechaFin(anioS,mesS)}&select=id_cita,fecha,estado,importe,id_terapeuta,id_servicio,financiacion_tipo`),
       sg('cobros',   `fecha=gte.${kpiFechaIni(anioS,mesS)}&fecha=lt.${kpiFechaFin(anioS,mesS)}&select=importe,fecha`),
       sg('bonos',    `estado=eq.Activo&select=sesiones_totales,sesiones_consumidas,importe_anticipo,valor_sesion`),
-      sg('becas',    `estado=eq.Activo&select=sesiones_autorizadas,sesiones_consumidas,valor_sesion,importe_neto`),
+      sg('becas',    `estado=eq.Activo&select=sesiones_total,sesiones_consumidas,valor_sesion,importe_neto`),
       sg('sesiones', `estado=eq.Hecha&select=fecha,importe&order=fecha.asc&limit=5000`),
     ]);
 
@@ -4575,7 +4587,7 @@ async function cargarKPIs() {
       return a + pend * precSes;
     }, 0);
     const pasivoBecas = becas.reduce((a,b) => {
-      const pend = Math.max(0, (b.sesiones_autorizadas||0) - (b.sesiones_consumidas||0));
+      const pend = Math.max(0, (b.sesiones_total||0) - (b.sesiones_consumidas||0));
       return a + pend * parseFloat(b.valor_sesion||0);
     }, 0);
     const pasivo = pasivoBonos + pasivoBecas;
