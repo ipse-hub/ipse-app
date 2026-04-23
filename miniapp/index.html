@@ -870,6 +870,7 @@ let G = {
   lunes: null, diaActual: null, vista: 'semana',
   colores: {}, citaActual: null, estadoSel: 'Programada',
   pacienteEditandoId: null, dragCita: null,
+  cargandoCobro: false, // Fix Bug1: flag race condition async cobro
 };
 const HORAS_INICIO = 8;
 const HORAS_FIN    = 21;
@@ -1377,32 +1378,48 @@ function abrirModalCita(cita) {
   document.getElementById('mc-btn-cobrar').style.display='none';
   document.getElementById('mc-btn-guardar').style.display='inline-flex';
   G.sesionActualId=null;
+  G.cargandoCobro=false; // Fix Bug1: flag para bloquear interacción mientras carga async
   // Si la cita está Hecha y es SUELTA, verificar estado de cobro
   if((cita.EstadoAgenda||cita.Estado)==='Hecha'){
     const tipoFin=cita.ID_Bono?'BONO':(cita.ID_Beca?'BECA':'SUELTA');
     if(tipoFin==='SUELTA'&&esMia){
+      // Fix Bug1: bloquear botones de estado y guardar durante la carga async
+      G.cargandoCobro=true;
+      document.querySelectorAll('.estado-btn').forEach(b=>b.disabled=true);
+      document.getElementById('mc-btn-guardar').disabled=true;
+      document.getElementById('mc-btn-guardar').textContent='⏳ Verificando…';
       (async()=>{
-        const horaCorta=(cita.Hora||'').slice(0,5);
-        const ses=await supaGet('sesiones',`fecha=eq.${cita.Fecha}&id_paciente=eq.${cita.ID_Paciente}&hora=eq.${horaCorta}`);
-        if(ses&&ses.length){
-          G.sesionActualId=ses[0].id_cita;
-          const cobrosExist=await supaGet('cobros',`id_sesion=eq.${G.sesionActualId}`);
-          if(cobrosExist&&cobrosExist.length){
-            const c=cobrosExist[0];
-            document.getElementById('mc-cobro-registrado-info').textContent=
-              `${parseFloat(c.importe||0).toFixed(2).replace('.',',')} € · ${c.metodo_pago||'Efectivo'} · ${c.fecha||''}`;
-            document.getElementById('mc-cobro-registrado').style.display='block';
-            if(!esAdmin()){
-              document.getElementById('mc-btn-guardar').style.display='none';
-              document.getElementById('mc-btn-repetir').style.display='none';
+        try {
+          // Fix Bug2: incluir id_terapeuta en la búsqueda (consistente con guardarEstadoCita)
+          const horaCorta=(cita.Hora||'').slice(0,5);
+          const idTer=cita.ID_Terapeuta||G.miId;
+          const ses=await supaGet('sesiones',`fecha=eq.${cita.Fecha}&id_paciente=eq.${cita.ID_Paciente}&hora=eq.${horaCorta}&id_terapeuta=eq.${idTer}`);
+          if(ses&&ses.length){
+            G.sesionActualId=ses[0].id_cita;
+            const cobrosExist=await supaGet('cobros',`id_sesion=eq.${G.sesionActualId}`);
+            if(cobrosExist&&cobrosExist.length){
+              const c=cobrosExist[0];
+              document.getElementById('mc-cobro-registrado-info').textContent=
+                `${parseFloat(c.importe||0).toFixed(2).replace('.',',')} € · ${c.metodo_pago||'Efectivo'} · ${c.fecha||''}`;
+              document.getElementById('mc-cobro-registrado').style.display='block';
+              if(!esAdmin()){
+                document.getElementById('mc-btn-guardar').style.display='none';
+                document.getElementById('mc-btn-repetir').style.display='none';
+              }
+            } else {
+              const imp=ses[0].importe||await calcularImporte(cita.ID_Servicio,tipoFin,'');
+              const el=document.getElementById('mc-cobro-importe');
+              if(el) el.textContent=imp>0?parseFloat(imp).toFixed(2).replace('.',',')+' €':'—';
+              document.getElementById('mc-fecha-cobro').value=new Date().toISOString().split('T')[0];
+              document.getElementById('mc-btn-cobrar').style.display='inline-flex';
             }
-          } else {
-            const imp=ses[0].importe||await calcularImporte(cita.ID_Servicio,tipoFin,'');
-            const el=document.getElementById('mc-cobro-importe');
-            if(el) el.textContent=imp>0?parseFloat(imp).toFixed(2).replace('.',',')+' €':'—';
-            document.getElementById('mc-fecha-cobro').value=new Date().toISOString().split('T')[0];
-            document.getElementById('mc-btn-cobrar').style.display='inline-flex';
           }
+        } finally {
+          // Fix Bug1: desbloquear siempre, haya error o no
+          G.cargandoCobro=false;
+          document.querySelectorAll('.estado-btn').forEach(b=>b.disabled=false);
+          const btnG=document.getElementById('mc-btn-guardar');
+          if(btnG.style.display!=='none'){btnG.disabled=false;btnG.textContent='Guardar';}
         }
       })();
     }
@@ -1410,6 +1427,8 @@ function abrirModalCita(cita) {
   actualizarBotonesEstado(); abrirOverlay('modal-cita');
 }
 function selEstado(estado) {
+  // Fix Bug1: ignorar clics mientras la carga async de cobro esté en curso
+  if(G.cargandoCobro) return;
   G.estadoSel=estado; actualizarBotonesEstado();
   const panel=document.getElementById('mc-reprog-panel');
   const panelCobro=document.getElementById('mc-cobro-panel');
@@ -1418,12 +1437,14 @@ function selEstado(estado) {
   else{panel.classList.remove('visible');btn.textContent='Guardar';}
   const tipoFin=G.citaActual?(G.citaActual.ID_Bono?'BONO':(G.citaActual.ID_Beca?'BECA':'SUELTA')):'SUELTA';
   if(estado!=='Hecha'){
-    // Al cambiar a otro estado, ocultar todo lo de cobro
+    // Fix Bug3: al salir de Hecha resetear sesionActualId para que si vuelve a Hecha
+    // el panel se reconstruya correctamente (y no quede en estado inconsistente)
+    G.sesionActualId=null;
     panelCobro.style.display='none';
     document.getElementById('mc-cobro-registrado').style.display='none';
     document.getElementById('mc-btn-cobrar').style.display='none';
   } else if(estado==='Hecha' && tipoFin==='SUELTA' && !G.sesionActualId){
-    // Primera vez Hecha — mostrar panel para cobrar ahora o dejar pendiente
+    // Primera vez Hecha (sin sesión preexistente) — mostrar panel cobro
     calcularImporte(G.citaActual.ID_Servicio, tipoFin, '').then(imp=>{
       const el=document.getElementById('mc-cobro-importe');
       if(el) el.textContent = imp>0 ? imp.toFixed(2).replace('.',',')+' €' : '—';
@@ -1432,6 +1453,8 @@ function selEstado(estado) {
     document.getElementById('mc-fecha-cobro').value = new Date().toISOString().split('T')[0];
     panelCobro.style.display = 'block';
   }
+  // Fix Bug3 (caso Hecha con sesionActualId ya cargado): no mostrar panel de cobro de nuevo,
+  // el botón "💶 Cobrar" ya está visible si no había cobro — no hacer nada más.
 }
 function actualizarBotonesEstado() {
   const estadoOrig=G.citaActual?(G.citaActual.EstadoAgenda||G.citaActual.Estado||''):'';
@@ -1458,10 +1481,11 @@ async function confirmarCobro() {
   const btn = document.querySelector('#mc-cobro-panel .btn-primary');
   if(btn){ btn.disabled = true; btn.textContent = '⏳ Guardando…'; }
   try {
-    // Si no tenemos sesionActualId, buscarlo ahora
+    // Si no tenemos sesionActualId, buscarlo ahora (Fix Bug2: incluir id_terapeuta)
     if(!G.sesionActualId && G.citaActual){
       const horaCorta=(G.citaActual.Hora||'').slice(0,5);
-      const ses=await supaGet('sesiones',`fecha=eq.${G.citaActual.Fecha}&id_paciente=eq.${G.citaActual.ID_Paciente}&hora=eq.${horaCorta}`);
+      const idTer=G.citaActual.ID_Terapeuta||G.miId;
+      const ses=await supaGet('sesiones',`fecha=eq.${G.citaActual.Fecha}&id_paciente=eq.${G.citaActual.ID_Paciente}&hora=eq.${horaCorta}&id_terapeuta=eq.${idTer}`);
       if(ses&&ses.length) G.sesionActualId=ses[0].id_cita;
     }
     if(!G.sesionActualId){ toast('Error: sesión no encontrada en base de datos','err'); return; }
@@ -1490,6 +1514,8 @@ async function confirmarCobro() {
 
 async function guardarEstadoCita() {
   if(!G.citaActual)return;
+  // Fix Bug4: no permitir guardar mientras la verificación de cobro esté en curso
+  if(G.cargandoCobro){toast('Espera un momento, verificando cobro…','err');return;}
   const notas=document.getElementById('mc-notas').value.trim();
   const btn=document.getElementById('mc-btn-guardar');
   if(G.estadoSel==='Reprogramada'){
@@ -1514,6 +1540,7 @@ async function guardarEstadoCita() {
       // Buscar sesión existente por fecha+paciente+terapeuta (el id_cita en sesiones es autogenerado, no coincide con agenda)
       const horaCorta2=(G.citaActual.Hora||'').slice(0,5);
       const sesExist=await supaGet('sesiones',`fecha=eq.${G.citaActual.Fecha}&id_paciente=eq.${G.citaActual.ID_Paciente}&hora=eq.${horaCorta2}&id_terapeuta=eq.${G.citaActual.ID_Terapeuta||G.miId}`);
+
       if(!sesExist||!sesExist.length){
         const importe=G.estadoSel==='No-show'&&tipoFin!=='BECA'?0:await calcularImporte(G.citaActual.ID_Servicio,tipoFin,idFin);
         const idSes=await generarId('sesiones','id_cita','S');
