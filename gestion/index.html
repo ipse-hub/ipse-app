@@ -2818,6 +2818,22 @@ function tlItem(s) {
 function tlItemConNota(s) {
   const dotClass = s.estado==='Hecha'?'hecha':s.estado==='No-show'?'noshow':s.estado==='Programada'?'programada':'cancelada';
   const badge = s.estado==='Hecha'?'badge-hecha':s.estado==='No-show'?'badge-noshow':s.estado==='Programada'?'badge-programada':'badge-cancelada';
+
+  // Separar notas de trazabilidad (↪ ↩) de notas clínicas reales
+  let notaTrazabilidad = '', notaClinica = '';
+  if (s.notas) {
+    const lineas = s.notas.split('|').map(l => l.trim()).filter(Boolean);
+    const traz = [], clin = [];
+    lineas.forEach(l => (l.startsWith('↪') || l.startsWith('↩') ? traz : clin).push(l));
+    // Compatibilidad con formato antiguo [Reprog. desde ...]
+    const resto = clin.join(' | ');
+    const antiguos = (resto.match(/\[Reprog\.[^\]]+\]/g) || []);
+    const notaLimpia = resto.replace(/\[Reprog\.[^\]]+\]/g, '').trim();
+    if (antiguos.length) traz.push(...antiguos.map(a => '↩ ' + a.replace(/^\[|\]$/g,'')));
+    notaTrazabilidad = traz.join(' · ');
+    notaClinica = notaLimpia;
+  }
+
   return `<div class="tl-item" onclick="editarSesion('${s.id_cita}')" style="cursor:pointer" title="Editar sesión ${s.id_cita}">
     <div class="tl-dot ${dotClass}"></div>
     <div class="tl-body">
@@ -2828,7 +2844,8 @@ function tlItemConNota(s) {
         ${s.financiacion&&s.financiacion!=='SUELTA'?`<span class="badge badge-bono" style="font-size:9px">${s.financiacion}</span>`:''}
       </div>
       <div class="tl-ter">${nomTer(s.id_terapeuta)}</div>
-      ${s.notas?`<div style="font-size:12px;color:var(--ink-muted);margin-top:3px;font-style:italic">${s.notas}</div>`:''}
+      ${notaTrazabilidad?`<div style="font-size:11px;color:var(--ink-muted);margin-top:2px;font-style:italic;opacity:0.75">🔄 ${notaTrazabilidad}</div>`:''}
+      ${notaClinica?`<div style="font-size:12px;color:var(--ink-muted);margin-top:3px;font-style:italic">${notaClinica}</div>`:''}
     </div>
   </div>`;
 }

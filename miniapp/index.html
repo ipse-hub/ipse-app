@@ -1559,8 +1559,10 @@ async function guardarEstadoCita() {
     if(!nuevaFecha){toast('Indica la nueva fecha','err');return;}
     btn.disabled=true;btn.textContent='⏳ Reprogramando…';
     try {
-      await supaPatch('agenda_datos',`id_cita=eq.${G.citaActual.ID_Cita}`,{estado_agenda:'Reprogramada',notas_agenda:notas});
-      await crearCita({fecha:nuevaFecha,hora:nuevaHora,idPaciente:G.citaActual.ID_Paciente,idServicio:G.citaActual.ID_Servicio,tipoFin:G.citaActual.ID_Bono?'BONO':(G.citaActual.ID_Beca?'BECA':'SUELTA'),idFin:G.citaActual.ID_Bono||G.citaActual.ID_Beca||'',notas:'[Reprog. desde '+formatFecha(G.citaActual.Fecha)+']'+(notas?' '+notas:'')});
+      const notaOriginal = '↪ Reprogramada → nueva cita del '+formatFecha(nuevaFecha)+(notas?' | '+notas:'');
+      const notaNueva    = '↩ Reprogramación de cita del '+formatFecha(G.citaActual.Fecha);
+      await supaPatch('agenda_datos',`id_cita=eq.${G.citaActual.ID_Cita}`,{estado_agenda:'Reprogramada',notas_agenda:notaOriginal});
+      await crearCita({fecha:nuevaFecha,hora:nuevaHora,idPaciente:G.citaActual.ID_Paciente,idServicio:G.citaActual.ID_Servicio,tipoFin:G.citaActual.ID_Bono?'BONO':(G.citaActual.ID_Beca?'BECA':'SUELTA'),idFin:G.citaActual.ID_Bono||G.citaActual.ID_Beca||'',notas:notaNueva});
       toast('Cita reprogramada ✓','ok');cerrarModal('modal-cita');recargarVista();
     }catch(err){toast('Error: '+err.message,'err');}
     finally{btn.disabled=false;btn.textContent='🔄 Reprogramar y crear cita';}
