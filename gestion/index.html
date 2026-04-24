@@ -1799,8 +1799,9 @@ function nomSrv(id) {
 }
 function fmtFecha(v) {
   if (!v) return '—';
-  const d = new Date(v+'T12:00:00');
-  return isNaN(d)?v:d.getDate()+'/'+(d.getMonth()+1)+'/'+d.getFullYear();
+  const clean = String(v).split('T')[0].split(' ')[0]; // aguanta DATE, TIMESTAMP y ISO
+  const d = new Date(clean + 'T12:00:00');
+  return isNaN(d) ? v : d.getDate()+'/'+(d.getMonth()+1)+'/'+d.getFullYear();
 }
 function fmtEur(v) { return (parseFloat(v)||0).toLocaleString('es-ES',{minimumFractionDigits:2,maximumFractionDigits:2})+' €'; }
 function badgeEstado(e) {
