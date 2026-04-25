@@ -208,7 +208,14 @@
   .info-panel .info-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
   .info-panel .info-label { font-size: 11px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .4px; }
   .info-panel .info-val { font-size: 13px; font-weight: 500; }
-  .modal-footer { display: flex; justify-content: flex-end; gap: 10px; margin-top: 22px; padding-top: 18px; border-top: 1px solid var(--border); }
+  .modal-footer { display: flex; align-items: center; gap: 8px; margin-top: 22px; padding-top: 18px; border-top: 1px solid var(--border); flex-wrap: wrap; }
+  .modal-footer .spacer { flex: 1; min-width: 8px; }
+  .btn-icono { padding: 9px 11px; }
+  @media (max-width: 480px) {
+    .modal-footer { gap: 6px; }
+    .modal-footer .btn { font-size: 12px; padding: 8px 12px; }
+    .modal-footer .btn-icono { padding: 8px 10px; }
+  }
   .btn { padding: 9px 20px; border-radius: 8px; font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer; border: none; transition: all .15s; }
   .btn-primary { background: var(--azul); color: #fff; }
   .btn-primary:hover { background: #0b0580; }
@@ -319,7 +326,7 @@
 
 <!-- MODAL NUEVO PACIENTE -->
 <div class="overlay" id="modal-paciente">
-  <div class="modal">
+  <div class="modal" style="max-height:90vh;overflow-y:auto;display:flex;flex-direction:column;">
     <div class="modal-header">
       <span class="modal-title">Nuevo paciente</span>
       <button class="modal-close" onclick="cerrarModal('modal-paciente')">✕</button>
@@ -600,10 +607,11 @@
       </div>
       <div class="modal-footer">
         <button class="btn btn-secondary" onclick="cerrarModal('modal-cita')">Cerrar</button>
+        <button class="btn btn-secondary btn-icono" id="mc-btn-eliminar" onclick="eliminarCita()" title="Eliminar cita" style="background:#fff;border:1.5px solid #DA291C;color:#DA291C;display:none">🗑</button>
+        <div class="spacer"></div>
         <button class="btn btn-secondary" id="mc-btn-repetir" onclick="togglePanelRepetir()" style="background:var(--verde);border-color:var(--verde);color:#fff;display:none">🔁 Repetir</button>
-        <button class="btn btn-secondary" id="mc-btn-eliminar" onclick="eliminarCita()" style="background:#fff;border-color:#DA291C;color:#DA291C;display:none">🗑 Eliminar</button>
-        <button class="btn btn-primary" id="mc-btn-cobrar" onclick="togglePanelCobro()" style="display:none;background:#97D700;border-color:#6a9900;color:#fff">💶 Cobrar</button>
         <button class="btn btn-primary" id="mc-btn-guardar" onclick="guardarEstadoCita()">💾 Guardar</button>
+        <button class="btn btn-primary" id="mc-btn-cobrar" onclick="togglePanelCobro()" style="display:none;background:#97D700;border-color:#6a9900;color:#fff;font-size:14px;padding:9px 22px">💶 Cobrar</button>
       </div>
     </div>
     <div id="mc-solo-lectura" style="display:none">
@@ -814,6 +822,22 @@
   </div>
 </div>
 
+<!-- MODAL PREVIEW WHATSAPP -->
+<div class="overlay" id="modal-wa-preview">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-header">
+      <span class="modal-title">📲 Mensaje WhatsApp</span>
+      <button class="modal-close" onclick="cerrarModal('modal-wa-preview')">✕</button>
+    </div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:8px">Revisa y edita el mensaje antes de enviarlo:</div>
+    <textarea id="wa-preview-texto" class="form-control" rows="9" style="resize:vertical;font-size:13px;line-height:1.55;font-family:inherit"></textarea>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="cerrarModal('modal-wa-preview')">Cancelar</button>
+      <button class="btn btn-primary" id="wa-preview-btn-enviar" onclick="_waPreviewEnviar()">Abrir WhatsApp →</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -870,6 +894,7 @@ let G = {
   lunes: null, diaActual: null, vista: 'semana',
   colores: {}, citaActual: null, estadoSel: 'Programada',
   pacienteEditandoId: null, dragCita: null,
+  cargandoCobro: false, // Fix Bug1: flag race condition async cobro
 };
 const HORAS_INICIO = 8;
 const HORAS_FIN    = 21;
@@ -1377,32 +1402,57 @@ function abrirModalCita(cita) {
   document.getElementById('mc-btn-cobrar').style.display='none';
   document.getElementById('mc-btn-guardar').style.display='inline-flex';
   G.sesionActualId=null;
+  G.cargandoCobro=false; // Fix Bug1: flag para bloquear interacción mientras carga async
   // Si la cita está Hecha y es SUELTA, verificar estado de cobro
   if((cita.EstadoAgenda||cita.Estado)==='Hecha'){
     const tipoFin=cita.ID_Bono?'BONO':(cita.ID_Beca?'BECA':'SUELTA');
     if(tipoFin==='SUELTA'&&esMia){
+      // Fix Bug1: bloquear botones de estado y guardar durante la carga async
+      G.cargandoCobro=true;
+      document.querySelectorAll('.estado-btn').forEach(b=>b.disabled=true);
+      document.getElementById('mc-btn-guardar').disabled=true;
+      document.getElementById('mc-btn-guardar').textContent='⏳ Verificando…';
       (async()=>{
-        const horaCorta=(cita.Hora||'').slice(0,5);
-        const ses=await supaGet('sesiones',`fecha=eq.${cita.Fecha}&id_paciente=eq.${cita.ID_Paciente}&hora=eq.${horaCorta}`);
-        if(ses&&ses.length){
-          G.sesionActualId=ses[0].id_cita;
-          const cobrosExist=await supaGet('cobros',`id_sesion=eq.${G.sesionActualId}`);
-          if(cobrosExist&&cobrosExist.length){
-            const c=cobrosExist[0];
-            document.getElementById('mc-cobro-registrado-info').textContent=
-              `${parseFloat(c.importe||0).toFixed(2).replace('.',',')} € · ${c.metodo_pago||'Efectivo'} · ${c.fecha||''}`;
-            document.getElementById('mc-cobro-registrado').style.display='block';
-            if(!esAdmin()){
-              document.getElementById('mc-btn-guardar').style.display='none';
+        try {
+          // Fix Bug2: incluir id_terapeuta en la búsqueda (consistente con guardarEstadoCita)
+          const horaCorta=(cita.Hora||'').slice(0,5);
+          const idTer=cita.ID_Terapeuta||G.miId;
+          const ses=await supaGet('sesiones',`fecha=eq.${cita.Fecha}&id_paciente=eq.${cita.ID_Paciente}&hora=eq.${horaCorta}&id_terapeuta=eq.${idTer}`);
+          if(ses&&ses.length){
+            G.sesionActualId=ses[0].id_cita;
+            const cobrosExist=await supaGet('cobros',`id_sesion=eq.${G.sesionActualId}`);
+            if(cobrosExist&&cobrosExist.length){
+              const c=cobrosExist[0];
+              document.getElementById('mc-cobro-registrado-info').textContent=
+                `${parseFloat(c.importe||0).toFixed(2).replace('.',',')} € · ${c.metodo_pago||'Efectivo'} · ${c.fecha||''}`;
+              document.getElementById('mc-cobro-registrado').style.display='block';
+              if(!esAdmin()){
+                document.getElementById('mc-btn-guardar').style.display='none';
+                document.getElementById('mc-btn-repetir').style.display='none';
+              }
+            } else {
+              const imp=ses[0].importe||await calcularImporte(cita.ID_Servicio,tipoFin,'');
+              const el=document.getElementById('mc-cobro-importe');
+              if(el) el.textContent=imp>0?parseFloat(imp).toFixed(2).replace('.',',')+' €':'—';
+              document.getElementById('mc-fecha-cobro').value=new Date().toISOString().split('T')[0];
+              // Cobrar es CTA principal: lo mostramos grande, Guardar pasa a secundario, Repetir se oculta
+              document.getElementById('mc-btn-cobrar').style.display='inline-flex';
+              const btnG=document.getElementById('mc-btn-guardar');
+              btnG.textContent='💾 Notas';
+              btnG.className='btn btn-secondary';
+              btnG.style.background='';btnG.style.color='';btnG.style.borderColor='';
               document.getElementById('mc-btn-repetir').style.display='none';
             }
-          } else {
-            const imp=ses[0].importe||await calcularImporte(cita.ID_Servicio,tipoFin,'');
-            const el=document.getElementById('mc-cobro-importe');
-            if(el) el.textContent=imp>0?parseFloat(imp).toFixed(2).replace('.',',')+' €':'—';
-            document.getElementById('mc-fecha-cobro').value=new Date().toISOString().split('T')[0];
-            document.getElementById('mc-btn-cobrar').style.display='inline-flex';
           }
+        } finally {
+          // Fix Bug1: desbloquear siempre, haya error o no
+          G.cargandoCobro=false;
+          document.querySelectorAll('.estado-btn').forEach(b=>b.disabled=false);
+          const btnG=document.getElementById('mc-btn-guardar');
+          // Solo desbloquear — no sobreescribir textContent si ya fue personalizado (ej: cobro pendiente)
+          if(btnG.style.display!=='none') btnG.disabled=false;
+          // Si no se ha cambiado el texto aún (sigue siendo el placeholder de carga), restaurar
+          if(btnG.textContent==='⏳ Verificando…') btnG.textContent='Guardar';
         }
       })();
     }
@@ -1410,6 +1460,8 @@ function abrirModalCita(cita) {
   actualizarBotonesEstado(); abrirOverlay('modal-cita');
 }
 function selEstado(estado) {
+  // Fix Bug1: ignorar clics mientras la carga async de cobro esté en curso
+  if(G.cargandoCobro) return;
   G.estadoSel=estado; actualizarBotonesEstado();
   const panel=document.getElementById('mc-reprog-panel');
   const panelCobro=document.getElementById('mc-cobro-panel');
@@ -1418,12 +1470,19 @@ function selEstado(estado) {
   else{panel.classList.remove('visible');btn.textContent='Guardar';}
   const tipoFin=G.citaActual?(G.citaActual.ID_Bono?'BONO':(G.citaActual.ID_Beca?'BECA':'SUELTA')):'SUELTA';
   if(estado!=='Hecha'){
-    // Al cambiar a otro estado, ocultar todo lo de cobro
+    // Fix Bug3: al salir de Hecha resetear sesionActualId para que si vuelve a Hecha
+    // el panel se reconstruya correctamente (y no quede en estado inconsistente)
+    G.sesionActualId=null;
     panelCobro.style.display='none';
     document.getElementById('mc-cobro-registrado').style.display='none';
     document.getElementById('mc-btn-cobrar').style.display='none';
+    // Restaurar Guardar a estado primario normal
+    btn.className='btn btn-primary'; btn.style.background=''; btn.style.color=''; btn.style.borderColor='';
+    // Restaurar Repetir si corresponde (lo gestiona abrirModalCita, aquí solo asegurar visibilidad)
+    const esMiaLocal=G.citaActual&&(G.citaActual.ID_Terapeuta===G.miId||esAdmin());
+    document.getElementById('mc-btn-repetir').style.display=esMiaLocal?'inline-flex':'none';
   } else if(estado==='Hecha' && tipoFin==='SUELTA' && !G.sesionActualId){
-    // Primera vez Hecha — mostrar panel para cobrar ahora o dejar pendiente
+    // Primera vez Hecha (sin sesión preexistente) — mostrar panel cobro
     calcularImporte(G.citaActual.ID_Servicio, tipoFin, '').then(imp=>{
       const el=document.getElementById('mc-cobro-importe');
       if(el) el.textContent = imp>0 ? imp.toFixed(2).replace('.',',')+' €' : '—';
@@ -1432,6 +1491,8 @@ function selEstado(estado) {
     document.getElementById('mc-fecha-cobro').value = new Date().toISOString().split('T')[0];
     panelCobro.style.display = 'block';
   }
+  // Fix Bug3 (caso Hecha con sesionActualId ya cargado): no mostrar panel de cobro de nuevo,
+  // el botón "💶 Cobrar" ya está visible si no había cobro — no hacer nada más.
 }
 function actualizarBotonesEstado() {
   const estadoOrig=G.citaActual?(G.citaActual.EstadoAgenda||G.citaActual.Estado||''):'';
@@ -1446,8 +1507,21 @@ function togglePanelCobro() {
   const panel = document.getElementById('mc-cobro-panel');
   const visible = panel.style.display !== 'none';
   panel.style.display = visible ? 'none' : 'block';
-  // Ocultar botón Cobrar cuando el panel está abierto
-  document.getElementById('mc-btn-cobrar').style.display = visible ? 'inline-flex' : 'none';
+  // Si abrimos el panel: Cobrar desaparece, Guardar pasa a primario normal (confirma cobro+notas)
+  // Si cerramos el panel: volvemos al estado de cobro pendiente (Cobrar=CTA, Guardar=secundario)
+  const btnCobrar = document.getElementById('mc-btn-cobrar');
+  const btnGuardar = document.getElementById('mc-btn-guardar');
+  if(visible){
+    // Panel se cierra — volvemos a cobro pendiente
+    btnCobrar.style.display='inline-flex';
+    btnGuardar.textContent='💾 Notas';
+    btnGuardar.className='btn btn-secondary';
+  } else {
+    // Panel se abre — Guardar es el CTA de confirmar
+    btnCobrar.style.display='none';
+    btnGuardar.textContent='💾 Guardar';
+    btnGuardar.className='btn btn-primary';
+  }
 }
 
 async function confirmarCobro() {
@@ -1458,10 +1532,11 @@ async function confirmarCobro() {
   const btn = document.querySelector('#mc-cobro-panel .btn-primary');
   if(btn){ btn.disabled = true; btn.textContent = '⏳ Guardando…'; }
   try {
-    // Si no tenemos sesionActualId, buscarlo ahora
+    // Si no tenemos sesionActualId, buscarlo ahora (Fix Bug2: incluir id_terapeuta)
     if(!G.sesionActualId && G.citaActual){
       const horaCorta=(G.citaActual.Hora||'').slice(0,5);
-      const ses=await supaGet('sesiones',`fecha=eq.${G.citaActual.Fecha}&id_paciente=eq.${G.citaActual.ID_Paciente}&hora=eq.${horaCorta}`);
+      const idTer=G.citaActual.ID_Terapeuta||G.miId;
+      const ses=await supaGet('sesiones',`fecha=eq.${G.citaActual.Fecha}&id_paciente=eq.${G.citaActual.ID_Paciente}&hora=eq.${horaCorta}&id_terapeuta=eq.${idTer}`);
       if(ses&&ses.length) G.sesionActualId=ses[0].id_cita;
     }
     if(!G.sesionActualId){ toast('Error: sesión no encontrada en base de datos','err'); return; }
@@ -1490,6 +1565,8 @@ async function confirmarCobro() {
 
 async function guardarEstadoCita() {
   if(!G.citaActual)return;
+  // Fix Bug4: no permitir guardar mientras la verificación de cobro esté en curso
+  if(G.cargandoCobro){toast('Espera un momento, verificando cobro…','err');return;}
   const notas=document.getElementById('mc-notas').value.trim();
   const btn=document.getElementById('mc-btn-guardar');
   if(G.estadoSel==='Reprogramada'){
@@ -1498,8 +1575,10 @@ async function guardarEstadoCita() {
     if(!nuevaFecha){toast('Indica la nueva fecha','err');return;}
     btn.disabled=true;btn.textContent='⏳ Reprogramando…';
     try {
-      await supaPatch('agenda_datos',`id_cita=eq.${G.citaActual.ID_Cita}`,{estado_agenda:'Reprogramada',notas_agenda:notas});
-      await crearCita({fecha:nuevaFecha,hora:nuevaHora,idPaciente:G.citaActual.ID_Paciente,idServicio:G.citaActual.ID_Servicio,tipoFin:G.citaActual.ID_Bono?'BONO':(G.citaActual.ID_Beca?'BECA':'SUELTA'),idFin:G.citaActual.ID_Bono||G.citaActual.ID_Beca||'',notas:'[Reprog. desde '+formatFecha(G.citaActual.Fecha)+']'+(notas?' '+notas:'')});
+      const notaOriginal = '↪ Reprogramada → nueva cita del '+formatFecha(nuevaFecha)+(notas?' | '+notas:'');
+      const notaNueva    = '↩ Reprogramación de cita del '+formatFecha(G.citaActual.Fecha);
+      await supaPatch('agenda_datos',`id_cita=eq.${G.citaActual.ID_Cita}`,{estado_agenda:'Reprogramada',notas_agenda:notaOriginal});
+      await crearCita({fecha:nuevaFecha,hora:nuevaHora,idPaciente:G.citaActual.ID_Paciente,idServicio:G.citaActual.ID_Servicio,tipoFin:G.citaActual.ID_Bono?'BONO':(G.citaActual.ID_Beca?'BECA':'SUELTA'),idFin:G.citaActual.ID_Bono||G.citaActual.ID_Beca||'',notas:notaNueva});
       toast('Cita reprogramada ✓','ok');cerrarModal('modal-cita');recargarVista();
     }catch(err){toast('Error: '+err.message,'err');}
     finally{btn.disabled=false;btn.textContent='🔄 Reprogramar y crear cita';}
@@ -1790,7 +1869,8 @@ let toastTimer;
 function toast(msg,tipo=''){const el=document.getElementById('toast');el.textContent=msg;el.className='toast visible'+(tipo?' '+tipo:'');clearTimeout(toastTimer);toastTimer=setTimeout(()=>{el.className='toast';},3200);}
 document.querySelectorAll('.overlay').forEach(ov=>{ov.addEventListener('click',e=>{if(e.target===ov)ov.classList.remove('visible');});});
 function parseHora(hora){if(!hora)return null;if(typeof hora==='string'){if(hora.includes('T')){const d=new Date(hora);return d.getUTCHours()*60+d.getUTCMinutes();}const[h,m]=hora.split(':').map(Number);if(isNaN(h)||isNaN(m))return null;return h*60+m;}return null;}
-function formatFecha(val){if(!val)return'—';const d=new Date(val+'T12:00:00');if(isNaN(d))return String(val);return d.getDate()+' '+MESES_ES[d.getMonth()]+' '+d.getFullYear();}
+function formatFecha(val){if(!val)return'—';const d=val.includes('T')?new Date(val):new Date(val+'T12:00:00');if(isNaN(d))return String(val);return d.getDate()+' '+MESES_ES[d.getMonth()]+' '+d.getFullYear();}
+function fmtFechaDMY(val){if(!val)return'—';const d=val.includes('T')?new Date(val):new Date(val+'T12:00:00');if(isNaN(d))return String(val);return String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+d.getFullYear();}
 function estadoLabel(e){const m={Hecha:'✓ Hecha','No-show':'👻 No-show',Reprogramada:'🔄 Reprogram.',Cancelada:'✕ Cancelada',Programada:'📅 Programada'};return m[e]||e||'';}
 function contrastColor(hex){const r=parseInt(hex.slice(1,3),16);const g=parseInt(hex.slice(3,5),16);const b=parseInt(hex.slice(5,7),16);return(r*299+g*587+b*114)/1000>128?'#1A1B2E':'#FFFFFF';}
 function darken(hex){return hex.replace(/^#/,'').replace(/../g,c=>Math.max(0,parseInt(c,16)-30).toString(16).padStart(2,'0')).replace(/^/,'#');}
@@ -2030,6 +2110,24 @@ if ('serviceWorker' in navigator) {
 //  RECORDATORIOS
 // ═══════════════════════════════════════════════════════════════
 
+// ── Helper: modal preview WhatsApp ──
+let _waPreviewCallback = null;
+let _waPreviewTel = '';
+function abrirWaPreview(msgBase, telLimpio, callback) {
+  _waPreviewCallback = callback;
+  _waPreviewTel = telLimpio;
+  document.getElementById('wa-preview-texto').value = msgBase;
+  abrirOverlay('modal-wa-preview');
+}
+function _waPreviewEnviar() {
+  const msg = document.getElementById('wa-preview-texto').value;
+  if (!msg.trim()) return;
+  window.open(`https://wa.me/${_waPreviewTel}?text=${encodeURIComponent(msg)}`, '_blank');
+  cerrarModal('modal-wa-preview');
+  if (_waPreviewCallback) _waPreviewCallback(msg);
+  _waPreviewCallback = null;
+}
+
 // ── Punto de entrada contextual: día → pantalla día | resto → pantalla mensual ──
 function abrirPantallaRecordatorios() {
   if (G.vista === 'dia') {
@@ -2128,22 +2226,22 @@ async function enviarRecordatorioDiaDesdePantalla(idCita, btn) {
   const mesNom = MESES_ES[fechaObj.getMonth()];
   const hora = cita.Hora || '';
   const msgBase = `¡Hola! Le recordamos su sesión en Centro IPSE de mañana día ${diaNum} de ${mesNom} a las ${hora}.\n\nSi no puede asistir, avise con antelación suficiente hoy o con cuatro horas de antelación a la cita.\nEn caso contrario, se procederá a anular la sesión considerándose dada.\n\n¡Un saludo!`;
-  const msgEditado = prompt('Edita el mensaje si lo necesitas:', msgBase);
-  if (msgEditado === null) return;
   const telLimpio = '34' + tel.replace(/\D/g, '').replace(/^34/, '');
-  window.open(`https://wa.me/${telLimpio}?text=${encodeURIComponent(msgEditado)}`, '_blank');
-  btn.disabled = true; btn.textContent = '⏳';
-  try {
-    const ahora = new Date().toISOString();
-    await supaPatch('agenda_datos', `id_cita=eq.${idCita}`, { recordatorio_dia_at: ahora });
-    const idx = G.citas.findIndex(c => c.ID_Cita === idCita);
-    if (idx >= 0) G.citas[idx].RecordatorioDiaAt = ahora;
-    toast('Recordatorio registrado ✓', 'ok');
-    cargarRecordatoriosDia();
-  } catch (err) {
-    toast('WhatsApp abierto · Error al registrar: ' + err.message, 'err');
-    btn.disabled = false; btn.textContent = '📲 Enviar';
-  }
+  abrirWaPreview(msgBase, telLimpio, async (msgEditado) => {
+    btn.disabled = true; btn.textContent = '⏳';
+    try {
+      const ahora = new Date().toISOString();
+      await supaPatch('agenda_datos', `id_cita=eq.${idCita}`, { recordatorio_dia_at: ahora });
+      const idx = G.citas.findIndex(c => c.ID_Cita === idCita);
+      if (idx >= 0) G.citas[idx].RecordatorioDiaAt = ahora;
+      toast('Recordatorio registrado ✓', 'ok');
+      cargarRecordatoriosDia();
+    } catch (err) {
+      toast('WhatsApp abierto · Error al registrar: ' + err.message, 'err');
+      btn.disabled = false; btn.textContent = '📲 Enviar';
+    }
+  });
+  return; // el resto lo gestiona el callback del modal
 }
 
 // ── Botón inline en cita (vista día) — selector de número ──
@@ -2172,20 +2270,19 @@ async function enviarRecordatorioDia(idCita,btn) {
   const mesNom=MESES_ES[fechaObj.getMonth()];
   const hora=cita.Hora||'';
   const msgBase=`¡Hola! Le recordamos su sesión en Centro IPSE de mañana día ${diaNum} de ${mesNom} a las ${hora}.\n\nSi no puede asistir, avise con antelación suficiente hoy o con cuatro horas de antelación a la cita.\nEn caso contrario, se procederá a anular la sesión considerándose dada.\n\n¡Un saludo!`;
-  const msgEditado=prompt('Edita el mensaje si lo necesitas:',msgBase);
-  if(msgEditado===null)return;
   const telLimpio='34'+tel.replace(/\D/g,'').replace(/^34/,'');
-  window.open(`https://wa.me/${telLimpio}?text=${encodeURIComponent(msgEditado)}`,'_blank');
-  btn.textContent='⏳';btn.disabled=true;
-  try {
-    const ahora=new Date().toISOString();
-    await supaPatch('agenda_datos',`id_cita=eq.${idCita}`,{recordatorio_dia_at:ahora});
-    const idx=G.citas.findIndex(c=>c.ID_Cita===idCita);
-    if(idx>=0)G.citas[idx].RecordatorioDiaAt=ahora;
-    toast('Recordatorio registrado ✓','ok');
-    document.querySelector('.sel-tel-popup')?.remove();
-    renderizarDia();
-  } catch(err){toast('WhatsApp abierto · Error al registrar: '+err.message,'err');document.querySelector('.sel-tel-popup')?.remove();}
+  document.querySelector('.sel-tel-popup')?.remove();
+  abrirWaPreview(msgBase, telLimpio, async (msgEditado) => {
+    btn.textContent='⏳';btn.disabled=true;
+    try {
+      const ahora=new Date().toISOString();
+      await supaPatch('agenda_datos',`id_cita=eq.${idCita}`,{recordatorio_dia_at:ahora});
+      const idx=G.citas.findIndex(c=>c.ID_Cita===idCita);
+      if(idx>=0)G.citas[idx].RecordatorioDiaAt=ahora;
+      toast('Recordatorio registrado ✓','ok');
+      renderizarDia();
+    } catch(err){toast('WhatsApp abierto · Error al registrar: '+err.message,'err');}
+  });
 }
 
 // ── Pantalla recordatorios MES ──
@@ -2201,7 +2298,7 @@ async function cargarRecordatoriosMensuales() {
     const rows=await supaGet('sesiones',`id_terapeuta=eq.${G.miId}&fecha=gte.${fi}&fecha=lt.${ff}&estado=eq.Hecha&order=fecha.asc`);
     if(!rows.length){lista.innerHTML='<div style="color:var(--muted);font-size:13px;padding:20px 0">Sin sesiones en ese período.</div>';return;}
     const grupos={};
-    rows.forEach(r=>{if(!grupos[r.id_paciente])grupos[r.id_paciente]=[];grupos[r.id_paciente].push(r);});
+    rows.forEach(r=>{const key=(r.id_paciente||'').toString().trim();if(!key)return;if(!grupos[key])grupos[key]=[];grupos[key].push(r);});
     lista.innerHTML=Object.entries(grupos).map(([idPac,sesiones])=>{
       const pac=G.pacientes.find(p=>p.ID_Paciente===idPac);
       const nombre=pac?(pac.Alias||pac.Nombre):idPac;
@@ -2238,17 +2335,16 @@ async function enviarRecordatorioMes(idPac,btn) {
   const diasEs=['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
   const fechasTexto=rows.map(s=>{const d=new Date(s.fecha+'T12:00:00');return`- ${diasEs[d.getDay()]} ${d.getDate()}${s.hora?' a las '+s.hora.slice(0,5):''}`;}).join('\n');
   const msgBase=`¡Hola! Le enviamos el resumen de sesiones en Centro IPSE de ${MESES_ES[mes-1]} de ${anio}:\n\n${fechasTexto}\n\nGracias por confiar en IPSE. 🙏`;
-  const msgEditado=prompt('Edita el mensaje si lo necesitas:',msgBase);
-  if(msgEditado===null)return;
   const telLimpio='34'+tel.replace(/\D/g,'').replace(/^34/,'');
-  window.open(`https://wa.me/${telLimpio}?text=${encodeURIComponent(msgEditado)}`,'_blank');
-  btn.disabled=true;btn.textContent='⏳';
-  try {
-    const ahora=new Date().toISOString();
-    await supaPatch('sesiones',`id_terapeuta=eq.${G.miId}&id_paciente=eq.${idPac}&fecha=gte.${fi}&fecha=lt.${ff}`,{recordatorio_mes_at:ahora});
-    toast('Recordatorio mensual registrado ✓','ok');
-    cargarRecordatoriosMensuales();
-  } catch(err){toast('WhatsApp abierto · Error al registrar: '+err.message,'err');btn.disabled=false;btn.textContent='📲 Enviar';}
+  abrirWaPreview(msgBase, telLimpio, async (msgEditado) => {
+    btn.disabled=true;btn.textContent='⏳';
+    try {
+      const ahora=new Date().toISOString();
+      await supaPatch('sesiones',`id_terapeuta=eq.${G.miId}&id_paciente=eq.${idPac}&fecha=gte.${fi}&fecha=lt.${ff}`,{recordatorio_mes_at:ahora});
+      toast('Recordatorio mensual registrado ✓','ok');
+      cargarRecordatoriosMensuales();
+    } catch(err){toast('WhatsApp abierto · Error al registrar: '+err.message,'err');btn.disabled=false;btn.textContent='📲 Enviar';}
+  });
 }
 </script>
 </body>
