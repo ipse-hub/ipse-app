@@ -2315,7 +2315,7 @@ function editarSesion(id) {
   const s = G.sesiones.find(x=>x.id_cita===id); if (!s) return;
   document.getElementById('s-id').value=id;
   document.getElementById('modal-sesion-titulo').textContent='Editar sesión · '+id;
-  document.getElementById('s-fecha').value=s.fecha||'';
+  document.getElementById('s-fecha').value = s.fecha ? String(s.fecha).split('T')[0] : '';
   document.getElementById('s-hora').value=(s.hora||'').slice(0,5);
   setPacienteEnModal('s-paciente-txt','s-paciente',s.id_paciente);
   document.getElementById('s-terapeuta').value=s.id_terapeuta||'';
@@ -2936,6 +2936,9 @@ function tlItemConNota(s) {
         <span class="tl-srv">${s.servicio||''}</span>
         <span class="badge ${badge}" style="font-size:10px">${s.estado}</span>
         ${s.financiacion&&s.financiacion!=='SUELTA'?`<span class="badge badge-bono" style="font-size:9px">${s.financiacion}</span>`:''}
+        <button onclick="event.stopPropagation();p360ImprimirSesion('${s.id_cita}')" 
+          style="margin-left:auto;background:none;border:none;cursor:pointer;font-size:11px;color:var(--ink-muted);padding:2px 6px;border-radius:4px"
+          title="Imprimir esta sesión">🖨️</button>
       </div>
       <div class="tl-ter">${nomTer(s.id_terapeuta)}</div>
       ${notaTrazabilidad?`<div style="font-size:11px;color:var(--ink-muted);margin-top:2px;font-style:italic;opacity:0.75">🔄 ${notaTrazabilidad}</div>`:''}
@@ -2998,47 +3001,99 @@ async function p360SubirInforme(input) {
   input.value = '';
 }
 
-// ── PDF Diario de Sesiones (Bloque 2.4) ──
+function p360GenerarHTMLDiario(sesiones, paciente, titulo) {
+  const nombre = paciente ? ((paciente.nombre||'')+' '+(paciente.apellidos||'')).trim() : '';
+  const dni = paciente?.dni_paciente || '';
+  const dir = [paciente?.direccion, paciente?.codigo_postal, paciente?.municipio].filter(Boolean).join(', ');
+  const hoy = fmtFecha(new Date().toISOString());
+  const ter = paciente?.terapeuta_principal ? G.terapeutas.find(t=>t.id_terapeuta===paciente.terapeuta_principal) : null;
+  const terNom = ter ? ter.nombre : 'Inés Ferreira';
+
+  const sesHtml = sesiones.map((s, i) => {
+    const fecha = fmtFecha(s.fecha);
+    const hora = (s.hora||'').slice(0,5);
+    const terapeutaSesion = nomTer(s.id_terapeuta);
+    const notas = s.notas ? s.notas.replace(/\n/g,'<br>') : '<em style="color:#999">Sin notas registradas</em>';
+    return `
+      <div style="margin-bottom:28px;page-break-inside:avoid">
+        <div style="display:flex;justify-content:space-between;border-bottom:1px solid #ccc;padding-bottom:4px;margin-bottom:10px">
+          <strong style="font-size:13px">${fecha}${hora?' · '+hora:''}</strong>
+          <span style="font-size:12px;color:#555">${terapeutaSesion}</span>
+        </div>
+        <div style="font-size:13px;line-height:1.8;color:#1a1b2e">${notas}</div>
+      </div>`;
+  }).join('');
+
+  return `<!DOCTYPE html><html><head><meta charset="utf-8">
+  <title>${titulo} — ${nombre}</title>
+  <style>
+    body{font-family:Arial,sans-serif;font-size:12px;color:#1a1b2e;margin:40px}
+    .cabecera{display:flex;justify-content:space-between;margin-bottom:24px}
+    .cab-izq{font-size:11px;line-height:1.7;color:#333}
+    .cab-der{text-align:right;font-size:11px;line-height:1.7;color:#333}
+    .cab-logo{font-size:16px;font-weight:700;color:#1a1b2e;letter-spacing:-0.5px}
+    .cab-logo span{color:#00B4D8}
+    table.header{width:100%;border-collapse:collapse;margin-bottom:20px}
+    table.header td{padding:6px 10px;border:1px solid #ccc;font-size:11px}
+    table.header .label{background:#f5f5f5;font-weight:700;text-transform:uppercase;font-size:10px;letter-spacing:.05em}
+    h2{font-size:14px;border-bottom:2px solid #1a1b2e;padding-bottom:6px;margin:24px 0 20px}
+    .pie{margin-top:40px;padding-top:16px;border-top:1px solid #ccc;font-size:9px;color:#777;line-height:1.6}
+    @media print{body{margin:20px}.pie{position:fixed;bottom:0;width:100%}}
+  </style></head><body>
+
+  <div class="cabecera">
+    <div class="cab-izq">
+      <div class="cab-logo">IPSE <span>·</span> Instituto Psicoeducativo</div>
+      26036593H. NºCol. AO07537. NICA 60.178<br>
+      Paseo de Carlos Cano 51, 1ºB · 18110 Híjar-Las Gabias<br>
+      Tel. 658609996
+    </div>
+    <div class="cab-der">
+      <strong>${nombre}</strong><br>
+      ${dni}<br>
+      ${dir}<br>
+      <br>${hoy}
+    </div>
+  </div>
+
+  <table class="header">
+    <tr>
+      <td class="label">Historia Clínica</td>
+      <td class="label" style="text-align:right">${terNom.toUpperCase()}</td>
+    </tr>
+    <tr>
+      <td colspan="2" class="label">SEGUIMIENTOS</td>
+    </tr>
+  </table>
+
+  ${sesHtml}
+
+  <div class="pie">
+    Expedido por: ${terNom} · En cumplimiento del RGPD 2016/679 y LOPDGDD 3/2018. Los datos son tratados con la máxima confidencialidad por Centro Instituto Psicoeducativo IPSE. Responsable: Inés Ferreira Reyes. inesferrei@cop.es
+  </div>
+  </body></html>`;
+}
+
 function p360DescargarDiarioPDF() {
   const p = G.pacientes.find(x => x.id_paciente === P360.id);
-  const nombre = p ? ((p.nombre||'')+' '+(p.apellidos||'')).trim() : P360.id;
-  const sesiones = P360.sesiones.filter(s => s.estado !== 'Programada').sort((a,b)=>a.fecha.localeCompare(b.fecha));
+  const sesiones = (P360.sesiones||[]).filter(s => s.estado !== 'Programada').sort((a,b)=>a.fecha.localeCompare(b.fecha));
   if (!sesiones.length) { toast('Sin sesiones para exportar','err'); return; }
-
-  // Construir HTML para imprimir
-  const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
-  <title>Diario de Sesiones — ${nombre}</title>
-  <style>
-    body{font-family:Arial,sans-serif;font-size:12px;color:#1a1b2e;margin:32px}
-    h1{font-size:18px;margin-bottom:4px}
-    .sub{color:#666;font-size:11px;margin-bottom:24px}
-    table{width:100%;border-collapse:collapse;margin-top:8px}
-    th{background:#f5f5f5;padding:8px;text-align:left;font-size:11px;text-transform:uppercase;border-bottom:2px solid #ddd}
-    td{padding:8px;border-bottom:1px solid #eee;vertical-align:top}
-    .nota{color:#444;font-style:italic;font-size:11px;margin-top:3px}
-    @media print{body{margin:16px}}
-  </style></head><body>
-  <h1>Diario de Sesiones</h1>
-  <div class="sub">${nombre} · Exportado el ${fmtFecha(new Date().toISOString())}</div>
-  <table>
-    <thead><tr><th>Fecha</th><th>Hora</th><th>Estado</th><th>Terapeuta</th><th>Notas</th></tr></thead>
-    <tbody>
-      ${sesiones.map(s=>`<tr>
-        <td>${fmtFecha(s.fecha)}</td>
-        <td>${(s.hora||'').slice(0,5)}</td>
-        <td>${s.estado}</td>
-        <td>${nomTer(s.id_terapeuta)}</td>
-        <td><span class="nota">${s.notas||''}</span></td>
-      </tr>`).join('')}
-    </tbody>
-  </table>
-  </body></html>`;
-
+  const html = p360GenerarHTMLDiario(sesiones, p, 'Diario de Sesiones');
   const win = window.open('', '_blank');
   win.document.write(html);
   win.document.close();
-  win.focus();
-  setTimeout(() => win.print(), 400);
+  setTimeout(() => win.print(), 500);
+}
+
+function p360ImprimirSesion(idCita) {
+  const p = G.pacientes.find(x => x.id_paciente === P360.id);
+  const s = (P360.sesiones||[]).find(x => x.id_cita === idCita);
+  if (!s) return;
+  const html = p360GenerarHTMLDiario([s], p, 'Sesión '+idCita);
+  const win = window.open('', '_blank');
+  win.document.write(html);
+  win.document.close();
+  setTimeout(() => win.print(), 500);
 }
 
 function editarPacienteActual() {
