@@ -1122,7 +1122,7 @@ textarea.form-control { min-height: 72px; transition: border-color .2s; }
 
 <!-- MODAL SESIÓN -->
 <div class="modal-overlay" id="modal-sesion">
-  <div class="modal" style="max-width:580px">
+  <div class="modal" style="max-width:760px;width:95vw">
     <div class="modal-header">
       <div class="modal-title" id="modal-sesion-titulo">Registrar sesión</div>
       <button class="modal-close" onclick="cerrarModal('modal-sesion')">×</button>
@@ -1154,9 +1154,9 @@ textarea.form-control { min-height: 72px; transition: border-color .2s; }
           <label class="form-label" style="margin:0;font-size:11px;color:var(--blue)">📋 NOTAS CLÍNICAS</label>
           <span style="font-size:11px;color:var(--ink-muted)" id="s-notas-chars">0 caracteres</span>
         </div>
-        <textarea class="form-control" id="s-notas" rows="14"
+        <textarea class="form-control" id="s-notas" rows="18"
           placeholder="Observaciones clínicas, evolución de la sesión, objetivos trabajados, respuesta del paciente, propuestas para próxima sesión…"
-          style="resize:vertical;min-height:260px;line-height:1.7;font-size:14px;background:#fff;border-color:var(--border);font-family:'DM Sans',sans-serif"
+          style="resize:vertical;min-height:340px;line-height:1.7;font-size:14px;background:#fff;border-color:var(--border);font-family:'DM Sans',sans-serif"
           oninput="autoExpand(this);document.getElementById('s-notas-chars').textContent=this.value.length+' caracteres'"></textarea>
       </div>
     </div>
@@ -2870,6 +2870,8 @@ function p360RenderActividad(sesiones) {
 }
 
 function p360RenderNotas(sesiones) {
+  const lista = document.getElementById('p360-notas-list');
+  if (!lista) return; // elemento eliminado en el nuevo diseño
   const conNotas = sesiones.filter(s=>s.estado==='Hecha' && s.notas && s.notas.trim())
                            .sort((a,b)=>b.fecha.localeCompare(a.fecha));
   document.getElementById('p360-notas-list').innerHTML = conNotas.length
