@@ -2845,6 +2845,8 @@ function p360RenderActividad(sesiones) {
 }
 
 function p360RenderNotas(sesiones) {
+  const lista = document.getElementById('p360-notas-list');
+  if (!lista) return; // elemento eliminado en el nuevo diseño
   const conNotas = sesiones.filter(s=>s.estado==='Hecha' && s.notas && s.notas.trim())
                            .sort((a,b)=>b.fecha.localeCompare(a.fecha));
   document.getElementById('p360-notas-list').innerHTML = conNotas.length
