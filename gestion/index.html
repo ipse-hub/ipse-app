@@ -2953,22 +2953,25 @@ async function p360CargarInformes(idPaciente) {
   const lista = document.getElementById('p360-informes-list');
   if (!lista) return;
   try {
-    const { data, error } = await window._supabase.storage
-      .from('informes')
-      .list(`pacientes/${idPaciente}`, { sortBy: { column: 'created_at', order: 'desc' } });
-    if (error || !data || !data.length) {
+    const r = await fetch(`${SUPA_URL}/storage/v1/object/list/informes`, {
+      method: 'POST',
+      headers: { apikey: SUPA_KEY, Authorization: 'Bearer '+SUPA_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prefix: `pacientes/${idPaciente}/`, limit: 100, sortBy: { column: 'created_at', order: 'desc' } })
+    });
+    const data = await r.json();
+    if (!r.ok || !Array.isArray(data) || !data.length) {
       lista.innerHTML = '<div class="empty-state">Sin informes subidos</div>';
       return;
     }
-    lista.innerHTML = data.map(f => {
-      const url = window._supabase.storage.from('informes').getPublicUrl(`pacientes/${idPaciente}/${f.name}`).data.publicUrl;
+    lista.innerHTML = data.filter(f=>f.name&&f.name!=='.emptyFolderPlaceholder').map(f => {
+      const url = `${SUPA_URL}/storage/v1/object/public/informes/pacientes/${idPaciente}/${f.name}`;
       return `<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)">
         <span style="font-size:13px">📄 ${f.name}</span>
         <a href="${url}" target="_blank" class="btn btn-secondary btn-sm">Ver</a>
       </div>`;
-    }).join('');
+    }).join('') || '<div class="empty-state">Sin informes subidos</div>';
   } catch(e) {
-    lista.innerHTML = `<div class="empty-state">Error al cargar informes</div>`;
+    lista.innerHTML = '<div class="empty-state">Sin informes subidos</div>';
   }
 }
 
@@ -2979,9 +2982,14 @@ async function p360SubirInforme(input) {
   if (file.size > 10 * 1024 * 1024) { toast('El archivo supera 10 MB','err'); return; }
   toast('Subiendo informe…', 'ok');
   try {
-    const path = `pacientes/${P360.id}/${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._-]/g,'_')}`;
-    const { error } = await window._supabase.storage.from('informes').upload(path, file);
-    if (error) throw error;
+    const nombre = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._-]/g,'_')}`;
+    const path = `pacientes/${P360.id}/${nombre}`;
+    const r = await fetch(`${SUPA_URL}/storage/v1/object/informes/${path}`, {
+      method: 'POST',
+      headers: { apikey: SUPA_KEY, Authorization: 'Bearer '+SUPA_KEY, 'Content-Type': 'application/pdf' },
+      body: file
+    });
+    if (!r.ok) { const e = await r.json(); throw new Error(e.message||r.status); }
     toast('Informe subido ✓', 'ok');
     p360CargarInformes(P360.id);
   } catch(e) {
