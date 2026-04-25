@@ -2838,6 +2838,10 @@ function tlItemConNota(s) {
     notaTrazabilidad = traz.join(' · ');
     notaClinica = notaLimpia;
   }
+  // Campo estructurado cita_origen_id (Bloque 1.2) — tiene prioridad sobre el texto
+  if (s.cita_origen_id) {
+    notaTrazabilidad = `↩ Reprogramación de ${s.cita_origen_id}`;
+  }
 
   return `<div class="tl-item" onclick="editarSesion('${s.id_cita}')" style="cursor:pointer" title="Editar sesión ${s.id_cita}">
     <div class="tl-dot ${dotClass}"></div>
