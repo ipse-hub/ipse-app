@@ -2677,12 +2677,12 @@ async function abrirP360(idPaciente) {
   document.querySelectorAll('.p360-panel').forEach((t,i)=>t.classList.toggle('active',i===0));
 
   // — Pestaña PERSONA / Ficha de identidad —
-  const edad = p.fecha_nacimiento ? calcEdad(p.fecha_nacimiento) : null;
+  // edad ya calculada arriba para p360-meta
   document.getElementById('p360-ficha').innerHTML = [
     p360Field('Nombre completo', ((p.nombre||'')+' '+(p.apellidos||'')).trim()),
     p360Field('Alias', p.alias),
     p360Field('Fecha de nacimiento', p.fecha_nacimiento
-      ? fmtFecha(p.fecha_nacimiento) + (edad !== null ? ` (${edad} años)` : '') : ''),
+      ? fmtFecha(p.fecha_nacimiento) + (edad ? ` (${edad})` : '') : ''),
     p360Field('DNI / NIE', p.dni_paciente),
     p360Field('Dirección', [p.direccion, p.codigo_postal, p.municipio].filter(Boolean).join(', ')),
     p360Field('Centro escolar', p.centro_escolar),
