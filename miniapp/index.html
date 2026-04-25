@@ -579,7 +579,31 @@
           <button class="estado-btn" data-estado="Cancelada"    onclick="selEstado('Cancelada')" style="grid-column:span 4">❌ Cancelada</button>
         </div>
       </div>
-      <!-- Panel cobro — aparece al marcar Hecha o al cobrar retroactivamente -->
+      <!-- Panel cancelación selectiva de serie (1.3) -->
+      <div id="mc-cancel-serie-panel" style="display:none;background:#fff8f0;border:1.5px solid #DA291C;border-radius:8px;padding:14px;margin-bottom:8px">
+        <div style="font-size:12px;font-weight:700;color:#DA291C;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">❌ Cancelar citas de la serie</div>
+        <div style="font-size:12px;color:#7a3a00;margin-bottom:10px">Esta cita pertenece a una serie. ¿Qué citas quieres cancelar?</div>
+        <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px">
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer">
+            <input type="radio" name="cancel-serie-modo" value="solo" checked onchange="onCancelSerieModo()"> Solo esta cita
+          </label>
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer">
+            <input type="radio" name="cancel-serie-modo" value="siguientes" onchange="onCancelSerieModo()"> Esta y las siguientes
+          </label>
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer">
+            <input type="radio" name="cancel-serie-modo" value="todas" onchange="onCancelSerieModo()"> Todas las de la serie
+          </label>
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer">
+            <input type="radio" name="cancel-serie-modo" value="seleccion" onchange="onCancelSerieModo()"> Seleccionar individualmente
+          </label>
+        </div>
+        <!-- Lista selección individual -->
+        <div id="mc-cancel-serie-lista" style="display:none;max-height:180px;overflow-y:auto;border:1px solid #f0c0b0;border-radius:6px;padding:8px;margin-bottom:10px;background:#fff;font-size:12px"></div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-secondary" style="flex:1;font-size:12px" onclick="cerrarCancelSerie()">Volver</button>
+          <button class="btn btn-danger" style="flex:2;font-size:12px" id="mc-cancel-serie-btn" onclick="ejecutarCancelSerie()">❌ Cancelar selección</button>
+        </div>
+      </div>
       <div id="mc-cobro-panel" style="display:none;background:#f0f7f0;border:1px solid #97D700;border-radius:8px;padding:12px;margin-bottom:8px;">
         <div style="font-size:12px;font-weight:700;color:#4a6a00;margin-bottom:10px;">💶 Cobro en consulta — <span id="mc-cobro-importe" style="font-size:14px;">—</span></div>
         <div class="form-row" style="margin-bottom:8px">
@@ -994,6 +1018,7 @@ function mapearCitas(rows) {
     NombreServicio:  srvMap[r.id_servicio]  || r.id_servicio  || '',
     RecordatorioDiaAt: r.recordatorio_dia_at || '',
     CitaOrigenId: r.cita_origen_id || '',
+    IDCompromiso: r.id_compromiso || '',
   }));
 }
 
@@ -1116,7 +1141,7 @@ async function crearCita(datos) {
   await supaPost('agenda_datos', {
     id_cita: idCita, fecha: datos.fecha, hora: datos.hora,
     id_terapeuta: G.miId, id_paciente: datos.idPaciente, id_servicio: datos.idServicio,
-    id_beca: idBeca, id_bono: idBono, estado_agenda: 'Programada', id_compromiso: '',
+    id_beca: idBeca, id_bono: idBono, estado_agenda: 'Programada', id_compromiso: datos.idSerie || '',
     notas_agenda: datos.notas || '', fecha_alta_cita: new Date().toISOString().split('T')[0],
     cita_origen_id: datos.citaOrigenId || null,
   });
@@ -1376,7 +1401,13 @@ async function guardarNuevaCita() {
     const fechas=calcularFechasRecurrentes(fecha,hasta,cadaDias,festivos);
     if (!fechas.length){toast('No hay fechas válidas en ese rango','err');return;}
     const btn=document.getElementById('btn-crear-cita'); btn.disabled=true; btn.textContent=`⏳ Creando ${fechas.length} citas…`;
-    try { for (const f of fechas) await crearCita({fecha:f,hora,idPaciente:paciente,idServicio:servicio,tipoFin,idFin:'',notas}); toast(`${fechas.length} citas creadas ✓`,'ok'); cerrarModal('modal-nueva'); recargarVista(); }
+    const idSerie = 'SER-' + Date.now(); // identificador único de serie
+    try {
+      // Primera cita (la fecha base) + las recurrentes comparten el mismo id_compromiso
+      await crearCita({fecha,hora,idPaciente:paciente,idServicio:servicio,tipoFin,idFin:'',notas,idSerie});
+      for (const f of fechas) await crearCita({fecha:f,hora,idPaciente:paciente,idServicio:servicio,tipoFin,idFin:'',notas,idSerie});
+      toast(`${fechas.length+1} citas creadas ✓`,'ok'); cerrarModal('modal-nueva'); recargarVista();
+    }
     catch(err){toast('Error: '+err.message,'err');}
     finally{btn.disabled=false;btn.textContent='Crear citas';}
     return;
@@ -1491,9 +1522,17 @@ function selEstado(estado) {
   G.estadoSel=estado; actualizarBotonesEstado();
   const panel=document.getElementById('mc-reprog-panel');
   const panelCobro=document.getElementById('mc-cobro-panel');
+  const panelCancelSerie=document.getElementById('mc-cancel-serie-panel');
   const btn=document.getElementById('mc-btn-guardar');
+  // Ocultar panel cancelación serie al cambiar de estado
+  panelCancelSerie.style.display='none';
   if(estado==='Reprogramada'){if(G.citaActual)document.getElementById('mc-reprog-hora').value=G.citaActual.Hora||'';panel.classList.add('visible');btn.textContent='🔄 Reprogramar y crear cita';}
   else{panel.classList.remove('visible');btn.textContent='Guardar';}
+  // Si Cancelada y tiene serie → mostrar panel selectivo en lugar de guardar directamente
+  if(estado==='Cancelada' && G.citaActual?.IDCompromiso) {
+    abrirCancelSerie();
+    return;
+  }
   const tipoFin=G.citaActual?(G.citaActual.ID_Bono?'BONO':(G.citaActual.ID_Beca?'BECA':'SUELTA')):'SUELTA';
   if(estado!=='Hecha'){
     // Fix Bug3: al salir de Hecha resetear sesionActualId para que si vuelve a Hecha
@@ -1928,7 +1967,88 @@ function actualizarPreviewRecur(){const fecha=document.getElementById('n-fecha')
 function togglePanelRepetir(){const panel=document.getElementById('mc-repetir-panel');const abierto=panel.style.display!=='none';panel.style.display=abierto?'none':'block';if(!abierto){const anio=new Date().getFullYear();document.getElementById('mc-rep-hasta').value=`${anio}-07-31`;actualizarPreviewRepetir();}}
 function cerrarPanelRepetir(){document.getElementById('mc-repetir-panel').style.display='none';document.getElementById('mc-rep-preview').innerHTML='';}
 function actualizarPreviewRepetir(){const cita=G.citaActual;if(!cita)return;const hasta=document.getElementById('mc-rep-hasta').value;const cadaDias=parseInt(document.getElementById('mc-rep-cada').value)||7;const preview=document.getElementById('mc-rep-preview');if(!hasta||hasta<=cita.Fecha){preview.innerHTML='';return;}const agosto=[...diasDeAgosto(new Date().getFullYear()),...diasDeAgosto(new Date().getFullYear()+1)];const fechas=calcularFechasRecurrentes(cita.Fecha,hasta,cadaDias,agosto);if(!fechas.length){preview.innerHTML='<strong>Sin repeticiones</strong> en ese rango.';return;}const etiquetas=fechas.map(f=>{const d=new Date(f+'T12:00:00');return DIAS_ES[d.getDay()]+' '+d.getDate()+'/'+(d.getMonth()+1);});preview.innerHTML=`<strong>${fechas.length} citas nuevas</strong>: `+etiquetas.join(' · ');}
-async function confirmarRepetirCita(){const cita=G.citaActual;if(!cita)return;const hasta=document.getElementById('mc-rep-hasta').value;const cadaDias=parseInt(document.getElementById('mc-rep-cada').value)||7;if(!hasta){toast('Indica la fecha hasta la que repetir','err');return;}const agosto=[...diasDeAgosto(new Date().getFullYear()),...diasDeAgosto(new Date().getFullYear()+1)];const fechas=calcularFechasRecurrentes(cita.Fecha,hasta,cadaDias,agosto);if(!fechas.length){toast('No hay fechas válidas','err');return;}const btn=document.getElementById('mc-btn-confirmar-repetir');btn.disabled=true;btn.textContent=`⏳ Creando ${fechas.length} citas…`;try{for(const f of fechas)await crearCita({fecha:f,hora:cita.Hora,idPaciente:cita.ID_Paciente,idServicio:cita.ID_Servicio,tipoFin:cita.ID_Beca?'BECA':(cita.ID_Bono?'BONO':'SUELTA'),idFin:cita.ID_Beca||cita.ID_Bono||'',notas:''});toast(`✅ ${fechas.length} citas creadas`,'ok');cerrarModal('modal-cita');recargarVista();}catch(err){toast('Error: '+err.message,'err');}finally{btn.disabled=false;btn.textContent='Crear repeticiones';}}
+async function confirmarRepetirCita(){const cita=G.citaActual;if(!cita)return;const hasta=document.getElementById('mc-rep-hasta').value;const cadaDias=parseInt(document.getElementById('mc-rep-cada').value)||7;if(!hasta){toast('Indica la fecha hasta la que repetir','err');return;}const agosto=[...diasDeAgosto(new Date().getFullYear()),...diasDeAgosto(new Date().getFullYear()+1)];const fechas=calcularFechasRecurrentes(cita.Fecha,hasta,cadaDias,agosto);if(!fechas.length){toast('No hay fechas válidas','err');return;}const btn=document.getElementById('mc-btn-confirmar-repetir');btn.disabled=true;btn.textContent=`⏳ Creando ${fechas.length} citas…`;
+// Usar id_compromiso de la cita origen si ya tiene serie, o crear uno nuevo
+const idSerie = cita.IDCompromiso || ('SER-'+Date.now());
+// Si la cita origen no tiene serie, asignarle la misma
+if (!cita.IDCompromiso) await supaPatch('agenda_datos',`id_cita=eq.${cita.ID_Cita}`,{id_compromiso:idSerie});
+try{for(const f of fechas)await crearCita({fecha:f,hora:cita.Hora,idPaciente:cita.ID_Paciente,idServicio:cita.ID_Servicio,tipoFin:cita.ID_Beca?'BECA':(cita.ID_Bono?'BONO':'SUELTA'),idFin:cita.ID_Beca||cita.ID_Bono||'',notas:'',idSerie});toast(`✅ ${fechas.length} citas creadas`,'ok');cerrarModal('modal-cita');recargarVista();}catch(err){toast('Error: '+err.message,'err');}finally{btn.disabled=false;btn.textContent='Crear repeticiones';}}
+
+// ═══════════════════════════════════════════════════════════════
+//  CANCELACIÓN SELECTIVA DE SERIE (1.3)
+// ═══════════════════════════════════════════════════════════════
+function abrirCancelSerie() {
+  const panel = document.getElementById('mc-cancel-serie-panel');
+  const lista = document.getElementById('mc-cancel-serie-lista');
+  panel.style.display = 'block';
+  document.getElementById('mc-btn-guardar').style.display = 'none';
+  // Seleccionar "solo esta" por defecto
+  document.querySelector('input[name="cancel-serie-modo"][value="solo"]').checked = true;
+  lista.style.display = 'none';
+  lista.innerHTML = '';
+}
+function cerrarCancelSerie() {
+  document.getElementById('mc-cancel-serie-panel').style.display = 'none';
+  document.getElementById('mc-btn-guardar').style.display = 'inline-flex';
+  // Volver a estado anterior
+  selEstado(G.citaActual?.EstadoAgenda || 'Programada');
+}
+async function onCancelSerieModo() {
+  const modo = document.querySelector('input[name="cancel-serie-modo"]:checked')?.value;
+  const lista = document.getElementById('mc-cancel-serie-lista');
+  if (modo !== 'seleccion') { lista.style.display = 'none'; return; }
+  // Cargar todas las citas programadas de la serie
+  lista.style.display = 'block';
+  lista.innerHTML = '<div style="color:var(--muted);padding:6px">Cargando…</div>';
+  try {
+    const serie = G.citaActual.IDCompromiso;
+    const hoy = new Date().toISOString().split('T')[0];
+    const rows = await supaGet('agenda_datos',
+      `id_compromiso=eq.${serie}&estado_agenda=eq.Programada&fecha=gte.${hoy}&order=fecha.asc`);
+    if (!rows.length) { lista.innerHTML = '<div style="color:var(--muted);padding:6px">Sin citas programadas en la serie.</div>'; return; }
+    lista.innerHTML = rows.map(r => `
+      <label style="display:flex;align-items:center;gap:8px;padding:5px 4px;cursor:pointer;border-bottom:1px solid #f5e8e8">
+        <input type="checkbox" name="cancel-serie-chk" value="${r.id_cita}" ${r.id_cita===G.citaActual.ID_Cita?'checked disabled':'checked'}>
+        <span style="color:${r.id_cita===G.citaActual.ID_Cita?'var(--azul)':'inherit'};font-weight:${r.id_cita===G.citaActual.ID_Cita?'600':'400'}">
+          ${fmtFechaDMY(r.fecha)} · ${(r.hora||'').slice(0,5)}${r.id_cita===G.citaActual.ID_Cita?' ← esta':''}
+        </span>
+      </label>`).join('');
+  } catch(err) { lista.innerHTML = `<div style="color:var(--rojo);padding:6px">Error: ${err.message}</div>`; }
+}
+async function ejecutarCancelSerie() {
+  const modo = document.querySelector('input[name="cancel-serie-modo"]:checked')?.value;
+  if (!modo || !G.citaActual) return;
+  const serie = G.citaActual.IDCompromiso;
+  const hoy = new Date().toISOString().split('T')[0];
+  const btn = document.getElementById('mc-cancel-serie-btn');
+  btn.disabled = true; btn.textContent = '⏳ Cancelando…';
+  try {
+    if (modo === 'solo') {
+      await supaPatch('agenda_datos', `id_cita=eq.${G.citaActual.ID_Cita}`, {estado_agenda:'Cancelada'});
+      toast('Cita cancelada ✓', 'ok');
+    } else if (modo === 'siguientes') {
+      await supaPatch('agenda_datos',
+        `id_compromiso=eq.${serie}&estado_agenda=eq.Programada&fecha=gte.${G.citaActual.Fecha}`,
+        {estado_agenda:'Cancelada'});
+      toast('Citas siguientes canceladas ✓', 'ok');
+    } else if (modo === 'todas') {
+      await supaPatch('agenda_datos',
+        `id_compromiso=eq.${serie}&estado_agenda=eq.Programada`,
+        {estado_agenda:'Cancelada'});
+      toast('Toda la serie cancelada ✓', 'ok');
+    } else if (modo === 'seleccion') {
+      const checks = [...document.querySelectorAll('input[name="cancel-serie-chk"]:checked')];
+      if (!checks.length) { toast('Selecciona al menos una cita','err'); btn.disabled=false; btn.textContent='❌ Cancelar selección'; return; }
+      for (const chk of checks) {
+        await supaPatch('agenda_datos', `id_cita=eq.${chk.value}`, {estado_agenda:'Cancelada'});
+      }
+      toast(`${checks.length} cita${checks.length>1?'s':''} cancelada${checks.length>1?'s':''} ✓`, 'ok');
+    }
+    cerrarModal('modal-cita');
+    recargarVista();
+  } catch(err) { toast('Error: ' + err.message, 'err'); }
+  finally { btn.disabled=false; btn.textContent='❌ Cancelar selección'; }
+}
 
 // ═══════════════════════════════════════════════════════════════
 //  DETECCIÓN DUPLICADO
