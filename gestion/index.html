@@ -1122,7 +1122,7 @@ textarea.form-control { min-height: 72px; transition: border-color .2s; }
 
 <!-- MODAL SESIÓN -->
 <div class="modal-overlay" id="modal-sesion">
-  <div class="modal" style="max-width:760px;width:95vw">
+  <div class="modal" style="max-width:95vw;width:95vw;max-height:95vh;display:flex;flex-direction:column">
     <div class="modal-header">
       <div class="modal-title" id="modal-sesion-titulo">Registrar sesión</div>
       <button class="modal-close" onclick="cerrarModal('modal-sesion')">×</button>
@@ -1149,14 +1149,14 @@ textarea.form-control { min-height: 72px; transition: border-color .2s; }
         </div>
       </div>
       <!-- Notas clínicas -->
-      <div style="padding:16px 26px 20px;background:var(--cream)">
+      <div style="padding:16px 26px 20px;background:var(--cream);flex:1;display:flex;flex-direction:column">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
           <label class="form-label" style="margin:0;font-size:11px;color:var(--blue)">📋 NOTAS CLÍNICAS</label>
           <span style="font-size:11px;color:var(--ink-muted)" id="s-notas-chars">0 caracteres</span>
         </div>
         <textarea class="form-control" id="s-notas" rows="18"
           placeholder="Observaciones clínicas, evolución de la sesión, objetivos trabajados, respuesta del paciente, propuestas para próxima sesión…"
-          style="resize:vertical;min-height:340px;line-height:1.7;font-size:14px;background:#fff;border-color:var(--border);font-family:'DM Sans',sans-serif"
+          style="flex:1;resize:none;min-height:400px;line-height:1.7;font-size:14px;background:#fff;border-color:var(--border);font-family:'DM Sans',sans-serif"
           oninput="autoExpand(this);document.getElementById('s-notas-chars').textContent=this.value.length+' caracteres'"></textarea>
       </div>
     </div>
