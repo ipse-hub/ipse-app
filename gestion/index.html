@@ -861,7 +861,10 @@ textarea.form-control { min-height: 72px; transition: border-color .2s; }
 
     <!-- ══ PACIENTE 360° — EXPEDIENTE ══ -->
     <div class="page" id="page-p360">
-      <button class="p360-back-btn" onclick="navigate('pacientes')">← Volver a búsqueda</button>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+        <button class="p360-back-btn" style="margin-bottom:0" onclick="navigate('pacientes')">← Volver a búsqueda</button>
+        <button class="btn btn-primary btn-sm" onclick="abrirModalPaciente()">+ Nuevo paciente</button>
+      </div>
 
       <!-- Cabecera del paciente -->
       <div class="p360-header" id="p360-header">
@@ -1214,17 +1217,18 @@ textarea.form-control { min-height: 72px; transition: border-color .2s; }
         <!-- Datos básicos -->
         <div class="form-section">Datos personales</div>
         <div class="form-group"><label class="form-label">Nombre *</label><input type="text" class="form-control" id="p-nombre"></div>
-        <div class="form-group"><label class="form-label">Apellidos</label><input type="text" class="form-control" id="p-apellidos"></div>
+        <div class="form-group"><label class="form-label">Apellidos *</label><input type="text" class="form-control" id="p-apellidos"></div>
         <div class="form-group"><label class="form-label">Alias</label><input type="text" class="form-control" id="p-alias" placeholder="Como se le conoce"></div>
-        <div class="form-group"><label class="form-label">Fecha nacimiento</label><input type="date" class="form-control" id="p-fnac"></div>
+        <div class="form-group"><label class="form-label">Fecha nacimiento</label><input type="date" class="form-control" id="p-fnac" oninput="gestionActualizarMenor()"></div>
         <div class="form-group"><label class="form-label">DNI paciente</label><input type="text" class="form-control" id="p-dni-pac"></div>
+        <div id="g-badge-edad" style="display:none;padding:7px 12px;border-radius:6px;font-size:12px;font-weight:600;margin-bottom:4px"></div>
         <!-- Tutores -->
         <div class="form-section">Tutores y contacto</div>
-        <div class="form-group"><label class="form-label">Tutor 1</label><input type="text" class="form-control" id="p-tutor1"></div>
+        <div class="form-group"><label class="form-label" id="g-label-tutor1">Tutor 1</label><input type="text" class="form-control" id="p-tutor1"></div>
         <div class="form-group"><label class="form-label">DNI Tutor 1</label><input type="text" class="form-control" id="p-dni-tutor1"></div>
-        <div class="form-group"><label class="form-label">Teléfono</label><input type="tel" class="form-control" id="p-tel"></div>
+        <div class="form-group"><label class="form-label" id="g-label-tel">Teléfono *</label><input type="tel" class="form-control" id="p-tel"></div>
         <div class="form-group"><label class="form-label">Tutor 2</label><input type="text" class="form-control" id="p-tutor2"></div>
-        <div class="form-group"><label class="form-label">Teléfono 2</label><input type="tel" class="form-control" id="p-tel2"></div>
+        <div class="form-group"><label class="form-label" id="g-label-tel2">Teléfono 2</label><input type="tel" class="form-control" id="p-tel2"></div>
         <div class="form-group"><label class="form-label">Email</label><input type="email" class="form-control" id="p-email"></div>
         <!-- Dirección -->
         <div class="form-section">Dirección</div>
@@ -1801,7 +1805,8 @@ function fmtFecha(v) {
   if (!v) return '—';
   const clean = String(v).split('T')[0].split(' ')[0]; // aguanta DATE, TIMESTAMP y ISO
   const d = new Date(clean + 'T12:00:00');
-  return isNaN(d) ? v : d.getDate()+'/'+(d.getMonth()+1)+'/'+d.getFullYear();
+  if (isNaN(d)) return String(v);
+  return String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+d.getFullYear();
 }
 function fmtEur(v) { return (parseFloat(v)||0).toLocaleString('es-ES',{minimumFractionDigits:2,maximumFractionDigits:2})+' €'; }
 function badgeEstado(e) {
@@ -2877,6 +2882,15 @@ function abrirModalPaciente() {
   document.getElementById('p-terapeuta').value='';
   document.getElementById('p-btn-eliminar').style.display='none';
   document.getElementById('p-btn-guardar').textContent='Crear paciente';
+  // Reset badge menor/mayor y labels
+  const badge = document.getElementById('g-badge-edad');
+  if (badge) badge.style.display='none';
+  const lTel = document.getElementById('g-label-tel');
+  const lTut = document.getElementById('g-label-tutor1');
+  const lTel2 = document.getElementById('g-label-tel2');
+  if(lTel) lTel.textContent='Teléfono *';
+  if(lTut) lTut.textContent='Tutor 1';
+  if(lTel2) lTel2.textContent='Teléfono 2';
   abrirModal('modal-paciente');
 }
 
@@ -2906,25 +2920,45 @@ function editarPaciente(id) {
   document.getElementById('p-btn-eliminar').style.display='inline-flex';
   document.getElementById('p-btn-guardar').textContent='Guardar cambios';
   abrirModal('modal-paciente');
+  // Actualizar badge menor/mayor si hay fecha de nacimiento
+  setTimeout(gestionActualizarMenor, 50);
 }
 
 async function guardarPaciente() {
   const id     = document.getElementById('p-id').value;
   const nombre = document.getElementById('p-nombre').value.trim();
-  if (!nombre) { toast('El nombre es obligatorio','err'); return; }
+  const apellidos = document.getElementById('p-apellidos').value.trim();
+  const fnac   = document.getElementById('p-fnac').value;
+  const tel    = document.getElementById('p-tel').value.trim();
+  const tutor1 = document.getElementById('p-tutor1').value.trim();
+  const telTutor = document.getElementById('p-tel2').value.trim();
+  const dir    = document.getElementById('p-dir').value.trim();
+
+  // Validaciones mínimas
+  if (!nombre)    { toast('El nombre es obligatorio','err'); return; }
+  if (!apellidos) { toast('Los apellidos son obligatorios','err'); return; }
+
+  const esMenor = fnac ? calcEdadGestion(fnac) < 18 : false;
+  if (esMenor) {
+    if (!tutor1)   { toast('El Tutor 1 es obligatorio para menores de edad','err'); return; }
+    if (!telTutor) { toast('El teléfono del tutor es obligatorio para menores de edad','err'); return; }
+  } else {
+    if (!tel) { toast('El teléfono es obligatorio','err'); return; }
+  }
+
   const datos = {
     nombre,
-    apellidos:        document.getElementById('p-apellidos').value.trim(),
+    apellidos,
     alias:            document.getElementById('p-alias').value.trim(),
-    fecha_nacimiento: document.getElementById('p-fnac').value||null,
+    fecha_nacimiento: fnac||null,
     dni_paciente:     document.getElementById('p-dni-pac').value.trim(),
-    tutor1:           document.getElementById('p-tutor1').value.trim(),
+    tutor1,
     dni_tutor1:       document.getElementById('p-dni-tutor1').value.trim(),
-    telefono:         document.getElementById('p-tel').value.trim(),
+    telefono:         tel,
     tutor2:           document.getElementById('p-tutor2').value.trim(),
-    telefono2:        document.getElementById('p-tel2').value.trim(),
+    telefono2:        telTutor,
     email:            document.getElementById('p-email').value.trim(),
-    direccion:        document.getElementById('p-dir').value.trim(),
+    direccion:        dir,
     codigo_postal:    document.getElementById('p-cp').value.trim(),
     municipio:        document.getElementById('p-municipio').value.trim(),
     notas:            document.getElementById('p-notas').value.trim(),
@@ -2950,6 +2984,39 @@ async function guardarPaciente() {
     cerrarModal('modal-paciente');
     renderPacientes();
   } catch(err) { toast('Error: '+err.message,'err'); }
+}
+function calcEdadGestion(fnac) {
+  const hoy = new Date(); const nac = new Date(fnac);
+  let edad = hoy.getFullYear()-nac.getFullYear();
+  const m = hoy.getMonth()-nac.getMonth();
+  if (m<0||(m===0&&hoy.getDate()<nac.getDate())) edad--;
+  return edad;
+}
+function gestionActualizarMenor() {
+  const fnac = document.getElementById('p-fnac').value;
+  const badge = document.getElementById('g-badge-edad');
+  const labelTel = document.getElementById('g-label-tel');
+  const labelTutor = document.getElementById('g-label-tutor1');
+  const labelTel2 = document.getElementById('g-label-tel2');
+  if (!fnac) { if(badge) badge.style.display='none'; return; }
+  const edad = calcEdadGestion(fnac);
+  const esMenor = edad < 18;
+  if (badge) {
+    badge.style.display = 'block';
+    if (esMenor) {
+      badge.style.background='#fff3cd'; badge.style.color='#7a5c00'; badge.style.border='1px solid #f0c040';
+      badge.textContent = `👶 Menor de edad (${edad} años) — Tutor 1 y teléfono tutor obligatorios`;
+      if(labelTel) labelTel.textContent = 'Teléfono paciente';
+      if(labelTutor) labelTutor.textContent = 'Tutor 1 *';
+      if(labelTel2) labelTel2.textContent = 'Teléfono tutor *';
+    } else {
+      badge.style.background='#f0fff0'; badge.style.color='#2d7a2d'; badge.style.border='1px solid #97D700';
+      badge.textContent = `✓ Mayor de edad (${edad} años)`;
+      if(labelTel) labelTel.textContent = 'Teléfono *';
+      if(labelTutor) labelTutor.textContent = 'Tutor 1';
+      if(labelTel2) labelTel2.textContent = 'Teléfono 2';
+    }
+  }
 }
 
 async function eliminarPaciente() {
@@ -3707,7 +3774,7 @@ async function cargarLineasDesdeSesiones() {
       const ter = nomTer(g.sesiones[0].id_terapeuta);
       const ses0 = g.sesiones[0];
       const sesN = g.sesiones[g.sesiones.length - 1];
-      const fmtF = f => { if(!f) return ''; const d = new Date(f+'T12:00:00'); return d.getDate()+'/'+(d.getMonth()+1)+'/'+d.getFullYear(); };
+      const fmtF = fmtFecha;
       const rango = fmtF(ses0.fecha) + (count > 1 ? ' al ' + fmtF(sesN.fecha) : '');
       const concepto = `Asistencia psicológica · ${count} sesión${count>1?'es':''} de ${ter} (${rango})`;
       return { concepto, horas: count, precio_hora: precio, importe: total };
@@ -4020,7 +4087,7 @@ function generarPDFFactura(f, descargar = true) {
   y += 8;
 
   const lineas = Array.isArray(f.lineas) ? f.lineas : [];
-  const fmtFLocal = s => { if(!s) return ''; const d=new Date(s.split(' ')[0]+'T12:00:00'); return d.getDate()+'/'+(d.getMonth()+1)+'/'+d.getFullYear(); };
+  const fmtFLocal = s => fmtFecha(s ? s.split(' ')[0] : '');
 
   lineas.forEach((l, i) => {
     const rowH = 24;
