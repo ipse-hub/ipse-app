@@ -882,7 +882,7 @@ textarea.form-control { min-height: 72px; transition: border-color .2s; }
       <!-- Pestañas -->
       <div class="p360-tabs">
         <div class="p360-tab active" onclick="p360Tab('personal',this)">Persona</div>
-        <div class="p360-tab" onclick="p360Tab('contacto',this)">Contacto y Tutoría</div>
+        <div class="p360-tab" onclick="p360Tab('contacto',this)">Contacto Tutores</div>
         <div class="p360-tab" onclick="p360Tab('clinico',this)">Ficha Clínica</div>
         <div class="p360-tab" onclick="p360Tab('economico',this)">Económico</div>
         <div class="p360-tab" onclick="p360Tab('actividad',this)">Diario de Sesiones</div>
@@ -1122,56 +1122,41 @@ textarea.form-control { min-height: 72px; transition: border-color .2s; }
 
 <!-- MODAL SESIÓN -->
 <div class="modal-overlay" id="modal-sesion">
-  <div class="modal modal-sesion-wide">
+  <div class="modal" style="max-width:580px">
     <div class="modal-header">
       <div class="modal-title" id="modal-sesion-titulo">Registrar sesión</div>
       <button class="modal-close" onclick="cerrarModal('modal-sesion')">×</button>
     </div>
     <div class="modal-body" style="padding:0">
       <input type="hidden" id="s-id">
-      <!-- Bloque administrativo -->
+      <!-- Campos ocultos — se conservan para guardarSesion() pero no se muestran -->
+      <input type="hidden" id="s-paciente">
+      <input type="hidden" id="s-paciente-txt">
+      <input type="hidden" id="s-terapeuta">
+      <input type="hidden" id="s-servicio">
+      <input type="hidden" id="s-estado">
+      <input type="hidden" id="s-fin">
+      <input type="hidden" id="s-cobrado">
+      <input type="hidden" id="s-importe">
+      <input type="hidden" id="s-bono">
+      <input type="hidden" id="s-beca">
+      <input type="hidden" id="s-fecha-cierre">
+      <!-- Fecha y hora -->
       <div style="padding:20px 26px 16px;border-bottom:1px solid var(--border)">
-        <div class="form-grid">
+        <div class="form-grid" style="grid-template-columns:1fr 1fr">
           <div class="form-group"><label class="form-label">Fecha *</label><input type="date" class="form-control" id="s-fecha"></div>
           <div class="form-group"><label class="form-label">Hora</label><input type="time" class="form-control" id="s-hora" step="300"></div>
-          <div class="form-group"><label class="form-label">Paciente *</label>
-            <div class="pac-search-wrap" id="psw-sesion">
-              <input type="text" class="form-control" id="s-paciente-txt" placeholder="Escribe nombre…" oninput="pacSearch(this,'s-paciente','psd-sesion')" autocomplete="off" onblur="setTimeout(()=>hidePacDrop('psd-sesion'),200)">
-              <input type="hidden" id="s-paciente">
-              <div class="pac-search-drop" id="psd-sesion"></div>
-            </div>
-          </div>
-          <div class="form-group"><label class="form-label">Terapeuta</label><select class="form-control" id="s-terapeuta"></select></div>
-          <div class="form-group"><label class="form-label">Servicio</label><select class="form-control" id="s-servicio"></select></div>
-          <div class="form-group"><label class="form-label">Estado</label>
-            <select class="form-control" id="s-estado">
-              <option>Programada</option><option>Hecha</option><option>Cancelada</option><option>No-show</option>
-            </select>
-          </div>
-          <div class="form-group"><label class="form-label">Financiación</label>
-            <select class="form-control" id="s-fin">
-              <option value="SUELTA">Particular</option><option value="BONO">Bono</option>
-              <option value="BECA">Beca Junta</option><option value="ADECCO">ADECCO</option>
-            </select>
-          </div>
-          <div class="form-group"><label class="form-label">¿Cobrado?</label>
-            <select class="form-control" id="s-cobrado"><option value="No">No</option><option value="Sí">Sí</option></select>
-          </div>
-          <div class="form-group"><label class="form-label">Importe (€)</label><input type="number" class="form-control" id="s-importe" step="0.01"></div>
-          <div class="form-group"><label class="form-label">ID Bono vinculado</label><input type="text" class="form-control" id="s-bono" placeholder="Ej: B001"></div>
-          <div class="form-group"><label class="form-label">ID Beca vinculada</label><input type="text" class="form-control" id="s-beca" placeholder="Ej: BCA001"></div>
-          <div class="form-group"><label class="form-label">Fecha cierre</label><input type="date" class="form-control" id="s-fecha-cierre"></div>
         </div>
       </div>
-      <!-- Bloque notas clínicas tipo folio -->
+      <!-- Notas clínicas -->
       <div style="padding:16px 26px 20px;background:var(--cream)">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
           <label class="form-label" style="margin:0;font-size:11px;color:var(--blue)">📋 NOTAS CLÍNICAS</label>
           <span style="font-size:11px;color:var(--ink-muted)" id="s-notas-chars">0 caracteres</span>
         </div>
-        <textarea class="form-control" id="s-notas" rows="10"
+        <textarea class="form-control" id="s-notas" rows="14"
           placeholder="Observaciones clínicas, evolución de la sesión, objetivos trabajados, respuesta del paciente, propuestas para próxima sesión…"
-          style="resize:vertical;min-height:200px;line-height:1.7;font-size:14px;background:#fff;border-color:var(--border);font-family:'DM Sans',sans-serif"
+          style="resize:vertical;min-height:260px;line-height:1.7;font-size:14px;background:#fff;border-color:var(--border);font-family:'DM Sans',sans-serif"
           oninput="autoExpand(this);document.getElementById('s-notas-chars').textContent=this.value.length+' caracteres'"></textarea>
       </div>
     </div>
@@ -1244,10 +1229,20 @@ textarea.form-control { min-height: 72px; transition: border-color .2s; }
         <div class="form-group"><label class="form-label">DNI Tutor 1</label><input type="text" class="form-control" id="p-dni-tutor1"></div>
         <div class="form-group"><label class="form-label" id="g-label-tel">Teléfono *</label><input type="tel" class="form-control" id="p-tel"></div>
         <div class="form-group"><label class="form-label">Email Tutor 1</label><input type="email" class="form-control" id="p-tutor1-email"></div>
+        <div class="form-group span2"><label class="form-label">Dirección Tutor 1</label><input type="text" class="form-control" id="p-tutor1-dir"></div>
         <div class="form-group"><label class="form-label">Tutor 2</label><input type="text" class="form-control" id="p-tutor2"></div>
         <div class="form-group"><label class="form-label">DNI Tutor 2</label><input type="text" class="form-control" id="p-tutor2-dni"></div>
         <div class="form-group"><label class="form-label" id="g-label-tel2">Teléfono Tutor 2</label><input type="tel" class="form-control" id="p-tel2"></div>
         <div class="form-group"><label class="form-label">Email Tutor 2</label><input type="email" class="form-control" id="p-tutor2-email"></div>
+        <div class="form-group span2"><label class="form-label">Dirección Tutor 2</label><input type="text" class="form-control" id="p-tutor2-dir"></div>
+        <div class="form-group"><label class="form-label">Facturar a</label>
+          <select class="form-control" id="p-facturacion-tutor">
+            <option value="">—</option>
+            <option value="tutor1">Tutor 1</option>
+            <option value="tutor2">Tutor 2</option>
+            <option value="ambos">Ambos</option>
+          </select>
+        </div>
         <!-- Email paciente (mayor de edad) -->
         <div class="form-group"><label class="form-label">Email paciente</label><input type="email" class="form-control" id="p-email"></div>
         <!-- Escolar -->
@@ -1262,7 +1257,8 @@ textarea.form-control { min-height: 72px; transition: border-color .2s; }
         <!-- Clínica -->
         <div class="form-section">Datos clínicos</div>
         <div class="form-group"><label class="form-label">Terapeuta principal</label><select class="form-control" id="p-terapeuta"></select></div>
-        <div class="form-group"><label class="form-label">Fecha alta IPSE</label><input type="date" class="form-control" id="p-alta"></div>
+        <div class="form-group"><label class="form-label">Fecha entrada IPSE</label><input type="date" class="form-control" id="p-alta"></div>
+        <div class="form-group"><label class="form-label">Fecha alta médica</label><input type="date" class="form-control" id="p-alta-medica"></div>
         <div class="form-group"><label class="form-label">¿Beca?</label>
           <select class="form-control" id="p-beca"><option value="No">No</option><option value="Sí">Sí</option></select>
         </div>
@@ -2676,19 +2672,31 @@ async function abrirP360(idPaciente) {
   document.querySelectorAll('.p360-tab').forEach((t,i)=>t.classList.toggle('active',i===0));
   document.querySelectorAll('.p360-panel').forEach((t,i)=>t.classList.toggle('active',i===0));
 
-  // — Pestaña PERSONA / Ficha de identidad —
-  // edad ya calculada arriba para p360-meta
+  // — Pestaña PERSONA / 3 bloques —
+  // edad ya declarada arriba para p360-meta (calcEdad devuelve string "X años")
+  const edadNum = p.fecha_nacimiento ? calcEdad(p.fecha_nacimiento) : null;
+  const esMenorP = edadNum !== null ? parseInt(edadNum) < 18 : false;
+
   document.getElementById('p360-ficha').innerHTML = [
     p360Field('Nombre completo', ((p.nombre||'')+' '+(p.apellidos||'')).trim()),
     p360Field('Alias', p.alias),
     p360Field('Fecha de nacimiento', p.fecha_nacimiento
-      ? fmtFecha(p.fecha_nacimiento) + (edad ? ` (${edad})` : '') : ''),
+      ? fmtFecha(p.fecha_nacimiento) + (edadNum !== null ? ` (${edadNum} años)` : '') : ''),
     p360Field('DNI / NIE', p.dni_paciente),
     p360Field('Dirección', [p.direccion, p.codigo_postal, p.municipio].filter(Boolean).join(', ')),
-    p360Field('Centro escolar', p.centro_escolar),
-    p360Field('Curso escolar', p.curso_escolar),
-    p360Field('Fecha de alta en IPSE', fmtFecha(p.fecha_alta)),
-  ].join('');
+    p360Field('Fecha de entrada en IPSE', fmtFecha(p.fecha_alta)),
+    p360Field('Fecha de alta médica', fmtFecha(p.fecha_alta_medica)),
+  ].join('') + (esMenorP ? `
+    <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border)">
+      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-muted);margin-bottom:10px">Tutores</div>
+      ${p360Field('Tutor 1', p.tutor1)}
+      ${p360Field('Tutor 2', p.tutor2)}
+    </div>` : '') + `
+    <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border)">
+      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-muted);margin-bottom:10px">Datos escolares</div>
+      ${p360Field('Centro escolar', p.centro_escolar)}
+      ${p360Field('Curso escolar', p.curso_escolar)}
+    </div>`;
 
   const consent = p.consentimiento==='Firmado';
   document.getElementById('p360-consent').innerHTML = `
@@ -2698,15 +2706,19 @@ async function abrirP360(idPaciente) {
       ${p.fecha_alta?`<span style="font-size:12px;color:var(--ink-muted)">— alta ${fmtFecha(p.fecha_alta)}</span>`:''}
     </div>`;
 
-  // — Pestaña CONTACTO Y TUTORÍA —
+  // — Pestaña CONTACTO TUTORES —
+  const tituloTutor1 = esMenorP ? 'Tutor 1' : 'Datos de contacto';
   document.getElementById('p360-tutor1').innerHTML = [
     p360Field('Nombre', p.tutor1),
     p360Field('DNI / NIE', p.dni_tutor1),
-    p360Field('Teléfono', p.telefono || p.telefono2),
+    p360Field('Teléfono', p.telefono),
     p360Field('Email', p.tutor1_email || p.email),
+    p360Field('Dirección', p.tutor1_direccion || [p.direccion, p.codigo_postal, p.municipio].filter(Boolean).join(', ')),
   ].join('');
+  const tutor1Card = document.getElementById('p360-tutor1').closest('.p360-card');
+  if (tutor1Card) { const st = tutor1Card.querySelector('.p360-stitle'); if (st) st.textContent = tituloTutor1; }
 
-  const hayTutor2 = p.tutor2 || p.tutor2_dni || p.tutor2_telefono || p.tutor2_email;
+  const hayTutor2 = p.tutor2 || p.tutor2_dni || p.tutor2_telefono || p.tutor2_email || p.tutor2_direccion;
   const tutor2Card = document.getElementById('p360-tutor2-card');
   if (hayTutor2) {
     tutor2Card.style.display = '';
@@ -2715,9 +2727,22 @@ async function abrirP360(idPaciente) {
       p360Field('DNI / NIE', p.tutor2_dni),
       p360Field('Teléfono', p.tutor2_telefono || p.telefono2),
       p360Field('Email', p.tutor2_email),
+      p360Field('Dirección', p.tutor2_direccion),
     ].join('');
+    // Card facturación
+    let factCard = document.getElementById('p360-facturacion-card');
+    if (!factCard) {
+      factCard = document.createElement('div');
+      factCard.className = 'p360-card'; factCard.id = 'p360-facturacion-card';
+      factCard.innerHTML = `<div class="p360-stitle">Facturación</div><div class="p360-fg" id="p360-facturacion"></div>`;
+      tutor2Card.after(factCard);
+    }
+    const factLabel = {tutor1:'Tutor 1', tutor2:'Tutor 2', ambos:'Ambos tutores'}[p.facturacion_tutor] || '—';
+    document.getElementById('p360-facturacion').innerHTML = p360Field('Emitir factura a', factLabel);
+    factCard.style.display = '';
   } else {
     tutor2Card.style.display = 'none';
+    const fc = document.getElementById('p360-facturacion-card'); if (fc) fc.style.display = 'none';
   }
 
   // — Pestaña FICHA CLÍNICA / Profesionales —
@@ -2845,8 +2870,6 @@ function p360RenderActividad(sesiones) {
 }
 
 function p360RenderNotas(sesiones) {
-  const lista = document.getElementById('p360-notas-list');
-  if (!lista) return; // elemento eliminado en el nuevo diseño
   const conNotas = sesiones.filter(s=>s.estado==='Hecha' && s.notas && s.notas.trim())
                            .sort((a,b)=>b.fecha.localeCompare(a.fecha));
   document.getElementById('p360-notas-list').innerHTML = conNotas.length
@@ -3024,7 +3047,7 @@ function calcEdad(fechaNac) {
 function abrirModalPaciente() {
   document.getElementById('p-id').value='';
   document.getElementById('modal-pac-titulo').textContent='Nuevo paciente';
-  ['p-nombre','p-apellidos','p-alias','p-fnac','p-dni-pac','p-tutor1','p-dni-tutor1','p-tel','p-tutor1-email','p-tutor2','p-tutor2-dni','p-tel2','p-tutor2-email','p-email','p-centro-escolar','p-curso-escolar','p-dir','p-cp','p-municipio','p-diagnostico','p-alergias','p-notas'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  ['p-nombre','p-apellidos','p-alias','p-fnac','p-dni-pac','p-tutor1','p-dni-tutor1','p-tel','p-tutor1-email','p-tutor1-dir','p-tutor2','p-tutor2-dni','p-tel2','p-tutor2-email','p-tutor2-dir','p-email','p-centro-escolar','p-curso-escolar','p-dir','p-cp','p-municipio','p-diagnostico','p-alergias','p-notas','p-alta-medica'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   document.getElementById('p-beca').value='No';
   document.getElementById('p-consent').value='Pendiente';
   document.getElementById('p-alta').value=new Date().toISOString().split('T')[0];
@@ -3056,10 +3079,13 @@ function editarPaciente(id) {
   document.getElementById('p-dni-tutor1').value  = p.dni_tutor1||'';
   document.getElementById('p-tel').value         = p.telefono||'';
   document.getElementById('p-tutor1-email').value= p.tutor1_email||'';
+  document.getElementById('p-tutor1-dir').value  = p.tutor1_direccion||'';
   document.getElementById('p-tutor2').value      = p.tutor2||'';
   document.getElementById('p-tutor2-dni').value  = p.tutor2_dni||'';
   document.getElementById('p-tel2').value        = p.telefono2||'';
   document.getElementById('p-tutor2-email').value= p.tutor2_email||'';
+  document.getElementById('p-tutor2-dir').value  = p.tutor2_direccion||'';
+  document.getElementById('p-facturacion-tutor').value = p.facturacion_tutor||'';
   document.getElementById('p-email').value       = p.email||'';
   document.getElementById('p-centro-escolar').value = p.centro_escolar||'';
   document.getElementById('p-curso-escolar').value  = p.curso_escolar||'';
@@ -3074,6 +3100,7 @@ function editarPaciente(id) {
   document.getElementById('p-beca').value        = p.es_beca||'No';
   document.getElementById('p-consent').value     = p.consentimiento||'Pendiente';
   document.getElementById('p-alta').value        = p.fecha_alta||'';
+  document.getElementById('p-alta-medica').value = p.fecha_alta_medica||'';
   document.getElementById('p-terapeuta').value   = p.terapeuta_principal||'';
   document.getElementById('p-btn-eliminar').style.display='inline-flex';
   document.getElementById('p-btn-guardar').textContent='Guardar cambios';
@@ -3113,11 +3140,14 @@ async function guardarPaciente() {
     tutor1,
     dni_tutor1:       document.getElementById('p-dni-tutor1').value.trim(),
     tutor1_email:     document.getElementById('p-tutor1-email').value.trim(),
+    tutor1_direccion: document.getElementById('p-tutor1-dir').value.trim(),
     telefono:         tel,
     tutor2:           document.getElementById('p-tutor2').value.trim(),
     tutor2_dni:       document.getElementById('p-tutor2-dni').value.trim(),
     telefono2:        telTutor,
     tutor2_email:     document.getElementById('p-tutor2-email').value.trim(),
+    tutor2_direccion: document.getElementById('p-tutor2-dir').value.trim(),
+    facturacion_tutor: document.getElementById('p-facturacion-tutor').value||null,
     email:            document.getElementById('p-email').value.trim(),
     centro_escolar:   document.getElementById('p-centro-escolar').value.trim(),
     curso_escolar:    document.getElementById('p-curso-escolar').value.trim(),
@@ -3132,6 +3162,7 @@ async function guardarPaciente() {
     es_beca:          document.getElementById('p-beca').value,
     consentimiento:   document.getElementById('p-consent').value,
     fecha_alta:       document.getElementById('p-alta').value||null,
+    fecha_alta_medica: document.getElementById('p-alta-medica').value||null,
     terapeuta_principal: document.getElementById('p-terapeuta').value||null,
   };
   try {
