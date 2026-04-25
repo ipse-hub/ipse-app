@@ -881,21 +881,18 @@ textarea.form-control { min-height: 72px; transition: border-color .2s; }
 
       <!-- Pestañas -->
       <div class="p360-tabs">
-        <div class="p360-tab active" onclick="p360Tab('personal',this)">Personal</div>
-        <div class="p360-tab" onclick="p360Tab('clinico',this)">Clínico</div>
+        <div class="p360-tab active" onclick="p360Tab('personal',this)">Persona</div>
+        <div class="p360-tab" onclick="p360Tab('contacto',this)">Contacto y Tutoría</div>
+        <div class="p360-tab" onclick="p360Tab('clinico',this)">Ficha Clínica</div>
         <div class="p360-tab" onclick="p360Tab('economico',this)">Económico</div>
-        <div class="p360-tab" onclick="p360Tab('actividad',this)">Actividad</div>
+        <div class="p360-tab" onclick="p360Tab('actividad',this)">Diario de Sesiones</div>
       </div>
 
-      <!-- ▸ PERSONAL -->
+      <!-- ▸ PERSONA -->
       <div class="p360-panel active" id="p360-personal">
         <div class="p360-card">
           <div class="p360-stitle">Ficha de identidad</div>
           <div class="p360-fg" id="p360-ficha"></div>
-        </div>
-        <div class="p360-card">
-          <div class="p360-stitle">Contacto y tutor/a</div>
-          <div class="p360-fg" id="p360-contacto"></div>
         </div>
         <div class="p360-card">
           <div class="p360-stitle">Consentimiento informado</div>
@@ -903,18 +900,37 @@ textarea.form-control { min-height: 72px; transition: border-color .2s; }
         </div>
       </div>
 
-      <!-- ▸ CLÍNICO -->
+      <!-- ▸ CONTACTO Y TUTORÍA -->
+      <div class="p360-panel" id="p360-contacto">
+        <div class="p360-card">
+          <div class="p360-stitle">Tutor 1</div>
+          <div class="p360-fg" id="p360-tutor1"></div>
+        </div>
+        <div class="p360-card" id="p360-tutor2-card">
+          <div class="p360-stitle">Tutor 2</div>
+          <div class="p360-fg" id="p360-tutor2"></div>
+        </div>
+      </div>
+
+      <!-- ▸ FICHA CLÍNICA -->
       <div class="p360-panel" id="p360-clinico">
         <div class="p360-card">
-          <div class="p360-stitle">Ficha clínica</div>
+          <div class="p360-stitle">Profesionales</div>
           <div class="p360-fg" id="p360-clinica-datos"></div>
         </div>
         <div class="p360-card">
-          <div class="p360-stitle">
-            <span>Notas clínicas por sesión</span>
-            <button class="btn btn-secondary btn-sm" onclick="p360NuevaNotaModal()">+ Nota</button>
+          <div class="p360-stitle">Ficha clínica</div>
+          <div class="p360-fg" id="p360-clinica-ficha"></div>
+        </div>
+        <div class="p360-card">
+          <div class="p360-stitle" style="display:flex;align-items:center;justify-content:space-between">
+            <span>Informes PDF</span>
+            <label class="btn btn-secondary btn-sm" style="cursor:pointer">
+              📎 Subir informe
+              <input type="file" accept=".pdf" style="display:none" onchange="p360SubirInforme(this)">
+            </label>
           </div>
-          <div id="p360-notas-list"><div class="empty-state">Sin notas registradas</div></div>
+          <div id="p360-informes-list"><div class="empty-state">Sin informes subidos</div></div>
         </div>
       </div>
 
@@ -939,17 +955,17 @@ textarea.form-control { min-height: 72px; transition: border-color .2s; }
         </div>
       </div>
 
-      <!-- ▸ ACTIVIDAD -->
+      <!-- ▸ DIARIO DE SESIONES -->
       <div class="p360-panel" id="p360-actividad">
-        <div class="p360-kpis" id="p360-kpis-act"></div>
         <div class="p360-card">
-          <div class="p360-stitle">
-            <span>Próximas citas</span>
-          </div>
+          <div class="p360-stitle">Próximas citas</div>
           <div id="p360-proximas"><div class="empty-state">Sin citas próximas</div></div>
         </div>
         <div class="p360-card">
-          <div class="p360-stitle">Historial de sesiones y notas</div>
+          <div class="p360-stitle" style="display:flex;align-items:center;justify-content:space-between">
+            <span>Diario de sesiones</span>
+            <button class="btn btn-secondary btn-sm" onclick="p360DescargarDiarioPDF()">⬇ PDF</button>
+          </div>
           <div id="p360-historial"><div class="empty-state">Sin historial</div></div>
         </div>
       </div>
@@ -1227,9 +1243,17 @@ textarea.form-control { min-height: 72px; transition: border-color .2s; }
         <div class="form-group"><label class="form-label" id="g-label-tutor1">Tutor 1</label><input type="text" class="form-control" id="p-tutor1"></div>
         <div class="form-group"><label class="form-label">DNI Tutor 1</label><input type="text" class="form-control" id="p-dni-tutor1"></div>
         <div class="form-group"><label class="form-label" id="g-label-tel">Teléfono *</label><input type="tel" class="form-control" id="p-tel"></div>
+        <div class="form-group"><label class="form-label">Email Tutor 1</label><input type="email" class="form-control" id="p-tutor1-email"></div>
         <div class="form-group"><label class="form-label">Tutor 2</label><input type="text" class="form-control" id="p-tutor2"></div>
-        <div class="form-group"><label class="form-label" id="g-label-tel2">Teléfono 2</label><input type="tel" class="form-control" id="p-tel2"></div>
-        <div class="form-group"><label class="form-label">Email</label><input type="email" class="form-control" id="p-email"></div>
+        <div class="form-group"><label class="form-label">DNI Tutor 2</label><input type="text" class="form-control" id="p-tutor2-dni"></div>
+        <div class="form-group"><label class="form-label" id="g-label-tel2">Teléfono Tutor 2</label><input type="tel" class="form-control" id="p-tel2"></div>
+        <div class="form-group"><label class="form-label">Email Tutor 2</label><input type="email" class="form-control" id="p-tutor2-email"></div>
+        <!-- Email paciente (mayor de edad) -->
+        <div class="form-group"><label class="form-label">Email paciente</label><input type="email" class="form-control" id="p-email"></div>
+        <!-- Escolar -->
+        <div class="form-section">Datos escolares</div>
+        <div class="form-group"><label class="form-label">Centro escolar</label><input type="text" class="form-control" id="p-centro-escolar"></div>
+        <div class="form-group"><label class="form-label">Curso escolar</label><input type="text" class="form-control" id="p-curso-escolar" placeholder="Ej: 3º Primaria"></div>
         <!-- Dirección -->
         <div class="form-section">Dirección</div>
         <div class="form-group span2"><label class="form-label">Dirección</label><input type="text" class="form-control" id="p-dir"></div>
@@ -1238,14 +1262,31 @@ textarea.form-control { min-height: 72px; transition: border-color .2s; }
         <!-- Clínica -->
         <div class="form-section">Datos clínicos</div>
         <div class="form-group"><label class="form-label">Terapeuta principal</label><select class="form-control" id="p-terapeuta"></select></div>
-        <div class="form-group"><label class="form-label">Fecha alta</label><input type="date" class="form-control" id="p-alta"></div>
+        <div class="form-group"><label class="form-label">Fecha alta IPSE</label><input type="date" class="form-control" id="p-alta"></div>
         <div class="form-group"><label class="form-label">¿Beca?</label>
           <select class="form-control" id="p-beca"><option value="No">No</option><option value="Sí">Sí</option></select>
         </div>
         <div class="form-group"><label class="form-label">Consentimiento</label>
           <select class="form-control" id="p-consent"><option value="Pendiente">Pendiente</option><option value="Firmado">Firmado</option></select>
         </div>
-        <div class="form-group span2"><label class="form-label">Notas</label><input type="text" class="form-control" id="p-notas"></div>
+        <div class="form-group span2"><label class="form-label">Diagnóstico</label><input type="text" class="form-control" id="p-diagnostico" placeholder="Diagnóstico principal"></div>
+        <div class="form-group"><label class="form-label">Ámbito</label>
+          <select class="form-control" id="p-ambito">
+            <option value="">—</option>
+            <option value="salud_mental">Salud Mental</option>
+            <option value="neurologia">Neurología</option>
+            <option value="otro">Otro</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Derivación</label>
+          <select class="form-control" id="p-derivacion">
+            <option value="">—</option>
+            <option value="true">Sí</option>
+            <option value="false">No</option>
+          </select>
+        </div>
+        <div class="form-group span2"><label class="form-label">Alergias</label><input type="text" class="form-control" id="p-alergias" placeholder="Alergias conocidas"></div>
+        <div class="form-group span2"><label class="form-label">Notas generales</label><input type="text" class="form-control" id="p-notas"></div>
       </div>
     </div>
     <div class="modal-footer">
@@ -2635,23 +2676,18 @@ async function abrirP360(idPaciente) {
   document.querySelectorAll('.p360-tab').forEach((t,i)=>t.classList.toggle('active',i===0));
   document.querySelectorAll('.p360-panel').forEach((t,i)=>t.classList.toggle('active',i===0));
 
-  // — Pestaña Personal —
+  // — Pestaña PERSONA / Ficha de identidad —
+  const edad = p.fecha_nacimiento ? calcEdad(p.fecha_nacimiento) : null;
   document.getElementById('p360-ficha').innerHTML = [
     p360Field('Nombre completo', ((p.nombre||'')+' '+(p.apellidos||'')).trim()),
     p360Field('Alias', p.alias),
-    p360Field('Fecha de nacimiento', p.fecha_nacimiento ? fmtFecha(p.fecha_nacimiento)+(edad?' ('+edad+')':'') : ''),
+    p360Field('Fecha de nacimiento', p.fecha_nacimiento
+      ? fmtFecha(p.fecha_nacimiento) + (edad !== null ? ` (${edad} años)` : '') : ''),
     p360Field('DNI / NIE', p.dni_paciente),
     p360Field('Dirección', [p.direccion, p.codigo_postal, p.municipio].filter(Boolean).join(', ')),
-    p360Field('Fecha de alta', fmtFecha(p.fecha_alta)),
-  ].join('');
-
-  document.getElementById('p360-contacto').innerHTML = [
-    p360Field('Tutor/a principal', p.tutor1),
-    p360Field('Teléfono', p.telefono),
-    p360Field('Email', p.email),
-    p360Field('Tutor/a secundario/a', p.tutor2),
-    p360Field('Teléfono 2', p.telefono2),
-    p360Field('DNI tutor 1', p.dni_tutor1),
+    p360Field('Centro escolar', p.centro_escolar),
+    p360Field('Curso escolar', p.curso_escolar),
+    p360Field('Fecha de alta en IPSE', fmtFecha(p.fecha_alta)),
   ].join('');
 
   const consent = p.consentimiento==='Firmado';
@@ -2662,13 +2698,47 @@ async function abrirP360(idPaciente) {
       ${p.fecha_alta?`<span style="font-size:12px;color:var(--ink-muted)">— alta ${fmtFecha(p.fecha_alta)}</span>`:''}
     </div>`;
 
-  // — Pestaña Clínica (ficha) —
+  // — Pestaña CONTACTO Y TUTORÍA —
+  document.getElementById('p360-tutor1').innerHTML = [
+    p360Field('Nombre', p.tutor1),
+    p360Field('DNI / NIE', p.dni_tutor1),
+    p360Field('Teléfono', p.telefono || p.telefono2),
+    p360Field('Email', p.tutor1_email || p.email),
+  ].join('');
+
+  const hayTutor2 = p.tutor2 || p.tutor2_dni || p.tutor2_telefono || p.tutor2_email;
+  const tutor2Card = document.getElementById('p360-tutor2-card');
+  if (hayTutor2) {
+    tutor2Card.style.display = '';
+    document.getElementById('p360-tutor2').innerHTML = [
+      p360Field('Nombre', p.tutor2),
+      p360Field('DNI / NIE', p.tutor2_dni),
+      p360Field('Teléfono', p.tutor2_telefono || p.telefono2),
+      p360Field('Email', p.tutor2_email),
+    ].join('');
+  } else {
+    tutor2Card.style.display = 'none';
+  }
+
+  // — Pestaña FICHA CLÍNICA / Profesionales —
   document.getElementById('p360-clinica-datos').innerHTML = [
     p360Field('Terapeuta principal', ter?ter.nombre:''),
     p360Field('Especialidad', ter?ter.especialidad:''),
     p360Field('Primera sesión', ''),  // se rellena tras cargar sesiones
-    p360Field('Notas clínicas', p.notas),
   ].join('');
+
+  // — Ficha clínica (campos clínicos nuevos) —
+  const ambitoLabel = {salud_mental:'Salud Mental', neurologia:'Neurología', otro:'Otro'}[p.ambito] || '';
+  document.getElementById('p360-clinica-ficha').innerHTML = [
+    p360Field('Diagnóstico', p.diagnostico),
+    p360Field('Ámbito', ambitoLabel),
+    p360Field('Derivación', p.derivacion === true ? 'Sí' : p.derivacion === false ? 'No' : ''),
+    p360Field('Alergias', p.alergias),
+    p360Field('Notas generales', p.notas),
+  ].join('');
+
+  // — PDF informes —
+  p360CargarInformes(p.id_paciente);
 
   // — Carga async de sesiones y cobros —
   p360CargarDatos(idPaciente, p);
@@ -2765,24 +2835,12 @@ function p360RenderActividad(sesiones) {
   const proximas  = sesiones.filter(s=>s.estado==='Programada' && s.fecha>=hoy).sort((a,b)=>a.fecha.localeCompare(b.fecha));
   const historico = sesiones.filter(s=>s.estado!=='Programada' || s.fecha<hoy).sort((a,b)=>b.fecha.localeCompare(a.fecha));
 
-  const total   = sesiones.length;
-  const hechas  = sesiones.filter(s=>s.estado==='Hecha');
-  const noShows = sesiones.filter(s=>s.estado==='No-show');
-  const asistPct= total>0?Math.round(hechas.length/total*100):0;
-  const proxNext= proximas[0];
-
-  document.getElementById('p360-kpis-act').innerHTML = `
-    <div class="p360-kpi"><div class="p360-kpi-l">Total citas</div><div class="p360-kpi-v">${total}</div><div class="p360-kpi-s">registradas</div></div>
-    <div class="p360-kpi green"><div class="p360-kpi-l">Asistencia</div><div class="p360-kpi-v">${asistPct}%</div><div class="p360-kpi-s">${hechas.length} hechas</div></div>
-    <div class="p360-kpi red"><div class="p360-kpi-l">No-shows</div><div class="p360-kpi-v">${noShows.length}</div><div class="p360-kpi-s">acumulados</div></div>
-    <div class="p360-kpi blue"><div class="p360-kpi-l">Próxima cita</div><div class="p360-kpi-v" style="font-size:15px;font-weight:500;padding-top:4px">${proxNext?fmtFecha(proxNext.fecha):'—'}</div><div class="p360-kpi-s">&nbsp;</div></div>`;
-
   document.getElementById('p360-proximas').innerHTML = proximas.length
     ? proximas.slice(0,5).map(s=>tlItem(s)).join('')
     : '<div class="empty-state" style="padding:14px">Sin citas próximas</div>';
 
   document.getElementById('p360-historial').innerHTML = historico.length
-    ? historico.slice(0,20).map(s=>tlItemConNota(s)).join('')
+    ? historico.map(s=>tlItemConNota(s)).join('')
     : '<div class="empty-state" style="padding:14px">Sin historial</div>';
 }
 
@@ -2863,6 +2921,91 @@ function p360NuevaNotaModal() {
   toast('Las notas se añaden desde el campo Notas al editar una sesión','ok');
 }
 
+// ── Informes PDF (Bloque 2.3) ──
+async function p360CargarInformes(idPaciente) {
+  const lista = document.getElementById('p360-informes-list');
+  if (!lista) return;
+  try {
+    const { data, error } = await window._supabase.storage
+      .from('informes')
+      .list(`pacientes/${idPaciente}`, { sortBy: { column: 'created_at', order: 'desc' } });
+    if (error || !data || !data.length) {
+      lista.innerHTML = '<div class="empty-state">Sin informes subidos</div>';
+      return;
+    }
+    lista.innerHTML = data.map(f => {
+      const url = window._supabase.storage.from('informes').getPublicUrl(`pacientes/${idPaciente}/${f.name}`).data.publicUrl;
+      return `<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)">
+        <span style="font-size:13px">📄 ${f.name}</span>
+        <a href="${url}" target="_blank" class="btn btn-secondary btn-sm">Ver</a>
+      </div>`;
+    }).join('');
+  } catch(e) {
+    lista.innerHTML = `<div class="empty-state">Error al cargar informes</div>`;
+  }
+}
+
+async function p360SubirInforme(input) {
+  const file = input.files[0];
+  if (!file || !P360.id) return;
+  if (file.type !== 'application/pdf') { toast('Solo se permiten archivos PDF','err'); return; }
+  if (file.size > 10 * 1024 * 1024) { toast('El archivo supera 10 MB','err'); return; }
+  toast('Subiendo informe…', 'ok');
+  try {
+    const path = `pacientes/${P360.id}/${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._-]/g,'_')}`;
+    const { error } = await window._supabase.storage.from('informes').upload(path, file);
+    if (error) throw error;
+    toast('Informe subido ✓', 'ok');
+    p360CargarInformes(P360.id);
+  } catch(e) {
+    toast('Error al subir: ' + e.message, 'err');
+  }
+  input.value = '';
+}
+
+// ── PDF Diario de Sesiones (Bloque 2.4) ──
+function p360DescargarDiarioPDF() {
+  const p = G.pacientes.find(x => x.id_paciente === P360.id);
+  const nombre = p ? ((p.nombre||'')+' '+(p.apellidos||'')).trim() : P360.id;
+  const sesiones = P360.sesiones.filter(s => s.estado !== 'Programada').sort((a,b)=>a.fecha.localeCompare(b.fecha));
+  if (!sesiones.length) { toast('Sin sesiones para exportar','err'); return; }
+
+  // Construir HTML para imprimir
+  const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
+  <title>Diario de Sesiones — ${nombre}</title>
+  <style>
+    body{font-family:Arial,sans-serif;font-size:12px;color:#1a1b2e;margin:32px}
+    h1{font-size:18px;margin-bottom:4px}
+    .sub{color:#666;font-size:11px;margin-bottom:24px}
+    table{width:100%;border-collapse:collapse;margin-top:8px}
+    th{background:#f5f5f5;padding:8px;text-align:left;font-size:11px;text-transform:uppercase;border-bottom:2px solid #ddd}
+    td{padding:8px;border-bottom:1px solid #eee;vertical-align:top}
+    .nota{color:#444;font-style:italic;font-size:11px;margin-top:3px}
+    @media print{body{margin:16px}}
+  </style></head><body>
+  <h1>Diario de Sesiones</h1>
+  <div class="sub">${nombre} · Exportado el ${fmtFecha(new Date().toISOString())}</div>
+  <table>
+    <thead><tr><th>Fecha</th><th>Hora</th><th>Estado</th><th>Terapeuta</th><th>Notas</th></tr></thead>
+    <tbody>
+      ${sesiones.map(s=>`<tr>
+        <td>${fmtFecha(s.fecha)}</td>
+        <td>${(s.hora||'').slice(0,5)}</td>
+        <td>${s.estado}</td>
+        <td>${nomTer(s.id_terapeuta)}</td>
+        <td><span class="nota">${s.notas||''}</span></td>
+      </tr>`).join('')}
+    </tbody>
+  </table>
+  </body></html>`;
+
+  const win = window.open('', '_blank');
+  win.document.write(html);
+  win.document.close();
+  win.focus();
+  setTimeout(() => win.print(), 400);
+}
+
 function editarPacienteActual() {
   if (P360.id) editarPaciente(P360.id);
 }
@@ -2879,7 +3022,7 @@ function calcEdad(fechaNac) {
 function abrirModalPaciente() {
   document.getElementById('p-id').value='';
   document.getElementById('modal-pac-titulo').textContent='Nuevo paciente';
-  ['p-nombre','p-apellidos','p-alias','p-fnac','p-dni-pac','p-tutor1','p-dni-tutor1','p-tel','p-tutor2','p-tel2','p-email','p-dir','p-cp','p-municipio','p-notas'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  ['p-nombre','p-apellidos','p-alias','p-fnac','p-dni-pac','p-tutor1','p-dni-tutor1','p-tel','p-tutor1-email','p-tutor2','p-tutor2-dni','p-tel2','p-tutor2-email','p-email','p-centro-escolar','p-curso-escolar','p-dir','p-cp','p-municipio','p-diagnostico','p-alergias','p-notas'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   document.getElementById('p-beca').value='No';
   document.getElementById('p-consent').value='Pendiente';
   document.getElementById('p-alta').value=new Date().toISOString().split('T')[0];
@@ -2910,12 +3053,21 @@ function editarPaciente(id) {
   document.getElementById('p-tutor1').value      = p.tutor1||'';
   document.getElementById('p-dni-tutor1').value  = p.dni_tutor1||'';
   document.getElementById('p-tel').value         = p.telefono||'';
+  document.getElementById('p-tutor1-email').value= p.tutor1_email||'';
   document.getElementById('p-tutor2').value      = p.tutor2||'';
+  document.getElementById('p-tutor2-dni').value  = p.tutor2_dni||'';
   document.getElementById('p-tel2').value        = p.telefono2||'';
+  document.getElementById('p-tutor2-email').value= p.tutor2_email||'';
   document.getElementById('p-email').value       = p.email||'';
+  document.getElementById('p-centro-escolar').value = p.centro_escolar||'';
+  document.getElementById('p-curso-escolar').value  = p.curso_escolar||'';
   document.getElementById('p-dir').value         = p.direccion||'';
   document.getElementById('p-cp').value          = p.codigo_postal||'';
   document.getElementById('p-municipio').value   = p.municipio||'';
+  document.getElementById('p-diagnostico').value = p.diagnostico||'';
+  document.getElementById('p-ambito').value      = p.ambito||'';
+  document.getElementById('p-derivacion').value  = p.derivacion===true?'true':p.derivacion===false?'false':'';
+  document.getElementById('p-alergias').value    = p.alergias||'';
   document.getElementById('p-notas').value       = p.notas||'';
   document.getElementById('p-beca').value        = p.es_beca||'No';
   document.getElementById('p-consent').value     = p.consentimiento||'Pendiente';
@@ -2958,13 +3110,22 @@ async function guardarPaciente() {
     dni_paciente:     document.getElementById('p-dni-pac').value.trim(),
     tutor1,
     dni_tutor1:       document.getElementById('p-dni-tutor1').value.trim(),
+    tutor1_email:     document.getElementById('p-tutor1-email').value.trim(),
     telefono:         tel,
     tutor2:           document.getElementById('p-tutor2').value.trim(),
+    tutor2_dni:       document.getElementById('p-tutor2-dni').value.trim(),
     telefono2:        telTutor,
+    tutor2_email:     document.getElementById('p-tutor2-email').value.trim(),
     email:            document.getElementById('p-email').value.trim(),
+    centro_escolar:   document.getElementById('p-centro-escolar').value.trim(),
+    curso_escolar:    document.getElementById('p-curso-escolar').value.trim(),
     direccion:        dir,
     codigo_postal:    document.getElementById('p-cp').value.trim(),
     municipio:        document.getElementById('p-municipio').value.trim(),
+    diagnostico:      document.getElementById('p-diagnostico').value.trim(),
+    ambito:           document.getElementById('p-ambito').value||null,
+    derivacion:       document.getElementById('p-derivacion').value===''?null:document.getElementById('p-derivacion').value==='true',
+    alergias:         document.getElementById('p-alergias').value.trim(),
     notas:            document.getElementById('p-notas').value.trim(),
     es_beca:          document.getElementById('p-beca').value,
     consentimiento:   document.getElementById('p-consent').value,
