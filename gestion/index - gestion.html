@@ -882,7 +882,7 @@ textarea.form-control { min-height: 72px; transition: border-color .2s; }
       <!-- Pestañas -->
       <div class="p360-tabs">
         <div class="p360-tab active" onclick="p360Tab('personal',this)">Persona</div>
-        <div class="p360-tab" onclick="p360Tab('contacto',this)">Contacto y Tutoría</div>
+        <div class="p360-tab" onclick="p360Tab('contacto',this)">Contacto Tutores</div>
         <div class="p360-tab" onclick="p360Tab('clinico',this)">Ficha Clínica</div>
         <div class="p360-tab" onclick="p360Tab('economico',this)">Económico</div>
         <div class="p360-tab" onclick="p360Tab('actividad',this)">Diario de Sesiones</div>
@@ -1122,56 +1122,41 @@ textarea.form-control { min-height: 72px; transition: border-color .2s; }
 
 <!-- MODAL SESIÓN -->
 <div class="modal-overlay" id="modal-sesion">
-  <div class="modal modal-sesion-wide">
+  <div class="modal" style="max-width:95vw;width:95vw;max-height:95vh;display:flex;flex-direction:column">
     <div class="modal-header">
       <div class="modal-title" id="modal-sesion-titulo">Registrar sesión</div>
       <button class="modal-close" onclick="cerrarModal('modal-sesion')">×</button>
     </div>
     <div class="modal-body" style="padding:0">
       <input type="hidden" id="s-id">
-      <!-- Bloque administrativo -->
+      <!-- Campos ocultos — se conservan para guardarSesion() pero no se muestran -->
+      <input type="hidden" id="s-paciente">
+      <input type="hidden" id="s-paciente-txt">
+      <input type="hidden" id="s-terapeuta">
+      <input type="hidden" id="s-servicio">
+      <input type="hidden" id="s-estado">
+      <input type="hidden" id="s-fin">
+      <input type="hidden" id="s-cobrado">
+      <input type="hidden" id="s-importe">
+      <input type="hidden" id="s-bono">
+      <input type="hidden" id="s-beca">
+      <input type="hidden" id="s-fecha-cierre">
+      <!-- Fecha y hora -->
       <div style="padding:20px 26px 16px;border-bottom:1px solid var(--border)">
-        <div class="form-grid">
+        <div class="form-grid" style="grid-template-columns:1fr 1fr">
           <div class="form-group"><label class="form-label">Fecha *</label><input type="date" class="form-control" id="s-fecha"></div>
           <div class="form-group"><label class="form-label">Hora</label><input type="time" class="form-control" id="s-hora" step="300"></div>
-          <div class="form-group"><label class="form-label">Paciente *</label>
-            <div class="pac-search-wrap" id="psw-sesion">
-              <input type="text" class="form-control" id="s-paciente-txt" placeholder="Escribe nombre…" oninput="pacSearch(this,'s-paciente','psd-sesion')" autocomplete="off" onblur="setTimeout(()=>hidePacDrop('psd-sesion'),200)">
-              <input type="hidden" id="s-paciente">
-              <div class="pac-search-drop" id="psd-sesion"></div>
-            </div>
-          </div>
-          <div class="form-group"><label class="form-label">Terapeuta</label><select class="form-control" id="s-terapeuta"></select></div>
-          <div class="form-group"><label class="form-label">Servicio</label><select class="form-control" id="s-servicio"></select></div>
-          <div class="form-group"><label class="form-label">Estado</label>
-            <select class="form-control" id="s-estado">
-              <option>Programada</option><option>Hecha</option><option>Cancelada</option><option>No-show</option>
-            </select>
-          </div>
-          <div class="form-group"><label class="form-label">Financiación</label>
-            <select class="form-control" id="s-fin">
-              <option value="SUELTA">Particular</option><option value="BONO">Bono</option>
-              <option value="BECA">Beca Junta</option><option value="ADECCO">ADECCO</option>
-            </select>
-          </div>
-          <div class="form-group"><label class="form-label">¿Cobrado?</label>
-            <select class="form-control" id="s-cobrado"><option value="No">No</option><option value="Sí">Sí</option></select>
-          </div>
-          <div class="form-group"><label class="form-label">Importe (€)</label><input type="number" class="form-control" id="s-importe" step="0.01"></div>
-          <div class="form-group"><label class="form-label">ID Bono vinculado</label><input type="text" class="form-control" id="s-bono" placeholder="Ej: B001"></div>
-          <div class="form-group"><label class="form-label">ID Beca vinculada</label><input type="text" class="form-control" id="s-beca" placeholder="Ej: BCA001"></div>
-          <div class="form-group"><label class="form-label">Fecha cierre</label><input type="date" class="form-control" id="s-fecha-cierre"></div>
         </div>
       </div>
-      <!-- Bloque notas clínicas tipo folio -->
-      <div style="padding:16px 26px 20px;background:var(--cream)">
+      <!-- Notas clínicas -->
+      <div style="padding:16px 26px 20px;background:var(--cream);flex:1;display:flex;flex-direction:column">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
           <label class="form-label" style="margin:0;font-size:11px;color:var(--blue)">📋 NOTAS CLÍNICAS</label>
           <span style="font-size:11px;color:var(--ink-muted)" id="s-notas-chars">0 caracteres</span>
         </div>
-        <textarea class="form-control" id="s-notas" rows="10"
+        <textarea class="form-control" id="s-notas" rows="18"
           placeholder="Observaciones clínicas, evolución de la sesión, objetivos trabajados, respuesta del paciente, propuestas para próxima sesión…"
-          style="resize:vertical;min-height:200px;line-height:1.7;font-size:14px;background:#fff;border-color:var(--border);font-family:'DM Sans',sans-serif"
+          style="flex:1;resize:none;min-height:400px;line-height:1.7;font-size:14px;background:#fff;border-color:var(--border);font-family:'DM Sans',sans-serif"
           oninput="autoExpand(this);document.getElementById('s-notas-chars').textContent=this.value.length+' caracteres'"></textarea>
       </div>
     </div>
@@ -1244,10 +1229,20 @@ textarea.form-control { min-height: 72px; transition: border-color .2s; }
         <div class="form-group"><label class="form-label">DNI Tutor 1</label><input type="text" class="form-control" id="p-dni-tutor1"></div>
         <div class="form-group"><label class="form-label" id="g-label-tel">Teléfono *</label><input type="tel" class="form-control" id="p-tel"></div>
         <div class="form-group"><label class="form-label">Email Tutor 1</label><input type="email" class="form-control" id="p-tutor1-email"></div>
+        <div class="form-group span2"><label class="form-label">Dirección Tutor 1</label><input type="text" class="form-control" id="p-tutor1-dir"></div>
         <div class="form-group"><label class="form-label">Tutor 2</label><input type="text" class="form-control" id="p-tutor2"></div>
         <div class="form-group"><label class="form-label">DNI Tutor 2</label><input type="text" class="form-control" id="p-tutor2-dni"></div>
         <div class="form-group"><label class="form-label" id="g-label-tel2">Teléfono Tutor 2</label><input type="tel" class="form-control" id="p-tel2"></div>
         <div class="form-group"><label class="form-label">Email Tutor 2</label><input type="email" class="form-control" id="p-tutor2-email"></div>
+        <div class="form-group span2"><label class="form-label">Dirección Tutor 2</label><input type="text" class="form-control" id="p-tutor2-dir"></div>
+        <div class="form-group"><label class="form-label">Facturar a</label>
+          <select class="form-control" id="p-facturacion-tutor">
+            <option value="">—</option>
+            <option value="tutor1">Tutor 1</option>
+            <option value="tutor2">Tutor 2</option>
+            <option value="ambos">Ambos</option>
+          </select>
+        </div>
         <!-- Email paciente (mayor de edad) -->
         <div class="form-group"><label class="form-label">Email paciente</label><input type="email" class="form-control" id="p-email"></div>
         <!-- Escolar -->
@@ -1262,7 +1257,8 @@ textarea.form-control { min-height: 72px; transition: border-color .2s; }
         <!-- Clínica -->
         <div class="form-section">Datos clínicos</div>
         <div class="form-group"><label class="form-label">Terapeuta principal</label><select class="form-control" id="p-terapeuta"></select></div>
-        <div class="form-group"><label class="form-label">Fecha alta IPSE</label><input type="date" class="form-control" id="p-alta"></div>
+        <div class="form-group"><label class="form-label">Fecha entrada IPSE</label><input type="date" class="form-control" id="p-alta"></div>
+        <div class="form-group"><label class="form-label">Fecha alta médica</label><input type="date" class="form-control" id="p-alta-medica"></div>
         <div class="form-group"><label class="form-label">¿Beca?</label>
           <select class="form-control" id="p-beca"><option value="No">No</option><option value="Sí">Sí</option></select>
         </div>
@@ -2319,7 +2315,8 @@ function editarSesion(id) {
   const s = G.sesiones.find(x=>x.id_cita===id); if (!s) return;
   document.getElementById('s-id').value=id;
   document.getElementById('modal-sesion-titulo').textContent='Editar sesión · '+id;
-  document.getElementById('s-fecha').value=s.fecha||'';
+  const fechaNorm = s.fecha ? String(s.fecha).replace(/T.*$/,'').replace(/\s.*$/,'').trim() : '';
+  document.getElementById('s-fecha').value = fechaNorm;
   document.getElementById('s-hora').value=(s.hora||'').slice(0,5);
   setPacienteEnModal('s-paciente-txt','s-paciente',s.id_paciente);
   document.getElementById('s-terapeuta').value=s.id_terapeuta||'';
@@ -2676,19 +2673,31 @@ async function abrirP360(idPaciente) {
   document.querySelectorAll('.p360-tab').forEach((t,i)=>t.classList.toggle('active',i===0));
   document.querySelectorAll('.p360-panel').forEach((t,i)=>t.classList.toggle('active',i===0));
 
-  // — Pestaña PERSONA / Ficha de identidad —
-  const edad = p.fecha_nacimiento ? calcEdad(p.fecha_nacimiento) : null;
+  // — Pestaña PERSONA / 3 bloques —
+  // edad ya declarada arriba para p360-meta (calcEdad devuelve string "X años")
+  const edadNum = p.fecha_nacimiento ? calcEdad(p.fecha_nacimiento) : null;
+  const esMenorP = edadNum !== null ? parseInt(edadNum) < 18 : false;
+
   document.getElementById('p360-ficha').innerHTML = [
     p360Field('Nombre completo', ((p.nombre||'')+' '+(p.apellidos||'')).trim()),
     p360Field('Alias', p.alias),
     p360Field('Fecha de nacimiento', p.fecha_nacimiento
-      ? fmtFecha(p.fecha_nacimiento) + (edad !== null ? ` (${edad} años)` : '') : ''),
+      ? fmtFecha(p.fecha_nacimiento) + (edadNum !== null ? ` (${edadNum} años)` : '') : ''),
     p360Field('DNI / NIE', p.dni_paciente),
     p360Field('Dirección', [p.direccion, p.codigo_postal, p.municipio].filter(Boolean).join(', ')),
-    p360Field('Centro escolar', p.centro_escolar),
-    p360Field('Curso escolar', p.curso_escolar),
-    p360Field('Fecha de alta en IPSE', fmtFecha(p.fecha_alta)),
-  ].join('');
+    p360Field('Fecha de entrada en IPSE', fmtFecha(p.fecha_alta)),
+    p360Field('Fecha de alta médica', fmtFecha(p.fecha_alta_medica)),
+  ].join('') + (esMenorP ? `
+    <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border)">
+      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-muted);margin-bottom:10px">Tutores</div>
+      ${p360Field('Tutor 1', p.tutor1)}
+      ${p360Field('Tutor 2', p.tutor2)}
+    </div>` : '') + `
+    <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border)">
+      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-muted);margin-bottom:10px">Datos escolares</div>
+      ${p360Field('Centro escolar', p.centro_escolar)}
+      ${p360Field('Curso escolar', p.curso_escolar)}
+    </div>`;
 
   const consent = p.consentimiento==='Firmado';
   document.getElementById('p360-consent').innerHTML = `
@@ -2698,15 +2707,19 @@ async function abrirP360(idPaciente) {
       ${p.fecha_alta?`<span style="font-size:12px;color:var(--ink-muted)">— alta ${fmtFecha(p.fecha_alta)}</span>`:''}
     </div>`;
 
-  // — Pestaña CONTACTO Y TUTORÍA —
+  // — Pestaña CONTACTO TUTORES —
+  const tituloTutor1 = esMenorP ? 'Tutor 1' : 'Datos de contacto';
   document.getElementById('p360-tutor1').innerHTML = [
     p360Field('Nombre', p.tutor1),
     p360Field('DNI / NIE', p.dni_tutor1),
-    p360Field('Teléfono', p.telefono || p.telefono2),
+    p360Field('Teléfono', p.telefono),
     p360Field('Email', p.tutor1_email || p.email),
+    p360Field('Dirección', p.tutor1_direccion || [p.direccion, p.codigo_postal, p.municipio].filter(Boolean).join(', ')),
   ].join('');
+  const tutor1Card = document.getElementById('p360-tutor1').closest('.p360-card');
+  if (tutor1Card) { const st = tutor1Card.querySelector('.p360-stitle'); if (st) st.textContent = tituloTutor1; }
 
-  const hayTutor2 = p.tutor2 || p.tutor2_dni || p.tutor2_telefono || p.tutor2_email;
+  const hayTutor2 = p.tutor2 || p.tutor2_dni || p.tutor2_telefono || p.tutor2_email || p.tutor2_direccion;
   const tutor2Card = document.getElementById('p360-tutor2-card');
   if (hayTutor2) {
     tutor2Card.style.display = '';
@@ -2715,9 +2728,22 @@ async function abrirP360(idPaciente) {
       p360Field('DNI / NIE', p.tutor2_dni),
       p360Field('Teléfono', p.tutor2_telefono || p.telefono2),
       p360Field('Email', p.tutor2_email),
+      p360Field('Dirección', p.tutor2_direccion),
     ].join('');
+    // Card facturación
+    let factCard = document.getElementById('p360-facturacion-card');
+    if (!factCard) {
+      factCard = document.createElement('div');
+      factCard.className = 'p360-card'; factCard.id = 'p360-facturacion-card';
+      factCard.innerHTML = `<div class="p360-stitle">Facturación</div><div class="p360-fg" id="p360-facturacion"></div>`;
+      tutor2Card.after(factCard);
+    }
+    const factLabel = {tutor1:'Tutor 1', tutor2:'Tutor 2', ambos:'Ambos tutores'}[p.facturacion_tutor] || '—';
+    document.getElementById('p360-facturacion').innerHTML = p360Field('Emitir factura a', factLabel);
+    factCard.style.display = '';
   } else {
     tutor2Card.style.display = 'none';
+    const fc = document.getElementById('p360-facturacion-card'); if (fc) fc.style.display = 'none';
   }
 
   // — Pestaña FICHA CLÍNICA / Profesionales —
@@ -2845,6 +2871,8 @@ function p360RenderActividad(sesiones) {
 }
 
 function p360RenderNotas(sesiones) {
+  const lista = document.getElementById('p360-notas-list');
+  if (!lista) return; // elemento eliminado en el nuevo diseño
   const conNotas = sesiones.filter(s=>s.estado==='Hecha' && s.notas && s.notas.trim())
                            .sort((a,b)=>b.fecha.localeCompare(a.fecha));
   document.getElementById('p360-notas-list').innerHTML = conNotas.length
@@ -2909,6 +2937,9 @@ function tlItemConNota(s) {
         <span class="tl-srv">${s.servicio||''}</span>
         <span class="badge ${badge}" style="font-size:10px">${s.estado}</span>
         ${s.financiacion&&s.financiacion!=='SUELTA'?`<span class="badge badge-bono" style="font-size:9px">${s.financiacion}</span>`:''}
+        <button onclick="event.stopPropagation();p360ImprimirSesion('${s.id_cita}')" 
+          style="margin-left:auto;background:#f0f4ff;border:1px solid #dde5ff;cursor:pointer;font-size:11px;color:var(--azul);padding:3px 8px;border-radius:4px;white-space:nowrap"
+          title="Imprimir esta sesión">🖨️ Imprimir</button>
       </div>
       <div class="tl-ter">${nomTer(s.id_terapeuta)}</div>
       ${notaTrazabilidad?`<div style="font-size:11px;color:var(--ink-muted);margin-top:2px;font-style:italic;opacity:0.75">🔄 ${notaTrazabilidad}</div>`:''}
@@ -2926,22 +2957,25 @@ async function p360CargarInformes(idPaciente) {
   const lista = document.getElementById('p360-informes-list');
   if (!lista) return;
   try {
-    const { data, error } = await window._supabase.storage
-      .from('informes')
-      .list(`pacientes/${idPaciente}`, { sortBy: { column: 'created_at', order: 'desc' } });
-    if (error || !data || !data.length) {
+    const r = await fetch(`${SUPA_URL}/storage/v1/object/list/informes`, {
+      method: 'POST',
+      headers: { apikey: SUPA_KEY, Authorization: 'Bearer '+SUPA_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prefix: `pacientes/${idPaciente}/`, limit: 100, sortBy: { column: 'created_at', order: 'desc' } })
+    });
+    const data = await r.json();
+    if (!r.ok || !Array.isArray(data) || !data.length) {
       lista.innerHTML = '<div class="empty-state">Sin informes subidos</div>';
       return;
     }
-    lista.innerHTML = data.map(f => {
-      const url = window._supabase.storage.from('informes').getPublicUrl(`pacientes/${idPaciente}/${f.name}`).data.publicUrl;
+    lista.innerHTML = data.filter(f=>f.name&&f.name!=='.emptyFolderPlaceholder').map(f => {
+      const url = `${SUPA_URL}/storage/v1/object/public/informes/pacientes/${idPaciente}/${f.name}`;
       return `<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)">
         <span style="font-size:13px">📄 ${f.name}</span>
         <a href="${url}" target="_blank" class="btn btn-secondary btn-sm">Ver</a>
       </div>`;
-    }).join('');
+    }).join('') || '<div class="empty-state">Sin informes subidos</div>';
   } catch(e) {
-    lista.innerHTML = `<div class="empty-state">Error al cargar informes</div>`;
+    lista.innerHTML = '<div class="empty-state">Sin informes subidos</div>';
   }
 }
 
@@ -2952,9 +2986,14 @@ async function p360SubirInforme(input) {
   if (file.size > 10 * 1024 * 1024) { toast('El archivo supera 10 MB','err'); return; }
   toast('Subiendo informe…', 'ok');
   try {
-    const path = `pacientes/${P360.id}/${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._-]/g,'_')}`;
-    const { error } = await window._supabase.storage.from('informes').upload(path, file);
-    if (error) throw error;
+    const nombre = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._-]/g,'_')}`;
+    const path = `pacientes/${P360.id}/${nombre}`;
+    const r = await fetch(`${SUPA_URL}/storage/v1/object/informes/${path}`, {
+      method: 'POST',
+      headers: { apikey: SUPA_KEY, Authorization: 'Bearer '+SUPA_KEY, 'Content-Type': 'application/pdf' },
+      body: file
+    });
+    if (!r.ok) { const e = await r.json(); throw new Error(e.message||r.status); }
     toast('Informe subido ✓', 'ok');
     p360CargarInformes(P360.id);
   } catch(e) {
@@ -2963,47 +3002,102 @@ async function p360SubirInforme(input) {
   input.value = '';
 }
 
-// ── PDF Diario de Sesiones (Bloque 2.4) ──
+function p360GenerarHTMLDiario(sesiones, paciente, titulo) {
+  const nombre = paciente ? ((paciente.nombre||'')+' '+(paciente.apellidos||'')).trim() : '';
+  const dni = paciente?.dni_paciente || '';
+  const dir = [paciente?.direccion, paciente?.codigo_postal, paciente?.municipio].filter(Boolean).join(', ');
+  const hoy = fmtFecha(new Date().toISOString());
+  const ter = paciente?.terapeuta_principal ? G.terapeutas.find(t=>t.id_terapeuta===paciente.terapeuta_principal) : null;
+  const terNom = ter ? ter.nombre : 'Inés Ferreira';
+
+  const sesHtml = sesiones.map((s, i) => {
+    const fecha = fmtFecha(s.fecha);
+    const hora = (s.hora||'').slice(0,5);
+    const terapeutaSesion = nomTer(s.id_terapeuta);
+    const notas = s.notas ? s.notas.replace(/\n/g,'<br>') : '<em style="color:#999">Sin notas registradas</em>';
+    return `
+      <div style="margin-bottom:28px;page-break-inside:avoid">
+        <div style="display:flex;justify-content:space-between;border-bottom:1px solid #ccc;padding-bottom:4px;margin-bottom:10px">
+          <strong style="font-size:13px">${fecha}${hora?' · '+hora:''}</strong>
+          <span style="font-size:12px;color:#555">${terapeutaSesion}</span>
+        </div>
+        <div style="font-size:13px;line-height:1.8;color:#1a1b2e">${notas}</div>
+      </div>`;
+  }).join('');
+
+  return `<!DOCTYPE html><html><head><meta charset="utf-8">
+  <title>${titulo} — ${nombre}</title>
+  <style>
+    body{font-family:Arial,sans-serif;font-size:12px;color:#1a1b2e;margin:40px}
+    .cabecera{display:flex;justify-content:space-between;margin-bottom:24px}
+    .cab-izq{font-size:11px;line-height:1.7;color:#333}
+    .cab-der{text-align:right;font-size:11px;line-height:1.7;color:#333}
+    .cab-logo{font-size:16px;font-weight:700;color:#1a1b2e;letter-spacing:-0.5px}
+    .cab-logo span{color:#00B4D8}
+    table.header{width:100%;border-collapse:collapse;margin-bottom:20px}
+    table.header td{padding:6px 10px;border:1px solid #ccc;font-size:11px}
+    table.header .label{background:#f5f5f5;font-weight:700;text-transform:uppercase;font-size:10px;letter-spacing:.05em}
+    h2{font-size:14px;border-bottom:2px solid #1a1b2e;padding-bottom:6px;margin:24px 0 20px}
+    .pie{margin-top:40px;padding-top:16px;border-top:1px solid #ccc;font-size:9px;color:#777;line-height:1.6}
+    @media print{body{margin:20px}.pie{position:fixed;bottom:0;width:100%}}
+  </style></head><body>
+
+  <div class="cabecera">
+    <div class="cab-izq">
+      <img src="data:image/png;base64,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1MvMgloyGtaAMnl4jmuu4tUltqZdGXW8bhBO5kdbNvcB3ZDXHp06uORzVB2s5zHljR3a55UTXTJaW7Da18bZHHvXlWdht5Zm9VJtXd+41BRWn0Gqk9KjfJ6QxmYo9vg4+BK2YkZtJ3twOpz0UeXUQs4raSZSuzTi3yiMh2QWhp2/LyXC6rt9ztOprxo2hEpj1BVQTQOAOAwucXfQCcH2NVku0Xw7xLbF1/5BHLmclTBspk5a0P3SW72fTeIJ15DOlPrpGNbuc9ob5k8llrmuGWkEeYUWcR6Sgj1Fpe0XyV8Omo4XMc7eWMdI1oDQ9w6cgPrK+/Ap9YDf6Zjp32SKqAtj5MkFu5+dpPUYDD9KubjycRwS3w18L0rTkCqH7NAwn2gO8dMqJI1vXmRWik1ERdFcpERERERERERERERERERERYIB6ptCyiIsbQm0LKIixtHkm0LKIixtGMJtCyiIsbQm0LKIiLAACyiIsEA9U2hZREWNoQtCyiIsbRlNoWURFjaE2hZREWNoTaFlERY2hC0HqsoiLG0JtCyiIsbQgAHRZREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREX/9k=" style="height:60px;margin-bottom:14px;display:block">
+      <strong>CENTRO IPSE, INSTITUTO PSICOEDUCATIVO.</strong><br>
+      26036593H. NºCol. AO07537. NICA 60.178<br>
+      PASEO DE CARLOS CANO 51, 1ºB<br>
+      18110 HÍJAR-LAS GABIAS<br>
+      Tel. 658609996
+    </div>
+    <div class="cab-der" style="text-align:right">
+      <br><br><br>
+      <strong>${nombre}</strong><br>
+      ${dni}<br>
+      ${dir}<br>
+      <br><strong>${hoy}</strong>
+    </div>
+  </div>
+
+  <table class="header">
+    <tr>
+      <td class="label">Historia Clínica</td>
+      <td class="label" style="text-align:right">${terNom.toUpperCase()}</td>
+    </tr>
+    <tr>
+      <td colspan="2" class="label">SEGUIMIENTOS</td>
+    </tr>
+  </table>
+
+  ${sesHtml}
+
+  <div class="pie">
+    Expedido por: ${terNom} · En cumplimiento del RGPD 2016/679 y LOPDGDD 3/2018. Los datos son tratados con la máxima confidencialidad por Centro Instituto Psicoeducativo IPSE. Responsable: Inés Ferreira Reyes. inesferrei@cop.es
+  </div>
+  </body></html>`;
+}
+
 function p360DescargarDiarioPDF() {
   const p = G.pacientes.find(x => x.id_paciente === P360.id);
-  const nombre = p ? ((p.nombre||'')+' '+(p.apellidos||'')).trim() : P360.id;
-  const sesiones = P360.sesiones.filter(s => s.estado !== 'Programada').sort((a,b)=>a.fecha.localeCompare(b.fecha));
+  const sesiones = (P360.sesiones||[]).filter(s => s.estado !== 'Programada').sort((a,b)=>a.fecha.localeCompare(b.fecha));
   if (!sesiones.length) { toast('Sin sesiones para exportar','err'); return; }
-
-  // Construir HTML para imprimir
-  const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
-  <title>Diario de Sesiones — ${nombre}</title>
-  <style>
-    body{font-family:Arial,sans-serif;font-size:12px;color:#1a1b2e;margin:32px}
-    h1{font-size:18px;margin-bottom:4px}
-    .sub{color:#666;font-size:11px;margin-bottom:24px}
-    table{width:100%;border-collapse:collapse;margin-top:8px}
-    th{background:#f5f5f5;padding:8px;text-align:left;font-size:11px;text-transform:uppercase;border-bottom:2px solid #ddd}
-    td{padding:8px;border-bottom:1px solid #eee;vertical-align:top}
-    .nota{color:#444;font-style:italic;font-size:11px;margin-top:3px}
-    @media print{body{margin:16px}}
-  </style></head><body>
-  <h1>Diario de Sesiones</h1>
-  <div class="sub">${nombre} · Exportado el ${fmtFecha(new Date().toISOString())}</div>
-  <table>
-    <thead><tr><th>Fecha</th><th>Hora</th><th>Estado</th><th>Terapeuta</th><th>Notas</th></tr></thead>
-    <tbody>
-      ${sesiones.map(s=>`<tr>
-        <td>${fmtFecha(s.fecha)}</td>
-        <td>${(s.hora||'').slice(0,5)}</td>
-        <td>${s.estado}</td>
-        <td>${nomTer(s.id_terapeuta)}</td>
-        <td><span class="nota">${s.notas||''}</span></td>
-      </tr>`).join('')}
-    </tbody>
-  </table>
-  </body></html>`;
-
+  const html = p360GenerarHTMLDiario(sesiones, p, 'Diario de Sesiones');
   const win = window.open('', '_blank');
   win.document.write(html);
   win.document.close();
-  win.focus();
-  setTimeout(() => win.print(), 400);
+  setTimeout(() => win.print(), 500);
+}
+
+function p360ImprimirSesion(idCita) {
+  const p = G.pacientes.find(x => x.id_paciente === P360.id);
+  const s = (P360.sesiones||[]).find(x => x.id_cita === idCita);
+  if (!s) return;
+  const html = p360GenerarHTMLDiario([s], p, 'Sesión '+idCita);
+  const win = window.open('', '_blank');
+  win.document.write(html);
+  win.document.close();
+  setTimeout(() => win.print(), 500);
 }
 
 function editarPacienteActual() {
@@ -3022,7 +3116,7 @@ function calcEdad(fechaNac) {
 function abrirModalPaciente() {
   document.getElementById('p-id').value='';
   document.getElementById('modal-pac-titulo').textContent='Nuevo paciente';
-  ['p-nombre','p-apellidos','p-alias','p-fnac','p-dni-pac','p-tutor1','p-dni-tutor1','p-tel','p-tutor1-email','p-tutor2','p-tutor2-dni','p-tel2','p-tutor2-email','p-email','p-centro-escolar','p-curso-escolar','p-dir','p-cp','p-municipio','p-diagnostico','p-alergias','p-notas'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  ['p-nombre','p-apellidos','p-alias','p-fnac','p-dni-pac','p-tutor1','p-dni-tutor1','p-tel','p-tutor1-email','p-tutor1-dir','p-tutor2','p-tutor2-dni','p-tel2','p-tutor2-email','p-tutor2-dir','p-email','p-centro-escolar','p-curso-escolar','p-dir','p-cp','p-municipio','p-diagnostico','p-alergias','p-notas','p-alta-medica'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   document.getElementById('p-beca').value='No';
   document.getElementById('p-consent').value='Pendiente';
   document.getElementById('p-alta').value=new Date().toISOString().split('T')[0];
@@ -3054,10 +3148,13 @@ function editarPaciente(id) {
   document.getElementById('p-dni-tutor1').value  = p.dni_tutor1||'';
   document.getElementById('p-tel').value         = p.telefono||'';
   document.getElementById('p-tutor1-email').value= p.tutor1_email||'';
+  document.getElementById('p-tutor1-dir').value  = p.tutor1_direccion||'';
   document.getElementById('p-tutor2').value      = p.tutor2||'';
   document.getElementById('p-tutor2-dni').value  = p.tutor2_dni||'';
   document.getElementById('p-tel2').value        = p.telefono2||'';
   document.getElementById('p-tutor2-email').value= p.tutor2_email||'';
+  document.getElementById('p-tutor2-dir').value  = p.tutor2_direccion||'';
+  document.getElementById('p-facturacion-tutor').value = p.facturacion_tutor||'';
   document.getElementById('p-email').value       = p.email||'';
   document.getElementById('p-centro-escolar').value = p.centro_escolar||'';
   document.getElementById('p-curso-escolar').value  = p.curso_escolar||'';
@@ -3072,6 +3169,7 @@ function editarPaciente(id) {
   document.getElementById('p-beca').value        = p.es_beca||'No';
   document.getElementById('p-consent').value     = p.consentimiento||'Pendiente';
   document.getElementById('p-alta').value        = p.fecha_alta||'';
+  document.getElementById('p-alta-medica').value = p.fecha_alta_medica||'';
   document.getElementById('p-terapeuta').value   = p.terapeuta_principal||'';
   document.getElementById('p-btn-eliminar').style.display='inline-flex';
   document.getElementById('p-btn-guardar').textContent='Guardar cambios';
@@ -3111,11 +3209,14 @@ async function guardarPaciente() {
     tutor1,
     dni_tutor1:       document.getElementById('p-dni-tutor1').value.trim(),
     tutor1_email:     document.getElementById('p-tutor1-email').value.trim(),
+    tutor1_direccion: document.getElementById('p-tutor1-dir').value.trim(),
     telefono:         tel,
     tutor2:           document.getElementById('p-tutor2').value.trim(),
     tutor2_dni:       document.getElementById('p-tutor2-dni').value.trim(),
     telefono2:        telTutor,
     tutor2_email:     document.getElementById('p-tutor2-email').value.trim(),
+    tutor2_direccion: document.getElementById('p-tutor2-dir').value.trim(),
+    facturacion_tutor: document.getElementById('p-facturacion-tutor').value||null,
     email:            document.getElementById('p-email').value.trim(),
     centro_escolar:   document.getElementById('p-centro-escolar').value.trim(),
     curso_escolar:    document.getElementById('p-curso-escolar').value.trim(),
@@ -3130,6 +3231,7 @@ async function guardarPaciente() {
     es_beca:          document.getElementById('p-beca').value,
     consentimiento:   document.getElementById('p-consent').value,
     fecha_alta:       document.getElementById('p-alta').value||null,
+    fecha_alta_medica: document.getElementById('p-alta-medica').value||null,
     terapeuta_principal: document.getElementById('p-terapeuta').value||null,
   };
   try {

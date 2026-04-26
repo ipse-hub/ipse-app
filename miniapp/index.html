@@ -177,7 +177,7 @@
   .pac-input { width: 100%; border: 1.5px solid var(--border); border-radius: 8px; padding: 9px 12px; font-family: inherit; font-size: 14px; color: var(--text); background: var(--bg); transition: border-color .15s; outline: none; }
   .pac-input:focus { border-color: var(--azul); background: #fff; }
   .pac-input.seleccionado { border-color: var(--verde); background: #f7ffe8; }
-  .pac-lista { position: absolute; top: calc(100% + 4px); left: 0; right: 0; background: #fff; border: 1.5px solid var(--azul); border-radius: 8px; max-height: 200px; overflow-y: auto; z-index: 9999; box-shadow: 0 4px 16px rgba(16,6,159,.12); display: none; }
+  .pac-lista { position: fixed; background: #fff; border: 1.5px solid var(--azul); border-radius: 8px; max-height: 200px; overflow-y: auto; z-index: 9999; box-shadow: 0 4px 16px rgba(16,6,159,.12); display: none; }
   .pac-lista.visible { display: block; }
   .pac-item { padding: 9px 12px; cursor: pointer; font-size: 14px; border-bottom: 1px solid var(--border); }
   .pac-item:last-child { border-bottom: none; }
@@ -324,56 +324,94 @@
   Varias citas
 </button>
 
-<!-- MODAL NUEVO PACIENTE -->
+<!-- MODAL NUEVO PACIENTE (formulario completo — mismo que panel gestión) -->
 <div class="overlay" id="modal-paciente">
-  <div class="modal" style="max-height:90vh;overflow-y:auto;display:flex;flex-direction:column;">
-    <div class="modal-header">
+  <div class="modal" style="max-width:560px;max-height:92vh;overflow-y:auto;display:flex;flex-direction:column;">
+    <div class="modal-header" style="position:sticky;top:0;background:#fff;z-index:10;padding-bottom:12px;border-bottom:1px solid var(--border);margin-bottom:16px">
       <span class="modal-title">Nuevo paciente</span>
       <button class="modal-close" onclick="cerrarModal('modal-paciente')">✕</button>
     </div>
-    <div class="form-row">
-      <div class="form-group">
-        <label class="form-label">Nombre *</label>
-        <input type="text" id="mp-nombre" class="form-control" placeholder="Nombre" oninput="comprobarPacienteSimilar();mpActualizarMenor()">
-      </div>
-      <div class="form-group">
-        <label class="form-label">Apellidos *</label>
-        <input type="text" id="mp-apellidos" class="form-control" placeholder="Apellidos" oninput="comprobarPacienteSimilar()">
-      </div>
+    <!-- ID auto-generado -->
+    <div style="font-size:11px;color:var(--muted);margin-bottom:12px;background:var(--bg);border-radius:6px;padding:6px 10px;font-family:'DM Mono',monospace">
+      ID: <strong id="mp-id-preview" style="color:var(--azul)">Se asignará automáticamente</strong>
     </div>
+
+    <!-- SECCIÓN: Datos personales -->
+    <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);border-top:1px solid var(--border);padding-top:12px;margin-bottom:10px">Datos personales</div>
     <div class="form-row">
-      <div class="form-group">
-        <label class="form-label">Fecha de nacimiento</label>
-        <input type="date" id="mp-fnac" class="form-control" oninput="mpActualizarMenor()">
-      </div>
-      <div class="form-group">
-        <label class="form-label" id="mp-label-tel">Teléfono *</label>
-        <input type="tel" id="mp-tel" class="form-control" placeholder="600 000 000">
-      </div>
+      <div class="form-group"><label class="form-label">Nombre *</label><input type="text" id="mp-nombre" class="form-control" placeholder="Nombre" oninput="comprobarPacienteSimilar();mpActualizarMenor()"></div>
+      <div class="form-group"><label class="form-label">Apellidos *</label><input type="text" id="mp-apellidos" class="form-control" placeholder="Apellidos" oninput="comprobarPacienteSimilar()"></div>
+    </div>
+    <div class="form-group"><label class="form-label">Alias <span style="font-weight:400;text-transform:none;font-size:11px">(nombre corto en agenda)</span></label><input type="text" id="mp-alias" class="form-control" placeholder="Ej: Juanito"></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Fecha de nacimiento</label><input type="date" id="mp-fnac" class="form-control" oninput="mpActualizarMenor()"></div>
+      <div class="form-group"><label class="form-label">DNI paciente</label><input type="text" id="mp-dni-pac" class="form-control" placeholder="00000000X"></div>
     </div>
     <!-- Badge menor/mayor -->
     <div id="mp-badge-edad" style="display:none;margin-bottom:10px;padding:7px 12px;border-radius:6px;font-size:12px;font-weight:600"></div>
+    <!-- Aviso duplicado -->
     <div id="mp-aviso-similar" style="display:none;background:#fff3cd;border:1px solid #f0c040;border-radius:6px;padding:10px 12px;margin-bottom:10px;font-size:13px;color:#7a5c00;">
       <strong>⚠️ Posible duplicado</strong> — ya existe un paciente con nombre similar:
       <div id="mp-aviso-lista" style="margin-top:6px;line-height:1.7"></div>
     </div>
-    <!-- Sección tutor — siempre visible, obligatoria si menor -->
-    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--azul);margin-bottom:8px;margin-top:4px">Tutor / Representante legal</div>
+
+    <!-- SECCIÓN: Tutores y contacto -->
+    <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);border-top:1px solid var(--border);padding-top:12px;margin-bottom:10px">Tutores y contacto</div>
     <div class="form-row">
-      <div class="form-group"><label class="form-label" id="mp-label-tutor1">Tutor 1</label><input type="text" id="mp-tutor1" class="form-control" placeholder="Nombre completo tutor"></div>
-      <div class="form-group"><label class="form-label" id="mp-label-tel-tutor">Teléfono tutor</label><input type="tel" id="mp-tel2" class="form-control" placeholder="600 000 000"></div>
+      <div class="form-group"><label class="form-label" id="mp-label-tutor1">Tutor 1</label><input type="text" id="mp-tutor1" class="form-control" placeholder="Nombre completo"></div>
+      <div class="form-group"><label class="form-label">DNI Tutor 1</label><input type="text" id="mp-dni-tutor1" class="form-control" placeholder="00000000X"></div>
     </div>
-    <div class="form-group"><label class="form-label">Email</label><input type="email" id="mp-email" class="form-control" placeholder="email@ejemplo.com"></div>
-    <div class="form-group">
-      <label class="form-label">Terapeuta principal</label>
-      <select id="mp-terapeuta" class="form-control"></select>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label" id="mp-label-tel">Teléfono *</label><input type="tel" id="mp-tel" class="form-control" placeholder="600 000 000"></div>
+      <div class="form-group"><label class="form-label">Email Tutor 1</label><input type="email" id="mp-tutor1-email" class="form-control" placeholder="email@ejemplo.com"></div>
+    </div>
+    <div class="form-group"><label class="form-label">Dirección Tutor 1</label><input type="text" id="mp-tutor1-dir" class="form-control" placeholder="Calle, número…"></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Tutor 2</label><input type="text" id="mp-tutor2" class="form-control" placeholder="Nombre completo"></div>
+      <div class="form-group"><label class="form-label">DNI Tutor 2</label><input type="text" id="mp-tutor2-dni" class="form-control" placeholder="00000000X"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label" id="mp-label-tel-tutor">Teléfono Tutor 2</label><input type="tel" id="mp-tel2" class="form-control" placeholder="600 000 000"></div>
+      <div class="form-group"><label class="form-label">Email Tutor 2</label><input type="email" id="mp-tutor2-email" class="form-control" placeholder="email@ejemplo.com"></div>
+    </div>
+    <div class="form-group"><label class="form-label">Dirección Tutor 2</label><input type="text" id="mp-tutor2-dir" class="form-control" placeholder="Calle, número…"></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Facturar a</label>
+        <select id="mp-facturacion-tutor" class="form-control"><option value="">—</option><option value="tutor1">Tutor 1</option><option value="tutor2">Tutor 2</option><option value="ambos">Ambos</option></select>
+      </div>
+      <div class="form-group"><label class="form-label">Email paciente</label><input type="email" id="mp-email" class="form-control" placeholder="email@ejemplo.com"></div>
+    </div>
+
+    <!-- SECCIÓN: Datos escolares -->
+    <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);border-top:1px solid var(--border);padding-top:12px;margin-bottom:10px">Datos escolares</div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Centro escolar</label><input type="text" id="mp-centro-escolar" class="form-control" placeholder="Nombre del colegio"></div>
+      <div class="form-group"><label class="form-label">Curso escolar</label><input type="text" id="mp-curso-escolar" class="form-control" placeholder="Ej: 3º Primaria"></div>
+    </div>
+
+    <!-- SECCIÓN: Datos clínicos -->
+    <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);border-top:1px solid var(--border);padding-top:12px;margin-bottom:10px">Datos clínicos</div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Terapeuta principal</label><select id="mp-terapeuta" class="form-control"></select></div>
+      <div class="form-group"><label class="form-label">Fecha entrada IPSE</label><input type="date" id="mp-alta" class="form-control"></div>
     </div>
     <div class="form-row">
       <div class="form-group"><label class="form-label">¿Beca?</label><select id="mp-beca" class="form-control"><option value="No">No</option><option value="Sí">Sí</option></select></div>
       <div class="form-group"><label class="form-label">Consentimiento</label><select id="mp-consent" class="form-control"><option value="Pendiente">Pendiente</option><option value="Firmado">Firmado</option></select></div>
     </div>
-    <div class="form-group"><label class="form-label">Notas</label><input type="text" id="mp-notas" class="form-control" placeholder="Observaciones"></div>
-    <div class="modal-footer">
+    <div class="form-group"><label class="form-label">Diagnóstico</label><input type="text" id="mp-diagnostico" class="form-control" placeholder="Diagnóstico principal"></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Ámbito</label>
+        <select id="mp-ambito" class="form-control"><option value="">—</option><option value="salud_mental">Salud Mental</option><option value="neurologia">Neurología</option><option value="otro">Otro</option></select>
+      </div>
+      <div class="form-group"><label class="form-label">Derivación</label>
+        <select id="mp-derivacion" class="form-control"><option value="">—</option><option value="true">Sí</option><option value="false">No</option></select>
+      </div>
+    </div>
+    <div class="form-group"><label class="form-label">Alergias</label><input type="text" id="mp-alergias" class="form-control" placeholder="Alergias conocidas"></div>
+    <div class="form-group"><label class="form-label">Notas generales</label><input type="text" id="mp-notas" class="form-control" placeholder="Observaciones"></div>
+
+    <div class="modal-footer" style="position:sticky;bottom:0;background:#fff;padding-top:14px;border-top:1px solid var(--border);margin-top:8px">
       <button class="btn btn-secondary" onclick="cerrarModal('modal-paciente')">Cancelar</button>
       <button class="btn btn-primary" id="btn-guardar-paciente" onclick="guardarNuevoPaciente()">Crear paciente</button>
     </div>
@@ -1398,18 +1436,20 @@ async function guardarNuevaCita() {
     const cadaDias=parseInt(document.getElementById('n-recur-cada').value)||7;
     if (!hasta){toast('Indica la fecha hasta la que repetir','err');return;}
     const festivos=[...parseFestivos(document.getElementById('n-recur-festivos').value),...diasDeAgosto(new Date().getFullYear()),...diasDeAgosto(new Date().getFullYear()+1)];
-    const fechas=calcularFechasRecurrentes(fecha,hasta,cadaDias,festivos);
-    if (!fechas.length){toast('No hay fechas válidas en ese rango','err');return;}
-    const btn=document.getElementById('btn-crear-cita'); btn.disabled=true; btn.textContent=`⏳ Creando ${fechas.length} citas…`;
+    // Bug 2 fix: calcularFechasRecurrentes genera fechas POSTERIORES a la base.
+    // La fecha base se añade manualmente al principio → total = 1 + N recurrentes.
+    // Antes se creaba la base por separado Y se iteraba el array → N+1 citas de más.
+    const fechasRecur=calcularFechasRecurrentes(fecha,hasta,cadaDias,festivos);
+    const todasFechas=[fecha,...fechasRecur]; // base incluida en el array
+    if (todasFechas.length<1){toast('No hay fechas válidas en ese rango','err');return;}
+    const btn=document.getElementById('btn-crear-cita'); btn.disabled=true; btn.textContent=`⏳ Creando ${todasFechas.length} citas…`;
     const idSerie = 'SER-' + Date.now(); // identificador único de serie
     try {
-      // Primera cita (la fecha base) + las recurrentes comparten el mismo id_compromiso
-      await crearCita({fecha,hora,idPaciente:paciente,idServicio:servicio,tipoFin,idFin:'',notas,idSerie});
-      for (const f of fechas) await crearCita({fecha:f,hora,idPaciente:paciente,idServicio:servicio,tipoFin,idFin:'',notas,idSerie});
-      toast(`${fechas.length+1} citas creadas ✓`,'ok'); cerrarModal('modal-nueva'); recargarVista();
+      for (const f of todasFechas) await crearCita({fecha:f,hora,idPaciente:paciente,idServicio:servicio,tipoFin,idFin:'',notas,idSerie});
+      toast(`${todasFechas.length} cita${todasFechas.length>1?'s':''} creada${todasFechas.length>1?'s':''} ✓`,'ok'); cerrarModal('modal-nueva'); recargarVista();
     }
     catch(err){toast('Error: '+err.message,'err');}
-    finally{btn.disabled=false;btn.textContent='Crear citas';}
+    finally{btn.disabled=false;btn.textContent='Crear cita';}
     return;
   }
   const btn=document.getElementById('btn-crear-cita'); btn.disabled=true; btn.textContent='⏳ Creando…';
@@ -1810,16 +1850,33 @@ async function verificarBonoDisponible(idPaciente, tipoFin) {
 //  MODAL NUEVO PACIENTE
 // ═══════════════════════════════════════════════════════════════
 function abrirModalPaciente() {
-  ['mp-nombre','mp-apellidos','mp-tutor1','mp-tel','mp-tel2','mp-email','mp-notas','mp-fnac'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
-  document.getElementById('mp-beca').value='No'; document.getElementById('mp-consent').value='Pendiente';
+  // Limpiar todos los campos del formulario completo
+  ['mp-nombre','mp-apellidos','mp-alias','mp-fnac','mp-dni-pac',
+   'mp-tutor1','mp-dni-tutor1','mp-tel','mp-tutor1-email','mp-tutor1-dir',
+   'mp-tutor2','mp-tutor2-dni','mp-tel2','mp-tutor2-email','mp-tutor2-dir',
+   'mp-facturacion-tutor','mp-email',
+   'mp-centro-escolar','mp-curso-escolar',
+   'mp-diagnostico','mp-alergias','mp-notas'
+  ].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  document.getElementById('mp-beca').value='No';
+  document.getElementById('mp-consent').value='Pendiente';
+  document.getElementById('mp-ambito').value='';
+  document.getElementById('mp-derivacion').value='';
+  // Fecha entrada IPSE = hoy por defecto
+  document.getElementById('mp-alta').value = new Date().toISOString().split('T')[0];
   document.getElementById('mp-badge-edad').style.display='none';
   document.getElementById('mp-aviso-similar').style.display='none';
-  // Labels por defecto (mayor de edad)
+  // Labels por defecto
   document.getElementById('mp-label-tel').textContent='Teléfono *';
   document.getElementById('mp-label-tutor1').textContent='Tutor 1';
-  document.getElementById('mp-label-tel-tutor').textContent='Teléfono tutor';
+  document.getElementById('mp-label-tel-tutor').textContent='Teléfono Tutor 2';
+  // Terapeuta
   const sel=document.getElementById('mp-terapeuta');
   sel.innerHTML='<option value="">— Selecciona terapeuta —</option>'+G.terapeutas.filter(t=>t.Activa==='Sí').map(t=>`<option value="${t.ID_Terapeuta}"${t.ID_Terapeuta===G.miId?' selected':''}>${t.Nombre}</option>`).join('');
+  // Preview ID
+  generarId('pacientes','id_paciente','P').then(id=>{
+    const el=document.getElementById('mp-id-preview');if(el)el.textContent=id;
+  }).catch(()=>{});
   abrirOverlay('modal-paciente');
 }
 function mpActualizarMenor() {
@@ -1837,13 +1894,13 @@ function mpActualizarMenor() {
     badge.textContent = `👶 Menor de edad (${edad} años) — se requieren datos del tutor`;
     labelTel.textContent = 'Teléfono paciente';
     labelTutor.textContent = 'Tutor 1 *';
-    labelTelTutor.textContent = 'Teléfono tutor *';
+    labelTelTutor.textContent = 'Teléfono Tutor 2 *';
   } else {
     badge.style.background='#f0fff0'; badge.style.color='#2d7a2d'; badge.style.border='1px solid #97D700';
     badge.textContent = `✓ Mayor de edad (${edad} años)`;
     labelTel.textContent = 'Teléfono *';
     labelTutor.textContent = 'Tutor 1';
-    labelTelTutor.textContent = 'Teléfono tutor';
+    labelTelTutor.textContent = 'Teléfono Tutor 2';
   }
 }
 function calcEdadSimple(fnac) {
@@ -1859,7 +1916,7 @@ async function guardarNuevoPaciente() {
   const tel       = document.getElementById('mp-tel').value.trim();
   const fnac      = document.getElementById('mp-fnac').value;
   const tutor1    = document.getElementById('mp-tutor1').value.trim();
-  const telTutor  = document.getElementById('mp-tel2').value.trim();
+  const telTutor2 = document.getElementById('mp-tel2').value.trim();
 
   // Validación campos mínimos
   if (!nombre)    { toast('El nombre es obligatorio','err'); return; }
@@ -1867,8 +1924,8 @@ async function guardarNuevoPaciente() {
 
   const esMenor = fnac && calcEdadSimple(fnac) < 18;
   if (esMenor) {
-    if (!tutor1)   { toast('El tutor 1 es obligatorio para menores de edad','err'); return; }
-    if (!telTutor) { toast('El teléfono del tutor es obligatorio para menores de edad','err'); return; }
+    if (!tutor1)    { toast('El tutor 1 es obligatorio para menores de edad','err'); return; }
+    if (!telTutor2) { toast('El teléfono del tutor es obligatorio para menores de edad','err'); return; }
   } else {
     if (!tel) { toast('El teléfono es obligatorio','err'); return; }
   }
@@ -1876,19 +1933,36 @@ async function guardarNuevoPaciente() {
   const btn=document.getElementById('btn-guardar-paciente'); btn.disabled=true; btn.textContent='⏳ Creando…';
   try {
     const id=await generarId('pacientes','id_paciente','P');
+    const derivVal=document.getElementById('mp-derivacion').value;
     await supaPost('pacientes',{
-      id_paciente:id, nombre, apellidos,
+      id_paciente:id,
+      nombre, apellidos,
+      alias: document.getElementById('mp-alias').value.trim(),
+      fecha_nacimiento: fnac || null,
+      dni_paciente: document.getElementById('mp-dni-pac').value.trim() || null,
       telefono: tel,
       tutor1,
-      telefono2: telTutor,
-      fecha_nacimiento: fnac || null,
-      email: document.getElementById('mp-email').value.trim(),
-      fecha_alta: new Date().toISOString().split('T')[0],
-      terapeuta_principal: document.getElementById('mp-terapeuta').value,
+      tutor1_dni: document.getElementById('mp-dni-tutor1').value.trim() || null,
+      tutor1_email: document.getElementById('mp-tutor1-email').value.trim() || null,
+      tutor1_direccion: document.getElementById('mp-tutor1-dir').value.trim() || null,
+      tutor2: document.getElementById('mp-tutor2').value.trim() || null,
+      tutor2_dni: document.getElementById('mp-tutor2-dni').value.trim() || null,
+      telefono2: telTutor2 || null,
+      tutor2_email: document.getElementById('mp-tutor2-email').value.trim() || null,
+      tutor2_direccion: document.getElementById('mp-tutor2-dir').value.trim() || null,
+      facturacion_tutor: document.getElementById('mp-facturacion-tutor').value || null,
+      email: document.getElementById('mp-email').value.trim() || null,
+      centro_escolar: document.getElementById('mp-centro-escolar').value.trim() || null,
+      curso_escolar: document.getElementById('mp-curso-escolar').value.trim() || null,
+      terapeuta_principal: document.getElementById('mp-terapeuta').value || null,
+      fecha_alta: document.getElementById('mp-alta').value || new Date().toISOString().split('T')[0],
       es_beca: document.getElementById('mp-beca').value,
       consentimiento: document.getElementById('mp-consent').value,
-      notas: document.getElementById('mp-notas').value.trim(),
-      alias: '',
+      diagnostico: document.getElementById('mp-diagnostico').value.trim() || null,
+      ambito: document.getElementById('mp-ambito').value || null,
+      derivacion: derivVal===''?null:(derivVal==='true'),
+      alergias: document.getElementById('mp-alergias').value.trim() || null,
+      notas: document.getElementById('mp-notas').value.trim() || null,
     });
     toast('Paciente creado — '+id,'ok'); cerrarModal('modal-paciente');
     const pac=await supaGet('pacientes','order=apellidos.asc,nombre.asc');
@@ -1938,8 +2012,30 @@ const PAC_CTX={
 };
 function pacNombre(p){return(p.Alias||'').trim()||((p.Nombre||'').trim())||p.Nombre||'';}
 function pacResaltar(texto,query){if(!query)return texto;const re=new RegExp('('+query.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','gi');return texto.replace(re,'<em>$1</em>');}
-function pacFiltrar(ctx){const ids=PAC_CTX[ctx];const query=document.getElementById(ids.txt).value.trim().toLowerCase();document.getElementById(ids.hid).value='';document.getElementById(ids.txt).classList.remove('seleccionado');const lista=document.getElementById(ids.lista);const items=query.length<1?G.pacientes.slice(0,40):G.pacientes.filter(p=>pacNombre(p).toLowerCase().includes(query));if(!items.length){lista.innerHTML='<div class="pac-vacio">Sin resultados</div>';}else{lista.innerHTML=items.map(p=>`<div class="pac-item" data-id="${p.ID_Paciente}" onmousedown="pacSeleccionar('${ctx}','${p.ID_Paciente}',this)">${pacResaltar(pacNombre(p),query)}</div>`).join('');}lista.classList.add('visible');if(ctx==='cita')ocultarBonoAviso();}
-function pacAbrir(ctx){pacFiltrar(ctx);}
+function pacFiltrar(ctx){const ids=PAC_CTX[ctx];const query=document.getElementById(ids.txt).value.trim().toLowerCase();document.getElementById(ids.hid).value='';document.getElementById(ids.txt).classList.remove('seleccionado');const lista=document.getElementById(ids.lista);
+  // Recalcular posición fixed en cada filtrado (scroll del modal puede haberla movido)
+  const rect=document.getElementById(ids.txt).getBoundingClientRect();
+  lista.style.top=(rect.bottom+4)+'px';lista.style.left=rect.left+'px';lista.style.width=rect.width+'px';lista.style.bottom='';
+  const spaceBelow=window.innerHeight-rect.bottom-8;if(spaceBelow<210){lista.style.top='';lista.style.bottom=(window.innerHeight-rect.top+4)+'px';}
+  const items=query.length<1?G.pacientes.slice(0,40):G.pacientes.filter(p=>pacNombre(p).toLowerCase().includes(query));if(!items.length){lista.innerHTML='<div class="pac-vacio">Sin resultados</div>';}else{lista.innerHTML=items.map(p=>`<div class="pac-item" data-id="${p.ID_Paciente}" onmousedown="pacSeleccionar('${ctx}','${p.ID_Paciente}',this)">${pacResaltar(pacNombre(p),query)}</div>`).join('');}lista.classList.add('visible');if(ctx==='cita')ocultarBonoAviso();}
+function pacAbrir(ctx){
+  const ids=PAC_CTX[ctx];
+  const input=document.getElementById(ids.txt);
+  const lista=document.getElementById(ids.lista);
+  const rect=input.getBoundingClientRect();
+  // Posición fixed: alineada con el input, ancho igual al input
+  lista.style.top=(rect.bottom+4)+'px';
+  lista.style.left=rect.left+'px';
+  lista.style.width=rect.width+'px';
+  lista.style.bottom='';
+  // Si la lista cae fuera del viewport inferior, abrirla hacia arriba
+  const spaceBelow=window.innerHeight-rect.bottom-8;
+  if(spaceBelow<210){
+    lista.style.top='';
+    lista.style.bottom=(window.innerHeight-rect.top+4)+'px';
+  }
+  pacFiltrar(ctx);
+}
 function pacBlur(ctx){setTimeout(()=>{document.getElementById(PAC_CTX[ctx].lista).classList.remove('visible');if(!document.getElementById(PAC_CTX[ctx].hid).value){document.getElementById(PAC_CTX[ctx].txt).value='';document.getElementById(PAC_CTX[ctx].txt).classList.remove('seleccionado');}},150);}
 function pacSeleccionar(ctx,idPaciente,el){const ids=PAC_CTX[ctx];const p=G.pacientes.find(p=>p.ID_Paciente===idPaciente);if(!p)return;document.getElementById(ids.hid).value=idPaciente;document.getElementById(ids.txt).value=pacNombre(p);document.getElementById(ids.txt).classList.add('seleccionado');document.getElementById(ids.lista).classList.remove('visible');if(ctx==='cita'){const tipoFin=derivarTipoFin(document.getElementById('n-servicio').value);if(tipoFin==='BONO'||tipoFin==='BECA')verificarBonoDisponible(idPaciente,tipoFin);}}
 function pacReset(ctx){const ids=PAC_CTX[ctx];document.getElementById(ids.txt).value='';document.getElementById(ids.hid).value='';document.getElementById(ids.txt).classList.remove('seleccionado');document.getElementById(ids.lista).classList.remove('visible');}
