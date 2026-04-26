@@ -565,8 +565,8 @@
             </select>
           </div>
           <div class="form-group" style="margin-bottom:8px">
-            <label class="form-label">Hasta fecha</label>
-            <input type="date" id="n-recur-hasta" class="form-control" oninput="actualizarPreviewRecur()">
+            <label class="form-label">Nº de citas total <span style="font-weight:400;text-transform:none;font-size:11px">(incluyendo esta)</span></label>
+            <input type="number" id="n-recur-num" class="form-control" min="2" max="60" placeholder="Ej: 4" oninput="actualizarPreviewRecur()">
           </div>
         </div>
         <div class="form-group" style="margin-bottom:0">
@@ -1403,7 +1403,7 @@ function abrirModalNueva(fechaPref, horaPref) {
   document.getElementById('n-notas').value    = '';
   document.getElementById('n-recur-check').checked = false;
   document.getElementById('n-recur-panel').classList.remove('visible');
-  document.getElementById('n-recur-hasta').value = '';
+  document.getElementById('n-recur-num').value = '';
   document.getElementById('n-recur-festivos').value = '';
   document.getElementById('n-recur-preview').innerHTML = '';
   document.getElementById('btn-crear-cita').textContent = 'Crear cita';
@@ -1432,18 +1432,14 @@ async function guardarNuevaCita() {
   if (!fecha||!hora||!paciente||!servicio){toast('Completa fecha, hora, paciente y servicio','err');return;}
   if ((tipoFin==='BONO'||tipoFin==='BECA') && !(await verificarBonoDisponible(paciente,tipoFin))) return;
   if (recur) {
-    const hasta=document.getElementById('n-recur-hasta').value;
+    const num=parseInt(document.getElementById('n-recur-num').value)||0;
     const cadaDias=parseInt(document.getElementById('n-recur-cada').value)||7;
-    if (!hasta){toast('Indica la fecha hasta la que repetir','err');return;}
-    const festivos=[...parseFestivos(document.getElementById('n-recur-festivos').value),...diasDeAgosto(new Date().getFullYear()),...diasDeAgosto(new Date().getFullYear()+1)];
-    // Bug 2 fix: calcularFechasRecurrentes genera fechas POSTERIORES a la base.
-    // La fecha base se añade manualmente al principio → total = 1 + N recurrentes.
-    // Antes se creaba la base por separado Y se iteraba el array → N+1 citas de más.
-    const fechasRecur=calcularFechasRecurrentes(fecha,hasta,cadaDias,festivos);
-    const todasFechas=[fecha,...fechasRecur]; // base incluida en el array
-    if (todasFechas.length<1){toast('No hay fechas válidas en ese rango','err');return;}
+    if (!num||num<1){toast('Indica el número de citas','err');return;}
+    const festivosExtra=[...parseFestivos(document.getElementById('n-recur-festivos').value),...diasDeAgosto(new Date().getFullYear()),...diasDeAgosto(new Date().getFullYear()+1)];
+    const recurrentes=calcularFechasDesdeNumero(fecha,num,cadaDias,festivosExtra);
+    const todasFechas=[fecha,...recurrentes]; // exactamente num citas
     const btn=document.getElementById('btn-crear-cita'); btn.disabled=true; btn.textContent=`⏳ Creando ${todasFechas.length} citas…`;
-    const idSerie = 'SER-' + Date.now(); // identificador único de serie
+    const idSerie='SER-'+Date.now();
     try {
       for (const f of todasFechas) await crearCita({fecha:f,hora,idPaciente:paciente,idServicio:servicio,tipoFin,idFin:'',notas,idSerie});
       toast(`${todasFechas.length} cita${todasFechas.length>1?'s':''} creada${todasFechas.length>1?'s':''} ✓`,'ok'); cerrarModal('modal-nueva'); recargarVista();
@@ -2058,8 +2054,24 @@ function diasDeAgosto(anio){const dias=[];const dm=new Date(anio,8,0).getDate();
 function parseFestivos(txt){return(txt||'').split(',').map(s=>{s=s.trim();if(!s)return null;const m=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);if(m)return`${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`;return s;}).filter(Boolean);}
 const FESTIVOS_ES=['2026-01-01','2026-01-06','2026-04-02','2026-04-03','2026-05-01','2026-08-15','2026-10-12','2026-11-01','2026-12-06','2026-12-08','2026-12-25','2027-01-01','2027-01-06','2027-03-25','2027-03-26','2027-05-01','2027-08-15','2027-10-12','2027-11-01','2027-12-06','2027-12-08','2027-12-25'];
 function calcularFechasRecurrentes(fechaInicio,fechaHasta,cadaDias,festivosExtra){const festivos=new Set([...FESTIVOS_ES,...festivosExtra]);const fechas=[];const hasta=new Date(fechaHasta+'T12:00:00');let cur=new Date(fechaInicio+'T12:00:00');cur.setDate(cur.getDate()+cadaDias);while(cur<=hasta){const iso=cur.toISOString().slice(0,10);if(!festivos.has(iso)){fechas.push(iso);}else{let sig=new Date(cur);for(let i=1;i<=6;i++){sig.setDate(sig.getDate()+1);const isoS=sig.toISOString().slice(0,10);if(!festivos.has(isoS)&&sig<=hasta){fechas.push(isoS);break;}}}cur.setDate(cur.getDate()+cadaDias);}return fechas;}
-function onRecurChange(){const checked=document.getElementById('n-recur-check').checked;document.getElementById('n-recur-panel').classList.toggle('visible',checked);document.getElementById('btn-crear-cita').textContent=checked?'Crear citas':'Crear cita';if(checked){const hastaEl=document.getElementById('n-recur-hasta');if(!hastaEl.value){const anio=new Date().getFullYear();hastaEl.value=`${anio}-07-31`;}actualizarPreviewRecur();}}
-function actualizarPreviewRecur(){const fecha=document.getElementById('n-fecha').value;const hasta=document.getElementById('n-recur-hasta').value;const cadaDias=parseInt(document.getElementById('n-recur-cada').value)||7;const preview=document.getElementById('n-recur-preview');if(!fecha||!hasta||hasta<=fecha){preview.innerHTML='';return;}const festivos=[...parseFestivos(document.getElementById('n-recur-festivos').value),...diasDeAgosto(new Date().getFullYear()),...diasDeAgosto(new Date().getFullYear()+1)];const fechas=calcularFechasRecurrentes(fecha,hasta,cadaDias,festivos);const total=fechas.length+1;if(!fechas.length){preview.innerHTML='<strong>Sin repeticiones</strong> en ese rango.';return;}const etiquetas=[fecha,...fechas].map(f=>{const d=new Date(f+'T12:00:00');return DIAS_ES[d.getDay()]+' '+d.getDate()+'/'+(d.getMonth()+1);});preview.innerHTML=`<strong>${total} citas</strong> en total: `+etiquetas.join(' · ');}
+function onRecurChange(){const checked=document.getElementById('n-recur-check').checked;document.getElementById('n-recur-panel').classList.toggle('visible',checked);document.getElementById('btn-crear-cita').textContent=checked?'Crear citas':'Crear cita';if(checked){const numEl=document.getElementById('n-recur-num');if(!numEl.value)numEl.value='4';actualizarPreviewRecur();}}
+function calcularFechasDesdeNumero(fechaBase,numTotal,cadaDias,festivosExtra){
+  // Genera exactamente (numTotal-1) fechas posteriores a fechaBase, saltando festivos
+  const festivos=new Set([...FESTIVOS_ES,...festivosExtra]);
+  const fechas=[];
+  let cur=new Date(fechaBase+'T12:00:00');
+  while(fechas.length<numTotal-1){
+    cur=new Date(cur);cur.setDate(cur.getDate()+cadaDias);
+    const iso=cur.toISOString().slice(0,10);
+    if(!festivos.has(iso)){fechas.push(iso);}
+    else{// buscar el siguiente día hábil
+      let sig=new Date(cur);
+      for(let i=1;i<=6;i++){sig.setDate(sig.getDate()+1);const isoS=sig.toISOString().slice(0,10);if(!festivos.has(isoS)){fechas.push(isoS);cur=new Date(sig);break;}}
+    }
+  }
+  return fechas;
+}
+function actualizarPreviewRecur(){const fecha=document.getElementById('n-fecha').value;const num=parseInt(document.getElementById('n-recur-num').value)||0;const cadaDias=parseInt(document.getElementById('n-recur-cada').value)||7;const preview=document.getElementById('n-recur-preview');if(!fecha||num<1){preview.innerHTML='';return;}if(num===1){preview.innerHTML='<strong>1 cita</strong> — solo la fecha seleccionada (sin repeticiones).';return;}const festivosExtra=[...parseFestivos(document.getElementById('n-recur-festivos').value),...diasDeAgosto(new Date().getFullYear()),...diasDeAgosto(new Date().getFullYear()+1)];const recur=calcularFechasDesdeNumero(fecha,num,cadaDias,festivosExtra);const todas=[fecha,...recur];const etiquetas=todas.map(f=>{const d=new Date(f+'T12:00:00');return DIAS_ES[d.getDay()]+' '+d.getDate()+'/'+(d.getMonth()+1);});preview.innerHTML=`<strong>${todas.length} citas</strong> en total: `+etiquetas.join(' · ');}
 function togglePanelRepetir(){const panel=document.getElementById('mc-repetir-panel');const abierto=panel.style.display!=='none';panel.style.display=abierto?'none':'block';if(!abierto){const anio=new Date().getFullYear();document.getElementById('mc-rep-hasta').value=`${anio}-07-31`;actualizarPreviewRepetir();}}
 function cerrarPanelRepetir(){document.getElementById('mc-repetir-panel').style.display='none';document.getElementById('mc-rep-preview').innerHTML='';}
 function actualizarPreviewRepetir(){const cita=G.citaActual;if(!cita)return;const hasta=document.getElementById('mc-rep-hasta').value;const cadaDias=parseInt(document.getElementById('mc-rep-cada').value)||7;const preview=document.getElementById('mc-rep-preview');if(!hasta||hasta<=cita.Fecha){preview.innerHTML='';return;}const agosto=[...diasDeAgosto(new Date().getFullYear()),...diasDeAgosto(new Date().getFullYear()+1)];const fechas=calcularFechasRecurrentes(cita.Fecha,hasta,cadaDias,agosto);if(!fechas.length){preview.innerHTML='<strong>Sin repeticiones</strong> en ese rango.';return;}const etiquetas=fechas.map(f=>{const d=new Date(f+'T12:00:00');return DIAS_ES[d.getDay()]+' '+d.getDate()+'/'+(d.getMonth()+1);});preview.innerHTML=`<strong>${fechas.length} citas nuevas</strong>: `+etiquetas.join(' · ');}
