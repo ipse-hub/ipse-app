@@ -4684,17 +4684,39 @@ function agRenderSemana() {
       slot.className = 'ag-day-slot';
       col.appendChild(slot);
     }
-    // Citas del día
+    // Bug 3 fix: calcular subcolumnas para citas solapadas en la vista semana
     const citasDia = citas.filter(c => c.fecha === fechaStr);
-    citasDia.forEach(c => {
-      const el = agCitaEl(c);
-      if (el) col.appendChild(el);
-    });
+    if (citasDia.length) {
+      const DUR_MIN = 50; // duración asumida si no hay dato
+      // Para cada cita, calcular su columna dentro del grupo de solapamiento
+      const asign = new Map();
+      const ordenadas = [...citasDia].sort((a,b)=>{
+        const ha=a.hora||'00:00',hb=b.hora||'00:00';return ha.localeCompare(hb);
+      });
+      ordenadas.forEach(cita=>{
+        const [hh,mm]=(cita.hora||'00:00').split(':').map(Number);
+        const hmA=hh*60+(mm||0);
+        const finA=hmA+(cita.duracion_minutos||DUR_MIN);
+        const grupo=ordenadas.filter(c2=>{
+          const [h2,m2]=(c2.hora||'00:00').split(':').map(Number);
+          const hmB=h2*60+(m2||0);const finB=hmB+(c2.duracion_minutos||DUR_MIN);
+          return hmA<finB&&finA>hmB;
+        });
+        grupo.sort((a,b)=>(a.id_cita||'').localeCompare(b.id_cita||''));
+        if(!asign.has(cita))asign.set(cita,{col:grupo.indexOf(cita),totalCols:grupo.length});
+      });
+      asign.forEach((pos,c)=>{
+        const el=agCitaElConPos(c,pos.col,pos.totalCols);
+        if(el)col.appendChild(el);
+      });
+    }
     body.appendChild(col);
   }
 }
 
-function agCitaEl(c) {
+function agCitaEl(c) { return agCitaElConPos(c, 0, 1); }
+
+function agCitaElConPos(c, col, totalCols) {
   const hora = c.hora || '';
   const [hh, mm] = hora.split(':').map(Number);
   if (isNaN(hh)) return null;
@@ -4708,9 +4730,14 @@ function agCitaEl(c) {
   const terNom = ter ? ter.nombre.split(' ')[0] : '';
   const estado = c.estado_agenda || c.estado || 'Programada';
 
+  // Subcolumnas: dividir el ancho disponible entre totalCols
+  const pct = 100 / totalCols;
+  const leftPct = col * pct;
+  const rightPct = (totalCols - col - 1) * pct;
+
   const el = document.createElement('div');
   el.className = 'ag-cita';
-  el.style.cssText = `top:${topPx}px;height:${heightPx}px;background:${color}22;border-left-color:${color};color:${color}`;
+  el.style.cssText = `top:${topPx}px;height:${heightPx}px;left:calc(2px + ${leftPct}%);right:calc(2px + ${rightPct}%);background:${color}22;border-left-color:${color};color:${color}`;
   el.innerHTML = `<div class="ag-cita-nombre">${nombre}</div>
     ${heightPx > 36 ? `<div class="ag-cita-sub">${terNom} · ${hora.slice(0,5)}</div>` : ''}
     ${heightPx > 52 ? `<div class="ag-cita-estado">${agEstadoLabel(estado)}</div>` : ''}`;

@@ -418,41 +418,101 @@
   </div>
 </div>
 
-<!-- MODAL EDITAR PACIENTE -->
-<div class="overlay" id="modal-editar-paciente">
-  <div class="modal">
-    <div class="modal-header">
-      <span class="modal-title">✏️ Editar paciente</span>
+<!-- MODAL EDITAR PACIENTE (formulario completo) -->
+<div class="overlay" id="modal-editar-paciente" style="align-items:flex-start;padding-top:20px">
+  <div class="modal" style="max-width:640px;max-height:90vh;display:flex;flex-direction:column">
+    <div class="modal-header" style="flex-shrink:0">
+      <span class="modal-title">✏️ Editar paciente — <span id="ep-id-label" style="font-family:'DM Mono',monospace;font-size:13px;color:var(--azul)"></span></span>
       <button class="modal-close" onclick="cerrarModal('modal-editar-paciente')">✕</button>
     </div>
-    <div style="font-size:11px;color:var(--muted);margin-bottom:16px;background:var(--bg);border-radius:6px;padding:7px 10px;">
-      <span id="ep-id-label" style="font-family:'DM Mono',monospace;font-weight:600;color:var(--azul)"></span>
-    </div>
-    <div class="form-row">
-      <div class="form-group">
-        <label class="form-label">Nombre *</label>
-        <input type="text" id="ep-nombre" class="form-control" placeholder="Nombre">
+    <div style="overflow-y:auto;flex:1;padding:16px 20px">
+      <!-- Datos personales -->
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--azul);border-bottom:1px solid var(--border);padding-bottom:6px;margin-bottom:12px">Datos personales</div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Nombre *</label><input type="text" id="ep-nombre" class="form-control" placeholder="Nombre"></div>
+        <div class="form-group"><label class="form-label">Apellidos *</label><input type="text" id="ep-apellidos" class="form-control" placeholder="Apellidos"></div>
       </div>
-      <div class="form-group">
-        <label class="form-label">Apellidos</label>
-        <input type="text" id="ep-apellidos" class="form-control" placeholder="Apellidos">
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Alias <span style="font-weight:400;font-size:11px">(en agenda)</span></label><input type="text" id="ep-alias" class="form-control" placeholder="Ej: Juanito"></div>
+        <div class="form-group"><label class="form-label">Fecha nacimiento</label><input type="date" id="ep-fnac" class="form-control" oninput="epActualizarMenor()"></div>
       </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">DNI paciente</label><input type="text" id="ep-dni-pac" class="form-control"></div>
+        <div class="form-group" style="align-self:flex-end"><div id="ep-badge-edad" style="display:none;padding:7px 12px;border-radius:6px;font-size:12px;font-weight:600"></div></div>
+      </div>
+      <!-- Tutores y contacto -->
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--azul);border-bottom:1px solid var(--border);padding-bottom:6px;margin-bottom:12px;margin-top:18px">Tutores y contacto</div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label" id="ep-label-tutor1">Tutor 1</label><input type="text" id="ep-tutor1" class="form-control" placeholder="Nombre tutor"></div>
+        <div class="form-group"><label class="form-label">DNI Tutor 1</label><input type="text" id="ep-dni-tutor1" class="form-control"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label" id="ep-label-tel">Teléfono *</label><input type="tel" id="ep-tel" class="form-control" placeholder="600 000 000"></div>
+        <div class="form-group"><label class="form-label">Email Tutor 1</label><input type="email" id="ep-tutor1-email" class="form-control"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Dirección Tutor 1</label><input type="text" id="ep-tutor1-dir" class="form-control"></div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Tutor 2</label><input type="text" id="ep-tutor2" class="form-control" placeholder="Nombre tutor 2"></div>
+        <div class="form-group"><label class="form-label">DNI Tutor 2</label><input type="text" id="ep-tutor2-dni" class="form-control"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label" id="ep-label-tel2">Teléfono 2</label><input type="tel" id="ep-tel2" class="form-control"></div>
+        <div class="form-group"><label class="form-label">Email Tutor 2</label><input type="email" id="ep-tutor2-email" class="form-control"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Dirección Tutor 2</label><input type="text" id="ep-tutor2-dir" class="form-control"></div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Facturar a</label>
+          <select class="form-control" id="ep-facturacion-tutor">
+            <option value="">—</option><option value="tutor1">Tutor 1</option><option value="tutor2">Tutor 2</option><option value="ambos">Ambos</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Email paciente</label><input type="email" id="ep-email" class="form-control"></div>
+      </div>
+      <!-- Datos escolares -->
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--azul);border-bottom:1px solid var(--border);padding-bottom:6px;margin-bottom:12px;margin-top:18px">Datos escolares</div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Centro escolar</label><input type="text" id="ep-centro-escolar" class="form-control"></div>
+        <div class="form-group"><label class="form-label">Curso escolar</label><input type="text" id="ep-curso-escolar" class="form-control" placeholder="Ej: 3º Primaria"></div>
+      </div>
+      <!-- Datos clínicos -->
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--azul);border-bottom:1px solid var(--border);padding-bottom:6px;margin-bottom:12px;margin-top:18px">Datos clínicos</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Terapeuta principal</label>
+          <select class="form-control" id="ep-terapeuta"></select>
+        </div>
+        <div class="form-group"><label class="form-label">Fecha entrada IPSE</label><input type="date" id="ep-alta" class="form-control"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">¿Beca?</label>
+          <select class="form-control" id="ep-beca"><option value="No">No</option><option value="Sí">Sí</option></select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Consentimiento</label>
+          <select class="form-control" id="ep-consent"><option value="Pendiente">Pendiente</option><option value="Firmado">Firmado</option></select>
+        </div>
+      </div>
+      <div class="form-group"><label class="form-label">Diagnóstico</label><input type="text" id="ep-diagnostico" class="form-control" placeholder="Diagnóstico principal"></div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Ámbito</label>
+          <select class="form-control" id="ep-ambito">
+            <option value="">—</option><option value="salud_mental">Salud Mental</option><option value="neurologia">Neurología</option><option value="otro">Otro</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Derivación</label>
+          <select class="form-control" id="ep-derivacion">
+            <option value="">—</option><option value="true">Sí</option><option value="false">No</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group"><label class="form-label">Alergias</label><input type="text" id="ep-alergias" class="form-control"></div>
+      <div class="form-group"><label class="form-label">Notas</label><textarea id="ep-notas" class="form-control" rows="2" style="resize:vertical"></textarea></div>
     </div>
-    <div class="form-group">
-      <label class="form-label">Alias <span style="font-weight:400;text-transform:none;font-size:11px">(nombre corto en agenda)</span></label>
-      <input type="text" id="ep-alias" class="form-control" placeholder="Ej: Juanito">
-    </div>
-    <div class="form-row">
-      <div class="form-group"><label class="form-label">Tutor 1</label><input type="text" id="ep-tutor1" class="form-control" placeholder="Nombre tutor"></div>
-      <div class="form-group"><label class="form-label">Teléfono</label><input type="tel" id="ep-tel" class="form-control" placeholder="600 000 000"></div>
-    </div>
-    <div class="form-row">
-      <div class="form-group"><label class="form-label">Tutor 2</label><input type="text" id="ep-tutor2" class="form-control" placeholder="Nombre tutor 2"></div>
-      <div class="form-group"><label class="form-label">Teléfono 2</label><input type="tel" id="ep-tel2" class="form-control" placeholder=""></div>
-    </div>
-    <div class="form-group"><label class="form-label">Email</label><input type="email" id="ep-email" class="form-control" placeholder="email@ejemplo.com"></div>
-    <div class="form-group"><label class="form-label">Notas</label><textarea id="ep-notas" class="form-control" rows="2" placeholder="Observaciones" style="resize:vertical"></textarea></div>
-    <div class="modal-footer">
+    <div class="modal-footer" style="flex-shrink:0">
       <button class="btn btn-secondary" onclick="cerrarModal('modal-editar-paciente')">Cancelar</button>
       <button class="btn btn-primary" id="btn-guardar-edicion-paciente" onclick="guardarEdicionPaciente()">Guardar cambios</button>
     </div>
@@ -1776,7 +1836,20 @@ async function abrirModalEditarPacienteDesde() {
 async function abrirModalEditarPaciente(idPaciente) {
   G.pacienteEditandoId = idPaciente;
   document.getElementById('ep-id-label').textContent = idPaciente;
-  ['ep-nombre','ep-apellidos','ep-alias','ep-tutor1','ep-tel','ep-tutor2','ep-tel2','ep-email','ep-notas'].forEach(id => { document.getElementById(id).value = ''; });
+  ['ep-nombre','ep-apellidos','ep-alias','ep-fnac','ep-dni-pac',
+   'ep-tutor1','ep-dni-tutor1','ep-tel','ep-tutor1-email','ep-tutor1-dir',
+   'ep-tutor2','ep-tutor2-dni','ep-tel2','ep-tutor2-email','ep-tutor2-dir',
+   'ep-email','ep-centro-escolar','ep-curso-escolar','ep-diagnostico','ep-alergias','ep-notas','ep-alta'
+  ].forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
+  document.getElementById('ep-beca').value = 'No';
+  document.getElementById('ep-consent').value = 'Pendiente';
+  document.getElementById('ep-ambito').value = '';
+  document.getElementById('ep-derivacion').value = '';
+  document.getElementById('ep-facturacion-tutor').value = '';
+  document.getElementById('ep-badge-edad').style.display = 'none';
+  const selTer = document.getElementById('ep-terapeuta');
+  selTer.innerHTML = '<option value="">— Selecciona —</option>' +
+    G.terapeutas.filter(t=>t.Activa==='Sí').map(t=>`<option value="${t.ID_Terapeuta}">${t.Nombre}</option>`).join('');
   const btn = document.getElementById('btn-guardar-edicion-paciente');
   btn.disabled = true; btn.textContent = '⏳ Cargando…';
   abrirOverlay('modal-editar-paciente');
@@ -1784,42 +1857,121 @@ async function abrirModalEditarPaciente(idPaciente) {
     const rows = await supaGet('pacientes', `id_paciente=eq.${idPaciente}`);
     if (!rows || !rows.length) { toast('Paciente no encontrado', 'err'); cerrarModal('modal-editar-paciente'); return; }
     const p = rows[0];
-    document.getElementById('ep-nombre').value    = p.nombre    || '';
-    document.getElementById('ep-apellidos').value = p.apellidos || '';
-    document.getElementById('ep-alias').value     = p.alias     || '';
-    document.getElementById('ep-tutor1').value    = p.tutor1    || '';
-    document.getElementById('ep-tel').value       = p.telefono  || '';
-    document.getElementById('ep-tutor2').value    = p.tutor2    || '';
-    document.getElementById('ep-tel2').value      = p.telefono2 || '';
-    document.getElementById('ep-email').value     = p.email     || '';
-    document.getElementById('ep-notas').value     = p.notas     || '';
+    document.getElementById('ep-nombre').value         = p.nombre            || '';
+    document.getElementById('ep-apellidos').value      = p.apellidos         || '';
+    document.getElementById('ep-alias').value          = p.alias             || '';
+    document.getElementById('ep-fnac').value           = p.fecha_nacimiento  || '';
+    document.getElementById('ep-dni-pac').value        = p.dni_paciente      || '';
+    document.getElementById('ep-tutor1').value         = p.tutor1            || '';
+    document.getElementById('ep-dni-tutor1').value     = p.dni_tutor1        || '';
+    document.getElementById('ep-tel').value            = p.telefono          || '';
+    document.getElementById('ep-tutor1-email').value   = p.tutor1_email      || '';
+    document.getElementById('ep-tutor1-dir').value     = p.tutor1_direccion  || '';
+    document.getElementById('ep-tutor2').value         = p.tutor2            || '';
+    document.getElementById('ep-tutor2-dni').value     = p.tutor2_dni        || '';
+    document.getElementById('ep-tel2').value           = p.telefono2         || '';
+    document.getElementById('ep-tutor2-email').value   = p.tutor2_email      || '';
+    document.getElementById('ep-tutor2-dir').value     = p.tutor2_direccion  || '';
+    document.getElementById('ep-facturacion-tutor').value = p.facturacion_tutor || '';
+    document.getElementById('ep-email').value          = p.email             || '';
+    document.getElementById('ep-centro-escolar').value = p.centro_escolar    || '';
+    document.getElementById('ep-curso-escolar').value  = p.curso_escolar     || '';
+    document.getElementById('ep-diagnostico').value    = p.diagnostico       || '';
+    document.getElementById('ep-ambito').value         = p.ambito            || '';
+    document.getElementById('ep-derivacion').value     = p.derivacion===true?'true':p.derivacion===false?'false':'';
+    document.getElementById('ep-alergias').value       = p.alergias          || '';
+    document.getElementById('ep-notas').value          = p.notas             || '';
+    document.getElementById('ep-beca').value           = p.es_beca           || 'No';
+    document.getElementById('ep-consent').value        = p.consentimiento    || 'Pendiente';
+    document.getElementById('ep-alta').value           = p.fecha_alta        || '';
+    document.getElementById('ep-terapeuta').value      = p.terapeuta_principal || '';
+    setTimeout(epActualizarMenor, 50);
   } catch(err) { toast('Error al cargar paciente: ' + err.message, 'err'); cerrarModal('modal-editar-paciente'); return; }
   finally { btn.disabled = false; btn.textContent = 'Guardar cambios'; }
 }
+function epActualizarMenor() {
+  const fnac = document.getElementById('ep-fnac').value;
+  const badge = document.getElementById('ep-badge-edad');
+  const lTel = document.getElementById('ep-label-tel');
+  const lTut = document.getElementById('ep-label-tutor1');
+  const lTel2 = document.getElementById('ep-label-tel2');
+  if (!fnac) { if(badge) badge.style.display='none'; return; }
+  const hoy=new Date(); const nac=new Date(fnac);
+  let edad=hoy.getFullYear()-nac.getFullYear();
+  const m=hoy.getMonth()-nac.getMonth();
+  if(m<0||(m===0&&hoy.getDate()<nac.getDate())) edad--;
+  const esMenor = edad < 18;
+  if (badge) {
+    badge.style.display='block';
+    if (esMenor) {
+      badge.style.background='#fff3cd'; badge.style.color='#7a5c00'; badge.style.border='1px solid #f0c040';
+      badge.textContent=`👶 Menor (${edad} años) — Tutor 1 y teléfono obligatorios`;
+      if(lTel) lTel.textContent='Teléfono paciente';
+      if(lTut) lTut.textContent='Tutor 1 *';
+      if(lTel2) lTel2.textContent='Teléfono tutor *';
+    } else {
+      badge.style.background='#f0fff0'; badge.style.color='#2d7a2d'; badge.style.border='1px solid #97D700';
+      badge.textContent=`✓ Mayor de edad (${edad} años)`;
+      if(lTel) lTel.textContent='Teléfono *';
+      if(lTut) lTut.textContent='Tutor 1';
+      if(lTel2) lTel2.textContent='Teléfono 2';
+    }
+  }
+}
 async function guardarEdicionPaciente() {
   const idPaciente = G.pacienteEditandoId; if (!idPaciente) return;
-  const nombre = document.getElementById('ep-nombre').value.trim();
-  if (!nombre) { toast('El nombre es obligatorio', 'err'); return; }
+  const nombre    = document.getElementById('ep-nombre').value.trim();
+  const apellidos = document.getElementById('ep-apellidos').value.trim();
+  const fnac      = document.getElementById('ep-fnac').value;
+  if (!nombre)    { toast('El nombre es obligatorio', 'err'); return; }
+  if (!apellidos) { toast('Los apellidos son obligatorios', 'err'); return; }
+  const esMenor = fnac ? (()=>{const hoy=new Date();const nac=new Date(fnac);let e=hoy.getFullYear()-nac.getFullYear();const m=hoy.getMonth()-nac.getMonth();if(m<0||(m===0&&hoy.getDate()<nac.getDate()))e--;return e<18;})() : false;
+  if (esMenor) {
+    if (!document.getElementById('ep-tutor1').value.trim()) { toast('El Tutor 1 es obligatorio para menores','err'); return; }
+    if (!document.getElementById('ep-tel2').value.trim())   { toast('El teléfono del tutor es obligatorio para menores','err'); return; }
+  } else {
+    if (!document.getElementById('ep-tel').value.trim()) { toast('El teléfono es obligatorio','err'); return; }
+  }
   const btn = document.getElementById('btn-guardar-edicion-paciente');
   btn.disabled = true; btn.textContent = '⏳ Guardando…';
+  const datos = {
+    nombre, apellidos,
+    alias:             document.getElementById('ep-alias').value.trim(),
+    fecha_nacimiento:  fnac||null,
+    dni_paciente:      document.getElementById('ep-dni-pac').value.trim(),
+    tutor1:            document.getElementById('ep-tutor1').value.trim(),
+    dni_tutor1:        document.getElementById('ep-dni-tutor1').value.trim(),
+    tutor1_email:      document.getElementById('ep-tutor1-email').value.trim(),
+    tutor1_direccion:  document.getElementById('ep-tutor1-dir').value.trim(),
+    telefono:          document.getElementById('ep-tel').value.trim(),
+    tutor2:            document.getElementById('ep-tutor2').value.trim(),
+    tutor2_dni:        document.getElementById('ep-tutor2-dni').value.trim(),
+    telefono2:         document.getElementById('ep-tel2').value.trim(),
+    tutor2_email:      document.getElementById('ep-tutor2-email').value.trim(),
+    tutor2_direccion:  document.getElementById('ep-tutor2-dir').value.trim(),
+    facturacion_tutor: document.getElementById('ep-facturacion-tutor').value||null,
+    email:             document.getElementById('ep-email').value.trim(),
+    centro_escolar:    document.getElementById('ep-centro-escolar').value.trim(),
+    curso_escolar:     document.getElementById('ep-curso-escolar').value.trim(),
+    diagnostico:       document.getElementById('ep-diagnostico').value.trim(),
+    ambito:            document.getElementById('ep-ambito').value||null,
+    derivacion:        document.getElementById('ep-derivacion').value===''?null:document.getElementById('ep-derivacion').value==='true',
+    alergias:          document.getElementById('ep-alergias').value.trim(),
+    notas:             document.getElementById('ep-notas').value.trim(),
+    es_beca:           document.getElementById('ep-beca').value,
+    consentimiento:    document.getElementById('ep-consent').value,
+    fecha_alta:        document.getElementById('ep-alta').value||null,
+    terapeuta_principal: document.getElementById('ep-terapeuta').value||null,
+  };
   try {
-    await supaPatch('pacientes', `id_paciente=eq.${idPaciente}`, {
-      nombre, apellidos: document.getElementById('ep-apellidos').value.trim(),
-      alias: document.getElementById('ep-alias').value.trim(),
-      tutor1: document.getElementById('ep-tutor1').value.trim(),
-      telefono: document.getElementById('ep-tel').value.trim(),
-      tutor2: document.getElementById('ep-tutor2').value.trim(),
-      telefono2: document.getElementById('ep-tel2').value.trim(),
-      email: document.getElementById('ep-email').value.trim(),
-      notas: document.getElementById('ep-notas').value.trim(),
-    });
+    await supaPatch('pacientes', `id_paciente=eq.${idPaciente}`, datos);
     const pac = await supaGet('pacientes', 'order=nombre.asc');
     G.pacientes = pac.map(p => ({ ID_Paciente: p.id_paciente, Nombre: ((p.nombre||'') + ' ' + (p.apellidos||'')).trim(), Alias: p.alias || '', Tutor1: p.tutor1 || '', Tel1: (p.telefono||'').replace(/\D/g,''), Tel2: (p.telefono2||'').replace(/\D/g,'') }));
     toast('Paciente actualizado ✓', 'ok');
     cerrarModal('modal-editar-paciente');
     if (G.citaActual && G.citaActual.ID_Paciente === idPaciente) {
-      const alias = document.getElementById('ep-alias').value.trim();
-      const nombreCompleto = (nombre + ' ' + document.getElementById('ep-apellidos').value.trim()).trim();
+      const alias = datos.alias;
+      const nombreCompleto = (nombre + ' ' + apellidos).trim();
       G.citaActual.NombrePaciente = alias || nombreCompleto;
       abrirModalCita(G.citaActual);
     }
