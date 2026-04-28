@@ -2090,6 +2090,9 @@ function poblarSelectoresServicios() {
 //  NAVEGACIÓN
 // ═══════════════════════════════════════════════════════
 function navigate(page) {
+  // Si page-banco no es hijo directo del body, rescatarlo (puede estar atrapado en un modal)
+  const pgBanco = document.getElementById('page-banco');
+  if (pgBanco && pgBanco.parentElement !== document.body) document.body.appendChild(pgBanco);
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   document.getElementById('page-'+page).classList.add('active');
