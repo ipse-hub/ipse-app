@@ -5922,37 +5922,46 @@ function bancoDrop(e, cuenta) {
 async function bancoCargarArchivos(files, cuenta) {
   const movs = [];
   const nombres = [];
+
+  function parseFecha(v) {
+    if(!v) return null;
+    if(v instanceof Date) return isNaN(v.getTime()) ? null : v;
+    if(typeof v === 'number') {
+      const d = new Date(Math.round((v - 25569) * 86400 * 1000));
+      return isNaN(d.getTime()) ? null : d;
+    }
+    const s = String(v).trim();
+    const p = s.split('/');
+    if(p.length === 3) {
+      const d = new Date(`${p[2]}-${p[1].padStart(2,'0')}-${p[0].padStart(2,'0')}`);
+      return isNaN(d.getTime()) ? null : d;
+    }
+    const d2 = new Date(s);
+    return isNaN(d2.getTime()) ? null : d2;
+  }
+
   for(const file of files) {
     if(!file.name.endsWith('.xlsx') && !file.name.endsWith('.xls')) continue;
     nombres.push(file.name);
     const ab = await file.arrayBuffer();
-    const wb = XLSX.read(ab, {type:'array', cellDates:false});
+    // dense:false evita crear array gigante en memoria
+    const wb = XLSX.read(ab, {type:'array', cellDates:false, dense:false});
     const ws = wb.Sheets[wb.SheetNames[0]];
-    const data = XLSX.utils.sheet_to_json(ws, {header:1, defval:''});
-    // Fila 4 (idx 4) es la cabecera: [_,F.Valor,Fecha,Concepto,Movimiento,Importe,...]
-    for(let i=5; i<data.length; i++) {
-      const row = data[i];
-      if(!row[2] || row[2]==='Fecha') continue;
-      // Parsear fecha: puede venir como string DD/MM/YYYY, numero serial Excel, o Date
-      let fecha;
-      if(row[2] instanceof Date) {
-        fecha = row[2];
-      } else if(typeof row[2] === 'number') {
-        // Numero serial Excel: dias desde 1/1/1900
-        const d = new Date(Math.round((row[2] - 25569) * 86400 * 1000));
-        fecha = d;
-      } else {
-        const parts = String(row[2]).split('/');
-        if(parts.length === 3) fecha = new Date(`${parts[2]}-${parts[1]}-${parts[0]}`);
-        else fecha = new Date(row[2]);
-      }
-      if(!fecha || isNaN(fecha.getTime())) continue;
-      const importe = parseFloat(String(row[5]).replace(',','.'));
+    if(!ws['!ref']) continue;
+    const ref = XLSX.utils.decode_range(ws['!ref']);
+    // Iterar fila a fila desde idx 5 (fila 6 del Excel = primer dato)
+    const getCel = (r, c) => { const cell = ws[XLSX.utils.encode_cell({r,c})]; return cell ? cell.v : ''; };
+    for(let r = ref.s.r + 5; r <= ref.e.r; r++) {
+      const fechaRaw = getCel(r, 2);
+      if(!fechaRaw || fechaRaw === 'Fecha') continue;
+      const fecha = parseFecha(fechaRaw);
+      if(!fecha) continue;
+      const importe = parseFloat(String(getCel(r, 5)).replace(',', '.'));
       if(isNaN(importe)) continue;
       movs.push({
         fecha,
-        concepto:  String(row[3]||'').trim().toLowerCase(),
-        movimiento:String(row[4]||'').trim(),
+        concepto:  String(getCel(r, 3)||'').trim().toLowerCase(),
+        movimiento:String(getCel(r, 4)||'').trim(),
         importe,
       });
     }
