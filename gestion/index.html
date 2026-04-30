@@ -5923,37 +5923,45 @@ function bancoDrop(e, cuenta) {
 async function bancoCargarArchivos(files, cuenta) {
   const movs = [];
   const nombres = [];
+
+  function parseFecha(v) {
+    if(!v) return null;
+    if(v instanceof Date) return isNaN(v.getTime()) ? null : v;
+    if(typeof v === 'number') {
+      const d = new Date(Math.round((v - 25569) * 86400 * 1000));
+      return isNaN(d.getTime()) ? null : d;
+    }
+    const s = String(v).trim();
+    const p = s.split('/');
+    if(p.length === 3) {
+      const d = new Date(`${p[2]}-${p[1].padStart(2,'0')}-${p[0].padStart(2,'0')}`);
+      return isNaN(d.getTime()) ? null : d;
+    }
+    return null;
+  }
+
   for(const file of files) {
     if(!file.name.endsWith('.xlsx') && !file.name.endsWith('.xls')) continue;
     nombres.push(file.name);
     const ab = await file.arrayBuffer();
-    const wb = XLSX.read(ab, {type:'array', cellDates:false});
+    // dense:false + sin sheet_to_json evita array gigante en memoria
+    const wb = XLSX.read(ab, {type:'array', cellDates:false, dense:false});
     const ws = wb.Sheets[wb.SheetNames[0]];
-    const data = XLSX.utils.sheet_to_json(ws, {header:1, defval:''});
-    // Fila 4 (idx 4) es la cabecera: [_,F.Valor,Fecha,Concepto,Movimiento,Importe,...]
-    for(let i=5; i<data.length; i++) {
-      const row = data[i];
-      if(!row[2] || row[2]==='Fecha') continue;
-      // Parsear fecha: puede venir como string DD/MM/YYYY, numero serial Excel, o Date
-      let fecha;
-      if(row[2] instanceof Date) {
-        fecha = row[2];
-      } else if(typeof row[2] === 'number') {
-        // Numero serial Excel: dias desde 1/1/1900
-        const d = new Date(Math.round((row[2] - 25569) * 86400 * 1000));
-        fecha = d;
-      } else {
-        const parts = String(row[2]).split('/');
-        if(parts.length === 3) fecha = new Date(`${parts[2]}-${parts[1]}-${parts[0]}`);
-        else fecha = new Date(row[2]);
-      }
-      if(!fecha || isNaN(fecha.getTime())) continue;
-      const importe = parseFloat(String(row[5]).replace(',','.'));
+    if(!ws['!ref']) continue;
+    const ref = XLSX.utils.decode_range(ws['!ref']);
+    const getCel = (r, c) => { const cell = ws[XLSX.utils.encode_cell({r,c})]; return cell ? cell.v : ''; };
+    // Fila 5 (idx 5) es el primer dato; idx 4 es cabecera F.Valor/Fecha/Concepto...
+    for(let r = ref.s.r + 5; r <= ref.e.r; r++) {
+      const fechaRaw = getCel(r, 2);
+      if(!fechaRaw || fechaRaw === 'Fecha') continue;
+      const fecha = parseFecha(fechaRaw);
+      if(!fecha) continue;
+      const importe = parseFloat(String(getCel(r, 5)).replace(',', '.'));
       if(isNaN(importe)) continue;
       movs.push({
         fecha,
-        concepto:  String(row[3]||'').trim().toLowerCase(),
-        movimiento:String(row[4]||'').trim(),
+        concepto:  String(getCel(r, 3)||'').trim().toLowerCase(),
+        movimiento:String(getCel(r, 4)||'').trim(),
         importe,
       });
     }
@@ -6260,203 +6268,155 @@ function bancoRenderConciliacion() {
     </div>`).join('');
 }
 
-// ── Exportar Excel (ExcelJS con estilos) ─────────────────────────────────────
+// ── Exportar Excel (ExcelJS con estilos IPSE) ────────────────────────────────
 async function bancoExportarExcel() {
   if(!BANCO.trazRows.length) { toast('Primero recalcula para tener datos','err'); return; }
-  if(typeof ExcelJS === 'undefined') { toast('ExcelJS no cargado aun, espera un momento','err'); return; }
+  if(typeof ExcelJS === 'undefined') { toast('ExcelJS no cargado, recarga la pagina','err'); return; }
+
+  const AO='1A237E', AM='3949AB', VO='1B5E20', RO='B71C1C', NA='CE6519';
+  const GR='F5F5F5', BL='FFFFFF', AC='E8EAF6', VC='E8F5E9', RC='FFEBEE';
+
+  function fnt(hex='000000', bold=false, sz=9) {
+    return { name:'Arial', size:sz, bold, color:{argb:'FF'+hex} };
+  }
+  function fill(hex) { return { type:'pattern', pattern:'solid', fgColor:{argb:'FF'+hex} }; }
+  function brd() {
+    const s={style:'thin',color:{argb:'FFCCCCCC'}};
+    return {top:s,left:s,bottom:s,right:s};
+  }
 
   const wb = new ExcelJS.Workbook();
   wb.creator = 'IPSE Gestion'; wb.created = new Date();
 
-  // ── Paleta ──────────────────────────────────────────────────────────────
-  const AO='1A237E', AM='3949AB', VO='1B5E20', RO='B71C1C', NA='CE6519';
-  const GR='F5F5F5', BL='FFFFFFFF', AC='E8EAF6', VC='E8F5E9', RC='FFEBEE';
-
-  function fnt(color='000000', bold=false, sz=9) {
-    return { name:'Arial', size:sz, bold, color:{argb:'FF'+color} };
-  }
-  function fill(hex) {
-    return { type:'pattern', pattern:'solid', fgColor:{argb:'FF'+hex} };
-  }
-  function brd() {
-    const s = { style:'thin', color:{argb:'FFCCCCCC'} };
-    return { top:s, left:s, bottom:s, right:s };
-  }
-  function alin(h='left') { return { horizontal:h, vertical:'middle' }; }
-
-  // ── Hoja 1: Trazabilidad ─────────────────────────────────────────────────
+  // ── Hoja 1: Trazabilidad ──────────────────────────────────────────────────
   const ws1 = wb.addWorksheet('Trazabilidad');
-
-  // Columnas
   ws1.columns = [
-    { key:'id',       width:10 },
-    { key:'paciente', width:28 },
-    { key:'hechas',   width:10 },
-    { key:'perfil',   width:14 },
-    { key:'bonIds',   width:18 },
-    { key:'becIds',   width:18 },
-    { key:'primera',  width:13 },
-    { key:'ultima',   width:13 },
-    { key:'impEst',   width:14 },
-    { key:'bancodet', width:34 },
-    { key:'bancotot', width:13 },
-    { key:'hits',     width:8  },
-    { key:'alerta',   width:36 },
+    {width:10},{width:28},{width:8},{width:14},{width:18},{width:18},
+    {width:12},{width:12},{width:13},{width:34},{width:12},{width:7},{width:36}
   ];
 
   // Titulo
   ws1.mergeCells('A1:M1');
-  const tit = ws1.getCell('A1');
-  tit.value = `IPSE — Trazabilidad Sesiones × Cobros Banco  |  ${new Date().toLocaleDateString('es')}`;
-  tit.font = fnt(BL.replace('FF',''), true, 13);
-  tit.fill = fill(AO); tit.alignment = alin('center'); tit.border = brd();
+  Object.assign(ws1.getCell('A1'), {
+    value: `IPSE — Trazabilidad Sesiones x Cobros  |  ${new Date().toLocaleDateString('es')}`,
+    font: fnt(BL, true, 13), fill: fill(AO),
+    alignment:{horizontal:'center',vertical:'middle'}, border:brd()
+  });
   ws1.getRow(1).height = 26;
 
-  // Subtitulo
   ws1.mergeCells('A2:M2');
-  const sub = ws1.getCell('A2');
-  sub.value = 'Cruce automatico entre sesiones Supabase y extractos BBVA. Alerta = posible descuadre a revisar con Ines.';
-  sub.font = { name:'Arial', size:8, italic:true, color:{argb:'FF555555'} };
-  sub.fill = fill(GR); sub.alignment = alin('left'); sub.border = brd();
+  Object.assign(ws1.getCell('A2'), {
+    value:'Cruce automatico sesiones Supabase vs extractos BBVA. Alerta = posible descuadre a revisar.',
+    font:{name:'Arial',size:8,italic:true,color:{argb:'FF555555'}},
+    fill:fill(GR), alignment:{horizontal:'left',vertical:'middle'}, border:brd()
+  });
   ws1.getRow(2).height = 12;
 
   // Cabeceras
-  const hdrs = [
-    ['ID','Paciente','Ses.','Perfil','IDs Bonos','IDs Becas',
-     'Primera','Ultima','Est. €','Movimientos banco','Banco €','Hits','Alerta']
-  ];
-  ws1.addRow(hdrs[0]);
-  const hRow = ws1.getRow(3);
+  const hdrVals = ['ID','Paciente','Ses.','Perfil','IDs Bonos','IDs Becas',
+    'Primera','Ultima','Est. EUR','Movimientos banco','Banco EUR','Hits','Alerta'];
+  const hRow = ws1.addRow(hdrVals);
   hRow.height = 16;
   hRow.eachCell(cell => {
-    cell.font = fnt(BL.replace('FF',''), true, 9);
-    cell.fill = fill(AM); cell.border = brd();
-    cell.alignment = alin(cell.col > 2 ? 'right' : 'left');
+    cell.font=fnt(BL,true,9); cell.fill=fill(AM); cell.border=brd();
+    cell.alignment={horizontal:'left',vertical:'middle'};
   });
+  [3,9,11,12].forEach(c => ws1.getRow(3).getCell(c).alignment={horizontal:'right',vertical:'middle'});
 
   // Datos
-  const alertaColors = { '': BL, 'OK': VC, 'revisar': RC, 'sin_cobros': 'FFF9C4' };
   BANCO.trazRows.forEach((r, idx) => {
-    const bg = idx % 2 === 0 ? GR : BL.replace('FF','');
-    const alerta = r.alerta || '';
-    const rowBg = alerta === 'revisar' ? 'FFEBEE' :
-                  alerta === 'sin_cobros' ? 'FFF9C4' :
-                  alerta === 'OK' ? 'E8F5E9' : bg;
-    const fntColor = alerta === 'revisar' ? RO :
-                     alerta === 'OK' ? VO : '333333';
-
-    const dataRow = ws1.addRow([
-      r.id, r.nombre,
-      r.hechas,
-      (r.nB>0?r.nB+'B ':'')+( r.nBC>0?r.nBC+'BC ':'')+( r.nS>0?r.nS+'S':''),
-      r.bonIds||'', r.becIds||'',
-      r.primera, r.ultima,
-      r.impEst,
-      r.bancodet||'',
-      r.bancotot,
-      r.bancohits,
-      alerta,
+    const bg = idx%2===0 ? GR : BL;
+    const rowBg = r.alerta==='revisar' ? RC : r.alerta==='sin_cobros' ? 'FFF9C4' : r.alerta==='OK' ? VC : bg;
+    const fcolor= r.alerta==='revisar' ? RO : r.alerta==='OK' ? VO : '333333';
+    const perfil = (r.nB>0?r.nB+'B ':'')+( r.nBC>0?r.nBC+'BC ':'')+( r.nS>0?r.nS+'S':'');
+    const dRow = ws1.addRow([
+      r.id, r.nombre, r.hechas, perfil, r.bonIds||'', r.becIds||'',
+      r.primera, r.ultima, r.impEst||0, r.bancodet||'', r.bancotot||0, r.bancohits||0, r.alerta||''
     ]);
-    dataRow.height = 13;
-    dataRow.eachCell({ includeEmpty:true }, (cell, colNum) => {
-      cell.font = fnt(fntColor, false, 9);
-      cell.fill = fill(rowBg);
-      cell.border = brd();
-      // Numericos alineados a la derecha
-      if([3,9,11,12].includes(colNum)) {
-        cell.alignment = alin('right');
-        if([9,11].includes(colNum)) cell.numFmt = '#,##0.00';
-      } else {
-        cell.alignment = alin('left');
-      }
+    dRow.height = 13;
+    dRow.eachCell({includeEmpty:true}, (cell,col) => {
+      cell.font=fnt(fcolor,false,9); cell.fill=fill(rowBg); cell.border=brd();
+      const right=[3,9,11,12].includes(col);
+      cell.alignment={horizontal:right?'right':'left',vertical:'middle'};
+      if([9,11].includes(col)) cell.numFmt='#,##0.00';
     });
   });
 
-  // Fila de totales
-  const nRows = BANCO.trazRows.length;
-  const totRow = ws1.addRow([
-    '', 'TOTAL  ('+nRows+' pacientes)',
-    BANCO.trazRows.reduce((s,r)=>s+r.hechas,0),
-    '', '', '', '', '',
-    BANCO.trazRows.reduce((s,r)=>s+(r.impEst||0),0),
-    '',
+  // Totales
+  const tot = ws1.addRow([
+    '', 'TOTAL  ('+BANCO.trazRows.length+' pacientes)',
+    BANCO.trazRows.reduce((s,r)=>s+(r.hechas||0),0), '', '', '', '', '',
+    BANCO.trazRows.reduce((s,r)=>s+(r.impEst||0),0), '',
     BANCO.trazRows.reduce((s,r)=>s+(r.bancotot||0),0),
-    BANCO.trazRows.reduce((s,r)=>s+(r.bancohits||0),0),
-    '',
+    BANCO.trazRows.reduce((s,r)=>s+(r.bancohits||0),0), ''
   ]);
-  totRow.height = 17;
-  totRow.eachCell({ includeEmpty:true }, (cell, colNum) => {
-    cell.font = fnt(AO, true, 10);
-    cell.fill = fill(AC); cell.border = brd();
-    if([3,9,11,12].includes(colNum)) {
-      cell.alignment = alin('right');
-      if([9,11].includes(colNum)) cell.numFmt = '#,##0.00';
-    } else {
-      cell.alignment = alin('left');
-    }
+  tot.height = 17;
+  tot.eachCell({includeEmpty:true},(cell,col)=>{
+    cell.font=fnt(AO,true,10); cell.fill=fill(AC); cell.border=brd();
+    const right=[3,9,11,12].includes(col);
+    cell.alignment={horizontal:right?'right':'left',vertical:'middle'};
+    if([9,11].includes(col)) cell.numFmt='#,##0.00';
   });
 
-  // Fila resumen alertas
-  const nRev = BANCO.trazRows.filter(r=>r.alerta==='revisar').length;
-  const nOk  = BANCO.trazRows.filter(r=>r.alerta==='OK').length;
-  const nSin = BANCO.trazRows.filter(r=>r.alerta==='sin_cobros').length;
+  // Resumen alertas
+  const nRev=BANCO.trazRows.filter(r=>r.alerta==='revisar').length;
+  const nOk=BANCO.trazRows.filter(r=>r.alerta==='OK').length;
+  const nSin=BANCO.trazRows.filter(r=>r.alerta==='sin_cobros').length;
   ws1.addRow([]);
-  const resRow = ws1.addRow(['', `Alertas: ${nRev} a revisar | ${nSin} sin cobros | ${nOk} OK`]);
-  resRow.height = 14;
-  ws1.mergeCells(`B${resRow.number}:M${resRow.number}`);
-  resRow.getCell(2).font = { name:'Arial', size:8, italic:true, color:{argb:'FF'+NA} };
-  resRow.getCell(2).fill = fill('FFF9C4'); resRow.getCell(2).border = brd();
+  const resRow=ws1.lastRow;
+  ws1.mergeCells(`A${resRow.number}:M${resRow.number}`);
+  const resCell=resRow.getCell(1);
+  resCell.value=`Alertas: ${nRev} a revisar | ${nSin} sin cobros | ${nOk} OK`;
+  resCell.font={name:'Arial',size:8,italic:true,color:{argb:'FF'+NA}};
+  resCell.fill=fill('FFF9C4'); resCell.border=brd();
+  resRow.height=14;
 
-  // ── Hoja 2: Extracto Gestion ────────────────────────────────────────────
-  const ws2 = wb.addWorksheet('Extracto Gestion');
-  ws2.columns = [
-    {width:12},{width:36},{width:12},{width:18}
-  ];
+  // ── Hoja 2: Extracto Gestion ──────────────────────────────────────────────
+  if(BANCO.gestion.length) {
+    const ws2 = wb.addWorksheet('Extracto Gestion');
+    ws2.columns = [{width:12},{width:38},{width:13},{width:22}];
 
-  ws2.mergeCells('A1:D1');
-  const t2 = ws2.getCell('A1');
-  t2.value = 'Extracto cuenta Gestion Operativa  |  ' + BANCO.gestion.length + ' movimientos';
-  t2.font = fnt(BL.replace('FF',''), true, 11);
-  t2.fill = fill(AO); t2.alignment = alin('center'); t2.border = brd();
-  ws2.getRow(1).height = 22;
-
-  const h2 = ws2.addRow(['Fecha','Descripcion','Importe (EUR)','Concepto BBVA']);
-  ws2.getRow(2).height = 15;
-  h2.eachCell(cell => {
-    cell.font = fnt(BL.replace('FF',''), true, 9);
-    cell.fill = fill(AM); cell.border = brd();
-    cell.alignment = alin(cell._column.number===3 ? 'right' : 'left');
-  });
-
-  BANCO.gestion.forEach((m, idx) => {
-    const bg = idx%2===0 ? GR : BL.replace('FF','');
-    const row = ws2.addRow([
-      m.fecha.toLocaleDateString('es'),
-      m.movimiento,
-      m.importe,
-      m.concepto,
-    ]);
-    row.height = 12;
-    row.eachCell({ includeEmpty:true }, (cell, colNum) => {
-      const isPos = m.importe >= 0;
-      const fcolor = colNum===3 ? (isPos ? VO : RO) : '333333';
-      cell.font = fnt(fcolor, false, 9);
-      cell.fill = fill(bg); cell.border = brd();
-      if(colNum===3) { cell.alignment = alin('right'); cell.numFmt='#,##0.00'; }
-      else cell.alignment = alin('left');
+    ws2.mergeCells('A1:D1');
+    Object.assign(ws2.getCell('A1'), {
+      value:`Extracto Cuenta Gestion  |  ${BANCO.gestion.length} movimientos`,
+      font:fnt(BL,true,11), fill:fill(AO),
+      alignment:{horizontal:'center',vertical:'middle'}, border:brd()
     });
-  });
+    ws2.getRow(1).height = 22;
+
+    const h2=ws2.addRow(['Fecha','Descripcion','Importe (EUR)','Concepto']);
+    ws2.getRow(2).height=15;
+    h2.eachCell(cell=>{
+      cell.font=fnt(BL,true,9); cell.fill=fill(AM); cell.border=brd();
+      cell.alignment={horizontal:'left',vertical:'middle'};
+    });
+    ws2.getRow(2).getCell(3).alignment={horizontal:'right',vertical:'middle'};
+
+    BANCO.gestion.forEach((m,idx)=>{
+      const bg=idx%2===0?GR:BL;
+      const fc=m.importe>=0?VO:RO;
+      const row=ws2.addRow([
+        m.fecha.toLocaleDateString('es'), m.movimiento, m.importe, m.concepto
+      ]);
+      row.height=12;
+      row.eachCell({includeEmpty:true},(cell,col)=>{
+        cell.font=fnt(col===3?fc:'333333',false,9);
+        cell.fill=fill(bg); cell.border=brd();
+        if(col===3){cell.alignment={horizontal:'right',vertical:'middle'};cell.numFmt='#,##0.00';}
+        else cell.alignment={horizontal:'left',vertical:'middle'};
+      });
+    });
+  }
 
   // Exportar
   const buffer = await wb.xlsx.writeBuffer();
-  const blob = new Blob([buffer], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+  const blob = new Blob([buffer],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
-  a.href = url;
-  a.download = `IPSE_Banco_${new Date().toISOString().substring(0,10)}.xlsx`;
-  a.click();
+  a.href=url; a.download=`IPSE_Banco_${new Date().toISOString().substring(0,10)}.xlsx`;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
   URL.revokeObjectURL(url);
-  toast('Excel exportado con estilos ✓', 'ok');
+  toast('Excel exportado con estilos ✓','ok');
 }
 
 // El hook de navegación al módulo Banco se inyecta en el navigate original
