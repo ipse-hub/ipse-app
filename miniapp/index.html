@@ -2050,6 +2050,99 @@ async function guardarEdicionPaciente() {
 // ═══════════════════════════════════════════════════════════════
 //  VERIFICAR BONO/BECA
 // ═══════════════════════════════════════════════════════════════
+// ── Modal bonito de confirmación de beca ──────────────────────
+function mostrarModalConfirmBeca({todasBecas, aviso}) {
+  return new Promise(resolve => {
+    document.getElementById('modal-beca-confirm')?.remove();
+    const becasAnteriores  = todasBecas.filter(b=>b.anio==='24/25');
+    const becasVigentes    = todasBecas.filter(b=>b.anio==='25/26'&&b.estado!=='Suspendida');
+    const becasSuspendidas = todasBecas.filter(b=>b.estado==='Suspendida');
+    const hayAlerta = becasSuspendidas.length>0 || becasAnteriores.length>0;
+    const colorHead = becasSuspendidas.length ? '#DA291C' : becasAnteriores.length ? '#F59E0B' : '#10069F';
+    const icono     = becasSuspendidas.length ? '🚨' : becasAnteriores.length ? '⚠️' : '📋';
+    const titulo    = becasSuspendidas.length ? 'Beca suspendida — revisar antes de continuar'
+                    : becasAnteriores.length  ? 'Hay sesiones de beca anterior pendientes'
+                    : 'Resumen de becas del paciente';
+
+    const fila = (b, anioLabel, bgColor) => {
+      const srv = (b.notas||'').split('.')[0] || '—';
+      const srvColor = srv.startsWith('PSI') ? '#10069F' : srv.startsWith('LOG') ? '#006a87' : '#6B7280';
+      const srvBg    = srv.startsWith('PSI') ? '#E8E6F8' : srv.startsWith('LOG') ? '#E0F5FB' : '#f4f5f9';
+      const estadoTxt = b.estado==='Suspendida' ? '⏸ Suspendida' : b.estado==='Activo' ? '✓ Activa' : b.estado;
+      const estadoBg  = b.estado==='Suspendida' ? '#fff3cd' : '#EDF7CC';
+      const estadoColor = b.estado==='Suspendida' ? '#7a5c00' : '#3a6600';
+      return `<tr style="border-bottom:1px solid #F0F1F5">
+        <td style="padding:9px 12px;font-family:'DM Mono',monospace;font-size:12px;color:#10069F;font-weight:600">${b.id_beca}</td>
+        <td style="padding:9px 12px"><span style="background:${bgColor};color:#fff;border-radius:5px;padding:2px 9px;font-size:11px;font-weight:700">${anioLabel}</span></td>
+        <td style="padding:9px 12px"><span style="background:${srvBg};color:${srvColor};border-radius:5px;padding:2px 9px;font-size:11px;font-weight:700">${srv||'—'}</span></td>
+        <td style="padding:9px 12px;text-align:center"><strong style="font-size:15px;color:${parseInt(b.sesiones_pendientes)<=3?'#DA291C':'#1A1B2E'}">${b.sesiones_pendientes}</strong> <span style="font-size:11px;color:#6B7280">pend.</span></td>
+        <td style="padding:9px 12px"><span style="background:${estadoBg};color:${estadoColor};border-radius:5px;padding:2px 9px;font-size:11px;font-weight:600">${estadoTxt}</span></td>
+      </tr>`;
+    };
+
+    const filas = [
+      ...becasAnteriores.map(b=>fila(b,'24/25','#F59E0B')),
+      ...becasSuspendidas.map(b=>fila(b,'25/26','#DA291C')),
+      ...becasVigentes.map(b=>fila(b,'25/26','#10069F')),
+    ].join('');
+
+    const alertaBanner = becasSuspendidas.length
+      ? `<div style="background:#fff3f3;border:1px solid #f5c6c6;border-radius:8px;padding:12px 16px;margin-bottom:16px;display:flex;gap:10px;align-items:flex-start">
+           <span style="font-size:20px;flex-shrink:0">🚨</span>
+           <div style="font-size:13px;color:#7a1a1a;line-height:1.5"><strong>Beca suspendida.</strong> El ingreso de la Junta está pendiente de regularización. No se deben imputar sesiones hasta confirmar el cobro. Consulta con Inés antes de continuar.</div>
+         </div>`
+      : becasAnteriores.length
+      ? `<div style="background:#fffbf0;border:1px solid #f0d080;border-radius:8px;padding:12px 16px;margin-bottom:16px;display:flex;gap:10px;align-items:flex-start">
+           <span style="font-size:20px;flex-shrink:0">⚠️</span>
+           <div style="font-size:13px;color:#7a5c00;line-height:1.5"><strong>Sesiones del curso 24/25 sin consumir.</strong> Revisa con Inés si estas sesiones deben imputarse a la beca anterior antes de usar la del curso vigente.</div>
+         </div>` : '';
+
+    const modal = document.createElement('div');
+    modal.id = 'modal-beca-confirm';
+    modal.style.cssText = 'position:fixed;inset:0;background:rgba(26,27,46,.55);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px)';
+    modal.innerHTML = `
+      <div style="background:#fff;border-radius:18px;width:100%;max-width:560px;box-shadow:0 32px 80px rgba(16,6,159,.22),0 8px 24px rgba(0,0,0,.12);overflow:hidden;animation:bcmIn .2s cubic-bezier(.16,1,.3,1)">
+        <style>@keyframes bcmIn{from{opacity:0;transform:translateY(16px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}</style>
+        <div style="background:${colorHead};padding:22px 26px;display:flex;align-items:center;gap:14px">
+          <div style="width:46px;height:46px;background:rgba(255,255,255,.18);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0">${icono}</div>
+          <div>
+            <div style="font-size:17px;font-weight:700;color:#fff;letter-spacing:-.2px">${titulo}</div>
+            <div style="font-size:12px;color:rgba(255,255,255,.7);margin-top:3px">Comprueba el estado de las becas antes de crear la cita</div>
+          </div>
+        </div>
+        <div style="padding:22px 26px">
+          ${alertaBanner}
+          <p style="font-size:12px;color:#6B7280;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Becas con sesiones pendientes</p>
+          <div style="border:1px solid #E8EAF0;border-radius:10px;overflow:hidden">
+            <table style="width:100%;border-collapse:collapse;font-size:13px">
+              <thead><tr style="background:#F4F5F9">
+                <th style="padding:8px 12px;text-align:left;color:#6B7280;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px">ID</th>
+                <th style="padding:8px 12px;text-align:left;color:#6B7280;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px">Curso</th>
+                <th style="padding:8px 12px;text-align:left;color:#6B7280;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px">Servicio</th>
+                <th style="padding:8px 12px;text-align:center;color:#6B7280;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px">Sesiones</th>
+                <th style="padding:8px 12px;text-align:left;color:#6B7280;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px">Estado</th>
+              </tr></thead>
+              <tbody>${filas}</tbody>
+            </table>
+          </div>
+        </div>
+        <div style="padding:16px 26px 22px;display:flex;justify-content:flex-end;gap:10px">
+          <button id="bcm-cancel" style="padding:10px 22px;border-radius:8px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;border:1.5px solid #E2E4EE;background:#fff;color:#6B7280;transition:all .15s">✕ Cancelar</button>
+          <button id="bcm-ok" style="padding:10px 24px;border-radius:8px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;border:none;background:${hayAlerta?'#DA291C':'#10069F'};color:#fff;transition:all .15s">${hayAlerta?'⚠️ Continuar igualmente':'✓ Continuar'}</button>
+        </div>
+      </div>`;
+    document.body.appendChild(modal);
+    const cleanup = (res) => { modal.remove(); if(!res){aviso.style.display='none';} resolve(res); };
+    document.getElementById('bcm-cancel').onclick = ()=>cleanup(false);
+    document.getElementById('bcm-ok').onclick = ()=>{
+      const bActiva=todasBecas.find(b=>b.estado==='Activo')||todasBecas.find(b=>b.estado==='Suspendida')||todasBecas[0];
+      aviso.className='bono-aviso ok'; aviso.textContent=`✓ ${bActiva.id_beca} · ${bActiva.sesiones_pendientes} ses. pendientes`;
+      cleanup(true);
+    };
+    modal.addEventListener('click',e=>{if(e.target===modal)cleanup(false);});
+  });
+}
+
 async function verificarBonoDisponible(idPaciente, tipoFin) {
   if(!idPaciente)return true;
   const aviso=document.getElementById('n-bono-aviso');
@@ -2058,47 +2151,22 @@ async function verificarBonoDisponible(idPaciente, tipoFin) {
     if(tipoFin==='BECA') {
       const todasBecas=await supaGet('becas',`id_paciente=eq.${idPaciente}&sesiones_pendientes=gt.0&order=anio.desc`);
       if(!todasBecas.length){
-        aviso.className='bono-aviso warn'; aviso.textContent='✗ No hay beca activa con sesiones pendientes para este paciente.'; return false;
+        aviso.className='bono-aviso warn'; aviso.textContent='✗ No hay beca con sesiones pendientes para este paciente.'; return false;
       }
-      const anioActual=new Date().getFullYear();
-      const becasAnteriores=todasBecas.filter(b=>b.anio<anioActual);
-      const becaActual=todasBecas.find(b=>b.anio===anioActual);
-      let msgAviso='';
-      if(becasAnteriores.length) {
-        const lista=becasAnteriores.map(b=>`· Beca ${b.anio} (${b.id_beca}): ${b.sesiones_pendientes} ses. pendientes`).join('\n');
-        msgAviso=`⚠️ ATENCIÓN — Becas de años anteriores con sesiones sin consumir:\n\n${lista}\n\n`;
-        if(becaActual) msgAviso+=`Beca ${anioActual}: ${becaActual.sesiones_pendientes} ses. disponibles.\n\n`;
-        msgAviso+='¿Deseas continuar y asignar esta sesión a la beca activa?';
-      } else if(becaActual) {
-        msgAviso=`ℹ️ Beca ${anioActual} (${becaActual.id_beca}): ${becaActual.sesiones_pendientes} sesión${becaActual.sesiones_pendientes!==1?'es':''} pendiente${becaActual.sesiones_pendientes!==1?'s':''}.\n\n¿Continuar?`;
-      }
-      const continuar=window.confirm(msgAviso);
-      if(!continuar){aviso.style.display='none';return false;}
-      const bActiva=todasBecas.find(b=>b.estado==='Activo')||todasBecas[0];
-      aviso.className='bono-aviso ok'; aviso.textContent=`✓ ${bActiva.id_beca} · ${bActiva.sesiones_pendientes} ses. pendientes`;
-      return true;
+      return await mostrarModalConfirmBeca({todasBecas, aviso});
     }
     if(tipoFin==='BONO') {
-      // Consultar todos los bonos con sesiones pendientes, ordenados por fecha de compra asc
-      // (el más antiguo primero, para consumir en orden)
       const todosBonos=await supaGet('bonos',`id_paciente=eq.${idPaciente}&sesiones_pendientes=gt.0&order=fecha_compra.asc`);
       if(!todosBonos.length){
-        aviso.className='bono-aviso warn'; aviso.textContent='✗ No hay bono activo con sesiones pendientes para este paciente.'; return false;
+        aviso.className='bono-aviso warn'; aviso.textContent='✗ No hay bono con sesiones pendientes para este paciente.'; return false;
       }
-      // Construir resumen de todos los bonos pendientes
       const totalSes=todosBonos.reduce((s,b)=>s+(parseInt(b.sesiones_pendientes)||0),0);
       let msgAviso='';
-      if(todosBonos.length===1) {
-        const b=todosBonos[0];
-        msgAviso=`ℹ️ Bono ${b.id_bono} (${b.tipo_bono||''}): ${b.sesiones_pendientes} sesión${b.sesiones_pendientes!==1?'es':''} pendiente${b.sesiones_pendientes!==1?'s':''}.\n\n¿Continuar?`;
-      } else {
-        const lista=todosBonos.map(b=>`· ${b.id_bono} (${b.tipo_bono||'—'}): ${b.sesiones_pendientes} ses. — comprado ${b.fecha_compra||'?'}`).join('\n');
-        msgAviso=`ℹ️ Este paciente tiene ${todosBonos.length} bonos con sesiones disponibles (${totalSes} en total):\n\n${lista}\n\nSe usará el más antiguo. ¿Continuar?`;
-      }
+      if(todosBonos.length===1){const b=todosBonos[0];msgAviso=`ℹ️ Bono ${b.id_bono} (${b.tipo_bono||''}): ${b.sesiones_pendientes} sesión${b.sesiones_pendientes!=1?'es':''} pendiente${b.sesiones_pendientes!=1?'s':''}.\n\n¿Continuar?`;}
+      else{const lista=todosBonos.map(b=>`· ${b.id_bono} (${b.tipo_bono||'—'}): ${b.sesiones_pendientes} ses. — ${b.fecha_compra||'?'}`).join('\n');msgAviso=`ℹ️ ${todosBonos.length} bonos activos · ${totalSes} ses. en total:\n\n${lista}\n\nSe usará el más antiguo. ¿Continuar?`;}
       const continuar=window.confirm(msgAviso);
       if(!continuar){aviso.style.display='none';return false;}
-      const bActivo=todosBonos[0];
-      aviso.className='bono-aviso ok'; aviso.textContent=`✓ ${bActivo.id_bono} · ${bActivo.sesiones_pendientes} ses. pendientes`;
+      aviso.className='bono-aviso ok'; aviso.textContent=`✓ ${todosBonos[0].id_bono} · ${todosBonos[0].sesiones_pendientes} ses. pendientes`;
       return true;
     }
     return true;
