@@ -3032,7 +3032,7 @@ function p360RenderEconomico(p, sesiones, cobros) {
     : '<div class="empty-state" style="padding:16px">Sin cobros registrados</div>';
 
   // Bonos
-  const bonos = G.bonos.filter(b=>b.id_paciente===p.id_paciente && b.estado==='Activo');
+  const bonos = G.bonos.filter(b=>b.id_paciente===p.id_paciente && (parseInt(b.sesiones_pendientes)||0)>0);
   const bonosCard = document.getElementById('p360-bonos-card');
   if (bonos.length) {
     bonosCard.style.display='block';
@@ -3049,7 +3049,7 @@ function p360RenderEconomico(p, sesiones, cobros) {
   } else { bonosCard.style.display='none'; }
 
   // Becas
-  const becas = G.becas.filter(b=>b.id_paciente===p.id_paciente && b.estado==='Activo');
+  const becas = G.becas.filter(b=>b.id_paciente===p.id_paciente && (parseInt(b.sesiones_pendientes)||0)>0);
   const becasCard = document.getElementById('p360-becas-card');
   if (becas.length) {
     becasCard.style.display='block';

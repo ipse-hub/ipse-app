@@ -2153,8 +2153,8 @@ function mostrarModalConfirmBono({todosBonos, aviso}) {
     const colorHead = hayAgotando ? '#F59E0B' : '#10069F';
     const icono     = hayAgotando ? '⚠️' : '🎟️';
     const titulo    = hayVarios
-      ? `${todosBonos.length} bonos activos — ${totalSes} sesiones en total`
-      : `Bono activo — ${totalSes} sesión${totalSes!==1?'es':''} disponible${totalSes!==1?'s':''}`;
+      ? `${todosBonos.length} bonos con sesiones pendientes — ${totalSes} en total`
+      : `Bono con ${totalSes} sesión${totalSes!==1?'es':''} disponible${totalSes!==1?'s':''}`;
 
     const fila = (b, esPrimero) => {
       const sesPend = parseInt(b.sesiones_pendientes)||0;
