@@ -1477,6 +1477,13 @@ textarea.form-control { min-height: 72px; transition: border-color .2s; }
         <div class="form-group"><label class="form-label">Consumidas</label><input type="number" class="form-control" id="bc-consumidas" min="0" value="0"></div>
         <div class="form-group"><label class="form-label">Importe neto (€)</label><input type="number" class="form-control" id="bc-neto" readonly></div>
         <div class="form-group"><label class="form-label">Valor/sesión (€)</label><input type="number" class="form-control" id="bc-valor-ses" readonly></div>
+        <div class="form-group"><label class="form-label">Servicio</label>
+          <select class="form-control" id="bc-servicio" onchange="bcActualizarNotas()">
+            <option value="">— Sin especificar —</option>
+            <option value="PSI">PSI — Psicología</option>
+            <option value="LOG">LOG — Logopedia</option>
+          </select>
+        </div>
         <div class="form-group"><label class="form-label">Cobrado</label>
           <select class="form-control" id="bc-cobrado"><option value="Pendiente_cobro">Pendiente</option><option value="SI">Cobrado</option></select>
         </div>
@@ -3808,6 +3815,18 @@ function renderBecas() {
 
 function filtrarBecas() { renderBecas(); }
 
+// Sincroniza el prefijo PSI/LOG en el campo notas al cambiar el selector de servicio
+function bcActualizarNotas() {
+  const srv = document.getElementById('bc-servicio').value;
+  const notasEl = document.getElementById('bc-notas');
+  const nota = notasEl.value;
+  // Quitar prefijo anterior si lo hay
+  const sinPrefijo = nota.replace(/^(PSI - Psicología|LOG - Logopedia)\.\s*/,'').replace(/^(PSI - Psicología|LOG - Logopedia)/,'').trim();
+  if (srv === 'PSI') notasEl.value = 'PSI - Psicología' + (sinPrefijo ? '. ' + sinPrefijo : '');
+  else if (srv === 'LOG') notasEl.value = 'LOG - Logopedia' + (sinPrefijo ? '. ' + sinPrefijo : '');
+  else notasEl.value = sinPrefijo;
+}
+
 function calcularBeca() {
   const bruto = parseFloat(document.getElementById('bc-bruto')?.value)||0;
   const fee   = parseFloat(document.getElementById('bc-fee')?.value)||0;
@@ -3831,6 +3850,7 @@ function abrirModalBeca() {
   document.getElementById('bc-neto').value='';
   document.getElementById('bc-valor-ses').value='';
   document.getElementById('bc-cobrado').value='Pendiente_cobro';
+  document.getElementById('bc-servicio').value='';
   document.getElementById('bc-fecha-cobro').value='';
   document.getElementById('bc-notas').value='';
   document.getElementById('bc-btn-eliminar').style.display='none';
@@ -3851,6 +3871,9 @@ function editarBeca(id) {
   document.getElementById('bc-neto').value        = b.importe_neto||0;
   document.getElementById('bc-valor-ses').value   = b.valor_sesion||0;
   document.getElementById('bc-cobrado').value     = normCobradoBeca(b.cobrado)==='Cobrado' ? 'SI' : 'Pendiente_cobro';
+  // Detectar servicio desde notas
+  const srvVal = servicioFromNotas(b.notas);
+  document.getElementById('bc-servicio').value = srvVal || '';
   document.getElementById('bc-fecha-cobro').value = b.fecha_cobro||'';
   document.getElementById('bc-notas').value       = b.notas||'';
   document.getElementById('bc-btn-eliminar').style.display='inline-flex';
