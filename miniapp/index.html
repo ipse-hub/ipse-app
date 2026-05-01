@@ -2143,6 +2143,94 @@ function mostrarModalConfirmBeca({todasBecas, aviso}) {
   });
 }
 
+// ── Modal bonito de confirmación de bono ──────────────────────
+function mostrarModalConfirmBono({todosBonos, aviso}) {
+  return new Promise(resolve => {
+    document.getElementById('modal-bono-confirm')?.remove();
+    const totalSes = todosBonos.reduce((s,b)=>s+(parseInt(b.sesiones_pendientes)||0),0);
+    const hayVarios = todosBonos.length > 1;
+    const hayAgotando = todosBonos.some(b=>(parseInt(b.sesiones_pendientes)||0)<=1);
+    const colorHead = hayAgotando ? '#F59E0B' : '#10069F';
+    const icono     = hayAgotando ? '⚠️' : '🎟️';
+    const titulo    = hayVarios
+      ? `${todosBonos.length} bonos activos — ${totalSes} sesiones en total`
+      : `Bono activo — ${totalSes} sesión${totalSes!==1?'es':''} disponible${totalSes!==1?'s':''}`;
+
+    const fila = (b, esPrimero) => {
+      const sesPend = parseInt(b.sesiones_pendientes)||0;
+      const colorSes = sesPend<=1 ? '#DA291C' : sesPend<=2 ? '#F59E0B' : '#1A1B2E';
+      const usarBadge = esPrimero && hayVarios
+        ? `<span style="background:#EDF7CC;color:#3a6600;border-radius:5px;padding:2px 8px;font-size:10px;font-weight:700;margin-left:6px">↑ se usará este</span>`
+        : '';
+      return `<tr style="border-bottom:1px solid #F0F1F5;${esPrimero&&hayVarios?'background:#FAFBFF;':''}">
+        <td style="padding:9px 12px;font-family:'DM Mono',monospace;font-size:12px;color:#10069F;font-weight:600">${b.id_bono}${usarBadge}</td>
+        <td style="padding:9px 12px;font-size:13px;color:#444">${b.tipo_bono||'—'}</td>
+        <td style="padding:9px 12px;font-size:12px;color:#6B7280">${(b.fecha_compra||'?').slice(0,10)}</td>
+        <td style="padding:9px 12px;text-align:center"><strong style="font-size:15px;color:${colorSes}">${sesPend}</strong> <span style="font-size:11px;color:#6B7280">pend.</span></td>
+        <td style="padding:9px 12px"><span style="background:#EDF7CC;color:#3a6600;border-radius:5px;padding:2px 8px;font-size:11px;font-weight:600">✓ Activo</span></td>
+      </tr>`;
+    };
+
+    const filas = todosBonos.map((b,i)=>fila(b,i===0)).join('');
+
+    const alertaBanner = hayAgotando
+      ? `<div style="background:#fffbf0;border:1px solid #f0d080;border-radius:8px;padding:12px 16px;margin-bottom:16px;display:flex;gap:10px;align-items:flex-start">
+           <span style="font-size:20px;flex-shrink:0">⚠️</span>
+           <div style="font-size:13px;color:#7a5c00;line-height:1.5"><strong>Bono a punto de agotarse.</strong> Alguno de los bonos activos tiene 1 sesión o menos. Valora si es necesario renovar antes de crear esta cita.</div>
+         </div>`
+      : hayVarios
+      ? `<div style="background:#E8E6F8;border:1px solid #c8c4f0;border-radius:8px;padding:12px 16px;margin-bottom:16px;display:flex;gap:10px;align-items:flex-start">
+           <span style="font-size:20px;flex-shrink:0">ℹ️</span>
+           <div style="font-size:13px;color:#3a2f8a;line-height:1.5"><strong>Hay ${todosBonos.length} bonos activos.</strong> Se consumirá el más antiguo (${todosBonos[0].id_bono}). Si quieres usar otro, cancela y ajusta manualmente.</div>
+         </div>`
+      : '';
+
+    const modal = document.createElement('div');
+    modal.id = 'modal-bono-confirm';
+    modal.style.cssText = 'position:fixed;inset:0;background:rgba(26,27,46,.55);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px)';
+    modal.innerHTML = `
+      <div style="background:#fff;border-radius:18px;width:100%;max-width:540px;box-shadow:0 32px 80px rgba(16,6,159,.22),0 8px 24px rgba(0,0,0,.12);overflow:hidden;animation:bnmIn .2s cubic-bezier(.16,1,.3,1)">
+        <style>@keyframes bnmIn{from{opacity:0;transform:translateY(16px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}</style>
+        <div style="background:${colorHead};padding:22px 26px;display:flex;align-items:center;gap:14px">
+          <div style="width:46px;height:46px;background:rgba(255,255,255,.18);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0">${icono}</div>
+          <div>
+            <div style="font-size:17px;font-weight:700;color:#fff;letter-spacing:-.2px">${titulo}</div>
+            <div style="font-size:12px;color:rgba(255,255,255,.7);margin-top:3px">Comprueba el estado del bono antes de crear la cita</div>
+          </div>
+        </div>
+        <div style="padding:22px 26px">
+          ${alertaBanner}
+          <p style="font-size:12px;color:#6B7280;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Bonos con sesiones pendientes</p>
+          <div style="border:1px solid #E8EAF0;border-radius:10px;overflow:hidden">
+            <table style="width:100%;border-collapse:collapse;font-size:13px">
+              <thead><tr style="background:#F4F5F9">
+                <th style="padding:8px 12px;text-align:left;color:#6B7280;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px">ID Bono</th>
+                <th style="padding:8px 12px;text-align:left;color:#6B7280;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px">Tipo</th>
+                <th style="padding:8px 12px;text-align:left;color:#6B7280;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px">Comprado</th>
+                <th style="padding:8px 12px;text-align:center;color:#6B7280;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px">Sesiones</th>
+                <th style="padding:8px 12px;text-align:left;color:#6B7280;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px">Estado</th>
+              </tr></thead>
+              <tbody>${filas}</tbody>
+            </table>
+          </div>
+        </div>
+        <div style="padding:16px 26px 22px;display:flex;justify-content:flex-end;gap:10px">
+          <button id="bnm-cancel" style="padding:10px 22px;border-radius:8px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;border:1.5px solid #E2E4EE;background:#fff;color:#6B7280;transition:all .15s">✕ Cancelar</button>
+          <button id="bnm-ok" style="padding:10px 24px;border-radius:8px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;border:none;background:${colorHead};color:#fff;transition:all .15s">✓ Continuar</button>
+        </div>
+      </div>`;
+    document.body.appendChild(modal);
+    const cleanup = (res) => { modal.remove(); if(!res) aviso.style.display='none'; resolve(res); };
+    document.getElementById('bnm-cancel').onclick = ()=>cleanup(false);
+    document.getElementById('bnm-ok').onclick = ()=>{
+      aviso.className='bono-aviso ok';
+      aviso.textContent=`✓ ${todosBonos[0].id_bono} · ${todosBonos[0].sesiones_pendientes} ses. pendientes`;
+      cleanup(true);
+    };
+    modal.addEventListener('click', e=>{if(e.target===modal)cleanup(false);});
+  });
+}
+
 async function verificarBonoDisponible(idPaciente, tipoFin) {
   if(!idPaciente)return true;
   const aviso=document.getElementById('n-bono-aviso');
@@ -2160,14 +2248,7 @@ async function verificarBonoDisponible(idPaciente, tipoFin) {
       if(!todosBonos.length){
         aviso.className='bono-aviso warn'; aviso.textContent='✗ No hay bono con sesiones pendientes para este paciente.'; return false;
       }
-      const totalSes=todosBonos.reduce((s,b)=>s+(parseInt(b.sesiones_pendientes)||0),0);
-      let msgAviso='';
-      if(todosBonos.length===1){const b=todosBonos[0];msgAviso=`ℹ️ Bono ${b.id_bono} (${b.tipo_bono||''}): ${b.sesiones_pendientes} sesión${b.sesiones_pendientes!=1?'es':''} pendiente${b.sesiones_pendientes!=1?'s':''}.\n\n¿Continuar?`;}
-      else{const lista=todosBonos.map(b=>`· ${b.id_bono} (${b.tipo_bono||'—'}): ${b.sesiones_pendientes} ses. — ${b.fecha_compra||'?'}`).join('\n');msgAviso=`ℹ️ ${todosBonos.length} bonos activos · ${totalSes} ses. en total:\n\n${lista}\n\nSe usará el más antiguo. ¿Continuar?`;}
-      const continuar=window.confirm(msgAviso);
-      if(!continuar){aviso.style.display='none';return false;}
-      aviso.className='bono-aviso ok'; aviso.textContent=`✓ ${todosBonos[0].id_bono} · ${todosBonos[0].sesiones_pendientes} ses. pendientes`;
-      return true;
+      return await mostrarModalConfirmBono({todosBonos, aviso});
     }
     return true;
   }catch(e){aviso.className='bono-aviso warn';aviso.textContent='✗ Error: '+e.message;return false;}
