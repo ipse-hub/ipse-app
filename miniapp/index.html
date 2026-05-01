@@ -401,12 +401,12 @@
     </div>
     <div class="form-row" style="margin-top:6px">
       <div class="form-group"><label class="form-label">Facturar a</label>
-        <select id="mp-facturacion-tutor" class="form-control"><option value="">—</option><option value="tutor1">Tutor 1</option><option value="tutor2">Tutor 2</option><option value="ambos">Ambos</option></select>
+        <select id="mp-facturacion-tutor" class="form-control"><option value="">—</option><option value="paciente">Paciente</option><option value="tutor1">Tutor 1</option><option value="tutor2">Tutor 2</option><option value="ambos">Ambos tutores</option></select>
       </div>
       <div class="form-group"></div>
     </div>
 
-    <!-- DATOS ESCOLARES -->
+    <!-- TUTOR 2 -->
     <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;background:#EDF7CC;color:#5A8000;border-radius:6px;padding:6px 12px;margin:14px 0 12px">🏫 Datos escolares</div>
     <div class="form-row">
       <div class="form-group"><label class="form-label">Centro escolar</label><input type="text" id="mp-centro-escolar" class="form-control" placeholder="Nombre del colegio"></div>
@@ -510,13 +510,13 @@
       <div class="form-row" style="margin-top:6px">
         <div class="form-group"><label class="form-label">Facturar a</label>
           <select class="form-control" id="ep-facturacion-tutor">
-            <option value="">—</option><option value="tutor1">Tutor 1</option><option value="tutor2">Tutor 2</option><option value="ambos">Ambos</option>
+            <option value="">—</option><option value="paciente">Paciente</option><option value="tutor1">Tutor 1</option><option value="tutor2">Tutor 2</option><option value="ambos">Ambos tutores</option>
           </select>
         </div>
         <div class="form-group"></div>
       </div>
 
-      <!-- DATOS ESCOLARES -->
+      <!-- TUTOR 2 -->
       <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;background:#EDF7CC;color:#5A8000;border-radius:6px;padding:6px 12px;margin:14px 0 12px">🏫 Datos escolares</div>
       <div class="form-row">
         <div class="form-group"><label class="form-label">Centro escolar</label><input type="text" id="ep-centro-escolar" class="form-control" placeholder="Nombre del colegio"></div>
@@ -692,7 +692,13 @@
         </span>
       </div>
       <div class="info-row"><span class="info-label">Servicio</span><span class="info-val" id="mc-servicio">—</span></div>
-      <div class="info-row"><span class="info-label">Terapeuta</span><span class="info-val" id="mc-terapeuta">—</span></div>
+      <div class="info-row">
+        <span class="info-label">Terapeuta</span>
+        <span style="display:flex;align-items:center;gap:4px">
+          <span class="info-val" id="mc-terapeuta">—</span>
+          <button class="btn-editar-pac" id="mc-btn-editar-cita-admin" onclick="abrirEditCitaDesdeModal()" title="Editar cita completa (admin)" style="display:none">✏️ Editar cita</button>
+        </span>
+      </div>
       <div class="info-row" style="margin-bottom:0"><span class="info-label">Fecha / Hora</span><span class="info-val" id="mc-fechahora">—</span></div>
       <div class="info-row" id="mc-origen-row" style="display:none;margin-bottom:0;margin-top:4px">
         <span class="info-label">Origen</span>
@@ -1582,6 +1588,9 @@ function abrirModalCita(cita) {
   document.getElementById('mc-btn-repetir').style.display=esMia?'inline-flex':'none';
   document.getElementById('mc-btn-eliminar').style.display=(esMia||esAdmin())?'inline-flex':'none';
   document.getElementById('mc-btn-editar-pac').style.display = cita.ID_Paciente ? 'inline-flex' : 'none';
+  // Fix admin editar cita: mostrar botón solo si es admin
+  const btnEditCitaAdmin = document.getElementById('mc-btn-editar-cita-admin');
+  if (btnEditCitaAdmin) btnEditCitaAdmin.style.display = esAdmin() ? 'inline-flex' : 'none';
   // Resetear paneles y botón cobro
   document.getElementById('mc-cobro-registrado').style.display='none';
   document.getElementById('mc-cobro-panel').style.display='none';
@@ -1791,7 +1800,9 @@ async function guardarEstadoCita() {
       if(!sesExist||!sesExist.length){
         const importe=G.estadoSel==='No-show'&&tipoFin!=='BECA'?0:await calcularImporte(G.citaActual.ID_Servicio,tipoFin,idFin);
         const idSes=await generarId('sesiones','id_cita','S');
-        await supaPost('sesiones',{id_cita:idSes,fecha:G.citaActual.Fecha,hora:(G.citaActual.Hora||'').slice(0,5),financiacion_tipo:tipoFin,id_paciente:G.citaActual.ID_Paciente,id_terapeuta:G.miId,id_servicio:G.citaActual.ID_Servicio,id_beca:tipoFin==='BECA'?idFin:'',id_bono:tipoFin==='BONO'?idFin:'',estado:G.estadoSel,importe:importe,cerrada:'No',fecha_cierre:'',notas:notas||G.citaActual.NotasAgenda||''});
+        // Fix cobrado: sesiones de BONO y BECA ya están pagadas por anticipado → cobrado:'Sí'
+        const cobradoSes=(tipoFin==='BONO'||tipoFin==='BECA')?'Sí':'No';
+        await supaPost('sesiones',{id_cita:idSes,fecha:G.citaActual.Fecha,hora:(G.citaActual.Hora||'').slice(0,5),financiacion_tipo:tipoFin,id_paciente:G.citaActual.ID_Paciente,id_terapeuta:G.miId,id_servicio:G.citaActual.ID_Servicio,id_beca:tipoFin==='BECA'?idFin:'',id_bono:tipoFin==='BONO'?idFin:'',estado:G.estadoSel,importe:importe,cobrado:cobradoSes,cerrada:'No',fecha_cierre:'',notas:notas||G.citaActual.NotasAgenda||''});
         if(G.estadoSel==='Hecha'){
           if(tipoFin==='BONO'&&idFin)await actualizarBono(idFin,1);
           if(tipoFin==='BECA'&&idFin)await actualizarBeca(idFin,1);
@@ -1856,6 +1867,24 @@ async function eliminarCita() {
   }
   catch(err){toast('Error: '+err.message,'err');}
   finally{btn.disabled=false;btn.textContent='🗑 Eliminar';}
+}
+
+// Fix admin editar cita: abrir modal-admin-cita desde el modal normal de cita
+function abrirEditCitaDesdeModal() {
+  if (!G.citaActual || !esAdmin()) return;
+  const c = G.citaActual;
+  // Construir objeto compatible con adminAbrirEditCita
+  const r = {
+    id_cita:       c.ID_Cita,
+    fecha:         c.Fecha,
+    hora:          c.Hora,
+    id_terapeuta:  c.ID_Terapeuta,
+    id_paciente:   c.ID_Paciente,
+    estado_agenda: c.EstadoAgenda || c.Estado,
+    notas_agenda:  c.NotasAgenda || c.Notas || '',
+  };
+  cerrarModal('modal-cita');
+  adminAbrirEditCita(r);
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -2026,10 +2055,53 @@ async function verificarBonoDisponible(idPaciente, tipoFin) {
   const aviso=document.getElementById('n-bono-aviso');
   aviso.textContent='⏳ Comprobando…'; aviso.className='bono-aviso ok'; aviso.style.display='block';
   try {
-    const tabla=tipoFin==='BONO'?'bonos':'becas'; const idCamp=tipoFin==='BONO'?'id_bono':'id_beca';
-    const rows=await supaGet(tabla,`id_paciente=eq.${idPaciente}&estado=eq.Activo&sesiones_pendientes=gt.0&limit=1`);
-    if(rows.length){aviso.className='bono-aviso ok';aviso.textContent=`✓ ${rows[0][idCamp]} · ${rows[0].sesiones_pendientes} ses. pendientes`;return true;}
-    else{aviso.className='bono-aviso warn';aviso.textContent=`✗ No hay ${tipoFin==='BONO'?'bono':'beca'} activo para este paciente.`;return false;}
+    if(tipoFin==='BECA') {
+      const todasBecas=await supaGet('becas',`id_paciente=eq.${idPaciente}&sesiones_pendientes=gt.0&order=anio.desc`);
+      if(!todasBecas.length){
+        aviso.className='bono-aviso warn'; aviso.textContent='✗ No hay beca activa con sesiones pendientes para este paciente.'; return false;
+      }
+      const anioActual=new Date().getFullYear();
+      const becasAnteriores=todasBecas.filter(b=>b.anio<anioActual);
+      const becaActual=todasBecas.find(b=>b.anio===anioActual);
+      let msgAviso='';
+      if(becasAnteriores.length) {
+        const lista=becasAnteriores.map(b=>`· Beca ${b.anio} (${b.id_beca}): ${b.sesiones_pendientes} ses. pendientes`).join('\n');
+        msgAviso=`⚠️ ATENCIÓN — Becas de años anteriores con sesiones sin consumir:\n\n${lista}\n\n`;
+        if(becaActual) msgAviso+=`Beca ${anioActual}: ${becaActual.sesiones_pendientes} ses. disponibles.\n\n`;
+        msgAviso+='¿Deseas continuar y asignar esta sesión a la beca activa?';
+      } else if(becaActual) {
+        msgAviso=`ℹ️ Beca ${anioActual} (${becaActual.id_beca}): ${becaActual.sesiones_pendientes} sesión${becaActual.sesiones_pendientes!==1?'es':''} pendiente${becaActual.sesiones_pendientes!==1?'s':''}.\n\n¿Continuar?`;
+      }
+      const continuar=window.confirm(msgAviso);
+      if(!continuar){aviso.style.display='none';return false;}
+      const bActiva=todasBecas.find(b=>b.estado==='Activo')||todasBecas[0];
+      aviso.className='bono-aviso ok'; aviso.textContent=`✓ ${bActiva.id_beca} · ${bActiva.sesiones_pendientes} ses. pendientes`;
+      return true;
+    }
+    if(tipoFin==='BONO') {
+      // Consultar todos los bonos con sesiones pendientes, ordenados por fecha de compra asc
+      // (el más antiguo primero, para consumir en orden)
+      const todosBonos=await supaGet('bonos',`id_paciente=eq.${idPaciente}&sesiones_pendientes=gt.0&order=fecha_compra.asc`);
+      if(!todosBonos.length){
+        aviso.className='bono-aviso warn'; aviso.textContent='✗ No hay bono activo con sesiones pendientes para este paciente.'; return false;
+      }
+      // Construir resumen de todos los bonos pendientes
+      const totalSes=todosBonos.reduce((s,b)=>s+(parseInt(b.sesiones_pendientes)||0),0);
+      let msgAviso='';
+      if(todosBonos.length===1) {
+        const b=todosBonos[0];
+        msgAviso=`ℹ️ Bono ${b.id_bono} (${b.tipo_bono||''}): ${b.sesiones_pendientes} sesión${b.sesiones_pendientes!==1?'es':''} pendiente${b.sesiones_pendientes!==1?'s':''}.\n\n¿Continuar?`;
+      } else {
+        const lista=todosBonos.map(b=>`· ${b.id_bono} (${b.tipo_bono||'—'}): ${b.sesiones_pendientes} ses. — comprado ${b.fecha_compra||'?'}`).join('\n');
+        msgAviso=`ℹ️ Este paciente tiene ${todosBonos.length} bonos con sesiones disponibles (${totalSes} en total):\n\n${lista}\n\nSe usará el más antiguo. ¿Continuar?`;
+      }
+      const continuar=window.confirm(msgAviso);
+      if(!continuar){aviso.style.display='none';return false;}
+      const bActivo=todosBonos[0];
+      aviso.className='bono-aviso ok'; aviso.textContent=`✓ ${bActivo.id_bono} · ${bActivo.sesiones_pendientes} ses. pendientes`;
+      return true;
+    }
+    return true;
   }catch(e){aviso.className='bono-aviso warn';aviso.textContent='✗ Error: '+e.message;return false;}
 }
 

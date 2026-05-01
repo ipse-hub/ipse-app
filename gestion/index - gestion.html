@@ -6,6 +6,7 @@
 <title>IPSE — Panel de Gestión</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
@@ -182,7 +183,16 @@ body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(
 .modal-overlay.open { display: flex; }
 .modal { background: var(--white); border-radius: 16px; box-shadow: var(--shadow-lg); width: 760px; max-width: 96vw; max-height: 92vh; overflow-y: auto; animation: modalIn .25s ease; }
 .modal-sm { width: 520px; }
-.modal-lg { width: 900px; }
+.modal-lg { width: 1100px; max-width: 96vw; max-height: 96vh; }
+.modal-pac-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px 18px; }
+.modal-pac-grid .span2 { grid-column: span 2; }
+.modal-pac-grid .span3 { grid-column: 1 / -1; }
+.modal-pac-grid .pac-section { grid-column: 1 / -1; font-size: 10px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; padding: 6px 12px; border-radius: 6px; margin-top: 6px; }
+.pac-section.s-pac   { background: #E8E6F8; color: #10069F; }
+.pac-section.s-t1    { background: #E0F5FB; color: #006a87; }
+.pac-section.s-t2    { background: #E0F5FB; color: #006a87; }
+.pac-section.s-esc   { background: #EDF7CC; color: #5A8000; }
+.pac-section.s-clin  { background: #FFF3CD; color: #7a5c00; }
 .modal-sesion-wide { width: 860px; }
 @keyframes modalIn { from { transform: translateY(20px) scale(.97); opacity: 0; } to { transform: none; opacity: 1; } }
 .modal-header { padding: 22px 26px 18px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
@@ -1256,34 +1266,46 @@ textarea.form-control { min-height: 72px; transition: border-color .2s; }
 
 <!-- MODAL PACIENTE (formulario completo con todos los campos de la tabla) -->
 <div class="modal-overlay" id="modal-paciente">
-  <div class="modal modal-lg">
-    <div class="modal-header">
+  <div class="modal modal-lg" style="display:flex;flex-direction:column;">
+    <div class="modal-header" style="flex-shrink:0">
       <div class="modal-title" id="modal-pac-titulo">Nuevo paciente</div>
       <button class="modal-close" onclick="cerrarModal('modal-paciente')">×</button>
     </div>
-    <div class="modal-body">
+    <div class="modal-body" style="flex:1;overflow-y:auto;">
       <input type="hidden" id="p-id">
-      <div class="form-grid">
-        <!-- Datos básicos -->
-        <div class="form-section">Datos personales</div>
+      <div class="modal-pac-grid">
+
+        <!-- ── PACIENTE ── -->
+        <div class="pac-section s-pac">👤 Paciente</div>
         <div class="form-group"><label class="form-label">Nombre *</label><input type="text" class="form-control" id="p-nombre"></div>
         <div class="form-group"><label class="form-label">Apellidos *</label><input type="text" class="form-control" id="p-apellidos"></div>
-        <div class="form-group"><label class="form-label">Alias</label><input type="text" class="form-control" id="p-alias" placeholder="Como se le conoce"></div>
+        <div class="form-group"><label class="form-label">Alias <span style="font-weight:400;text-transform:none;font-size:11px">(agenda)</span></label><input type="text" class="form-control" id="p-alias" placeholder="Como se le conoce"></div>
         <div class="form-group"><label class="form-label">Fecha nacimiento</label><input type="date" class="form-control" id="p-fnac" oninput="gestionActualizarMenor()"></div>
-        <div class="form-group"><label class="form-label">DNI paciente</label><input type="text" class="form-control" id="p-dni-pac"></div>
-        <div id="g-badge-edad" style="display:none;padding:7px 12px;border-radius:6px;font-size:12px;font-weight:600;margin-bottom:4px"></div>
-        <!-- Tutores -->
-        <div class="form-section">Tutores y contacto</div>
-        <div class="form-group"><label class="form-label" id="g-label-tutor1">Tutor 1</label><input type="text" class="form-control" id="p-tutor1"></div>
-        <div class="form-group"><label class="form-label">DNI Tutor 1</label><input type="text" class="form-control" id="p-dni-tutor1"></div>
+        <div class="form-group"><label class="form-label">DNI paciente</label><input type="text" class="form-control" id="p-dni-pac" placeholder="00000000X"></div>
+        <div id="g-badge-edad" class="span3" style="display:none;padding:7px 12px;border-radius:6px;font-size:12px;font-weight:600"></div>
+        <div class="form-group span3"><label class="form-label">Dirección (calle, nº, CP, municipio, provincia)</label><textarea class="form-control" id="p-dir" rows="3" placeholder="Calle Mayor 1, 2ºA&#10;18001 Granada&#10;Granada (España)" style="resize:vertical"></textarea></div>
         <div class="form-group"><label class="form-label" id="g-label-tel">Teléfono *</label><input type="tel" class="form-control" id="p-tel"></div>
-        <div class="form-group"><label class="form-label">Email Tutor 1</label><input type="email" class="form-control" id="p-tutor1-email"></div>
-        <div class="form-group span2"><label class="form-label">Dirección Tutor 1</label><input type="text" class="form-control" id="p-tutor1-dir"></div>
-        <div class="form-group"><label class="form-label">Tutor 2</label><input type="text" class="form-control" id="p-tutor2"></div>
-        <div class="form-group"><label class="form-label">DNI Tutor 2</label><input type="text" class="form-control" id="p-tutor2-dni"></div>
-        <div class="form-group"><label class="form-label" id="g-label-tel2">Teléfono Tutor 2</label><input type="tel" class="form-control" id="p-tel2"></div>
-        <div class="form-group"><label class="form-label">Email Tutor 2</label><input type="email" class="form-control" id="p-tutor2-email"></div>
-        <div class="form-group span2"><label class="form-label">Dirección Tutor 2</label><input type="text" class="form-control" id="p-tutor2-dir"></div>
+        <div class="form-group"><label class="form-label">Email</label><input type="email" class="form-control" id="p-email" placeholder="email@ejemplo.com"></div>
+        <div class="form-group"><label class="form-label">Profesión</label><input type="text" class="form-control" id="p-profesion" placeholder="Ocupación del paciente"></div>
+
+        <!-- ── TUTOR 1 ── -->
+        <div class="pac-section s-t1">👨‍👩‍👧 Tutor 1 <span id="g-label-tutor1-sec" style="font-weight:400;text-transform:none;font-size:11px;letter-spacing:0">(si es menor de edad)</span></div>
+        <div class="form-group"><label class="form-label" id="g-label-tutor1">Nombre y Apellidos</label><input type="text" class="form-control" id="p-tutor1" placeholder="Nombre completo"></div>
+        <div class="form-group"><label class="form-label">DNI Tutor 1</label><input type="text" class="form-control" id="p-dni-tutor1" placeholder="00000000X"></div>
+        <div class="form-group"></div>
+        <div class="form-group span3"><label class="form-label">Dirección Tutor 1</label><textarea class="form-control" id="p-tutor1-dir" rows="3" placeholder="Calle Mayor 1, 2ºA&#10;18001 Granada&#10;Granada (España)" style="resize:vertical"></textarea></div>
+        <div class="form-group"><label class="form-label">Email Tutor 1</label><input type="email" class="form-control" id="p-tutor1-email" placeholder="email@ejemplo.com"></div>
+        <div class="form-group"><label class="form-label" id="g-label-tel2">Teléfono Tutor 1</label><input type="tel" class="form-control" id="p-tel2"></div>
+        <div class="form-group"></div>
+
+        <!-- ── TUTOR 2 ── -->
+        <div class="pac-section s-t2">👨‍👩‍👧 Tutor 2</div>
+        <div class="form-group"><label class="form-label">Nombre y Apellidos</label><input type="text" class="form-control" id="p-tutor2" placeholder="Nombre completo"></div>
+        <div class="form-group"><label class="form-label">DNI Tutor 2</label><input type="text" class="form-control" id="p-tutor2-dni" placeholder="00000000X"></div>
+        <div class="form-group"></div>
+        <div class="form-group span3"><label class="form-label">Dirección Tutor 2</label><textarea class="form-control" id="p-tutor2-dir" rows="3" placeholder="Calle Mayor 1, 2ºA&#10;18001 Granada&#10;Granada (España)" style="resize:vertical"></textarea></div>
+        <div class="form-group"><label class="form-label">Email Tutor 2</label><input type="email" class="form-control" id="p-tutor2-email" placeholder="email@ejemplo.com"></div>
+        <div class="form-group"><label class="form-label">Teléfono Tutor 2</label><input type="tel" class="form-control" id="p-tel3"></div>
         <div class="form-group"><label class="form-label">Facturar a</label>
           <select class="form-control" id="p-facturacion-tutor">
             <option value="">—</option>
@@ -1292,19 +1314,15 @@ textarea.form-control { min-height: 72px; transition: border-color .2s; }
             <option value="ambos">Ambos</option>
           </select>
         </div>
-        <!-- Email paciente (mayor de edad) -->
-        <div class="form-group"><label class="form-label">Email paciente</label><input type="email" class="form-control" id="p-email"></div>
-        <!-- Escolar -->
-        <div class="form-section">Datos escolares</div>
+
+        <!-- ── DATOS ESCOLARES ── -->
+        <div class="pac-section s-esc">🏫 Datos escolares</div>
         <div class="form-group"><label class="form-label">Centro escolar</label><input type="text" class="form-control" id="p-centro-escolar"></div>
         <div class="form-group"><label class="form-label">Curso escolar</label><input type="text" class="form-control" id="p-curso-escolar" placeholder="Ej: 3º Primaria"></div>
-        <!-- Dirección -->
-        <div class="form-section">Dirección</div>
-        <div class="form-group span2"><label class="form-label">Dirección</label><input type="text" class="form-control" id="p-dir"></div>
-        <div class="form-group"><label class="form-label">Código postal</label><input type="text" class="form-control" id="p-cp"></div>
-        <div class="form-group"><label class="form-label">Municipio</label><input type="text" class="form-control" id="p-municipio"></div>
-        <!-- Clínica -->
-        <div class="form-section">Datos clínicos</div>
+        <div class="form-group"></div>
+
+        <!-- ── DATOS CLÍNICOS ── -->
+        <div class="pac-section s-clin">🩺 Datos clínicos</div>
         <div class="form-group"><label class="form-label">Terapeuta principal</label><select class="form-control" id="p-terapeuta"></select></div>
         <div class="form-group"><label class="form-label">Fecha entrada IPSE</label><input type="date" class="form-control" id="p-alta"></div>
         <div class="form-group"><label class="form-label">Fecha alta médica</label><input type="date" class="form-control" id="p-alta-medica"></div>
@@ -1314,7 +1332,8 @@ textarea.form-control { min-height: 72px; transition: border-color .2s; }
         <div class="form-group"><label class="form-label">Consentimiento</label>
           <select class="form-control" id="p-consent"><option value="Pendiente">Pendiente</option><option value="Firmado">Firmado</option></select>
         </div>
-        <div class="form-group span2"><label class="form-label">Diagnóstico</label><input type="text" class="form-control" id="p-diagnostico" placeholder="Diagnóstico principal"></div>
+        <div class="form-group"></div>
+        <div class="form-group span3"><label class="form-label">Diagnóstico</label><input type="text" class="form-control" id="p-diagnostico" placeholder="Diagnóstico principal"></div>
         <div class="form-group"><label class="form-label">Ámbito</label>
           <select class="form-control" id="p-ambito">
             <option value="">—</option>
@@ -1330,11 +1349,12 @@ textarea.form-control { min-height: 72px; transition: border-color .2s; }
             <option value="false">No</option>
           </select>
         </div>
-        <div class="form-group span2"><label class="form-label">Alergias</label><input type="text" class="form-control" id="p-alergias" placeholder="Alergias conocidas"></div>
-        <div class="form-group span2"><label class="form-label">Notas generales</label><input type="text" class="form-control" id="p-notas"></div>
+        <div class="form-group"></div>
+        <div class="form-group span3"><label class="form-label">Alergias</label><input type="text" class="form-control" id="p-alergias" placeholder="Alergias conocidas"></div>
+        <div class="form-group span3"><label class="form-label">Notas generales</label><textarea class="form-control" id="p-notas" rows="2" style="resize:vertical"></textarea></div>
       </div>
     </div>
-    <div class="modal-footer">
+    <div class="modal-footer" style="flex-shrink:0">
       <button class="btn btn-danger btn-sm" id="p-btn-eliminar" style="margin-right:auto;display:none" onclick="eliminarPaciente()">🗑 Eliminar</button>
       <button class="btn btn-secondary" onclick="cerrarModal('modal-paciente')">Cancelar</button>
       <button class="btn btn-primary" id="p-btn-guardar" onclick="guardarPaciente()">Guardar</button>
@@ -3291,7 +3311,7 @@ function calcEdad(fechaNac) {
 function abrirModalPaciente() {
   document.getElementById('p-id').value='';
   document.getElementById('modal-pac-titulo').textContent='Nuevo paciente';
-  ['p-nombre','p-apellidos','p-alias','p-fnac','p-dni-pac','p-tutor1','p-dni-tutor1','p-tel','p-tutor1-email','p-tutor1-dir','p-tutor2','p-tutor2-dni','p-tel2','p-tutor2-email','p-tutor2-dir','p-email','p-centro-escolar','p-curso-escolar','p-dir','p-cp','p-municipio','p-diagnostico','p-alergias','p-notas','p-alta-medica'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  ['p-nombre','p-apellidos','p-alias','p-fnac','p-dni-pac','p-tutor1','p-dni-tutor1','p-tel','p-tutor1-email','p-tutor1-dir','p-tutor2','p-tutor2-dni','p-tel2','p-tel3','p-tutor2-email','p-tutor2-dir','p-email','p-profesion','p-centro-escolar','p-curso-escolar','p-dir','p-diagnostico','p-alergias','p-notas','p-alta-medica'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});;
   document.getElementById('p-beca').value='No';
   document.getElementById('p-consent').value='Pendiente';
   document.getElementById('p-alta').value=new Date().toISOString().split('T')[0];
@@ -3305,8 +3325,8 @@ function abrirModalPaciente() {
   const lTut = document.getElementById('g-label-tutor1');
   const lTel2 = document.getElementById('g-label-tel2');
   if(lTel) lTel.textContent='Teléfono *';
-  if(lTut) lTut.textContent='Tutor 1';
-  if(lTel2) lTel2.textContent='Teléfono 2';
+  if(lTut) lTut.textContent='Nombre y Apellidos';
+  if(lTel2) lTel2.textContent='Teléfono Tutor 1';
   abrirModal('modal-paciente');
 }
 
@@ -3327,15 +3347,15 @@ function editarPaciente(id) {
   document.getElementById('p-tutor2').value      = p.tutor2||'';
   document.getElementById('p-tutor2-dni').value  = p.tutor2_dni||'';
   document.getElementById('p-tel2').value        = p.telefono2||'';
+  document.getElementById('p-tel3').value        = p.telefono3||'';
   document.getElementById('p-tutor2-email').value= p.tutor2_email||'';
   document.getElementById('p-tutor2-dir').value  = p.tutor2_direccion||'';
   document.getElementById('p-facturacion-tutor').value = p.facturacion_tutor||'';
   document.getElementById('p-email').value       = p.email||'';
+  document.getElementById('p-profesion').value   = p.profesion||'';
   document.getElementById('p-centro-escolar').value = p.centro_escolar||'';
   document.getElementById('p-curso-escolar').value  = p.curso_escolar||'';
   document.getElementById('p-dir').value         = p.direccion||'';
-  document.getElementById('p-cp').value          = p.codigo_postal||'';
-  document.getElementById('p-municipio').value   = p.municipio||'';
   document.getElementById('p-diagnostico').value = p.diagnostico||'';
   document.getElementById('p-ambito').value      = p.ambito||'';
   document.getElementById('p-derivacion').value  = p.derivacion===true?'true':p.derivacion===false?'false':'';
@@ -3389,15 +3409,15 @@ async function guardarPaciente() {
     tutor2:           document.getElementById('p-tutor2').value.trim(),
     tutor2_dni:       document.getElementById('p-tutor2-dni').value.trim(),
     telefono2:        telTutor,
+    telefono3:        document.getElementById('p-tel3').value.trim(),
     tutor2_email:     document.getElementById('p-tutor2-email').value.trim(),
     tutor2_direccion: document.getElementById('p-tutor2-dir').value.trim(),
     facturacion_tutor: document.getElementById('p-facturacion-tutor').value||null,
     email:            document.getElementById('p-email').value.trim(),
+    profesion:        document.getElementById('p-profesion').value.trim(),
     centro_escolar:   document.getElementById('p-centro-escolar').value.trim(),
     curso_escolar:    document.getElementById('p-curso-escolar').value.trim(),
     direccion:        dir,
-    codigo_postal:    document.getElementById('p-cp').value.trim(),
-    municipio:        document.getElementById('p-municipio').value.trim(),
     diagnostico:      document.getElementById('p-diagnostico').value.trim(),
     ambito:           document.getElementById('p-ambito').value||null,
     derivacion:       document.getElementById('p-derivacion').value===''?null:document.getElementById('p-derivacion').value==='true',
@@ -3449,14 +3469,14 @@ function gestionActualizarMenor() {
       badge.style.background='#fff3cd'; badge.style.color='#7a5c00'; badge.style.border='1px solid #f0c040';
       badge.textContent = `👶 Menor de edad (${edad} años) — Tutor 1 y teléfono tutor obligatorios`;
       if(labelTel) labelTel.textContent = 'Teléfono paciente';
-      if(labelTutor) labelTutor.textContent = 'Tutor 1 *';
+      if(labelTutor) labelTutor.textContent = 'Nombre y Apellidos *';
       if(labelTel2) labelTel2.textContent = 'Teléfono tutor *';
     } else {
       badge.style.background='#f0fff0'; badge.style.color='#2d7a2d'; badge.style.border='1px solid #97D700';
       badge.textContent = `✓ Mayor de edad (${edad} años)`;
       if(labelTel) labelTel.textContent = 'Teléfono *';
-      if(labelTutor) labelTutor.textContent = 'Tutor 1';
-      if(labelTel2) labelTel2.textContent = 'Teléfono 2';
+      if(labelTutor) labelTutor.textContent = 'Nombre y Apellidos';
+      if(labelTel2) labelTel2.textContent = 'Teléfono Tutor 1';
     }
   }
 }
@@ -5903,24 +5923,45 @@ function bancoDrop(e, cuenta) {
 async function bancoCargarArchivos(files, cuenta) {
   const movs = [];
   const nombres = [];
+
+  function parseFecha(v) {
+    if(!v) return null;
+    if(v instanceof Date) return isNaN(v.getTime()) ? null : v;
+    if(typeof v === 'number') {
+      const d = new Date(Math.round((v - 25569) * 86400 * 1000));
+      return isNaN(d.getTime()) ? null : d;
+    }
+    const s = String(v).trim();
+    const p = s.split('/');
+    if(p.length === 3) {
+      const d = new Date(`${p[2]}-${p[1].padStart(2,'0')}-${p[0].padStart(2,'0')}`);
+      return isNaN(d.getTime()) ? null : d;
+    }
+    return null;
+  }
+
   for(const file of files) {
     if(!file.name.endsWith('.xlsx') && !file.name.endsWith('.xls')) continue;
     nombres.push(file.name);
     const ab = await file.arrayBuffer();
-    const wb = XLSX.read(ab, {type:'array', cellDates:true});
+    // dense:false + sin sheet_to_json evita array gigante en memoria
+    const wb = XLSX.read(ab, {type:'array', cellDates:false, dense:false});
     const ws = wb.Sheets[wb.SheetNames[0]];
-    const data = XLSX.utils.sheet_to_json(ws, {header:1, defval:''});
-    // Fila 4 (idx 4) es la cabecera: [_,F.Valor,Fecha,Concepto,Movimiento,Importe,...]
-    for(let i=5; i<data.length; i++) {
-      const row = data[i];
-      if(!row[2] || row[2]==='Fecha') continue;
-      const fecha = row[2] instanceof Date ? row[2] : new Date(row[2]);
-      const importe = parseFloat(row[5]);
+    if(!ws['!ref']) continue;
+    const ref = XLSX.utils.decode_range(ws['!ref']);
+    const getCel = (r, c) => { const cell = ws[XLSX.utils.encode_cell({r,c})]; return cell ? cell.v : ''; };
+    // Fila 5 (idx 5) es el primer dato; idx 4 es cabecera F.Valor/Fecha/Concepto...
+    for(let r = ref.s.r + 5; r <= ref.e.r; r++) {
+      const fechaRaw = getCel(r, 2);
+      if(!fechaRaw || fechaRaw === 'Fecha') continue;
+      const fecha = parseFecha(fechaRaw);
+      if(!fecha) continue;
+      const importe = parseFloat(String(getCel(r, 5)).replace(',', '.'));
       if(isNaN(importe)) continue;
       movs.push({
         fecha,
-        concepto:  String(row[3]||'').trim().toLowerCase(),
-        movimiento:String(row[4]||'').trim(),
+        concepto:  String(getCel(r, 3)||'').trim().toLowerCase(),
+        movimiento:String(getCel(r, 4)||'').trim(),
         importe,
       });
     }
@@ -5972,12 +6013,13 @@ function bancoActualizarExtractosUI() {
   const thead = `<thead><tr>
     <th>Fecha</th><th>Concepto</th><th>Descripción banco</th><th style="text-align:right">Importe</th>
   </tr></thead>`;
-  const tbody = `<tbody>${clin.map(m=>`<tr>
+  const clinLimited = clin.slice(0, 100);
+  const tbody = `<tbody>${clinLimited.map(m=>`<tr>
     <td>${m.fecha.toLocaleDateString('es')}</td>
     <td style="color:var(--blue)">${m.concepto}</td>
     <td>${m.movimiento}</td>
     <td style="text-align:right;font-weight:600">${m.importe.toLocaleString('es',{minimumFractionDigits:2})} €</td>
-  </tr>`).join('')}</tbody>`;
+  </tr>`).join('')}${clin.length>100?`<tr><td colspan="4" style="text-align:center;color:var(--ink-muted);font-style:italic">... y ${clin.length-100} movimientos más</td></tr>`:''}</tbody>`;
   document.getElementById('banco-tabla-ingresos').innerHTML = thead + tbody;
 }
 
@@ -6226,26 +6268,155 @@ function bancoRenderConciliacion() {
     </div>`).join('');
 }
 
-// ── Exportar Excel ───────────────────────────────────────────────────────────
-function bancoExportarExcel() {
+// ── Exportar Excel (ExcelJS con estilos IPSE) ────────────────────────────────
+async function bancoExportarExcel() {
   if(!BANCO.trazRows.length) { toast('Primero recalcula para tener datos','err'); return; }
-  const rows = BANCO.trazRows.map(r=>({
-    'ID': r.id, 'Paciente': r.nombre,
-    'Sesiones Hecha': r.hechas, 'Bono': r.nB, 'Beca': r.nBC, 'Suelta': r.nS,
-    'Perfil': (r.nB>0?r.nB+'B ':'')+( r.nBC>0?r.nBC+'BC ':'')+( r.nS>0?r.nS+'S':''),
-    'Bonos IDs': r.bonIds, 'Becas IDs': r.becIds,
-    'Primera sesión': r.primera, 'Última sesión': r.ultima,
-    'Importe estimado €': r.impEst,
-    'Movimientos banco': r.bancodet,
-    'Total banco €': r.bancotot,
-    'Hits': r.bancohits,
-    'Alerta': r.alerta,
-  }));
-  const ws = XLSX.utils.json_to_sheet(rows);
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, 'Trazabilidad');
-  XLSX.writeFile(wb, `IPSE_Trazabilidad_${new Date().toISOString().substring(0,10)}.xlsx`);
-  toast('Excel exportado ✓','ok');
+  if(typeof ExcelJS === 'undefined') { toast('ExcelJS no cargado, recarga la pagina','err'); return; }
+
+  const AO='1A237E', AM='3949AB', VO='1B5E20', RO='B71C1C', NA='CE6519';
+  const GR='F5F5F5', BL='FFFFFF', AC='E8EAF6', VC='E8F5E9', RC='FFEBEE';
+
+  function fnt(hex='000000', bold=false, sz=9) {
+    return { name:'Arial', size:sz, bold, color:{argb:'FF'+hex} };
+  }
+  function fill(hex) { return { type:'pattern', pattern:'solid', fgColor:{argb:'FF'+hex} }; }
+  function brd() {
+    const s={style:'thin',color:{argb:'FFCCCCCC'}};
+    return {top:s,left:s,bottom:s,right:s};
+  }
+
+  const wb = new ExcelJS.Workbook();
+  wb.creator = 'IPSE Gestion'; wb.created = new Date();
+
+  // ── Hoja 1: Trazabilidad ──────────────────────────────────────────────────
+  const ws1 = wb.addWorksheet('Trazabilidad');
+  ws1.columns = [
+    {width:10},{width:28},{width:8},{width:14},{width:18},{width:18},
+    {width:12},{width:12},{width:13},{width:34},{width:12},{width:7},{width:36}
+  ];
+
+  // Titulo
+  ws1.mergeCells('A1:M1');
+  Object.assign(ws1.getCell('A1'), {
+    value: `IPSE — Trazabilidad Sesiones x Cobros  |  ${new Date().toLocaleDateString('es')}`,
+    font: fnt(BL, true, 13), fill: fill(AO),
+    alignment:{horizontal:'center',vertical:'middle'}, border:brd()
+  });
+  ws1.getRow(1).height = 26;
+
+  ws1.mergeCells('A2:M2');
+  Object.assign(ws1.getCell('A2'), {
+    value:'Cruce automatico sesiones Supabase vs extractos BBVA. Alerta = posible descuadre a revisar.',
+    font:{name:'Arial',size:8,italic:true,color:{argb:'FF555555'}},
+    fill:fill(GR), alignment:{horizontal:'left',vertical:'middle'}, border:brd()
+  });
+  ws1.getRow(2).height = 12;
+
+  // Cabeceras
+  const hdrVals = ['ID','Paciente','Ses.','Perfil','IDs Bonos','IDs Becas',
+    'Primera','Ultima','Est. EUR','Movimientos banco','Banco EUR','Hits','Alerta'];
+  const hRow = ws1.addRow(hdrVals);
+  hRow.height = 16;
+  hRow.eachCell(cell => {
+    cell.font=fnt(BL,true,9); cell.fill=fill(AM); cell.border=brd();
+    cell.alignment={horizontal:'left',vertical:'middle'};
+  });
+  [3,9,11,12].forEach(c => ws1.getRow(3).getCell(c).alignment={horizontal:'right',vertical:'middle'});
+
+  // Datos
+  BANCO.trazRows.forEach((r, idx) => {
+    const bg = idx%2===0 ? GR : BL;
+    const rowBg = r.alerta==='revisar' ? RC : r.alerta==='sin_cobros' ? 'FFF9C4' : r.alerta==='OK' ? VC : bg;
+    const fcolor= r.alerta==='revisar' ? RO : r.alerta==='OK' ? VO : '333333';
+    const perfil = (r.nB>0?r.nB+'B ':'')+( r.nBC>0?r.nBC+'BC ':'')+( r.nS>0?r.nS+'S':'');
+    const dRow = ws1.addRow([
+      r.id, r.nombre, r.hechas, perfil, r.bonIds||'', r.becIds||'',
+      r.primera, r.ultima, r.impEst||0, r.bancodet||'', r.bancotot||0, r.bancohits||0, r.alerta||''
+    ]);
+    dRow.height = 13;
+    dRow.eachCell({includeEmpty:true}, (cell,col) => {
+      cell.font=fnt(fcolor,false,9); cell.fill=fill(rowBg); cell.border=brd();
+      const right=[3,9,11,12].includes(col);
+      cell.alignment={horizontal:right?'right':'left',vertical:'middle'};
+      if([9,11].includes(col)) cell.numFmt='#,##0.00';
+    });
+  });
+
+  // Totales
+  const tot = ws1.addRow([
+    '', 'TOTAL  ('+BANCO.trazRows.length+' pacientes)',
+    BANCO.trazRows.reduce((s,r)=>s+(r.hechas||0),0), '', '', '', '', '',
+    BANCO.trazRows.reduce((s,r)=>s+(r.impEst||0),0), '',
+    BANCO.trazRows.reduce((s,r)=>s+(r.bancotot||0),0),
+    BANCO.trazRows.reduce((s,r)=>s+(r.bancohits||0),0), ''
+  ]);
+  tot.height = 17;
+  tot.eachCell({includeEmpty:true},(cell,col)=>{
+    cell.font=fnt(AO,true,10); cell.fill=fill(AC); cell.border=brd();
+    const right=[3,9,11,12].includes(col);
+    cell.alignment={horizontal:right?'right':'left',vertical:'middle'};
+    if([9,11].includes(col)) cell.numFmt='#,##0.00';
+  });
+
+  // Resumen alertas
+  const nRev=BANCO.trazRows.filter(r=>r.alerta==='revisar').length;
+  const nOk=BANCO.trazRows.filter(r=>r.alerta==='OK').length;
+  const nSin=BANCO.trazRows.filter(r=>r.alerta==='sin_cobros').length;
+  ws1.addRow([]);
+  const resRow=ws1.lastRow;
+  ws1.mergeCells(`A${resRow.number}:M${resRow.number}`);
+  const resCell=resRow.getCell(1);
+  resCell.value=`Alertas: ${nRev} a revisar | ${nSin} sin cobros | ${nOk} OK`;
+  resCell.font={name:'Arial',size:8,italic:true,color:{argb:'FF'+NA}};
+  resCell.fill=fill('FFF9C4'); resCell.border=brd();
+  resRow.height=14;
+
+  // ── Hoja 2: Extracto Gestion ──────────────────────────────────────────────
+  if(BANCO.gestion.length) {
+    const ws2 = wb.addWorksheet('Extracto Gestion');
+    ws2.columns = [{width:12},{width:38},{width:13},{width:22}];
+
+    ws2.mergeCells('A1:D1');
+    Object.assign(ws2.getCell('A1'), {
+      value:`Extracto Cuenta Gestion  |  ${BANCO.gestion.length} movimientos`,
+      font:fnt(BL,true,11), fill:fill(AO),
+      alignment:{horizontal:'center',vertical:'middle'}, border:brd()
+    });
+    ws2.getRow(1).height = 22;
+
+    const h2=ws2.addRow(['Fecha','Descripcion','Importe (EUR)','Concepto']);
+    ws2.getRow(2).height=15;
+    h2.eachCell(cell=>{
+      cell.font=fnt(BL,true,9); cell.fill=fill(AM); cell.border=brd();
+      cell.alignment={horizontal:'left',vertical:'middle'};
+    });
+    ws2.getRow(2).getCell(3).alignment={horizontal:'right',vertical:'middle'};
+
+    BANCO.gestion.forEach((m,idx)=>{
+      const bg=idx%2===0?GR:BL;
+      const fc=m.importe>=0?VO:RO;
+      const row=ws2.addRow([
+        m.fecha.toLocaleDateString('es'), m.movimiento, m.importe, m.concepto
+      ]);
+      row.height=12;
+      row.eachCell({includeEmpty:true},(cell,col)=>{
+        cell.font=fnt(col===3?fc:'333333',false,9);
+        cell.fill=fill(bg); cell.border=brd();
+        if(col===3){cell.alignment={horizontal:'right',vertical:'middle'};cell.numFmt='#,##0.00';}
+        else cell.alignment={horizontal:'left',vertical:'middle'};
+      });
+    });
+  }
+
+  // Exportar
+  const buffer = await wb.xlsx.writeBuffer();
+  const blob = new Blob([buffer],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href=url; a.download=`IPSE_Banco_${new Date().toISOString().substring(0,10)}.xlsx`;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  toast('Excel exportado con estilos ✓','ok');
 }
 
 // El hook de navegación al módulo Banco se inyecta en el navigate original

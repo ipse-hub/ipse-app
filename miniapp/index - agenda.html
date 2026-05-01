@@ -326,26 +326,29 @@
 
 <!-- MODAL NUEVO PACIENTE (formulario completo — mismo que panel gestión) -->
 <div class="overlay" id="modal-paciente">
-  <div class="modal" style="max-width:560px;max-height:92vh;overflow-y:auto;display:flex;flex-direction:column;">
+  <div class="modal" style="max-width:900px;width:96vw;max-height:95vh;overflow-y:auto;display:flex;flex-direction:column;">
     <div class="modal-header" style="position:sticky;top:0;background:#fff;z-index:10;padding-bottom:12px;border-bottom:1px solid var(--border);margin-bottom:16px">
       <span class="modal-title">Nuevo paciente</span>
       <button class="modal-close" onclick="cerrarModal('modal-paciente')">✕</button>
     </div>
     <!-- ID auto-generado -->
-    <div style="font-size:11px;color:var(--muted);margin-bottom:12px;background:var(--bg);border-radius:6px;padding:6px 10px;font-family:'DM Mono',monospace">
+    <div style="font-size:11px;color:var(--muted);margin-bottom:14px;background:var(--bg);border-radius:6px;padding:6px 10px;font-family:'DM Mono',monospace">
       ID: <strong id="mp-id-preview" style="color:var(--azul)">Se asignará automáticamente</strong>
     </div>
 
-    <!-- SECCIÓN: Datos personales -->
-    <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);border-top:1px solid var(--border);padding-top:12px;margin-bottom:10px">Datos personales</div>
+    <!-- PACIENTE -->
+    <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;background:#E8E6F8;color:#10069F;border-radius:6px;padding:6px 12px;margin-bottom:12px">👤 Paciente</div>
     <div class="form-row">
       <div class="form-group"><label class="form-label">Nombre *</label><input type="text" id="mp-nombre" class="form-control" placeholder="Nombre" oninput="comprobarPacienteSimilar();mpActualizarMenor()"></div>
       <div class="form-group"><label class="form-label">Apellidos *</label><input type="text" id="mp-apellidos" class="form-control" placeholder="Apellidos" oninput="comprobarPacienteSimilar()"></div>
     </div>
-    <div class="form-group"><label class="form-label">Alias <span style="font-weight:400;text-transform:none;font-size:11px">(nombre corto en agenda)</span></label><input type="text" id="mp-alias" class="form-control" placeholder="Ej: Juanito"></div>
     <div class="form-row">
+      <div class="form-group"><label class="form-label">Alias <span style="font-weight:400;text-transform:none;font-size:11px">(agenda)</span></label><input type="text" id="mp-alias" class="form-control" placeholder="Ej: Juanito"></div>
       <div class="form-group"><label class="form-label">Fecha de nacimiento</label><input type="date" id="mp-fnac" class="form-control" oninput="mpActualizarMenor()"></div>
+    </div>
+    <div class="form-row">
       <div class="form-group"><label class="form-label">DNI paciente</label><input type="text" id="mp-dni-pac" class="form-control" placeholder="00000000X"></div>
+      <div class="form-group"></div>
     </div>
     <!-- Badge menor/mayor -->
     <div id="mp-badge-edad" style="display:none;margin-bottom:10px;padding:7px 12px;border-radius:6px;font-size:12px;font-weight:600"></div>
@@ -354,43 +357,64 @@
       <strong>⚠️ Posible duplicado</strong> — ya existe un paciente con nombre similar:
       <div id="mp-aviso-lista" style="margin-top:6px;line-height:1.7"></div>
     </div>
-
-    <!-- SECCIÓN: Tutores y contacto -->
-    <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);border-top:1px solid var(--border);padding-top:12px;margin-bottom:10px">Tutores y contacto</div>
-    <div class="form-row">
-      <div class="form-group"><label class="form-label" id="mp-label-tutor1">Tutor 1</label><input type="text" id="mp-tutor1" class="form-control" placeholder="Nombre completo"></div>
-      <div class="form-group"><label class="form-label">DNI Tutor 1</label><input type="text" id="mp-dni-tutor1" class="form-control" placeholder="00000000X"></div>
+    <div class="form-group" style="margin-bottom:10px">
+      <label class="form-label">Dirección (calle, nº, CP, municipio, provincia)</label>
+      <textarea id="mp-dir" class="form-control" rows="3" placeholder="Calle Mayor 1, 2ºA&#10;18001 Granada&#10;Granada (España)" style="resize:vertical"></textarea>
     </div>
     <div class="form-row">
       <div class="form-group"><label class="form-label" id="mp-label-tel">Teléfono *</label><input type="tel" id="mp-tel" class="form-control" placeholder="600 000 000"></div>
-      <div class="form-group"><label class="form-label">Email Tutor 1</label><input type="email" id="mp-tutor1-email" class="form-control" placeholder="email@ejemplo.com"></div>
+      <div class="form-group"><label class="form-label">Email</label><input type="email" id="mp-email" class="form-control" placeholder="email@ejemplo.com"></div>
     </div>
-    <div class="form-group"><label class="form-label">Dirección Tutor 1</label><input type="text" id="mp-tutor1-dir" class="form-control" placeholder="Calle, número…"></div>
     <div class="form-row">
-      <div class="form-group"><label class="form-label">Tutor 2</label><input type="text" id="mp-tutor2" class="form-control" placeholder="Nombre completo"></div>
+      <div class="form-group"><label class="form-label">Profesión</label><input type="text" id="mp-profesion" class="form-control" placeholder="Ocupación del paciente"></div>
+      <div class="form-group"></div>
+    </div>
+
+    <!-- TUTOR 1 -->
+    <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;background:#E0F5FB;color:#006a87;border-radius:6px;padding:6px 12px;margin:14px 0 12px">👨‍👩‍👧 Tutor 1 <span style="font-weight:400;text-transform:none;font-size:11px;letter-spacing:0">(si es menor de edad)</span></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label" id="mp-label-tutor1">Nombre y Apellidos</label><input type="text" id="mp-tutor1" class="form-control" placeholder="Nombre completo"></div>
+      <div class="form-group"><label class="form-label">DNI Tutor 1</label><input type="text" id="mp-dni-tutor1" class="form-control" placeholder="00000000X"></div>
+    </div>
+    <div class="form-group" style="margin-bottom:10px">
+      <label class="form-label">Dirección Tutor 1</label>
+      <textarea id="mp-tutor1-dir" class="form-control" rows="3" placeholder="Calle Mayor 1, 2ºA&#10;18001 Granada&#10;Granada (España)" style="resize:vertical"></textarea>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Email Tutor 1</label><input type="email" id="mp-tutor1-email" class="form-control" placeholder="email@ejemplo.com"></div>
+      <div class="form-group"><label class="form-label" id="mp-label-tel-tutor">Teléfono Tutor 1</label><input type="tel" id="mp-tel2" class="form-control" placeholder="600 000 000"></div>
+    </div>
+
+    <!-- TUTOR 2 -->
+    <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;background:#E0F5FB;color:#006a87;border-radius:6px;padding:6px 12px;margin:14px 0 12px">👨‍👩‍👧 Tutor 2</div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Nombre y Apellidos</label><input type="text" id="mp-tutor2" class="form-control" placeholder="Nombre completo"></div>
       <div class="form-group"><label class="form-label">DNI Tutor 2</label><input type="text" id="mp-tutor2-dni" class="form-control" placeholder="00000000X"></div>
     </div>
-    <div class="form-row">
-      <div class="form-group"><label class="form-label" id="mp-label-tel-tutor">Teléfono Tutor 2</label><input type="tel" id="mp-tel2" class="form-control" placeholder="600 000 000"></div>
-      <div class="form-group"><label class="form-label">Email Tutor 2</label><input type="email" id="mp-tutor2-email" class="form-control" placeholder="email@ejemplo.com"></div>
+    <div class="form-group" style="margin-bottom:10px">
+      <label class="form-label">Dirección Tutor 2</label>
+      <textarea id="mp-tutor2-dir" class="form-control" rows="3" placeholder="Calle Mayor 1, 2ºA&#10;18001 Granada&#10;Granada (España)" style="resize:vertical"></textarea>
     </div>
-    <div class="form-group"><label class="form-label">Dirección Tutor 2</label><input type="text" id="mp-tutor2-dir" class="form-control" placeholder="Calle, número…"></div>
     <div class="form-row">
+      <div class="form-group"><label class="form-label">Email Tutor 2</label><input type="email" id="mp-tutor2-email" class="form-control" placeholder="email@ejemplo.com"></div>
+      <div class="form-group"><label class="form-label">Teléfono Tutor 2</label><input type="tel" id="mp-tel3" class="form-control" placeholder="600 000 000"></div>
+    </div>
+    <div class="form-row" style="margin-top:6px">
       <div class="form-group"><label class="form-label">Facturar a</label>
         <select id="mp-facturacion-tutor" class="form-control"><option value="">—</option><option value="tutor1">Tutor 1</option><option value="tutor2">Tutor 2</option><option value="ambos">Ambos</option></select>
       </div>
-      <div class="form-group"><label class="form-label">Email paciente</label><input type="email" id="mp-email" class="form-control" placeholder="email@ejemplo.com"></div>
+      <div class="form-group"></div>
     </div>
 
-    <!-- SECCIÓN: Datos escolares -->
-    <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);border-top:1px solid var(--border);padding-top:12px;margin-bottom:10px">Datos escolares</div>
+    <!-- DATOS ESCOLARES -->
+    <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;background:#EDF7CC;color:#5A8000;border-radius:6px;padding:6px 12px;margin:14px 0 12px">🏫 Datos escolares</div>
     <div class="form-row">
       <div class="form-group"><label class="form-label">Centro escolar</label><input type="text" id="mp-centro-escolar" class="form-control" placeholder="Nombre del colegio"></div>
       <div class="form-group"><label class="form-label">Curso escolar</label><input type="text" id="mp-curso-escolar" class="form-control" placeholder="Ej: 3º Primaria"></div>
     </div>
 
-    <!-- SECCIÓN: Datos clínicos -->
-    <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);border-top:1px solid var(--border);padding-top:12px;margin-bottom:10px">Datos clínicos</div>
+    <!-- DATOS CLÍNICOS -->
+    <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;background:#FFF3CD;color:#7a5c00;border-radius:6px;padding:6px 12px;margin:14px 0 12px">🩺 Datos clínicos</div>
     <div class="form-row">
       <div class="form-group"><label class="form-label">Terapeuta principal</label><select id="mp-terapeuta" class="form-control"></select></div>
       <div class="form-group"><label class="form-label">Fecha entrada IPSE</label><input type="date" id="mp-alta" class="form-control"></div>
@@ -409,7 +433,7 @@
       </div>
     </div>
     <div class="form-group"><label class="form-label">Alergias</label><input type="text" id="mp-alergias" class="form-control" placeholder="Alergias conocidas"></div>
-    <div class="form-group"><label class="form-label">Notas generales</label><input type="text" id="mp-notas" class="form-control" placeholder="Observaciones"></div>
+    <div class="form-group"><label class="form-label">Notas generales</label><textarea id="mp-notas" class="form-control" rows="2" style="resize:vertical"></textarea></div>
 
     <div class="modal-footer" style="position:sticky;bottom:0;background:#fff;padding-top:14px;border-top:1px solid var(--border);margin-top:8px">
       <button class="btn btn-secondary" onclick="cerrarModal('modal-paciente')">Cancelar</button>
@@ -419,15 +443,16 @@
 </div>
 
 <!-- MODAL EDITAR PACIENTE (formulario completo) -->
-<div class="overlay" id="modal-editar-paciente" style="align-items:flex-start;padding-top:20px">
-  <div class="modal" style="max-width:640px;max-height:90vh;display:flex;flex-direction:column">
+<div class="overlay" id="modal-editar-paciente" style="align-items:flex-start;padding-top:10px">
+  <div class="modal" style="max-width:900px;width:96vw;max-height:95vh;display:flex;flex-direction:column">
     <div class="modal-header" style="flex-shrink:0">
       <span class="modal-title">✏️ Editar paciente — <span id="ep-id-label" style="font-family:'DM Mono',monospace;font-size:13px;color:var(--azul)"></span></span>
       <button class="modal-close" onclick="cerrarModal('modal-editar-paciente')">✕</button>
     </div>
     <div style="overflow-y:auto;flex:1;padding:16px 20px">
-      <!-- Datos personales -->
-      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--azul);border-bottom:1px solid var(--border);padding-bottom:6px;margin-bottom:12px">Datos personales</div>
+
+      <!-- PACIENTE -->
+      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;background:#E8E6F8;color:#10069F;border-radius:6px;padding:6px 12px;margin-bottom:12px">👤 Paciente</div>
       <div class="form-row">
         <div class="form-group"><label class="form-label">Nombre *</label><input type="text" id="ep-nombre" class="form-control" placeholder="Nombre"></div>
         <div class="form-group"><label class="form-label">Apellidos *</label><input type="text" id="ep-apellidos" class="form-control" placeholder="Apellidos"></div>
@@ -437,79 +462,87 @@
         <div class="form-group"><label class="form-label">Fecha nacimiento</label><input type="date" id="ep-fnac" class="form-control" oninput="epActualizarMenor()"></div>
       </div>
       <div class="form-row">
-        <div class="form-group"><label class="form-label">DNI paciente</label><input type="text" id="ep-dni-pac" class="form-control"></div>
+        <div class="form-group"><label class="form-label">DNI paciente</label><input type="text" id="ep-dni-pac" class="form-control" placeholder="00000000X"></div>
         <div class="form-group" style="align-self:flex-end"><div id="ep-badge-edad" style="display:none;padding:7px 12px;border-radius:6px;font-size:12px;font-weight:600"></div></div>
       </div>
-      <!-- Tutores y contacto -->
-      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--azul);border-bottom:1px solid var(--border);padding-bottom:6px;margin-bottom:12px;margin-top:18px">Tutores y contacto</div>
-      <div class="form-row">
-        <div class="form-group"><label class="form-label" id="ep-label-tutor1">Tutor 1</label><input type="text" id="ep-tutor1" class="form-control" placeholder="Nombre tutor"></div>
-        <div class="form-group"><label class="form-label">DNI Tutor 1</label><input type="text" id="ep-dni-tutor1" class="form-control"></div>
+      <div class="form-group" style="margin-bottom:10px">
+        <label class="form-label">Dirección (calle, nº, CP, municipio, provincia)</label>
+        <textarea id="ep-dir" class="form-control" rows="3" placeholder="Calle Mayor 1, 2ºA&#10;18001 Granada&#10;Granada (España)" style="resize:vertical"></textarea>
       </div>
       <div class="form-row">
         <div class="form-group"><label class="form-label" id="ep-label-tel">Teléfono *</label><input type="tel" id="ep-tel" class="form-control" placeholder="600 000 000"></div>
-        <div class="form-group"><label class="form-label">Email Tutor 1</label><input type="email" id="ep-tutor1-email" class="form-control"></div>
-      </div>
-      <div class="form-group"><label class="form-label">Dirección Tutor 1</label><input type="text" id="ep-tutor1-dir" class="form-control"></div>
-      <div class="form-row">
-        <div class="form-group"><label class="form-label">Tutor 2</label><input type="text" id="ep-tutor2" class="form-control" placeholder="Nombre tutor 2"></div>
-        <div class="form-group"><label class="form-label">DNI Tutor 2</label><input type="text" id="ep-tutor2-dni" class="form-control"></div>
+        <div class="form-group"><label class="form-label">Email</label><input type="email" id="ep-email" class="form-control" placeholder="email@ejemplo.com"></div>
       </div>
       <div class="form-row">
-        <div class="form-group"><label class="form-label" id="ep-label-tel2">Teléfono 2</label><input type="tel" id="ep-tel2" class="form-control"></div>
-        <div class="form-group"><label class="form-label">Email Tutor 2</label><input type="email" id="ep-tutor2-email" class="form-control"></div>
+        <div class="form-group"><label class="form-label">Profesión</label><input type="text" id="ep-profesion" class="form-control" placeholder="Ocupación del paciente"></div>
+        <div class="form-group"></div>
       </div>
-      <div class="form-group"><label class="form-label">Dirección Tutor 2</label><input type="text" id="ep-tutor2-dir" class="form-control"></div>
+
+      <!-- TUTOR 1 -->
+      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;background:#E0F5FB;color:#006a87;border-radius:6px;padding:6px 12px;margin:14px 0 12px">👨‍👩‍👧 Tutor 1 <span style="font-weight:400;text-transform:none;font-size:11px;letter-spacing:0">(si es menor de edad)</span></div>
       <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">Facturar a</label>
+        <div class="form-group"><label class="form-label" id="ep-label-tutor1">Nombre y Apellidos</label><input type="text" id="ep-tutor1" class="form-control" placeholder="Nombre completo"></div>
+        <div class="form-group"><label class="form-label">DNI Tutor 1</label><input type="text" id="ep-dni-tutor1" class="form-control" placeholder="00000000X"></div>
+      </div>
+      <div class="form-group" style="margin-bottom:10px">
+        <label class="form-label">Dirección Tutor 1</label>
+        <textarea id="ep-tutor1-dir" class="form-control" rows="3" placeholder="Calle Mayor 1, 2ºA&#10;18001 Granada&#10;Granada (España)" style="resize:vertical"></textarea>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Email Tutor 1</label><input type="email" id="ep-tutor1-email" class="form-control" placeholder="email@ejemplo.com"></div>
+        <div class="form-group"><label class="form-label" id="ep-label-tel2">Teléfono Tutor 1</label><input type="tel" id="ep-tel2" class="form-control" placeholder="600 000 000"></div>
+      </div>
+
+      <!-- TUTOR 2 -->
+      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;background:#E0F5FB;color:#006a87;border-radius:6px;padding:6px 12px;margin:14px 0 12px">👨‍👩‍👧 Tutor 2</div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Nombre y Apellidos</label><input type="text" id="ep-tutor2" class="form-control" placeholder="Nombre completo"></div>
+        <div class="form-group"><label class="form-label">DNI Tutor 2</label><input type="text" id="ep-tutor2-dni" class="form-control" placeholder="00000000X"></div>
+      </div>
+      <div class="form-group" style="margin-bottom:10px">
+        <label class="form-label">Dirección Tutor 2</label>
+        <textarea id="ep-tutor2-dir" class="form-control" rows="3" placeholder="Calle Mayor 1, 2ºA&#10;18001 Granada&#10;Granada (España)" style="resize:vertical"></textarea>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Email Tutor 2</label><input type="email" id="ep-tutor2-email" class="form-control" placeholder="email@ejemplo.com"></div>
+        <div class="form-group"><label class="form-label">Teléfono Tutor 2</label><input type="tel" id="ep-tel3" class="form-control" placeholder="600 000 000"></div>
+      </div>
+      <div class="form-row" style="margin-top:6px">
+        <div class="form-group"><label class="form-label">Facturar a</label>
           <select class="form-control" id="ep-facturacion-tutor">
             <option value="">—</option><option value="tutor1">Tutor 1</option><option value="tutor2">Tutor 2</option><option value="ambos">Ambos</option>
           </select>
         </div>
-        <div class="form-group"><label class="form-label">Email paciente</label><input type="email" id="ep-email" class="form-control"></div>
+        <div class="form-group"></div>
       </div>
-      <!-- Datos escolares -->
-      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--azul);border-bottom:1px solid var(--border);padding-bottom:6px;margin-bottom:12px;margin-top:18px">Datos escolares</div>
+
+      <!-- DATOS ESCOLARES -->
+      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;background:#EDF7CC;color:#5A8000;border-radius:6px;padding:6px 12px;margin:14px 0 12px">🏫 Datos escolares</div>
       <div class="form-row">
-        <div class="form-group"><label class="form-label">Centro escolar</label><input type="text" id="ep-centro-escolar" class="form-control"></div>
+        <div class="form-group"><label class="form-label">Centro escolar</label><input type="text" id="ep-centro-escolar" class="form-control" placeholder="Nombre del colegio"></div>
         <div class="form-group"><label class="form-label">Curso escolar</label><input type="text" id="ep-curso-escolar" class="form-control" placeholder="Ej: 3º Primaria"></div>
       </div>
-      <!-- Datos clínicos -->
-      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--azul);border-bottom:1px solid var(--border);padding-bottom:6px;margin-bottom:12px;margin-top:18px">Datos clínicos</div>
+
+      <!-- DATOS CLÍNICOS -->
+      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;background:#FFF3CD;color:#7a5c00;border-radius:6px;padding:6px 12px;margin:14px 0 12px">🩺 Datos clínicos</div>
       <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">Terapeuta principal</label>
-          <select class="form-control" id="ep-terapeuta"></select>
-        </div>
+        <div class="form-group"><label class="form-label">Terapeuta principal</label><select class="form-control" id="ep-terapeuta"></select></div>
         <div class="form-group"><label class="form-label">Fecha entrada IPSE</label><input type="date" id="ep-alta" class="form-control"></div>
       </div>
       <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">¿Beca?</label>
-          <select class="form-control" id="ep-beca"><option value="No">No</option><option value="Sí">Sí</option></select>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Consentimiento</label>
-          <select class="form-control" id="ep-consent"><option value="Pendiente">Pendiente</option><option value="Firmado">Firmado</option></select>
-        </div>
+        <div class="form-group"><label class="form-label">¿Beca?</label><select class="form-control" id="ep-beca"><option value="No">No</option><option value="Sí">Sí</option></select></div>
+        <div class="form-group"><label class="form-label">Consentimiento</label><select class="form-control" id="ep-consent"><option value="Pendiente">Pendiente</option><option value="Firmado">Firmado</option></select></div>
       </div>
       <div class="form-group"><label class="form-label">Diagnóstico</label><input type="text" id="ep-diagnostico" class="form-control" placeholder="Diagnóstico principal"></div>
       <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">Ámbito</label>
-          <select class="form-control" id="ep-ambito">
-            <option value="">—</option><option value="salud_mental">Salud Mental</option><option value="neurologia">Neurología</option><option value="otro">Otro</option>
-          </select>
+        <div class="form-group"><label class="form-label">Ámbito</label>
+          <select class="form-control" id="ep-ambito"><option value="">—</option><option value="salud_mental">Salud Mental</option><option value="neurologia">Neurología</option><option value="otro">Otro</option></select>
         </div>
-        <div class="form-group">
-          <label class="form-label">Derivación</label>
-          <select class="form-control" id="ep-derivacion">
-            <option value="">—</option><option value="true">Sí</option><option value="false">No</option>
-          </select>
+        <div class="form-group"><label class="form-label">Derivación</label>
+          <select class="form-control" id="ep-derivacion"><option value="">—</option><option value="true">Sí</option><option value="false">No</option></select>
         </div>
       </div>
-      <div class="form-group"><label class="form-label">Alergias</label><input type="text" id="ep-alergias" class="form-control"></div>
+      <div class="form-group"><label class="form-label">Alergias</label><input type="text" id="ep-alergias" class="form-control" placeholder="Alergias conocidas"></div>
       <div class="form-group"><label class="form-label">Notas</label><textarea id="ep-notas" class="form-control" rows="2" style="resize:vertical"></textarea></div>
     </div>
     <div class="modal-footer" style="flex-shrink:0">
@@ -1838,8 +1871,8 @@ async function abrirModalEditarPaciente(idPaciente) {
   document.getElementById('ep-id-label').textContent = idPaciente;
   ['ep-nombre','ep-apellidos','ep-alias','ep-fnac','ep-dni-pac',
    'ep-tutor1','ep-dni-tutor1','ep-tel','ep-tutor1-email','ep-tutor1-dir',
-   'ep-tutor2','ep-tutor2-dni','ep-tel2','ep-tutor2-email','ep-tutor2-dir',
-   'ep-email','ep-centro-escolar','ep-curso-escolar','ep-diagnostico','ep-alergias','ep-notas','ep-alta'
+   'ep-tutor2','ep-tutor2-dni','ep-tel2','ep-tel3','ep-tutor2-email','ep-tutor2-dir',
+   'ep-email','ep-profesion','ep-dir','ep-centro-escolar','ep-curso-escolar','ep-diagnostico','ep-alergias','ep-notas','ep-alta'
   ].forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
   document.getElementById('ep-beca').value = 'No';
   document.getElementById('ep-consent').value = 'Pendiente';
@@ -1870,10 +1903,13 @@ async function abrirModalEditarPaciente(idPaciente) {
     document.getElementById('ep-tutor2').value         = p.tutor2            || '';
     document.getElementById('ep-tutor2-dni').value     = p.tutor2_dni        || '';
     document.getElementById('ep-tel2').value           = p.telefono2         || '';
+    document.getElementById('ep-tel3').value           = p.telefono3         || '';
     document.getElementById('ep-tutor2-email').value   = p.tutor2_email      || '';
     document.getElementById('ep-tutor2-dir').value     = p.tutor2_direccion  || '';
     document.getElementById('ep-facturacion-tutor').value = p.facturacion_tutor || '';
     document.getElementById('ep-email').value          = p.email             || '';
+    document.getElementById('ep-profesion').value      = p.profesion         || '';
+    document.getElementById('ep-dir').value            = p.direccion         || '';
     document.getElementById('ep-centro-escolar').value = p.centro_escolar    || '';
     document.getElementById('ep-curso-escolar').value  = p.curso_escolar     || '';
     document.getElementById('ep-diagnostico').value    = p.diagnostico       || '';
@@ -1907,14 +1943,14 @@ function epActualizarMenor() {
       badge.style.background='#fff3cd'; badge.style.color='#7a5c00'; badge.style.border='1px solid #f0c040';
       badge.textContent=`👶 Menor (${edad} años) — Tutor 1 y teléfono obligatorios`;
       if(lTel) lTel.textContent='Teléfono paciente';
-      if(lTut) lTut.textContent='Tutor 1 *';
+      if(lTut) lTut.textContent='Nombre y Apellidos *';
       if(lTel2) lTel2.textContent='Teléfono tutor *';
     } else {
       badge.style.background='#f0fff0'; badge.style.color='#2d7a2d'; badge.style.border='1px solid #97D700';
       badge.textContent=`✓ Mayor de edad (${edad} años)`;
       if(lTel) lTel.textContent='Teléfono *';
-      if(lTut) lTut.textContent='Tutor 1';
-      if(lTel2) lTel2.textContent='Teléfono 2';
+      if(lTut) lTut.textContent='Nombre y Apellidos';
+      if(lTel2) lTel2.textContent='Teléfono Tutor 1';
     }
   }
 }
@@ -1947,10 +1983,13 @@ async function guardarEdicionPaciente() {
     tutor2:            document.getElementById('ep-tutor2').value.trim(),
     tutor2_dni:        document.getElementById('ep-tutor2-dni').value.trim(),
     telefono2:         document.getElementById('ep-tel2').value.trim(),
+    telefono3:         document.getElementById('ep-tel3').value.trim(),
     tutor2_email:      document.getElementById('ep-tutor2-email').value.trim(),
     tutor2_direccion:  document.getElementById('ep-tutor2-dir').value.trim(),
     facturacion_tutor: document.getElementById('ep-facturacion-tutor').value||null,
     email:             document.getElementById('ep-email').value.trim(),
+    profesion:         document.getElementById('ep-profesion').value.trim(),
+    direccion:         document.getElementById('ep-dir').value.trim(),
     centro_escolar:    document.getElementById('ep-centro-escolar').value.trim(),
     curso_escolar:     document.getElementById('ep-curso-escolar').value.trim(),
     diagnostico:       document.getElementById('ep-diagnostico').value.trim(),
@@ -2001,8 +2040,8 @@ function abrirModalPaciente() {
   // Limpiar todos los campos del formulario completo
   ['mp-nombre','mp-apellidos','mp-alias','mp-fnac','mp-dni-pac',
    'mp-tutor1','mp-dni-tutor1','mp-tel','mp-tutor1-email','mp-tutor1-dir',
-   'mp-tutor2','mp-tutor2-dni','mp-tel2','mp-tutor2-email','mp-tutor2-dir',
-   'mp-facturacion-tutor','mp-email',
+   'mp-tutor2','mp-tutor2-dni','mp-tel2','mp-tel3','mp-tutor2-email','mp-tutor2-dir',
+   'mp-facturacion-tutor','mp-email','mp-profesion','mp-dir',
    'mp-centro-escolar','mp-curso-escolar',
    'mp-diagnostico','mp-alergias','mp-notas'
   ].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
@@ -2016,8 +2055,8 @@ function abrirModalPaciente() {
   document.getElementById('mp-aviso-similar').style.display='none';
   // Labels por defecto
   document.getElementById('mp-label-tel').textContent='Teléfono *';
-  document.getElementById('mp-label-tutor1').textContent='Tutor 1';
-  document.getElementById('mp-label-tel-tutor').textContent='Teléfono Tutor 2';
+  document.getElementById('mp-label-tutor1').textContent='Nombre y Apellidos';
+  document.getElementById('mp-label-tel-tutor').textContent='Teléfono Tutor 1';
   // Terapeuta
   const sel=document.getElementById('mp-terapeuta');
   sel.innerHTML='<option value="">— Selecciona terapeuta —</option>'+G.terapeutas.filter(t=>t.Activa==='Sí').map(t=>`<option value="${t.ID_Terapeuta}"${t.ID_Terapeuta===G.miId?' selected':''}>${t.Nombre}</option>`).join('');
@@ -2041,14 +2080,14 @@ function mpActualizarMenor() {
     badge.style.background='#fff3cd'; badge.style.color='#7a5c00'; badge.style.border='1px solid #f0c040';
     badge.textContent = `👶 Menor de edad (${edad} años) — se requieren datos del tutor`;
     labelTel.textContent = 'Teléfono paciente';
-    labelTutor.textContent = 'Tutor 1 *';
-    labelTelTutor.textContent = 'Teléfono Tutor 2 *';
+    labelTutor.textContent = 'Nombre y Apellidos *';
+    labelTelTutor.textContent = 'Teléfono Tutor 1 *';
   } else {
     badge.style.background='#f0fff0'; badge.style.color='#2d7a2d'; badge.style.border='1px solid #97D700';
     badge.textContent = `✓ Mayor de edad (${edad} años)`;
     labelTel.textContent = 'Teléfono *';
-    labelTutor.textContent = 'Tutor 1';
-    labelTelTutor.textContent = 'Teléfono Tutor 2';
+    labelTutor.textContent = 'Nombre y Apellidos';
+    labelTelTutor.textContent = 'Teléfono Tutor 1';
   }
 }
 function calcEdadSimple(fnac) {
@@ -2090,16 +2129,19 @@ async function guardarNuevoPaciente() {
       dni_paciente: document.getElementById('mp-dni-pac').value.trim() || null,
       telefono: tel,
       tutor1,
-      tutor1_dni: document.getElementById('mp-dni-tutor1').value.trim() || null,
+      dni_tutor1: document.getElementById('mp-dni-tutor1').value.trim() || null,
       tutor1_email: document.getElementById('mp-tutor1-email').value.trim() || null,
       tutor1_direccion: document.getElementById('mp-tutor1-dir').value.trim() || null,
       tutor2: document.getElementById('mp-tutor2').value.trim() || null,
       tutor2_dni: document.getElementById('mp-tutor2-dni').value.trim() || null,
       telefono2: telTutor2 || null,
+      telefono3: document.getElementById('mp-tel3').value.trim() || null,
       tutor2_email: document.getElementById('mp-tutor2-email').value.trim() || null,
       tutor2_direccion: document.getElementById('mp-tutor2-dir').value.trim() || null,
       facturacion_tutor: document.getElementById('mp-facturacion-tutor').value || null,
       email: document.getElementById('mp-email').value.trim() || null,
+      profesion: document.getElementById('mp-profesion').value.trim() || null,
+      direccion: document.getElementById('mp-dir').value.trim() || null,
       centro_escolar: document.getElementById('mp-centro-escolar').value.trim() || null,
       curso_escolar: document.getElementById('mp-curso-escolar').value.trim() || null,
       terapeuta_principal: document.getElementById('mp-terapeuta').value || null,
