@@ -776,6 +776,11 @@ textarea.form-control { min-height: 72px; transition: border-color .2s; }
           <option value="">Cobrado / No cobrado</option>
           <option value="Sí">Cobrado</option><option value="No">No cobrado</option>
         </select>
+        <select class="filter-select" id="ses-comprobado" onchange="filtrarSesiones()">
+          <option value="">✅ / ○ Todos</option>
+          <option value="Sí">✅ Comprobadas</option>
+          <option value="No">○ Sin comprobar</option>
+        </select>
         <button class="btn btn-secondary btn-sm" onclick="limpiarFiltrosSesiones()">✕ Limpiar</button>
       </div>
       <div class="data-table-wrap">
@@ -2477,6 +2482,7 @@ function filtrarSesiones() {
   const ter   = document.getElementById('ses-ter')?.value||'';
   const est   = document.getElementById('ses-estado')?.value||'';
   const cob   = document.getElementById('ses-cobrado')?.value||'';
+  const comp  = document.getElementById('ses-comprobado')?.value||'';
 
   sesFiltradas = G.sesiones.filter(s => {
     if (q && !(nomPac(s.id_paciente)+' '+nomTer(s.id_terapeuta)+' '+(s.id_cita||'')).toLowerCase().includes(q)) return false;
@@ -2488,6 +2494,10 @@ function filtrarSesiones() {
       const estaCobrada = esCobrada(s);
       if (cob === 'Sí' && !estaCobrada) return false;
       if (cob === 'No' && estaCobrada) return false;
+    }
+    if (comp) {
+      if (comp === 'Sí' && s.comprobado !== 'Sí') return false;
+      if (comp === 'No' && s.comprobado === 'Sí') return false;
     }
     return true;
   });
@@ -2544,7 +2554,7 @@ function renderSesiones() {
 
 function limpiarFiltrosSesiones() {
   ['ses-busq','ses-desde','ses-hasta'].forEach(id=>{ const el=document.getElementById(id); if(el)el.value=''; });
-  ['ses-ter','ses-estado','ses-cobrado'].forEach(id=>{ const el=document.getElementById(id); if(el)el.value=''; });
+  ['ses-ter','ses-estado','ses-cobrado','ses-comprobado'].forEach(id=>{ const el=document.getElementById(id); if(el)el.value=''; });
   filtrarSesiones();
 }
 
