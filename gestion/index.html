@@ -788,6 +788,7 @@ textarea.form-control { min-height: 72px; transition: border-color .2s; }
         </table>
         <div class="table-footer">
           <span id="sesiones-count">—</span>
+          <span id="sesiones-comprobado-count" style="font-size:12px;color:var(--ink-muted)"></span>
           <div id="pag-sesiones" style="display:flex;gap:4px"></div>
         </div>
       </div>
@@ -1192,21 +1193,67 @@ textarea.form-control { min-height: 72px; transition: border-color .2s; }
       <div class="modal-title" id="modal-sesion-titulo">Registrar sesión</div>
       <button class="modal-close" onclick="cerrarModal('modal-sesion')">×</button>
     </div>
-    <div class="modal-body" style="padding:0">
+    <div class="modal-body" style="padding:0;overflow-y:auto">
       <input type="hidden" id="s-id">
-      <!-- Campos ocultos — se conservan para guardarSesion() pero no se muestran -->
       <input type="hidden" id="s-paciente">
       <input type="hidden" id="s-paciente-txt">
-      <input type="hidden" id="s-terapeuta">
-      <input type="hidden" id="s-servicio">
-      <input type="hidden" id="s-estado">
-      <input type="hidden" id="s-fin">
-      <input type="hidden" id="s-cobrado">
-      <input type="hidden" id="s-importe">
-      <input type="hidden" id="s-bono">
-      <input type="hidden" id="s-beca">
-      <input type="hidden" id="s-fecha-cierre">
       <input type="hidden" id="s-comprobado">
+
+      <!-- ── BLOQUE ADMIN: campos técnicos editables ── -->
+      <div id="s-bloque-admin" style="display:none;padding:16px 26px;border-bottom:1px solid var(--border);background:#f8f7ff">
+        <div style="font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--blue);margin-bottom:12px">⚙️ Campos técnicos (admin)</div>
+        <div class="form-grid" style="grid-template-columns:1fr 1fr 1fr;gap:10px">
+          <div class="form-group" style="margin:0">
+            <label class="form-label">Terapeuta</label>
+            <select class="form-control" id="s-terapeuta"></select>
+          </div>
+          <div class="form-group" style="margin:0">
+            <label class="form-label">Estado sesión</label>
+            <select class="form-control" id="s-estado">
+              <option value="Programada">Programada</option>
+              <option value="Hecha">Hecha</option>
+              <option value="No-show">No-show</option>
+              <option value="Cancelada">Cancelada</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin:0">
+            <label class="form-label">Financiación</label>
+            <select class="form-control" id="s-fin">
+              <option value="SUELTA">SUELTA</option>
+              <option value="BONO">BONO</option>
+              <option value="BECA">BECA</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin:0">
+            <label class="form-label">Servicio</label>
+            <select class="form-control" id="s-servicio"></select>
+          </div>
+          <div class="form-group" style="margin:0">
+            <label class="form-label">Importe (€)</label>
+            <input type="number" class="form-control" id="s-importe" step="0.01" min="0">
+          </div>
+          <div class="form-group" style="margin:0">
+            <label class="form-label">Cerrada/Cobrada</label>
+            <select class="form-control" id="s-cobrado">
+              <option value="No">No</option>
+              <option value="Sí">Sí</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin:0">
+            <label class="form-label">ID Bono</label>
+            <input type="text" class="form-control" id="s-bono" placeholder="ej: BN0001">
+          </div>
+          <div class="form-group" style="margin:0">
+            <label class="form-label">ID Beca</label>
+            <input type="text" class="form-control" id="s-beca" placeholder="ej: BC0001">
+          </div>
+          <div class="form-group" style="margin:0">
+            <label class="form-label">Fecha cierre</label>
+            <input type="date" class="form-control" id="s-fecha-cierre">
+          </div>
+        </div>
+      </div>
+
       <!-- Fecha y hora -->
       <div style="padding:20px 26px 16px;border-bottom:1px solid var(--border)">
         <div class="form-grid" style="grid-template-columns:1fr 1fr">
@@ -1220,9 +1267,9 @@ textarea.form-control { min-height: 72px; transition: border-color .2s; }
           <label class="form-label" style="margin:0;font-size:11px;color:var(--blue)">📋 NOTAS CLÍNICAS</label>
           <span style="font-size:11px;color:var(--ink-muted)" id="s-notas-chars">0 caracteres</span>
         </div>
-        <textarea class="form-control" id="s-notas" rows="18"
+        <textarea class="form-control" id="s-notas" rows="10"
           placeholder="Observaciones clínicas, evolución de la sesión, objetivos trabajados, respuesta del paciente, propuestas para próxima sesión…"
-          style="flex:1;resize:none;min-height:400px;line-height:1.7;font-size:14px;background:#fff;border-color:var(--border);font-family:'DM Sans',sans-serif"
+          style="flex:1;resize:none;min-height:200px;line-height:1.7;font-size:14px;background:#fff;border-color:var(--border);font-family:'DM Sans',sans-serif"
           oninput="autoExpand(this);document.getElementById('s-notas-chars').textContent=this.value.length+' caracteres'"></textarea>
       </div>
     </div>
@@ -2486,6 +2533,12 @@ function renderSesiones() {
       </tr>`).join('');
   }
   document.getElementById('sesiones-count').textContent = sesFiltradas.length+' sesiones';
+  const nComp = sesFiltradas.filter(s=>s.comprobado==='Sí').length;
+  const nPend = sesFiltradas.length - nComp;
+  const cEl = document.getElementById('sesiones-comprobado-count');
+  if (cEl) cEl.innerHTML = nComp > 0
+    ? `<span style="color:#2d7a00;font-weight:600">✅ ${nComp} comprobadas</span>${nPend>0?` &nbsp;·&nbsp; <span style="color:var(--ink-muted)">○ ${nPend} sin comprobar</span>`:''}`
+    : `<span style="color:var(--ink-muted)">○ ${nPend} sin comprobar</span>`;
   renderPaginacion('pag-sesiones', sesFiltradas.length, G.paginaSize, sesPag, (p)=>{ sesPag=p; renderSesiones(); });
 }
 
@@ -2507,23 +2560,30 @@ function abrirModalSesion() {
   document.getElementById('modal-sesion-titulo').textContent='Nueva sesión';
   document.getElementById('s-fecha').value=new Date().toISOString().split('T')[0];
   document.getElementById('s-hora').value='09:00';
-  document.getElementById('s-estado').value='Programada';
-  document.getElementById('s-fin').value='SUELTA';
-  document.getElementById('s-cobrado').value='No';
   document.getElementById('s-comprobado').value='No';
   sesActualizarBtnComprobado('No');
-  document.getElementById('s-importe').value='';
   document.getElementById('s-notas').value='';
   autoExpand(document.getElementById('s-notas'));
   document.getElementById('s-notas-chars').textContent='0 caracteres';
   setPacienteEnModal('s-paciente-txt','s-paciente','');
   document.getElementById('s-paciente-txt').value='';
-  document.getElementById('s-terapeuta').value='';
-  document.getElementById('s-servicio').value='';
-  document.getElementById('s-bono').value='';
-  document.getElementById('s-beca').value='';
-  document.getElementById('s-fecha-cierre').value='';
   document.getElementById('s-btn-eliminar').style.display='none';
+  // Bloque admin
+  const bloqueAdmin = document.getElementById('s-bloque-admin');
+  if (bloqueAdmin) {
+    bloqueAdmin.style.display = 'block';
+    const selTer = document.getElementById('s-terapeuta');
+    selTer.innerHTML = '<option value="">— Terapeuta —</option>' + G.terapeutas.map(t=>`<option value="${t.id_terapeuta}">${t.nombre}</option>`).join('');
+    const selSrv = document.getElementById('s-servicio');
+    selSrv.innerHTML = '<option value="">— Servicio —</option>' + G.servicios.map(sv=>`<option value="${sv.id_servicio}">${sv.servicio||sv.id_servicio}</option>`).join('');
+    document.getElementById('s-estado').value='Hecha';
+    document.getElementById('s-fin').value='SUELTA';
+    document.getElementById('s-cobrado').value='No';
+    document.getElementById('s-importe').value='';
+    document.getElementById('s-bono').value='';
+    document.getElementById('s-beca').value='';
+    document.getElementById('s-fecha-cierre').value='';
+  }
   abrirModal('modal-sesion');
 }
 
@@ -2535,39 +2595,54 @@ function editarSesion(id) {
   document.getElementById('s-fecha').value = fechaNorm;
   document.getElementById('s-hora').value=(s.hora||'').slice(0,5);
   setPacienteEnModal('s-paciente-txt','s-paciente',s.id_paciente);
-  document.getElementById('s-terapeuta').value=s.id_terapeuta||'';
-  document.getElementById('s-servicio').value=s.id_servicio||'';
-  document.getElementById('s-estado').value=s.estado||'Programada';
-  document.getElementById('s-fin').value=s.financiacion_tipo||'SUELTA';
-  document.getElementById('s-cobrado').value=s.cerrada||'No';
-  document.getElementById('s-importe').value=s.importe||'';
-  document.getElementById('s-bono').value=s.id_bono||'';
-  document.getElementById('s-beca').value=s.id_beca||'';
-  document.getElementById('s-fecha-cierre').value=s.fecha_cierre||'';
-  document.getElementById('s-comprobado').value=s.comprobado||'No';
-  sesActualizarBtnComprobado(s.comprobado||'No');
   document.getElementById('s-notas').value=s.notas||'';
   autoExpand(document.getElementById('s-notas'));
   document.getElementById('s-notas-chars').textContent=(s.notas||'').length+' caracteres';
+  document.getElementById('s-comprobado').value=s.comprobado||'No';
+  sesActualizarBtnComprobado(s.comprobado||'No');
   document.getElementById('s-btn-eliminar').style.display='inline-flex';
+
+  // Bloque admin — siempre visible en gestión
+  const bloqueAdmin = document.getElementById('s-bloque-admin');
+  if (bloqueAdmin) {
+    bloqueAdmin.style.display = 'block';
+    // Poblar select terapeutas
+    const selTer = document.getElementById('s-terapeuta');
+    selTer.innerHTML = G.terapeutas.map(t=>`<option value="${t.id_terapeuta}"${t.id_terapeuta===s.id_terapeuta?' selected':''}>${t.nombre}</option>`).join('');
+    // Poblar select servicios
+    const selSrv = document.getElementById('s-servicio');
+    selSrv.innerHTML = G.servicios.map(sv=>`<option value="${sv.id_servicio}"${sv.id_servicio===s.id_servicio?' selected':''}>${sv.servicio||sv.id_servicio}</option>`).join('');
+    // Resto de campos técnicos
+    document.getElementById('s-estado').value = s.estado||'Hecha';
+    document.getElementById('s-fin').value = s.financiacion_tipo||'SUELTA';
+    document.getElementById('s-cobrado').value = s.cerrada||'No';
+    document.getElementById('s-importe').value = s.importe||'';
+    document.getElementById('s-bono').value = s.id_bono||'';
+    document.getElementById('s-beca').value = s.id_beca||'';
+    document.getElementById('s-fecha-cierre').value = (s.fecha_cierre||'').slice(0,10);
+  }
+
   abrirModal('modal-sesion');
 }
 
 async function guardarSesion() {
   const id = document.getElementById('s-id').value;
+  // Leer terapeuta y servicio del bloque admin si está visible
+  const bloqueAdmin = document.getElementById('s-bloque-admin');
+  const adminVisible = bloqueAdmin && bloqueAdmin.style.display !== 'none';
   const datos = {
     fecha:            document.getElementById('s-fecha').value,
     hora:             document.getElementById('s-hora').value||null,
     id_paciente:      document.getElementById('s-paciente').value,
-    id_terapeuta:     document.getElementById('s-terapeuta').value||null,
-    id_servicio:      document.getElementById('s-servicio').value||null,
-    estado:           document.getElementById('s-estado').value,
-    financiacion_tipo:document.getElementById('s-fin').value,
-    cerrada:          document.getElementById('s-cobrado').value,
-    importe:          parseFloat(document.getElementById('s-importe').value)||0,
-    id_bono:          document.getElementById('s-bono').value.trim()||null,
-    id_beca:          document.getElementById('s-beca').value.trim()||null,
-    fecha_cierre:     document.getElementById('s-fecha-cierre').value||null,
+    id_terapeuta:     adminVisible ? document.getElementById('s-terapeuta').value||null : (document.getElementById('s-terapeuta')?.value||null),
+    id_servicio:      adminVisible ? document.getElementById('s-servicio').value||null : (document.getElementById('s-servicio')?.value||null),
+    estado:           adminVisible ? document.getElementById('s-estado').value : 'Hecha',
+    financiacion_tipo:adminVisible ? document.getElementById('s-fin').value : 'SUELTA',
+    cerrada:          adminVisible ? document.getElementById('s-cobrado').value : 'No',
+    importe:          adminVisible ? (parseFloat(document.getElementById('s-importe').value)||0) : 0,
+    id_bono:          adminVisible ? (document.getElementById('s-bono').value.trim()||null) : null,
+    id_beca:          adminVisible ? (document.getElementById('s-beca').value.trim()||null) : null,
+    fecha_cierre:     adminVisible ? (document.getElementById('s-fecha-cierre').value||null) : null,
     notas:            document.getElementById('s-notas').value.trim(),
     comprobado:       document.getElementById('s-comprobado').value||'No',
   };
