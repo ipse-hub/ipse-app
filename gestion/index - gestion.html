@@ -1095,14 +1095,20 @@ textarea.form-control { min-height: 72px; transition: border-color .2s; }
       <div class="table-toolbar">
         <input class="search-input" placeholder="🔍 Paciente, año…" oninput="filtrarBecas()" id="bec-busq">
         <select class="filter-select" id="bec-estado" onchange="filtrarBecas()">
-          <option value="">Todos estados</option><option>Activo</option><option>Agotada</option><option>Caducada</option>
+          <option value="">Todos estados</option><option>Activo</option><option>Agotada</option><option>Caducada</option><option>Suspendida</option>
+        </select>
+        <select class="filter-select" id="bec-servicio" onchange="filtrarBecas()">
+          <option value="">PSI + LOG</option><option value="PSI">Solo PSI</option><option value="LOG">Solo LOG</option><option value="">Sin etiquetar</option>
+        </select>
+        <select class="filter-select" id="bec-cobrado" onchange="filtrarBecas()">
+          <option value="">Cobrado / Pendiente</option><option value="Cobrado">Cobradas</option><option value="Pendiente">Pendientes</option>
         </select>
         <span id="bec-count" style="font-size:12px;color:var(--ink-muted)"></span>
       </div>
       <div class="data-table-wrap">
         <table class="data-table">
           <thead><tr>
-            <th>ID Beca</th><th>Año</th><th>Paciente</th><th>Importe bruto</th>
+            <th>ID Beca</th><th>Año</th><th>Paciente</th><th>Servicio</th>
             <th>Neto</th><th>€/ses</th><th>Ses. total</th><th>Consumidas</th>
             <th>Pendientes</th><th>Estado</th><th>Cobrado</th><th></th>
           </tr></thead>
@@ -1471,8 +1477,15 @@ textarea.form-control { min-height: 72px; transition: border-color .2s; }
         <div class="form-group"><label class="form-label">Consumidas</label><input type="number" class="form-control" id="bc-consumidas" min="0" value="0"></div>
         <div class="form-group"><label class="form-label">Importe neto (€)</label><input type="number" class="form-control" id="bc-neto" readonly></div>
         <div class="form-group"><label class="form-label">Valor/sesión (€)</label><input type="number" class="form-control" id="bc-valor-ses" readonly></div>
+        <div class="form-group"><label class="form-label">Servicio</label>
+          <select class="form-control" id="bc-servicio" onchange="bcActualizarNotas()">
+            <option value="">— Sin especificar —</option>
+            <option value="PSI">PSI — Psicología</option>
+            <option value="LOG">LOG — Logopedia</option>
+          </select>
+        </div>
         <div class="form-group"><label class="form-label">Cobrado</label>
-          <select class="form-control" id="bc-cobrado"><option value="Pendiente_cobro">Pendiente</option><option value="Cobrado">Cobrado</option></select>
+          <select class="form-control" id="bc-cobrado"><option value="Pendiente_cobro">Pendiente</option><option value="SI">Cobrado</option></select>
         </div>
         <div class="form-group"><label class="form-label">Fecha cobro</label><input type="date" class="form-control" id="bc-fecha-cobro"></div>
         <div class="form-group span2"><label class="form-label">Notas / expediente</label><input type="text" class="form-control" id="bc-notas"></div>
@@ -3019,7 +3032,7 @@ function p360RenderEconomico(p, sesiones, cobros) {
     : '<div class="empty-state" style="padding:16px">Sin cobros registrados</div>';
 
   // Bonos
-  const bonos = G.bonos.filter(b=>b.id_paciente===p.id_paciente && b.estado==='Activo');
+  const bonos = G.bonos.filter(b=>b.id_paciente===p.id_paciente && (parseInt(b.sesiones_pendientes)||0)>0);
   const bonosCard = document.getElementById('p360-bonos-card');
   if (bonos.length) {
     bonosCard.style.display='block';
@@ -3036,7 +3049,7 @@ function p360RenderEconomico(p, sesiones, cobros) {
   } else { bonosCard.style.display='none'; }
 
   // Becas
-  const becas = G.becas.filter(b=>b.id_paciente===p.id_paciente && b.estado==='Activo');
+  const becas = G.becas.filter(b=>b.id_paciente===p.id_paciente && (parseInt(b.sesiones_pendientes)||0)>0);
   const becasCard = document.getElementById('p360-becas-card');
   if (becas.length) {
     becasCard.style.display='block';
@@ -3732,44 +3745,87 @@ function exportarBonosXLSX() {
 // ═══════════════════════════════════════════════════════
 //  BECAS  (campo real: sesiones_total, sin entidad_financiadora)
 // ═══════════════════════════════════════════════════════
+// Helper: normaliza el campo cobrado de beca a 'Cobrado' o 'Pendiente'
+// independientemente de si en Supabase está como 'SI','Cobrado','Sí','NO','Pendiente_cobro',etc.
+function normCobradoBeca(val) {
+  if(!val) return 'Pendiente';
+  const v = (val+'').toUpperCase().trim();
+  if(v==='SI'||v==='SÍ'||v==='COBRADO'||v==='SÍ') return 'Cobrado';
+  return 'Pendiente';
+}
+// Helper: extrae etiqueta de servicio del campo notas ('PSI','LOG' o '')
+function servicioFromNotas(notas) {
+  if(!notas) return '';
+  const n = (notas+'').toUpperCase();
+  if(n.startsWith('PSI')) return 'PSI';
+  if(n.startsWith('LOG')) return 'LOG';
+  return '';
+}
+
 function renderBecas() {
   const q   = (document.getElementById('bec-busq')?.value||'').toLowerCase();
   const est = document.getElementById('bec-estado')?.value||'';
+  const srv = document.getElementById('bec-servicio')?.value||'';
+  const cob = document.getElementById('bec-cobrado')?.value||'';
+
   const filtradas = G.becas.filter(b=>{
-    const nom=(nomPacFull(b.id_paciente)+' '+(b.anio||'')+' '+(b.id_beca||'')).toLowerCase();
+    const nom=(nomPacFull(b.id_paciente)+' '+(b.anio||'')+' '+(b.id_beca||'')+' '+(b.notas||'')).toLowerCase();
     if(q&&!nom.includes(q)) return false;
     if(est&&b.estado!==est) return false;
+    if(srv&&servicioFromNotas(b.notas)!==srv) return false;
+    if(cob&&normCobradoBeca(b.cobrado)!==cob) return false;
     return true;
   });
 
-  const activas  = filtradas.filter(b=>b.estado==='Activo');
-  const sesPend  = activas.reduce((sum,b)=>sum+(parseInt(b.sesiones_pendientes)||0),0);
-  const impPend  = activas.filter(b=>b.cobrado!=='Cobrado').reduce((sum,b)=>sum+(parseFloat(b.importe_neto)||0),0);
-  document.getElementById('becas-activas').textContent  = activas.length;
+  const activas = filtradas.filter(b=>b.estado==='Activo'||b.estado==='Suspendida');
+  const sesPend = activas.reduce((sum,b)=>sum+(parseInt(b.sesiones_pendientes)||0),0);
+  const impPend = activas.filter(b=>normCobradoBeca(b.cobrado)!=='Cobrado').reduce((sum,b)=>sum+(parseFloat(b.importe_neto)||0),0);
+  document.getElementById('becas-activas').textContent  = filtradas.filter(b=>b.estado==='Activo').length;
   document.getElementById('becas-ses-pend').textContent = sesPend;
   document.getElementById('becas-imp-pend').textContent = fmtEur(impPend);
 
   const tbody=document.getElementById('tbody-becas');
-  tbody.innerHTML=filtradas.map(b=>`
+  tbody.innerHTML=filtradas.map(b=>{
+    const srvLabel = servicioFromNotas(b.notas);
+    const srvBadge = srvLabel==='PSI'
+      ? `<span style="background:#E8E6F8;color:#10069F;border-radius:4px;padding:2px 7px;font-size:11px;font-weight:700">PSI</span>`
+      : srvLabel==='LOG'
+      ? `<span style="background:#E0F5FB;color:#006a87;border-radius:4px;padding:2px 7px;font-size:11px;font-weight:700">LOG</span>`
+      : `<span style="color:var(--ink-muted);font-size:11px">—</span>`;
+    const cobNorm = normCobradoBeca(b.cobrado);
+    return `
     <tr onclick="editarBeca('${b.id_beca}')">
       <td class="mono">${b.id_beca}</td>
       <td>${b.anio||'—'}</td>
       <td class="strong">${nomPacFull(b.id_paciente)}</td>
-      <td class="mono">${fmtEur(b.importe_bruto)}</td>
+      <td>${srvBadge}</td>
       <td class="mono">${fmtEur(b.importe_neto)}</td>
       <td class="mono">${fmtEur(b.valor_sesion)}</td>
       <td>${b.sesiones_total||'—'}</td>
       <td>${b.sesiones_consumidas||0}</td>
       <td><strong style="color:${parseInt(b.sesiones_pendientes)<=3?'var(--red)':'inherit'}">${b.sesiones_pendientes||0}</strong></td>
       <td>${badgeEstado(b.estado)}</td>
-      <td>${badgeEstado(b.cobrado==='Cobrado'?'Cobrado':'Pendiente')}</td>
+      <td>${badgeEstado(cobNorm)}</td>
       <td><button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();editarBeca('${b.id_beca}')">✏️</button></td>
-    </tr>`).join('')||'<tr><td colspan="12" class="empty-state">Sin becas</td></tr>';
+    </tr>`;
+  }).join('')||'<tr><td colspan="12" class="empty-state">Sin becas</td></tr>';
   document.getElementById('bec-footer').textContent=filtradas.length+' becas';
   document.getElementById('bec-count').textContent=filtradas.length+' becas';
 }
 
 function filtrarBecas() { renderBecas(); }
+
+// Sincroniza el prefijo PSI/LOG en el campo notas al cambiar el selector de servicio
+function bcActualizarNotas() {
+  const srv = document.getElementById('bc-servicio').value;
+  const notasEl = document.getElementById('bc-notas');
+  const nota = notasEl.value;
+  // Quitar prefijo anterior si lo hay
+  const sinPrefijo = nota.replace(/^(PSI - Psicología|LOG - Logopedia)\.\s*/,'').replace(/^(PSI - Psicología|LOG - Logopedia)/,'').trim();
+  if (srv === 'PSI') notasEl.value = 'PSI - Psicología' + (sinPrefijo ? '. ' + sinPrefijo : '');
+  else if (srv === 'LOG') notasEl.value = 'LOG - Logopedia' + (sinPrefijo ? '. ' + sinPrefijo : '');
+  else notasEl.value = sinPrefijo;
+}
 
 function calcularBeca() {
   const bruto = parseFloat(document.getElementById('bc-bruto')?.value)||0;
@@ -3794,6 +3850,7 @@ function abrirModalBeca() {
   document.getElementById('bc-neto').value='';
   document.getElementById('bc-valor-ses').value='';
   document.getElementById('bc-cobrado').value='Pendiente_cobro';
+  document.getElementById('bc-servicio').value='';
   document.getElementById('bc-fecha-cobro').value='';
   document.getElementById('bc-notas').value='';
   document.getElementById('bc-btn-eliminar').style.display='none';
@@ -3813,7 +3870,10 @@ function editarBeca(id) {
   document.getElementById('bc-consumidas').value  = b.sesiones_consumidas||0;
   document.getElementById('bc-neto').value        = b.importe_neto||0;
   document.getElementById('bc-valor-ses').value   = b.valor_sesion||0;
-  document.getElementById('bc-cobrado').value     = b.cobrado||'Pendiente_cobro';
+  document.getElementById('bc-cobrado').value     = normCobradoBeca(b.cobrado)==='Cobrado' ? 'SI' : 'Pendiente_cobro';
+  // Detectar servicio desde notas
+  const srvVal = servicioFromNotas(b.notas);
+  document.getElementById('bc-servicio').value = srvVal || '';
   document.getElementById('bc-fecha-cobro').value = b.fecha_cobro||'';
   document.getElementById('bc-notas').value       = b.notas||'';
   document.getElementById('bc-btn-eliminar').style.display='inline-flex';
