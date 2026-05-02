@@ -2485,7 +2485,7 @@ function filtrarSesiones() {
     if (ter && s.id_terapeuta !== ter) return false;
     if (est && s.estado !== est) return false;
     if (cob) {
-      const estaCobrada = G.sesionesCobradas && G.sesionesCobradas.has(s.id_cita);
+      const estaCobrada = esCobrada(s);
       if (cob === 'Sí' && !estaCobrada) return false;
       if (cob === 'No' && estaCobrada) return false;
     }
@@ -2493,7 +2493,7 @@ function filtrarSesiones() {
   });
 
   const prod = sesFiltradas.filter(s=>s.estado==='Hecha').reduce((sum,s)=>sum+(parseFloat(s.importe)||0),0);
-  const cobr = sesFiltradas.filter(s=>s.estado==='Hecha'&&G.sesionesCobradas&&G.sesionesCobradas.has(s.id_cita)).reduce((sum,s)=>sum+(parseFloat(s.importe)||0),0);
+  const cobr = sesFiltradas.filter(s=>s.estado==='Hecha'&&esCobrada(s)).reduce((sum,s)=>sum+(parseFloat(s.importe)||0),0);
   const noshow = sesFiltradas.filter(s=>s.estado==='No-show').length;
   const cancel = sesFiltradas.filter(s=>s.estado==='Cancelada').length;
   const realizadas = sesFiltradas.filter(s=>s.estado==='Hecha');
@@ -2528,7 +2528,7 @@ function renderSesiones() {
         <td>${s.financiacion_tipo||'—'}</td>
         <td>${badgeEstado(s.estado)}</td>
         <td class="mono">${fmtEur(s.importe)}</td>
-        <td>${badgeEstado(G.sesionesCobradas&&G.sesionesCobradas.has(s.id_cita)?'Cobrado':'Pendiente')}</td>
+        <td>${badgeEstado(esCobrada(s)?'Cobrado':'Pendiente')}</td>
         <td style="text-align:center">${s.comprobado==='Sí'?'<span title="Comprobado" style="font-size:16px">✅</span>':'<span style="color:#D1D5DB;font-size:14px">○</span>'}</td>
       </tr>`).join('');
   }
@@ -2550,8 +2550,19 @@ function limpiarFiltrosSesiones() {
 
 function exportarCSVSesiones() {
   const rows = [['ID','Fecha','Hora','Paciente','Terapeuta','Servicio','Financiación','Estado','Importe','Cobrado']];
-  sesFiltradas.forEach(s=>rows.push([s.id_cita,s.fecha,(s.hora||'').slice(0,5),nomPac(s.id_paciente),nomTer(s.id_terapeuta),nomSrv(s.id_servicio),s.financiacion_tipo,s.estado,s.importe,G.sesionesCobradas&&G.sesionesCobradas.has(s.id_cita)?'Sí':'No']));
+  sesFiltradas.forEach(s=>rows.push([s.id_cita,s.fecha,(s.hora||'').slice(0,5),nomPac(s.id_paciente),nomTer(s.id_terapeuta),nomSrv(s.id_servicio),s.financiacion_tipo,s.estado,s.importe,esCobrada(s)?'Sí':'No']));
   descargarCSV(rows,'sesiones_ipse.csv');
+}
+
+// ─── Helper: determina si una sesión está cobrada ──────
+// BECA/BONO → cobrada si cerrada='Sí' (el pago está garantizado)
+// SUELTA    → cobrada si existe registro en tabla cobros
+function esCobrada(s) {
+  if (!s) return false;
+  if (s.financiacion_tipo === 'BECA' || s.financiacion_tipo === 'BONO') {
+    return s.cerrada === 'Sí';
+  }
+  return G.sesionesCobradas && G.sesionesCobradas.has(s.id_cita);
 }
 
 // ─── Modal Sesión ──────────────────────────────────────
@@ -2877,7 +2888,7 @@ function _renderPacientesTable() {
       const ultSes = sesPac.length ? fmtFecha(sesPac[0].fecha) : '<span style="color:var(--ink-muted)">—</span>';
       // Saldo pendiente = sesiones hechas no cobradas
       const saldo = G.sesiones
-        .filter(s=>s.id_paciente===p.id_paciente && s.estado==='Hecha' && !(G.sesionesCobradas&&G.sesionesCobradas.has(s.id_cita)) && s.financiacion_tipo!=='BONO' && s.financiacion_tipo!=='BECA')
+        .filter(s=>s.id_paciente===p.id_paciente && s.estado==='Hecha' && !esCobrada(s) && s.financiacion_tipo!=='BONO' && s.financiacion_tipo!=='BECA')
         .reduce((sum,s)=>sum+(parseFloat(s.importe)||0),0);
       const saldoHtml = saldo>0
         ? `<span class="pac-saldo-warn">${fmtEur(saldo)}</span>`
