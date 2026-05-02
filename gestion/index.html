@@ -782,7 +782,7 @@ textarea.form-control { min-height: 72px; transition: border-color .2s; }
         <table class="data-table">
           <thead><tr>
             <th>ID</th><th>Fecha</th><th>Hora</th><th>Paciente</th><th>Terapeuta</th>
-            <th>Servicio</th><th>Financiación</th><th>Estado</th><th>Importe</th><th>Cobrado</th>
+            <th>Servicio</th><th>Financiación</th><th>Estado</th><th>Importe</th><th>Cobrado</th><th>✅</th>
           </tr></thead>
           <tbody id="tbody-sesiones"></tbody>
         </table>
@@ -842,12 +842,10 @@ textarea.form-control { min-height: 72px; transition: border-color .2s; }
       <!-- Buscador central -->
       <div id="pac-buscador-central" style="max-width:680px;margin:0 auto 32px">
         <div style="background:var(--white);border:1px solid var(--border);border-radius:16px;padding:28px 32px;box-shadow:var(--shadow-lg)">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px">
-            <div style="text-align:left">
-              <div style="font-size:16px;font-weight:600;color:var(--ink)">🔍 Buscar paciente</div>
-              <div style="font-size:13px;color:var(--ink-muted);margin-top:4px">Escribe en cualquier campo para filtrar</div>
-            </div>
-            <button class="btn btn-secondary btn-sm" onclick="verTodosPacientes()" id="btn-ver-todos-pac" style="white-space:nowrap">Ver todos ↓</button>
+          <div style="text-align:center;margin-bottom:24px">
+            <div style="font-size:32px;margin-bottom:8px">🔍</div>
+            <div style="font-size:16px;font-weight:600;color:var(--ink)">Buscar paciente</div>
+            <div style="font-size:13px;color:var(--ink-muted);margin-top:4px">Escribe en cualquier campo para filtrar</div>
           </div>
           <div style="display:flex;flex-direction:column;gap:12px">
             <div style="position:relative">
@@ -899,9 +897,6 @@ textarea.form-control { min-height: 72px; transition: border-color .2s; }
 
       <!-- Resultados -->
       <div id="pac-resultados" style="display:none;max-width:860px;margin:0 auto">
-        <!-- Stats y duplicados -->
-        <div id="pac-stats-bar" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;font-size:12px"></div>
-        <div id="pac-duplicados-aviso" style="display:none;background:#fff3cd;border:1px solid #f0c040;border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:13px"></div>
         <div class="data-table-wrap">
           <table class="data-table">
             <thead><tr>
@@ -909,7 +904,6 @@ textarea.form-control { min-height: 72px; transition: border-color .2s; }
               <th>Nombre</th>
               <th>Terapeuta</th>
               <th>Estado</th>
-              <th>Sesiones</th>
               <th>Última sesión</th>
               <th>Saldo pendiente</th>
               <th></th>
@@ -1212,6 +1206,7 @@ textarea.form-control { min-height: 72px; transition: border-color .2s; }
       <input type="hidden" id="s-bono">
       <input type="hidden" id="s-beca">
       <input type="hidden" id="s-fecha-cierre">
+      <input type="hidden" id="s-comprobado">
       <!-- Fecha y hora -->
       <div style="padding:20px 26px 16px;border-bottom:1px solid var(--border)">
         <div class="form-grid" style="grid-template-columns:1fr 1fr">
@@ -1234,6 +1229,10 @@ textarea.form-control { min-height: 72px; transition: border-color .2s; }
     <div class="modal-footer">
       <button class="btn btn-danger btn-sm" id="s-btn-eliminar" style="margin-right:auto;display:none" onclick="eliminarSesion()">🗑 Eliminar</button>
       <button class="btn btn-secondary" onclick="cerrarModal('modal-sesion')">Cancelar</button>
+      <button type="button" id="s-btn-comprobado" onclick="sesToggleComprobado()"
+        style="border:2px solid #9CA3AF;background:#f3f4f6;color:#6B7280;border-radius:8px;padding:6px 16px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .2s;white-space:nowrap">
+        ☐ Sin comprobar
+      </button>
       <button class="btn btn-primary" onclick="guardarSesion()">Guardar sesión</button>
     </div>
   </div>
@@ -2469,7 +2468,7 @@ function renderSesiones() {
   const inicio = sesPag * G.paginaSize;
   const pagina = sesFiltradas.slice(inicio, inicio+G.paginaSize);
   const tbody = document.getElementById('tbody-sesiones');
-  if (!pagina.length) { tbody.innerHTML='<tr><td colspan="10" class="empty-state">Sin sesiones</td></tr>'; }
+  if (!pagina.length) { tbody.innerHTML='<tr><td colspan="11" class="empty-state">Sin sesiones</td></tr>'; }
   else {
     tbody.innerHTML = pagina.map(s=>`
       <tr onclick="editarSesion('${s.id_cita}')">
@@ -2483,6 +2482,7 @@ function renderSesiones() {
         <td>${badgeEstado(s.estado)}</td>
         <td class="mono">${fmtEur(s.importe)}</td>
         <td>${badgeEstado(G.sesionesCobradas&&G.sesionesCobradas.has(s.id_cita)?'Cobrado':'Pendiente')}</td>
+        <td style="text-align:center">${s.comprobado==='Sí'?'<span title="Comprobado" style="font-size:16px">✅</span>':'<span style="color:#D1D5DB;font-size:14px">○</span>'}</td>
       </tr>`).join('');
   }
   document.getElementById('sesiones-count').textContent = sesFiltradas.length+' sesiones';
@@ -2510,6 +2510,8 @@ function abrirModalSesion() {
   document.getElementById('s-estado').value='Programada';
   document.getElementById('s-fin').value='SUELTA';
   document.getElementById('s-cobrado').value='No';
+  document.getElementById('s-comprobado').value='No';
+  sesActualizarBtnComprobado('No');
   document.getElementById('s-importe').value='';
   document.getElementById('s-notas').value='';
   autoExpand(document.getElementById('s-notas'));
@@ -2542,6 +2544,8 @@ function editarSesion(id) {
   document.getElementById('s-bono').value=s.id_bono||'';
   document.getElementById('s-beca').value=s.id_beca||'';
   document.getElementById('s-fecha-cierre').value=s.fecha_cierre||'';
+  document.getElementById('s-comprobado').value=s.comprobado||'No';
+  sesActualizarBtnComprobado(s.comprobado||'No');
   document.getElementById('s-notas').value=s.notas||'';
   autoExpand(document.getElementById('s-notas'));
   document.getElementById('s-notas-chars').textContent=(s.notas||'').length+' caracteres';
@@ -2565,6 +2569,7 @@ async function guardarSesion() {
     id_beca:          document.getElementById('s-beca').value.trim()||null,
     fecha_cierre:     document.getElementById('s-fecha-cierre').value||null,
     notas:            document.getElementById('s-notas').value.trim(),
+    comprobado:       document.getElementById('s-comprobado').value||'No',
   };
   if (!datos.fecha||!datos.id_paciente) { toast('Fecha y paciente son obligatorios','err'); return; }
   try {
@@ -2750,7 +2755,6 @@ function buscarPacientes() {
   if (!hayFiltro) {
     document.getElementById('pac-resultados').style.display='none';
     document.getElementById('pac-busq-count').textContent='';
-    _pac360OcultarStats();
     return;
   }
   pacFiltrados = G.pacientes.filter(p=>{
@@ -2769,83 +2773,6 @@ function buscarPacientes() {
   pacPag=0;
   const n = pacFiltrados.length;
   document.getElementById('pac-busq-count').textContent = n ? n+' resultado'+(n!==1?'s':'') : 'Sin resultados';
-  document.getElementById('pac-resultados').style.display = n ? 'block' : 'none';
-  if (n) { _renderPacientesTable(); _pac360MostrarStats(pacFiltrados); }
-}
-
-function verTodosPacientes() {
-  // Limpiar filtros y mostrar todos
-  ['pac-busq-nombre','pac-busq-tel'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
-  ['pac-busq-ter','pac-busq-estado','pac-busq-beca'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
-  pacFiltrados = [...G.pacientes].sort((a,b)=>(a.apellidos||'').localeCompare(b.apellidos||''));
-  pacPag=0;
-  const n = pacFiltrados.length;
-  document.getElementById('pac-busq-count').textContent = n+' pacientes en total';
-  document.getElementById('pac-resultados').style.display = n ? 'block' : 'none';
-  if (n) { _renderPacientesTable(); _pac360MostrarStats(pacFiltrados); }
-}
-
-function _pac360MostrarStats(lista) {
-  const statsBar = document.getElementById('pac-stats-bar');
-  const dupAviso = document.getElementById('pac-duplicados-aviso');
-  if (!statsBar) return;
-
-  const total = lista.length;
-  const conSes = lista.filter(p => G.sesiones.some(s=>s.id_paciente===p.id_paciente)).length;
-  const sinSes = total - conSes;
-
-  statsBar.innerHTML = [
-    `<span style="background:var(--blue);color:#fff;border-radius:6px;padding:3px 10px"><strong>${total}</strong> mostrados</span>`,
-    `<span style="background:#97D700;color:#1a1b2e;border-radius:6px;padding:3px 10px"><strong>${conSes}</strong> con sesiones</span>`,
-    sinSes > 0 ? `<span style="background:#DA291C;color:#fff;border-radius:6px;padding:3px 10px;cursor:pointer" onclick="filtrarSinSesiones()" title="Clic para filtrar">⚠️ <strong>${sinSes}</strong> sin sesiones</span>` : '',
-  ].filter(Boolean).join('');
-
-  // Detectar duplicados solo en listado total o filtrados amplios (>10)
-  if (lista.length > 5) {
-    const dups = _pac360DetectarDuplicados(lista);
-    if (dups.length) {
-      dupAviso.style.display = 'block';
-      dupAviso.innerHTML = `⚠️ <strong>${dups.length} posible${dups.length>1?'s':''} grupo${dups.length>1?'s':''} de duplicado${dups.length>1?'s':''} detectado${dups.length>1?'s':''}:</strong><br>` +
-        dups.map(g => `· ${g.map(p=>`<strong>${p.nombre} ${p.apellidos||''}</strong> (${p.id_paciente}, ${G.sesiones.filter(s=>s.id_paciente===p.id_paciente).length} ses.)`).join(' ↔ ')}`).join('<br>');
-    } else {
-      dupAviso.style.display = 'none';
-    }
-  } else {
-    dupAviso.style.display = 'none';
-  }
-}
-
-function _pac360OcultarStats() {
-  const el = document.getElementById('pac-stats-bar'); if(el) el.innerHTML='';
-  const el2 = document.getElementById('pac-duplicados-aviso'); if(el2) el2.style.display='none';
-}
-
-function _pac360DetectarDuplicados(pacientes) {
-  const grupos = [], vistos = new Set();
-  pacientes.forEach((p, i) => {
-    if (vistos.has(p.id_paciente)) return;
-    const clave = ((p.nombre||'') + ' ' + (p.apellidos||'')).trim().toUpperCase();
-    if (!clave || clave.length < 4) return;
-    const similares = pacientes.filter((q, j) => {
-      if (j===i || vistos.has(q.id_paciente)) return false;
-      const claveQ = ((q.nombre||'') + ' ' + (q.apellidos||'')).trim().toUpperCase();
-      return claveQ === clave;
-    });
-    if (similares.length > 0) {
-      const grupo = [p, ...similares];
-      grupo.forEach(x => vistos.add(x.id_paciente));
-      grupos.push(grupo);
-    }
-  });
-  return grupos;
-}
-
-function filtrarSinSesiones() {
-  const idsPacConSesion = new Set(G.sesiones.map(s=>s.id_paciente));
-  pacFiltrados = G.pacientes.filter(p => !idsPacConSesion.has(p.id_paciente));
-  pacPag = 0;
-  const n = pacFiltrados.length;
-  document.getElementById('pac-busq-count').textContent = n+' pacientes sin sesiones';
   document.getElementById('pac-resultados').style.display = n ? 'block' : 'none';
   if (n) _renderPacientesTable();
 }
@@ -2866,7 +2793,7 @@ function _renderPacientesTable() {
   const pagina = pacFiltrados.slice(inicio,inicio+G.paginaSize);
   const tbody  = document.getElementById('tbody-pacientes');
   if (!pagina.length) {
-    tbody.innerHTML='<tr><td colspan="8" class="empty-state">Sin pacientes</td></tr>';
+    tbody.innerHTML='<tr><td colspan="7" class="empty-state">Sin pacientes</td></tr>';
   } else {
     tbody.innerHTML = pagina.map(p=>{
       // Última sesión del paciente
@@ -2901,13 +2828,6 @@ function _renderPacientesTable() {
           </td>
           <td>${nomTer(p.terapeuta_principal)}</td>
           <td>${estadoBadge}${becaBadge}</td>
-          <td style="text-align:center">
-            ${(() => {
-              const n = G.sesiones.filter(s=>s.id_paciente===p.id_paciente).length;
-              const col = n===0?'var(--red)':n<5?'#d97706':'var(--green-dark)';
-              return `<span style="font-weight:700;color:${col}">${n}</span>`;
-            })()}
-          </td>
           <td class="muted">${ultSes}</td>
           <td>${saldoHtml}</td>
           <td><button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();editarPaciente('${p.id_paciente}')">✏️</button></td>
@@ -6577,6 +6497,32 @@ document.addEventListener('click', e => {
   const navItem = e.target.closest('.nav-item[onclick*="banco"]');
   if(navItem && BANCO.gestion.length) setTimeout(bancoActualizarExtractosUI, 50);
 });
+
+// ═══════════════════════════════════════════════════════
+//  COMPROBADO — check de verificación de sesión
+// ═══════════════════════════════════════════════════════
+function sesToggleComprobado() {
+  const campo = document.getElementById('s-comprobado');
+  const actual = campo.value === 'Sí' ? 'No' : 'Sí';
+  campo.value = actual;
+  sesActualizarBtnComprobado(actual);
+}
+
+function sesActualizarBtnComprobado(valor) {
+  const btn = document.getElementById('s-btn-comprobado');
+  if (!btn) return;
+  if (valor === 'Sí') {
+    btn.textContent = '✅ Comprobado';
+    btn.style.border = '2px solid #97D700';
+    btn.style.background = '#f7ffe8';
+    btn.style.color = '#2d7a00';
+  } else {
+    btn.textContent = '☐ Sin comprobar';
+    btn.style.border = '2px solid #9CA3AF';
+    btn.style.background = '#f3f4f6';
+    btn.style.color = '#6B7280';
+  }
+}
 
 </script>
 </body>
