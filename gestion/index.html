@@ -1486,6 +1486,14 @@ textarea.form-control { min-height: 72px; transition: border-color .2s; }
         <div class="form-group"><label class="form-label">Cobrado</label>
           <select class="form-control" id="bn-cobrado"><option value="No">No</option><option value="Sí">Sí</option></select>
         </div>
+        <div class="form-group"><label class="form-label">Forma de pago</label>
+          <select class="form-control" id="bn-forma-pago">
+            <option value="">— Sin especificar —</option>
+            <option value="Efectivo">Efectivo</option>
+            <option value="Bizum">Bizum</option>
+            <option value="Transferencia">Transferencia</option>
+          </select>
+        </div>
         <div class="form-group"><label class="form-label">Fecha compra</label><input type="date" class="form-control" id="bn-fecha-compra"></div>
         <div class="form-group"><label class="form-label">Fecha caducidad</label><input type="date" class="form-control" id="bn-fecha-cad"></div>
         <div class="form-group span2"><label class="form-label">Notas</label><input type="text" class="form-control" id="bn-notas"></div>
@@ -3750,6 +3758,7 @@ function abrirModalBono() {
   document.getElementById('bn-consumidas').value='0';
   document.getElementById('bn-anticipo').value='';
   document.getElementById('bn-cobrado').value='No';
+  document.getElementById('bn-forma-pago').value='';
   document.getElementById('bn-fecha-compra').value=new Date().toISOString().split('T')[0];
   document.getElementById('bn-fecha-cad').value='';
   document.getElementById('bn-notas').value='';
@@ -3771,6 +3780,7 @@ function editarBono(id) {
   document.getElementById('bn-consumidas').value  = b.sesiones_consumidas||0;
   document.getElementById('bn-anticipo').value    = b.importe_anticipo||0;
   document.getElementById('bn-cobrado').value     = b.cobrado||'No';
+  document.getElementById('bn-forma-pago').value  = b.forma_pago||'';
   document.getElementById('bn-fecha-compra').value= b.fecha_compra||'';
   document.getElementById('bn-fecha-cad').value   = b.fecha_caducidad||'';
   document.getElementById('bn-notas').value       = b.notas||'';
@@ -3809,6 +3819,7 @@ async function guardarBono() {
     importe_devengado: cons*valSes,
     importe_pendiente: pend*valSes,
     cobrado:           document.getElementById('bn-cobrado').value,
+    forma_pago:        document.getElementById('bn-forma-pago').value||null,
     fecha_compra:      document.getElementById('bn-fecha-compra').value||null,
     fecha_caducidad:   document.getElementById('bn-fecha-cad').value||null,
     notas:             document.getElementById('bn-notas').value.trim(),
