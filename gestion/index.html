@@ -3882,6 +3882,11 @@ function renderBecas() {
     if(srv&&servicioFromNotas(b.notas)!==srv) return false;
     if(cob&&normCobradoBeca(b.cobrado)!==cob) return false;
     return true;
+  }).sort((a,b)=>{
+    const na=nomPacFull(a.id_paciente).toUpperCase();
+    const nb=nomPacFull(b.id_paciente).toUpperCase();
+    if(na<nb) return -1; if(na>nb) return 1;
+    return (a.anio||'').localeCompare(b.anio||'');
   });
 
   const activas = filtradas.filter(b=>b.estado==='Activo'||b.estado==='Suspendida');
