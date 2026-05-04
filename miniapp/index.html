@@ -1186,7 +1186,7 @@ async function iniciarApp() {
 
 function mapearCitas(rows) {
   const pacMap = {}, terMap = {}, srvMap = {};
-  G.pacientes.forEach(p  => { pacMap[p.ID_Paciente]  = p.Alias || p.Nombre; });
+  G.pacientes.forEach(p  => { pacMap[p.ID_Paciente]  = p.Nombre; });
   G.terapeutas.forEach(t => { terMap[t.ID_Terapeuta] = t.Nombre; });
   G.servicios.forEach(s  => { srvMap[s.ID_Servicio]  = s.Servicio; });
   return rows.map(r => ({
@@ -2114,7 +2114,7 @@ async function guardarEdicionPaciente() {
     if (G.citaActual && G.citaActual.ID_Paciente === idPaciente) {
       const alias = datos.alias;
       const nombreCompleto = (nombre + ' ' + apellidos).trim();
-      G.citaActual.NombrePaciente = alias || nombreCompleto;
+      G.citaActual.NombrePaciente = nombreCompleto;
       abrirModalCita(G.citaActual);
     }
   } catch(err) { toast('Error al guardar: ' + err.message, 'err'); }
@@ -2506,14 +2506,15 @@ const PAC_CTX={
   'admin-cita':{txt:'admin-cita-pac-txt',hid:'admin-cita-pac',  lista:'pac-lista-admin-cita'},
   aec:       {txt:'aec-pac-txt',         hid:'aec-pac',         lista:'pac-lista-aec'},
 };
-function pacNombre(p){return(p.Alias||'').trim()||((p.Nombre||'').trim())||p.Nombre||'';}
+function pacNombre(p){return((p.Nombre||'').trim())||p.ID_Paciente||'';}
+function pacNombreConAlias(p){return((p.Nombre||'').trim())||p.ID_Paciente||'';}
 function pacResaltar(texto,query){if(!query)return texto;const re=new RegExp('('+query.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','gi');return texto.replace(re,'<em>$1</em>');}
 function pacFiltrar(ctx){const ids=PAC_CTX[ctx];const query=document.getElementById(ids.txt).value.trim().toLowerCase();document.getElementById(ids.hid).value='';document.getElementById(ids.txt).classList.remove('seleccionado');const lista=document.getElementById(ids.lista);
   // Recalcular posición fixed en cada filtrado (scroll del modal puede haberla movido)
   const rect=document.getElementById(ids.txt).getBoundingClientRect();
   lista.style.top=(rect.bottom+4)+'px';lista.style.left=rect.left+'px';lista.style.width=rect.width+'px';lista.style.bottom='';
   const spaceBelow=window.innerHeight-rect.bottom-8;if(spaceBelow<210){lista.style.top='';lista.style.bottom=(window.innerHeight-rect.top+4)+'px';}
-  const items=query.length<1?G.pacientes.slice(0,40):G.pacientes.filter(p=>pacNombre(p).toLowerCase().includes(query));if(!items.length){lista.innerHTML='<div class="pac-vacio">Sin resultados</div>';}else{lista.innerHTML=items.map(p=>`<div class="pac-item" data-id="${p.ID_Paciente}" onmousedown="pacSeleccionar('${ctx}','${p.ID_Paciente}',this)">${pacResaltar(pacNombre(p),query)}</div>`).join('');}lista.classList.add('visible');if(ctx==='cita')ocultarBonoAviso();}
+  const items=query.length<1?G.pacientes.slice(0,40):G.pacientes.filter(p=>{const nombre=(p.Nombre||'').toLowerCase();const alias=(p.Alias||'').toLowerCase();return nombre.includes(query)||alias.includes(query)||(p.ID_Paciente||'').toLowerCase().includes(query);});if(!items.length){lista.innerHTML='<div class="pac-vacio">Sin resultados</div>';}else{lista.innerHTML=items.map(p=>`<div class="pac-item" data-id="${p.ID_Paciente}" onmousedown="pacSeleccionar('${ctx}','${p.ID_Paciente}',this)">${pacResaltar(pacNombreConAlias(p),query)}</div>`).join('');}lista.classList.add('visible');if(ctx==='cita')ocultarBonoAviso();}
 function pacAbrir(ctx){
   const ids=PAC_CTX[ctx];
   const input=document.getElementById(ids.txt);
