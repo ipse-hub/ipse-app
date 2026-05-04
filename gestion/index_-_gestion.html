@@ -2656,6 +2656,27 @@ function editarSesion(id) {
 
 async function guardarSesion() {
   const id = document.getElementById('s-id').value;
+  // Regla: no crear sesión suelta si el paciente tiene bonos activos (excepto si es beca)
+  if(!id) {
+    const pacId = document.getElementById('s-paciente').value;
+    const finTipo = document.getElementById('s-fin') ? document.getElementById('s-fin').value : '';
+    const esBeca = finTipo === 'BECA';
+    if(pacId && !esBeca) {
+      const bonosVivos = (G.bonos||[]).filter(b =>
+        b.id_paciente === pacId && b.estado === 'Activo' && parseInt(b.sesiones_pendientes||0) > 0
+      );
+      if(bonosVivos.length > 0) {
+        const ids = bonosVivos.map(b=>b.id_bono).join(', ');
+        const tieneBeca=(G.becas||[]).some(b=>b.id_paciente===pacId&&b.estado==='Activo'&&parseInt(b.sesiones_pendientes||0)>0);
+        if(tieneBeca){
+          if(!confirm('⚠️ Este paciente tiene beca(s) activa(s) pendientes. Al ser paciente de beca, ¿Realmente creas una sesión suelta?')) return;
+        } else {
+          toast('⚠️ Este paciente tiene bono(s) activo(s) con sesiones pendientes (' + ids + '). La sesión debe imputarse al bono.', 'err');
+          return;
+        }
+      }
+    }
+  }
   // Leer terapeuta y servicio del bloque admin si está visible
   const bloqueAdmin = document.getElementById('s-bloque-admin');
   const adminVisible = bloqueAdmin && bloqueAdmin.style.display !== 'none';
@@ -3805,6 +3826,25 @@ async function guardarBono() {
   const cons = parseInt(document.getElementById('bn-consumidas').value)||0;
   const imp  = parseFloat(document.getElementById('bn-anticipo').value)||0;
   if(tot<1) { toast('Indica el número de sesiones','err'); return; }
+  // Regla: no crear bono si el paciente ya tiene bonos activos con sesiones pendientes
+  if(!id) {
+    const pacId = document.getElementById('bn-paciente').value;
+    if(pacId) {
+      const bonosVivos = (G.bonos||[]).filter(b =>
+        b.id_paciente === pacId && b.estado === 'Activo' && parseInt(b.sesiones_pendientes||0) > 0
+      );
+      if(bonosVivos.length > 0) {
+        const ids = bonosVivos.map(b=>b.id_bono).join(', ');
+        const tieneBeca=(G.becas||[]).some(b=>b.id_paciente===pacId&&b.estado==='Activo'&&parseInt(b.sesiones_pendientes||0)>0);
+        if(tieneBeca){
+          if(!confirm('⚠️ Este paciente tiene beca(s) activa(s) pendientes. Al ser paciente de beca, ¿Realmente contrata un bono?')) return;
+        } else {
+          toast('⚠️ Este paciente ya tiene bono(s) activo(s) con sesiones pendientes (' + ids + '). Usa el bono existente.', 'err');
+          return;
+        }
+      }
+    }
+  }
   const pend   = Math.max(tot-cons,0);
   const valSes = tot>0?imp/tot:0;
   const datos  = {
