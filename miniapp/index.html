@@ -160,12 +160,10 @@
   .btn-nueva { position: fixed; bottom: 28px; right: 28px; background: var(--azul); color: #fff; border: none; border-radius: 28px; padding: 14px 22px; font-family: inherit; font-size: 14px; font-weight: 600; cursor: pointer; box-shadow: 0 4px 18px rgba(16,6,159,.35); display: flex; align-items: center; gap: 8px; transition: all .2s; z-index: 50; }
   .btn-nueva:hover { background: #0b0580; transform: translateY(-1px); box-shadow: 0 6px 22px rgba(16,6,159,.45); }
   .btn-nueva svg { width: 18px; height: 18px; }
-  .overlay { display: none; position: fixed; inset: 0; background: rgba(26,27,46,.5); z-index: 200; align-items: flex-start; justify-content: center; padding: 20px; backdrop-filter: blur(2px); overflow-y: auto; }
+  .overlay { display: none; position: fixed; inset: 0; width: 100%; height: 100%; background: rgba(26,27,46,.5); z-index: 200; align-items: flex-start; justify-content: center; padding: 20px; backdrop-filter: blur(2px); overflow-x: hidden; overflow-y: auto; box-sizing: border-box; }
   .overlay.visible { display: flex; }
-  /* Centrar verticalmente cuando el modal cabe en pantalla */
-  .overlay::before { content: ''; flex-shrink: 0; height: env(safe-area-inset-top, 0px); min-height: 0; }
-  .overlay > .modal { margin: auto; }
-  .modal { background: var(--surface); border-radius: 14px; padding: 28px; width: 100%; max-width: 480px; box-shadow: 0 20px 60px rgba(0,0,0,.2); animation: modalIn .2s ease; max-height: none; }
+  .overlay > .modal { margin: auto; flex-shrink: 0; }
+  .modal { background: var(--surface); border-radius: 14px; padding: 28px; width: 100%; max-width: 480px; box-shadow: 0 20px 60px rgba(0,0,0,.2); animation: modalIn .2s ease; }
   /* Bloquear scroll del body cuando hay overlay visible */
   body.modal-open { overflow: hidden; }
   @keyframes modalIn { from { opacity: 0; transform: scale(.96) translateY(8px); } to { opacity: 1; transform: scale(1) translateY(0); } }
@@ -1133,18 +1131,18 @@ window.addEventListener('DOMContentLoaded', () => {
 // ═══════════════════════════════════════════════════════════════
 async function iniciarApp() {
   try {
-    const terRows = await supaGet('terapeutas', `email=eq.${encodeURIComponent(G.email)}&activa=eq.Sí`);
+    const terRows = await supaGet('terapeutas', `email=eq.${encodeURIComponent(G.email)}&activa=in.(Sí,Si,Activo,activo,true,TRUE)`);
     if (!terRows || !terRows.length) throw new Error('Acceso no autorizado para: ' + G.email);
     const ter = terRows[0];
     G.miId          = ter.id_terapeuta;
     G.miNombre      = ter.nombre;
     G.miAccesoGestion = ter.acceso_gestion === 'Sí';
     const [terapeutas, pacientesRaw, servicios] = await Promise.all([
-      supaGet('terapeutas', 'activa=eq.Sí&order=id_terapeuta.asc'),
+      supaGet('terapeutas', 'activa=in.(Sí,Si,Activo,activo,true,TRUE)&order=id_terapeuta.asc'),
       supaGet('pacientes',  'order=nombre.asc'),
       supaGet('servicios',  'order=id_servicio.asc'),
     ]);
-    G.terapeutas = terapeutas.map(t => ({ ID_Terapeuta: t.id_terapeuta, Nombre: t.nombre, Activa: t.activa, Pct_Com: t.pct_com, Email: t.email }));
+    G.terapeutas = terapeutas.map(t => ({ ID_Terapeuta: t.id_terapeuta, Nombre: t.nombre, Activa: ['Sí','Si','Activo','activo','true','TRUE'].includes(t.activa) ? 'Sí' : t.activa, Pct_Com: t.pct_com, Email: t.email }));
     G.pacientes  = pacientesRaw.map(p => ({ ID_Paciente: p.id_paciente, Nombre: ((p.nombre||'') + ' ' + (p.apellidos||'')).trim(), Alias: p.alias || '', Tutor1: p.tutor1 || '', Tel1: (p.telefono||'').replace(/\D/g,''), Tel2: (p.telefono2||'').replace(/\D/g,'') }));
     G.servicios  = servicios.map(s => ({ ID_Servicio: s.id_servicio, Servicio: s.servicio, Precio: s.precio, DuraciónMin: s.duracion_min, Activo: s.activo, TipoConsumo: s.tipo_consumo_default || 'Privado' }));
     G.terapeutas.forEach((t, i) => { G.colores[t.ID_Terapeuta] = PALETTE[i % PALETTE.length]; });
