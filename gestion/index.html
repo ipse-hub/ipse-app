@@ -2547,7 +2547,7 @@ function renderSesiones() {
         <td>${badgeEstado(s.estado)}</td>
         <td class="mono">${fmtEur(s.importe)}</td>
         <td>${badgeEstado(esCobrada(s)?'Cobrado':'Pendiente')}</td>
-        <td style="text-align:center">${s.comprobado==='Sí'?'<span title="Comprobado" style="font-size:16px">✅</span>':'<span style="color:#D1D5DB;font-size:14px">○</span>'}</td>
+        <td style="text-align:center"><button onclick="toggleComprobado('${s.id_cita}',this)" title="${s.comprobado==='Sí'?'Marcar sin comprobar':'Marcar como comprobado'}" style="background:none;border:none;cursor:pointer;font-size:16px;padding:2px 6px;border-radius:6px;transition:opacity .15s" onmouseover="this.style.opacity='.7'" onmouseout="this.style.opacity='1'">${s.comprobado==='Sí'?'✅':'<span style="color:#D1D5DB">○</span>'}</button></td>
       </tr>`).join('');
   }
   document.getElementById('sesiones-count').textContent = sesFiltradas.length+' sesiones';
@@ -6673,6 +6673,34 @@ function sesActualizarBtnComprobado(valor) {
     btn.style.border = '2px solid #9CA3AF';
     btn.style.background = '#f3f4f6';
     btn.style.color = '#6B7280';
+  }
+}
+
+
+// ── TOGGLE COMPROBADO INLINE ────────────────────────────────────────────────
+async function toggleComprobado(idCita, btn) {
+  const sesion = G.sesiones.find(s => s.id_cita === idCita);
+  if (!sesion) return;
+  const nuevoValor = sesion.comprobado === 'Sí' ? 'No' : 'Sí';
+  btn.disabled = true;
+  try {
+    const r = await fetch(`${SUPA_URL}/rest/v1/sesiones?id_cita=eq.${idCita}`, {
+      method: 'PATCH',
+      headers: { ...SUPA_HEADERS, Prefer: 'return=representation' },
+      body: JSON.stringify({ comprobado: nuevoValor })
+    });
+    if (!r.ok) throw new Error('Error ' + r.status);
+    sesion.comprobado = nuevoValor;
+    btn.title = nuevoValor === 'Sí' ? 'Marcar sin comprobar' : 'Marcar como comprobado';
+    btn.innerHTML = nuevoValor === 'Sí' ? '✅' : '<span style="color:#D1D5DB">○</span>';
+    // Actualizar contador
+    const nComp = G.sesiones.filter(s => s.comprobado === 'Sí').length;
+    const total = G.sesiones.length;
+    toast(nuevoValor === 'Sí' ? '✅ Marcado como comprobado' : '○ Desmarcado', 'ok');
+  } catch(e) {
+    toast('Error al actualizar: ' + e.message, 'err');
+  } finally {
+    btn.disabled = false;
   }
 }
 
