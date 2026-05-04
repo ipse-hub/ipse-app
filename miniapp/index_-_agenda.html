@@ -3117,7 +3117,8 @@ async function cargarRecordatoriosMensuales() {
   const lista=document.getElementById('rec-lista-mensual');
   lista.innerHTML='<div style="color:var(--muted);font-size:13px;padding:20px 0">Cargando…</div>';
   try {
-    const rows=await supaGet('sesiones',`id_terapeuta=eq.${G.miId}&fecha=gte.${fi}&fecha=lt.${ff}&estado=eq.Hecha&order=fecha.asc`);
+    const filtroTer = esAdmin() ? '' : `id_terapeuta=eq.${G.miId}&`;
+    const rows=await supaGet('sesiones',`${filtroTer}fecha=gte.${fi}&fecha=lt.${ff}&estado=eq.Hecha&order=fecha.asc`);
     if(!rows.length){lista.innerHTML='<div style="color:var(--muted);font-size:13px;padding:20px 0">Sin sesiones en ese período.</div>';return;}
     const grupos={};
     rows.forEach(r=>{const key=(r.id_paciente||'').toString().trim();if(!key)return;if(!grupos[key])grupos[key]=[];grupos[key].push(r);});
@@ -3153,7 +3154,8 @@ async function enviarRecordatorioMes(idPac,btn) {
   const pad=n=>String(n).padStart(2,'0');
   const fi=`${anio}-${pad(mes)}-01`;const fd=new Date(anio,mes,1);
   const ff=`${fd.getFullYear()}-${pad(fd.getMonth()+1)}-01`;
-  const rows=await supaGet('sesiones',`id_terapeuta=eq.${G.miId}&id_paciente=eq.${idPac}&fecha=gte.${fi}&fecha=lt.${ff}&estado=eq.Hecha`);
+  const filtroTer = esAdmin() ? '' : `id_terapeuta=eq.${G.miId}&`;
+  const rows=await supaGet('sesiones',`${filtroTer}id_paciente=eq.${idPac}&fecha=gte.${fi}&fecha=lt.${ff}&estado=eq.Hecha`);
   const diasEs=['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
   const fechasTexto=rows.map(s=>{const d=new Date(s.fecha+'T12:00:00');return`- ${diasEs[d.getDay()]} ${d.getDate()}${s.hora?' a las '+s.hora.slice(0,5):''}`;}).join('\n');
   const msgBase=`¡Hola! Le enviamos el resumen de sesiones en Centro IPSE de ${MESES_ES[mes-1]} de ${anio}:\n\n${fechasTexto}\n\nGracias por confiar en IPSE. 🙏`;
@@ -3162,7 +3164,8 @@ async function enviarRecordatorioMes(idPac,btn) {
     btn.disabled=true;btn.textContent='⏳';
     try {
       const ahora=new Date().toISOString();
-      await supaPatch('sesiones',`id_terapeuta=eq.${G.miId}&id_paciente=eq.${idPac}&fecha=gte.${fi}&fecha=lt.${ff}`,{recordatorio_mes_at:ahora});
+      const filtroTerPatch = esAdmin() ? '' : `id_terapeuta=eq.${G.miId}&`;
+      await supaPatch('sesiones',`${filtroTerPatch}id_paciente=eq.${idPac}&fecha=gte.${fi}&fecha=lt.${ff}`,{recordatorio_mes_at:ahora});
       toast('Recordatorio mensual registrado ✓','ok');
       cargarRecordatoriosMensuales();
     } catch(err){toast('WhatsApp abierto · Error al registrar: '+err.message,'err');btn.disabled=false;btn.textContent='📲 Enviar';}
