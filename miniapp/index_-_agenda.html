@@ -2992,7 +2992,7 @@ async function cargarRecordatoriosDia() {
   try {
     const citas = G.citas.filter(c =>
       c.Fecha === fechaStr &&
-      c.ID_Terapeuta === G.miId &&
+      (esAdmin() || c.ID_Terapeuta === G.miId) &&
       c.EstadoAgenda === 'Programada'
     ).sort((a, b) => (a.Hora || '').localeCompare(b.Hora || ''));
 
@@ -3116,23 +3116,36 @@ async function cargarRecordatoriosMensuales() {
   const ff=`${fd.getFullYear()}-${pad(fd.getMonth()+1)}-01`;
   const lista=document.getElementById('rec-lista-mensual');
   lista.innerHTML='<div style="color:var(--muted);font-size:13px;padding:20px 0">Cargando…</div>';
+
+  // Mes pasado → sesiones hechas. Mes actual o futuro → citas programadas
+  const hoy=new Date(); const esMesPasado=(anio<hoy.getFullYear())||(anio===hoy.getFullYear()&&mes<hoy.getMonth()+1);
+
   try {
-    const filtroTer = esAdmin() ? '' : `id_terapeuta=eq.${G.miId}&`;
-    const rows=await supaGet('sesiones',`${filtroTer}fecha=gte.${fi}&fecha=lt.${ff}&estado=eq.Hecha&order=fecha.asc`);
-    if(!rows.length){lista.innerHTML='<div style="color:var(--muted);font-size:13px;padding:20px 0">Sin sesiones en ese período.</div>';return;}
+    let rows;
+    if (esMesPasado) {
+      const filtroTer = esAdmin() ? '' : `id_terapeuta=eq.${G.miId}&`;
+      rows=await supaGet('sesiones',`${filtroTer}fecha=gte.${fi}&fecha=lt.${ff}&estado=eq.Hecha&order=fecha.asc`);
+      // Normalizar campos al mismo formato que agenda_datos
+      rows=rows.map(r=>({...r, id_paciente:r.id_paciente, recordatorio_mes_at:r.recordatorio_mes_at}));
+    } else {
+      rows=await supaGet('agenda_datos',`fecha=gte.${fi}&fecha=lt.${ff}&estado_agenda=eq.Programada&order=fecha.asc,hora.asc`);
+      rows=rows.map(r=>({...r, recordatorio_mes_at:r.recordatorio_mes_at||null}));
+    }
+
+    if(!rows.length){lista.innerHTML='<div style="color:var(--muted);font-size:13px;padding:20px 0">Sin citas/sesiones en ese período.</div>';return;}
     const grupos={};
     rows.forEach(r=>{const key=(r.id_paciente||'').toString().trim();if(!key)return;if(!grupos[key])grupos[key]=[];grupos[key].push(r);});
-    lista.innerHTML=Object.entries(grupos).map(([idPac,sesiones])=>{
+    lista.innerHTML=Object.entries(grupos).map(([idPac,items])=>{
       const pac=G.pacientes.find(p=>p.ID_Paciente===idPac);
-      const nombre=pac?(pac.Alias||pac.Nombre):idPac;
+      const nombre=pac?pac.Nombre:idPac;
       const tutor1=pac?.Tutor1||'';const tel1=pac?.Tel1||'';const tel2=pac?.Tel2||'';
-      const yaEnviado=sesiones.some(s=>s.recordatorio_mes_at);
-      const cuandoEnviado=sesiones.find(s=>s.recordatorio_mes_at)?.recordatorio_mes_at;
-      const fechasTexto=sesiones.map(s=>{const d=new Date(s.fecha+'T12:00:00');return`${d.getDate()} de ${MESES_ES[d.getMonth()]}`+(s.hora?` a las ${s.hora.slice(0,5)}` :'');}).join(', ');
+      const yaEnviado=items.some(s=>s.recordatorio_mes_at);
+      const cuandoEnviado=items.find(s=>s.recordatorio_mes_at)?.recordatorio_mes_at;
+      const fechasTexto=items.map(s=>{const d=new Date((s.fecha||'')+'T12:00:00');return`${d.getDate()} de ${MESES_ES[d.getMonth()]}`+(s.hora?` a las ${(s.hora||'').slice(0,5)}`:'');}).join(', ');
       const badgeHtml=yaEnviado
         ?`<span style="font-size:11px;background:#f0fff0;border:1px solid #97D700;color:#3a6600;border-radius:6px;padding:3px 10px">✓ Enviado ${new Date(cuandoEnviado).toLocaleDateString('es-ES')}</span>`
-        :`<button onclick="enviarRecordatorioMes('${idPac}',this)" style="font-size:12px;background:#10069F;color:#fff;border:none;border-radius:6px;padding:5px 12px;cursor:pointer;font-family:inherit;font-weight:600">📲 Enviar</button>`;
-      return`<div style="background:#fff;border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:10px"><div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px"><div><div style="font-size:14px;font-weight:600">${nombre}</div><div style="font-size:12px;color:var(--muted)">${tutor1}${tel1?' · '+tel1:''}</div></div>${badgeHtml}</div><div style="font-size:12px;color:var(--muted)">${sesiones.length} sesión${sesiones.length>1?'es':''} — ${fechasTexto}</div>${(tel1&&tel2)?`<div style="margin-top:8px;font-size:11px;color:#10069F;cursor:pointer" onclick="toggleTel2Mensual(this,'${idPac}')">▸ Cambiar a tutor 2 (${tel2})</div>`:''}<input type="hidden" id="rec-tel-${idPac}" value="${tel1}"></div>`;
+        :`<button onclick="enviarRecordatorioMes('${idPac}',this,'${esMesPasado?'sesiones':'agenda'}')" style="font-size:12px;background:#10069F;color:#fff;border:none;border-radius:6px;padding:5px 12px;cursor:pointer;font-family:inherit;font-weight:600">📲 Enviar</button>`;
+      return`<div style="background:#fff;border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:10px"><div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px"><div><div style="font-size:14px;font-weight:600">${nombre}</div><div style="font-size:12px;color:var(--muted)">${tutor1}${tel1?' · '+tel1:''}</div></div>${badgeHtml}</div><div style="font-size:12px;color:var(--muted)">${items.length} cita${items.length>1?'s':''} — ${fechasTexto}</div>${(tel1&&tel2)?`<div style="margin-top:8px;font-size:11px;color:#10069F;cursor:pointer" onclick="toggleTel2Mensual(this,'${idPac}')">▸ Cambiar a tutor 2 (${tel2})</div>`:''}<input type="hidden" id="rec-tel-${idPac}" value="${tel1}"></div>`;
     }).join('');
   } catch(err){lista.innerHTML=`<div style="color:var(--rojo);font-size:13px">Error: ${err.message}</div>`;}
 }
@@ -3145,7 +3158,7 @@ function toggleTel2Mensual(el,idPac) {
   el.textContent=usandoTel2?`▸ Cambiar a tutor 2 (${pac.Tel2})`:`▸ Volver a tutor 1 (${pac.Tel1})`;
 }
 
-async function enviarRecordatorioMes(idPac,btn) {
+async function enviarRecordatorioMes(idPac,btn,fuente) {
   const pac=G.pacientes.find(p=>p.ID_Paciente===idPac);if(!pac)return;
   const tel=document.getElementById('rec-tel-'+idPac)?.value;
   if(!tel){toast('Sin teléfono para este paciente','err');return;}
@@ -3154,18 +3167,24 @@ async function enviarRecordatorioMes(idPac,btn) {
   const pad=n=>String(n).padStart(2,'0');
   const fi=`${anio}-${pad(mes)}-01`;const fd=new Date(anio,mes,1);
   const ff=`${fd.getFullYear()}-${pad(fd.getMonth()+1)}-01`;
-  const filtroTer = esAdmin() ? '' : `id_terapeuta=eq.${G.miId}&`;
-  const rows=await supaGet('sesiones',`${filtroTer}id_paciente=eq.${idPac}&fecha=gte.${fi}&fecha=lt.${ff}&estado=eq.Hecha`);
+  const usaSesiones = fuente==='sesiones';
+  const filtroTer = (!usaSesiones || esAdmin()) ? '' : `id_terapeuta=eq.${G.miId}&`;
+  const tabla = usaSesiones ? 'sesiones' : 'agenda_datos';
+  const filtroEstado = usaSesiones ? '&estado=eq.Hecha' : '&estado_agenda=eq.Programada';
+  const rows=await supaGet(tabla,`${filtroTer}id_paciente=eq.${idPac}&fecha=gte.${fi}&fecha=lt.${ff}${filtroEstado}`);
   const diasEs=['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
-  const fechasTexto=rows.map(s=>{const d=new Date(s.fecha+'T12:00:00');return`- ${diasEs[d.getDay()]} ${d.getDate()}${s.hora?' a las '+s.hora.slice(0,5):''}`;}).join('\n');
-  const msgBase=`¡Hola! Le enviamos el resumen de sesiones en Centro IPSE de ${MESES_ES[mes-1]} de ${anio}:\n\n${fechasTexto}\n\nGracias por confiar en IPSE. 🙏`;
+  const fechasTexto=rows.map(s=>{const d=new Date(s.fecha+'T12:00:00');return`- ${diasEs[d.getDay()]} ${d.getDate()}${s.hora?' a las '+(s.hora||'').slice(0,5):''}`;}).join('\n');
+  const labelMes = usaSesiones
+    ? `el resumen de sesiones en Centro IPSE de ${MESES_ES[mes-1]} de ${anio}`
+    : `sus próximas citas en Centro IPSE de ${MESES_ES[mes-1]} de ${anio}`;
+  const msgBase=`¡Hola! Le enviamos ${labelMes}:\n\n${fechasTexto}\n\nGracias por confiar en IPSE. 🙏`;
   const telLimpio='34'+tel.replace(/\D/g,'').replace(/^34/,'');
   abrirWaPreview(msgBase, telLimpio, async (msgEditado) => {
     btn.disabled=true;btn.textContent='⏳';
     try {
       const ahora=new Date().toISOString();
-      const filtroTerPatch = esAdmin() ? '' : `id_terapeuta=eq.${G.miId}&`;
-      await supaPatch('sesiones',`${filtroTerPatch}id_paciente=eq.${idPac}&fecha=gte.${fi}&fecha=lt.${ff}`,{recordatorio_mes_at:ahora});
+      const filtroTerPatch = (!usaSesiones || esAdmin()) ? '' : `id_terapeuta=eq.${G.miId}&`;
+      await supaPatch(tabla,`${filtroTerPatch}id_paciente=eq.${idPac}&fecha=gte.${fi}&fecha=lt.${ff}`,{recordatorio_mes_at:ahora});
       toast('Recordatorio mensual registrado ✓','ok');
       cargarRecordatoriosMensuales();
     } catch(err){toast('WhatsApp abierto · Error al registrar: '+err.message,'err');btn.disabled=false;btn.textContent='📲 Enviar';}
