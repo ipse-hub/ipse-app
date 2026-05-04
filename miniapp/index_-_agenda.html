@@ -643,6 +643,7 @@
     </div>
     <div class="form-group"><label class="form-label">Servicio</label><select id="n-servicio" class="form-control" onchange="onServicioChange()"></select>
       <div class="bono-aviso" id="n-bono-aviso"></div></div>
+    <div class="form-group" id="n-terapeuta-wrap" style="display:none"><label class="form-label">Terapeuta</label><select id="n-terapeuta" class="form-control"></select></div>
     <div class="form-group"><label class="form-label">Notas</label><input type="text" id="n-notas" class="form-control" placeholder="Opcional"></div>
     <div class="form-group" style="margin-bottom:8px">
       <label class="recur-toggle">
@@ -1084,10 +1085,11 @@ async function supaDelete(tabla, filtro) {
   if (!r.ok) throw new Error('Error al eliminar');
 }
 async function generarId(tabla, campo, prefijo) {
-  const rows = await supaGet(tabla, `select=${campo}&order=${campo}.desc&limit=1`);
+  const rows = await supaGet(tabla, `select=${campo}&order=${campo}.asc`);
   if (!rows || !rows.length) return prefijo + '001';
-  const num = parseInt((rows[0][campo] || '').replace(prefijo, '')) || 0;
-  return prefijo + String(num + 1).padStart(3, '0');
+  const nums = rows.map(r => parseInt((r[campo] || '').replace(prefijo, '')) || 0);
+  const max = Math.max(...nums);
+  return prefijo + String(max + 1).padStart(3, '0');
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -1106,6 +1108,11 @@ const HORAS_FIN    = 21;
 const PALETTE = ['#10069F','#00B5E2','#DA291C','#97D700','#F59E0B','#8B5CF6'];
 const DIAS_ES  = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
 const MESES_ES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+
+// ── Emails de administrador (acceso completo sin necesidad de estar en terapeutas) ──
+const ADMIN_EMAILS = [
+  'a.garciablanco@icloud.com',
+];
 
 // ═══════════════════════════════════════════════════════════════
 //  LOGIN
@@ -1131,12 +1138,20 @@ window.addEventListener('DOMContentLoaded', () => {
 // ═══════════════════════════════════════════════════════════════
 async function iniciarApp() {
   try {
-    const terRows = await supaGet('terapeutas', `email=eq.${encodeURIComponent(G.email)}&activa=in.(Sí,Si,Activo,activo,true,TRUE)`);
-    if (!terRows || !terRows.length) throw new Error('Acceso no autorizado para: ' + G.email);
-    const ter = terRows[0];
-    G.miId          = ter.id_terapeuta;
-    G.miNombre      = ter.nombre;
-    G.miAccesoGestion = ter.acceso_gestion === 'Sí';
+    const esAdminDirecto = ADMIN_EMAILS.includes(G.email.toLowerCase());
+    if (esAdminDirecto) {
+      // Acceso de administrador: no requiere entrada en terapeutas
+      G.miId            = 'ADMIN';
+      G.miNombre        = 'Administrador';
+      G.miAccesoGestion = true;
+    } else {
+      const terRows = await supaGet('terapeutas', `email=eq.${encodeURIComponent(G.email)}&activa=in.(Sí,Si,Activo,activo,true,TRUE)`);
+      if (!terRows || !terRows.length) throw new Error('Acceso no autorizado para: ' + G.email);
+      const ter = terRows[0];
+      G.miId            = ter.id_terapeuta;
+      G.miNombre        = ter.nombre;
+      G.miAccesoGestion = ter.acceso_gestion === 'Sí';
+    }
     const [terapeutas, pacientesRaw, servicios] = await Promise.all([
       supaGet('terapeutas', 'activa=in.(Sí,Si,Activo,activo,true,TRUE)&order=id_terapeuta.asc'),
       supaGet('pacientes',  'order=nombre.asc'),
@@ -1307,7 +1322,7 @@ async function crearCita(datos) {
   if (datos.tipoFin === 'BONO') idBono = datos.idFin || await resolverBonoActivo(datos.idPaciente) || '';
   await supaPost('agenda_datos', {
     id_cita: idCita, fecha: datos.fecha, hora: datos.hora,
-    id_terapeuta: G.miId, id_paciente: datos.idPaciente, id_servicio: datos.idServicio,
+    id_terapeuta: datos.idTerapeuta || G.miId, id_paciente: datos.idPaciente, id_servicio: datos.idServicio,
     id_beca: idBeca, id_bono: idBono, estado_agenda: 'Programada', id_compromiso: datos.idSerie || '',
     notas_agenda: datos.notas || '', fecha_alta_cita: new Date().toISOString().split('T')[0],
     cita_origen_id: datos.citaOrigenId || null,
@@ -1536,6 +1551,18 @@ function abrirModalNueva(fechaPref, horaPref) {
   document.getElementById('n-recur-festivos').value = '';
   document.getElementById('n-recur-preview').innerHTML = '';
   document.getElementById('btn-crear-cita').textContent = 'Crear cita';
+  // Selector de terapeuta: solo visible para administrador
+  const terWrap = document.getElementById('n-terapeuta-wrap');
+  const terSel  = document.getElementById('n-terapeuta');
+  if (esAdmin()) {
+    terWrap.style.display = 'block';
+    terSel.innerHTML = '<option value="">— Selecciona terapeuta —</option>' +
+      G.terapeutas.filter(t => t.Activa === 'Sí').map(t =>
+        `<option value="${t.ID_Terapeuta}">${t.Nombre}</option>`).join('');
+  } else {
+    terWrap.style.display = 'none';
+    terSel.innerHTML = '';
+  }
   pacReset('cita'); ocultarBonoAviso(); abrirOverlay('modal-nueva');
 }
 function ocultarBonoAviso() {
@@ -1558,7 +1585,11 @@ async function guardarNuevaCita() {
   const tipoFin=derivarTipoFin(servicio);
   const notas=document.getElementById('n-notas').value.trim();
   const recur=document.getElementById('n-recur-check').checked;
+  const idTerapeuta = esAdmin()
+    ? (document.getElementById('n-terapeuta').value || null)
+    : G.miId;
   if (!fecha||!hora||!paciente||!servicio){toast('Completa fecha, hora, paciente y servicio','err');return;}
+  if (esAdmin() && !idTerapeuta){toast('Selecciona una terapeuta','err');return;}
   if ((tipoFin==='BONO'||tipoFin==='BECA') && !(await verificarBonoDisponible(paciente,tipoFin))) return;
   // Regla: sesión suelta bloqueada si hay bonos activos (salvo beca)
   if(tipoFin==='SUELTA'){
@@ -1583,7 +1614,7 @@ async function guardarNuevaCita() {
     const btn=document.getElementById('btn-crear-cita'); btn.disabled=true; btn.textContent=`⏳ Creando ${todasFechas.length} citas…`;
     const idSerie='SER-'+Date.now();
     try {
-      for (const f of todasFechas) await crearCita({fecha:f,hora,idPaciente:paciente,idServicio:servicio,tipoFin,idFin:'',notas,idSerie});
+      for (const f of todasFechas) await crearCita({fecha:f,hora,idPaciente:paciente,idServicio:servicio,tipoFin,idFin:'',notas,idSerie,idTerapeuta});
       toast(`${todasFechas.length} cita${todasFechas.length>1?'s':''} creada${todasFechas.length>1?'s':''} ✓`,'ok'); cerrarModal('modal-nueva'); recargarVista();
     }
     catch(err){toast('Error: '+err.message,'err');}
@@ -1591,7 +1622,7 @@ async function guardarNuevaCita() {
     return;
   }
   const btn=document.getElementById('btn-crear-cita'); btn.disabled=true; btn.textContent='⏳ Creando…';
-  try { await crearCita({fecha,hora,idPaciente:paciente,idServicio:servicio,tipoFin,idFin:'',notas}); toast('Cita creada ✓','ok'); cerrarModal('modal-nueva'); recargarVista(); }
+  try { await crearCita({fecha,hora,idPaciente:paciente,idServicio:servicio,tipoFin,idFin:'',notas,idTerapeuta}); toast('Cita creada ✓','ok'); cerrarModal('modal-nueva'); recargarVista(); }
   catch(err){toast('Error: '+err.message,'err');}
   finally{btn.disabled=false;btn.textContent='Crear cita';}
 }
