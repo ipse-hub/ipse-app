@@ -2752,7 +2752,7 @@ async function adminCargarBonos() {
         </div>
         <div class="admin-card-row"><span>Sesiones</span><strong>${b.sesiones_consumidas||0} / ${b.sesiones_totales} (${b.sesiones_pendientes} pend.)</strong></div>
         <div class="admin-card-row"><span>Valor/ses</span><strong>${parseFloat(b.valor_sesion||0).toFixed(2)} €</strong></div>
-        <div class="admin-card-row"><span>Importe</span><strong>${parseFloat(b.importe_anticipo||0).toFixed(2)} € · ${b.cobrado==='Sí'?'✅ Cobrado':'⏳ Pendiente'}</strong></div>
+        <div class="admin-card-row"><span>Importe</span><strong>${parseFloat(b.importe_anticipo||0).toFixed(2)} € · ${(['Sí','SI','Cobrado','cobrado'].includes(b.cobrado))?'✅ Cobrado':'⏳ Pendiente'}</strong></div>
         ${b.fecha_caducidad?`<div class="admin-card-row"><span>Caduca</span><strong>${fmtFechaDMY(b.fecha_caducidad)}</strong></div>`:''}
       </div>`;
     }).join('');

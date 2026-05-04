@@ -3862,7 +3862,7 @@ function renderBonos() {
       <td>${b.sesiones_totales||'—'}</td>
       <td>${b.sesiones_consumidas||0}</td>
       <td><strong style="color:${parseInt(b.sesiones_pendientes)<=2?'var(--red)':'inherit'}">${b.sesiones_pendientes||0}</strong></td>
-      <td>${badgeEstado(b.cobrado==='Sí'?'Cobrado':'Pendiente')}</td>
+      <td>${badgeEstado(normCobradoBono(b.cobrado))}</td>
       <td>${badgeEstado(b.estado)}</td>
       <td><button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();editarBono('${b.id_bono}')">✏️</button></td>
     </tr>`).join('')||'<tr><td colspan="13" class="empty-state">Sin bonos</td></tr>';
@@ -3904,7 +3904,7 @@ function editarBono(id) {
   document.getElementById('bn-sesiones').value    = b.sesiones_totales||0;
   document.getElementById('bn-consumidas').value  = b.sesiones_consumidas||0;
   document.getElementById('bn-anticipo').value    = b.importe_anticipo||0;
-  document.getElementById('bn-cobrado').value     = b.cobrado||'No';
+  document.getElementById('bn-cobrado').value     = normCobradoBono(b.cobrado)==='Cobrado' ? 'Sí' : 'No';
   document.getElementById('bn-forma-pago').value  = b.forma_pago||'';
   document.getElementById('bn-fecha-compra').value= b.fecha_compra||'';
   document.getElementById('bn-fecha-cad').value   = b.fecha_caducidad||'';
@@ -4013,6 +4013,13 @@ function normCobradoBeca(val) {
   if(!val) return 'Pendiente';
   const v = (val+'').toUpperCase().trim();
   if(v==='SI'||v==='SÍ'||v==='COBRADO'||v==='SÍ') return 'Cobrado';
+  return 'Pendiente';
+}
+// Helper: normaliza el campo cobrado de bono — misma lógica, mismos valores posibles
+function normCobradoBono(val) {
+  if(!val) return 'Pendiente';
+  const v = (val+'').toUpperCase().trim();
+  if(v==='SI'||v==='SÍ'||v==='COBRADO'||v==='YES'||v==='TRUE') return 'Cobrado';
   return 'Pendiente';
 }
 // Helper: extrae etiqueta de servicio del campo notas ('PSI','LOG' o '')
@@ -6840,7 +6847,7 @@ async function abrirBono360(idBono) {
 
   const badges = [];
   badges.push(badgeEstado(b.estado));
-  badges.push(badgeEstado(b.cobrado==='Cobrado'?'Cobrado':'Pendiente'));
+  badges.push(badgeEstado(normCobradoBono(b.cobrado)));
   if (b.forma_pago) badges.push('<span class="badge badge-beca">'+b.forma_pago+'</span>');
   document.getElementById('bono360-badges').innerHTML = badges.join('');
 
