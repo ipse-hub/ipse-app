@@ -6686,7 +6686,7 @@ async function toggleComprobado(idCita, btn) {
   try {
     const r = await fetch(`${SUPA_URL}/rest/v1/sesiones?id_cita=eq.${idCita}`, {
       method: 'PATCH',
-      headers: { ...SUPA_HEADERS, Prefer: 'return=representation' },
+      headers: { apikey: SUPA_KEY, Authorization: 'Bearer '+SUPA_KEY, 'Content-Type': 'application/json', Prefer: 'return=representation' },
       body: JSON.stringify({ comprobado: nuevoValor })
     });
     if (!r.ok) throw new Error('Error ' + r.status);
