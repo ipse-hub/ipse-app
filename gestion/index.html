@@ -1184,6 +1184,107 @@ textarea.form-control { min-height: 72px; transition: border-color .2s; }
   </div>
 </div>
 
+
+    <!-- ══ BONO 360° ══════════════════════════════════════════════════════ -->
+    <div class="page" id="page-bono360">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+        <button class="p360-back-btn" style="margin-bottom:0" onclick="navigate('bonos')">← Volver a bonos</button>
+        <button class="btn btn-secondary btn-sm" id="bono360-btn-editar" onclick="editarBonoActual()">✏️ Editar bono</button>
+      </div>
+      <!-- Cabecera -->
+      <div class="p360-header" id="bono360-header">
+        <div class="p360-hav" id="bono360-avatar">🎟</div>
+        <div class="p360-hinfo">
+          <div class="p360-hname" id="bono360-titulo">—</div>
+          <div class="p360-hmeta" id="bono360-meta">—</div>
+          <div class="p360-hbadges" id="bono360-badges"></div>
+        </div>
+      </div>
+      <!-- Pestañas -->
+      <div class="p360-tabs">
+        <div class="p360-tab active" onclick="bono360Tab('resumen',this)">Resumen</div>
+        <div class="p360-tab" onclick="bono360Tab('sesiones',this)">Sesiones</div>
+        <div class="p360-tab" onclick="bono360Tab('paciente',this)">Paciente</div>
+      </div>
+      <!-- RESUMEN -->
+      <div class="p360-panel active" id="bono360-resumen">
+        <div class="p360-card">
+          <div class="p360-stitle">Datos del bono</div>
+          <div class="p360-fg" id="bono360-datos"></div>
+        </div>
+        <div class="p360-card">
+          <div class="p360-stitle">Estado económico</div>
+          <div class="p360-fg" id="bono360-economico"></div>
+        </div>
+      </div>
+      <!-- SESIONES -->
+      <div class="p360-panel" id="bono360-sesiones">
+        <div class="p360-card">
+          <div class="p360-stitle">Sesiones vinculadas al bono</div>
+          <div id="bono360-lista-sesiones"></div>
+        </div>
+      </div>
+      <!-- PACIENTE -->
+      <div class="p360-panel" id="bono360-paciente">
+        <div class="p360-card">
+          <div class="p360-stitle">Datos del paciente</div>
+          <div class="p360-fg" id="bono360-pac-datos"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ BECA 360° ══════════════════════════════════════════════════════ -->
+    <div class="page" id="page-beca360">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+        <button class="p360-back-btn" style="margin-bottom:0" onclick="navigate('becas')">← Volver a becas</button>
+        <button class="btn btn-secondary btn-sm" id="beca360-btn-editar" onclick="editarBecaActual()">✏️ Editar beca</button>
+      </div>
+      <!-- Cabecera -->
+      <div class="p360-header" id="beca360-header">
+        <div class="p360-hav" id="beca360-avatar">🎓</div>
+        <div class="p360-hinfo">
+          <div class="p360-hname" id="beca360-titulo">—</div>
+          <div class="p360-hmeta" id="beca360-meta">—</div>
+          <div class="p360-hbadges" id="beca360-badges"></div>
+        </div>
+      </div>
+      <!-- Pestañas -->
+      <div class="p360-tabs">
+        <div class="p360-tab active" onclick="beca360Tab('resumen',this)">Resumen</div>
+        <div class="p360-tab" onclick="beca360Tab('sesiones',this)">Sesiones</div>
+        <div class="p360-tab" onclick="beca360Tab('paciente',this)">Paciente</div>
+      </div>
+      <!-- RESUMEN -->
+      <div class="p360-panel active" id="beca360-resumen">
+        <div class="p360-card">
+          <div class="p360-stitle">Datos de la beca</div>
+          <div class="p360-fg" id="beca360-datos"></div>
+        </div>
+        <div class="p360-card">
+          <div class="p360-stitle">Progreso de sesiones</div>
+          <div id="beca360-progreso"></div>
+        </div>
+        <div class="p360-card">
+          <div class="p360-stitle">Estado económico</div>
+          <div class="p360-fg" id="beca360-economico"></div>
+        </div>
+      </div>
+      <!-- SESIONES -->
+      <div class="p360-panel" id="beca360-sesiones">
+        <div class="p360-card">
+          <div class="p360-stitle">Sesiones de esta beca</div>
+          <div id="beca360-lista-sesiones"></div>
+        </div>
+      </div>
+      <!-- PACIENTE -->
+      <div class="p360-panel" id="beca360-paciente">
+        <div class="p360-card">
+          <div class="p360-stitle">Datos del paciente</div>
+          <div class="p360-fg" id="beca360-pac-datos"></div>
+        </div>
+      </div>
+    </div>
+
   </div><!-- /content -->
 </main>
 
@@ -1944,6 +2045,7 @@ textarea.form-control { min-height: 72px; transition: border-color .2s; }
 const SUPA_URL  = 'https://vlplebjqhufbzfncrawf.supabase.co';
 const SUPA_KEY  = 'sb_publishable_Qt604gEH_lfx89HkPElvcA_OGwbKeDO';
 const ADMIN_EMAIL = 'abraham.garcia.blanco@gmail.com';
+const ADMIN_EMAILS = ['abraham.garcia.blanco@gmail.com','a.garciablanco@icloud.com'];
 const PALETTE = ['#10069F','#00B5E2','#DA291C','#97D700','#F59E0B','#8B5CF6'];
 
 async function sg(tabla, params) {
@@ -2025,7 +2127,7 @@ async function loginEntrar() {
 
 // Devuelve true si el email es ADMIN o está en terapeutas con acceso_gestion='Sí'
 async function verificarAcceso(email) {
-  if (email === ADMIN_EMAIL) return true;
+  if (ADMIN_EMAILS.includes(email)) return true;
   const rows = await sg('terapeutas', `email=eq.${encodeURIComponent(email)}&acceso_gestion=eq.Sí&select=id_terapeuta,nombre`);
   return rows && rows.length > 0;
 }
@@ -2210,6 +2312,8 @@ function navigate(page) {
   if (page==='terapeutas') renderTerapeutas();
   if (page==='bonos') renderBonos();
   if (page==='becas') renderBecas();
+  if (page==='bono360') {}
+  if (page==='beca360') {}
   if (page==='servicios') cargarServicios();
   if (page==='facturas') cargarFacturas();
   if (page==='agenda') agIniciarSiNecesario();
@@ -3747,7 +3851,7 @@ function renderBonos() {
   });
   const tbody=document.getElementById('tbody-bonos');
   tbody.innerHTML=filtrados.map(b=>`
-    <tr onclick="editarBono('${b.id_bono}')">
+    <tr onclick="abrirBono360('${b.id_bono}')" style="cursor:pointer">
       <td class="mono">${b.id_bono}</td>
       <td class="strong">${nomPacFull(b.id_paciente)}</td>
       <td class="muted">${b.tipo_bono||'—'}</td>
@@ -3957,7 +4061,7 @@ function renderBecas() {
       : `<span style="color:var(--ink-muted);font-size:11px">—</span>`;
     const cobNorm = normCobradoBeca(b.cobrado);
     return `
-    <tr onclick="editarBeca('${b.id_beca}')">
+    <tr onclick="abrirBeca360('${b.id_beca}')" style="cursor:pointer">
       <td class="mono">${b.id_beca}</td>
       <td>${b.anio||'—'}</td>
       <td class="strong">${nomPacFull(b.id_paciente)}</td>
@@ -6703,6 +6807,253 @@ async function toggleComprobado(idCita, btn) {
   } finally {
     btn.disabled = false;
   }
+}
+
+
+// ══════════════════════════════════════════════════════
+//  BONO 360°
+// ══════════════════════════════════════════════════════
+let BONO360 = { id: null };
+
+function bono360Tab(name, el) {
+  document.querySelectorAll('#page-bono360 .p360-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('#page-bono360 .p360-panel').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('bono360-' + name).classList.add('active');
+}
+
+function editarBonoActual() {
+  if (BONO360.id) editarBono(BONO360.id);
+}
+
+async function abrirBono360(idBono) {
+  BONO360.id = idBono;
+  navigate('bono360');
+  const b = G.bonos.find(x => x.id_bono === idBono);
+  if (!b) return;
+  const pac = G.pacientes.find(p => p.id_paciente === b.id_paciente);
+  const nomPac = pac ? ((pac.nombre||'')+' '+(pac.apellidos||'')).trim() : b.id_paciente;
+
+  // Cabecera
+  document.getElementById('bono360-titulo').textContent = b.id_bono + ' · ' + nomPac;
+  document.getElementById('bono360-meta').textContent = [b.tipo_bono, b.fecha_compra ? 'Comprado: '+fmtFecha(b.fecha_compra) : '', b.fecha_caducidad ? 'Caduca: '+fmtFecha(b.fecha_caducidad) : ''].filter(Boolean).join(' · ');
+
+  const badges = [];
+  badges.push(badgeEstado(b.estado));
+  badges.push(badgeEstado(b.cobrado==='Cobrado'?'Cobrado':'Pendiente'));
+  if (b.forma_pago) badges.push('<span class="badge badge-beca">'+b.forma_pago+'</span>');
+  document.getElementById('bono360-badges').innerHTML = badges.join('');
+
+  // Datos del bono
+  document.getElementById('bono360-datos').innerHTML = [
+    p360Field('ID Bono', b.id_bono),
+    p360Field('Paciente', nomPac),
+    p360Field('Tipo bono', b.tipo_bono),
+    p360Field('Estado', b.estado),
+    p360Field('Fecha compra', fmtFecha(b.fecha_compra)),
+    p360Field('Fecha caducidad', fmtFecha(b.fecha_caducidad)),
+    p360Field('Notas', b.notas),
+  ].join('');
+
+  // Económico
+  const sesTotal = parseInt(b.sesiones_totales)||0;
+  const sesCons  = parseInt(b.sesiones_consumidas)||0;
+  const sesPend  = parseInt(b.sesiones_pendientes)||0;
+  const valSes   = parseFloat(b.valor_sesion)||0;
+  const anticipo = parseFloat(b.importe_anticipo)||0;
+  const devengado = sesCons * valSes;
+  const pendiente = sesPend * valSes;
+  document.getElementById('bono360-economico').innerHTML = [
+    p360Field('Sesiones totales', sesTotal),
+    p360Field('Sesiones consumidas', sesCons),
+    p360Field('Sesiones pendientes', '<strong style="color:'+( sesPend<=1?'var(--red)':'inherit')+'">'+sesPend+'</strong>'),
+    p360Field('Valor/sesión', fmtEur(valSes)),
+    p360Field('Importe anticipo', fmtEur(anticipo)),
+    p360Field('Devengado', fmtEur(devengado)),
+    p360Field('Pendiente de dar', fmtEur(pendiente)),
+    p360Field('Cobrado', b.cobrado||'—'),
+    p360Field('Forma de pago', b.forma_pago||'—'),
+  ].join('');
+
+  // Sesiones vinculadas
+  const sesiones = G.sesiones.filter(s => s.id_bono === idBono);
+  if (sesiones.length === 0) {
+    document.getElementById('bono360-lista-sesiones').innerHTML = '<p style="color:var(--ink-muted);font-size:13px">No hay sesiones vinculadas a este bono.</p>';
+  } else {
+    document.getElementById('bono360-lista-sesiones').innerHTML = `
+      <table style="width:100%;font-size:13px;border-collapse:collapse">
+        <thead><tr style="background:var(--blue-pale)">
+          <th style="padding:8px;text-align:left;font-size:11px;text-transform:uppercase;color:var(--blue)">ID</th>
+          <th style="padding:8px;text-align:left;font-size:11px;text-transform:uppercase;color:var(--blue)">Fecha</th>
+          <th style="padding:8px;text-align:left;font-size:11px;text-transform:uppercase;color:var(--blue)">Terapeuta</th>
+          <th style="padding:8px;text-align:left;font-size:11px;text-transform:uppercase;color:var(--blue)">Estado</th>
+          <th style="padding:8px;text-align:left;font-size:11px;text-transform:uppercase;color:var(--blue)">Importe</th>
+          <th style="padding:8px;text-align:left;font-size:11px;text-transform:uppercase;color:var(--blue)">Cobrado</th>
+        </tr></thead>
+        <tbody>${sesiones.map(s => {
+          const ter = G.terapeutas.find(t=>t.id_terapeuta===s.id_terapeuta);
+          return `<tr style="border-bottom:1px solid var(--border)">
+            <td style="padding:8px;font-family:monospace;font-size:12px">${s.id_cita}</td>
+            <td style="padding:8px">${fmtFecha(s.fecha)}</td>
+            <td style="padding:8px">${ter?ter.nombre:s.id_terapeuta||'—'}</td>
+            <td style="padding:8px">${badgeEstado(s.estado)}</td>
+            <td style="padding:8px;font-family:monospace">${fmtEur(s.importe)}</td>
+            <td style="padding:8px">${badgeEstado(esCobrada(s)?'Cobrado':'Pendiente')}</td>
+          </tr>`;
+        }).join('')}</tbody>
+      </table>`;
+  }
+
+  // Paciente
+  if (pac) {
+    document.getElementById('bono360-pac-datos').innerHTML = [
+      p360Field('Nombre', ((pac.nombre||'')+' '+(pac.apellidos||'')).trim()),
+      p360Field('ID', pac.id_paciente),
+      p360Field('Teléfono', pac.telefono),
+      p360Field('Email', pac.email),
+      p360Field('Terapeuta', nomTerapeuta(pac.terapeuta_principal)),
+    ].join('');
+  } else {
+    document.getElementById('bono360-pac-datos').innerHTML = '<p style="color:var(--ink-muted);font-size:13px">Paciente no encontrado.</p>';
+  }
+
+  // Reset tabs
+  document.querySelectorAll('#page-bono360 .p360-tab').forEach((t,i)=>t.classList.toggle('active',i===0));
+  document.querySelectorAll('#page-bono360 .p360-panel').forEach((t,i)=>t.classList.toggle('active',i===0));
+}
+
+// ══════════════════════════════════════════════════════
+//  BECA 360°
+// ══════════════════════════════════════════════════════
+let BECA360 = { id: null };
+
+function beca360Tab(name, el) {
+  document.querySelectorAll('#page-beca360 .p360-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('#page-beca360 .p360-panel').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('beca360-' + name).classList.add('active');
+}
+
+function editarBecaActual() {
+  if (BECA360.id) editarBeca(BECA360.id);
+}
+
+function nomTerapeuta(idTer) {
+  const t = (G.terapeutas||[]).find(x => x.id_terapeuta === idTer);
+  return t ? t.nombre : (idTer||'—');
+}
+
+async function abrirBeca360(idBeca) {
+  BECA360.id = idBeca;
+  navigate('beca360');
+  const b = G.becas.find(x => x.id_beca === idBeca);
+  if (!b) return;
+  const pac = G.pacientes.find(p => p.id_paciente === b.id_paciente);
+  const nomPac = pac ? ((pac.nombre||'')+' '+(pac.apellidos||'')).trim() : b.id_paciente;
+  const srvLabel = servicioFromNotas(b.notas);
+
+  // Cabecera
+  document.getElementById('beca360-titulo').textContent = b.id_beca + ' · ' + nomPac;
+  document.getElementById('beca360-meta').textContent = [b.anio, srvLabel, b.estado].filter(Boolean).join(' · ');
+
+  const badges = [];
+  badges.push(badgeEstado(b.estado));
+  badges.push(badgeEstado(normCobradoBeca(b.cobrado)));
+  if (srvLabel) badges.push(srvLabel==='PSI'
+    ? '<span style="background:#E8E6F8;color:#10069F;border-radius:4px;padding:2px 7px;font-size:11px;font-weight:700">PSI</span>'
+    : '<span style="background:#E0F5FB;color:#006a87;border-radius:4px;padding:2px 7px;font-size:11px;font-weight:700">LOG</span>');
+  document.getElementById('beca360-badges').innerHTML = badges.join('');
+
+  // Datos beca
+  document.getElementById('beca360-datos').innerHTML = [
+    p360Field('ID Beca', b.id_beca),
+    p360Field('Paciente', nomPac),
+    p360Field('Año', b.anio),
+    p360Field('Servicio', srvLabel||'—'),
+    p360Field('Estado', b.estado),
+    p360Field('Cobrado', normCobradoBeca(b.cobrado)),
+    p360Field('Notas', b.notas),
+  ].join('');
+
+  // Progreso
+  const total = parseInt(b.sesiones_total)||0;
+  const cons  = parseInt(b.sesiones_consumidas)||0;
+  const pend  = parseInt(b.sesiones_pendientes)||0;
+  const pct   = total > 0 ? Math.round(cons/total*100) : 0;
+  document.getElementById('beca360-progreso').innerHTML = `
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:10px">
+      <div style="flex:1;background:var(--border);border-radius:99px;height:12px;overflow:hidden">
+        <div style="width:${pct}%;background:var(--blue);height:100%;border-radius:99px;transition:width .3s"></div>
+      </div>
+      <span style="font-size:13px;font-weight:700;color:var(--blue);white-space:nowrap">${cons}/${total} (${pct}%)</span>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
+      <div style="text-align:center;background:var(--cream);border-radius:8px;padding:10px">
+        <div style="font-size:22px;font-weight:700;color:var(--ink)">${total}</div>
+        <div style="font-size:11px;color:var(--ink-muted)">TOTAL</div>
+      </div>
+      <div style="text-align:center;background:var(--green-pale);border-radius:8px;padding:10px">
+        <div style="font-size:22px;font-weight:700;color:var(--green-dark)">${cons}</div>
+        <div style="font-size:11px;color:var(--green-dark)">CONSUMIDAS</div>
+      </div>
+      <div style="text-align:center;background:${pend<=3?'var(--red-pale)':'var(--cream)'};border-radius:8px;padding:10px">
+        <div style="font-size:22px;font-weight:700;color:${pend<=3?'var(--red)':'var(--ink)'}">${pend}</div>
+        <div style="font-size:11px;color:${pend<=3?'var(--red)':'var(--ink-muted)'}">PENDIENTES</div>
+      </div>
+    </div>`;
+
+  // Económico
+  document.getElementById('beca360-economico').innerHTML = [
+    p360Field('Importe bruto', fmtEur(b.importe_bruto)),
+    p360Field('Fee gestión', fmtEur(b.fee_gestion)),
+    p360Field('Importe neto', fmtEur(b.importe_neto)),
+    p360Field('Valor/sesión', fmtEur(b.valor_sesion)),
+    p360Field('Devengado', fmtEur((parseInt(b.sesiones_consumidas)||0) * (parseFloat(b.valor_sesion)||0))),
+    p360Field('Por devengar', fmtEur((parseInt(b.sesiones_pendientes)||0) * (parseFloat(b.valor_sesion)||0))),
+  ].join('');
+
+  // Sesiones de la beca
+  const sesiones = G.sesiones.filter(s => s.id_beca === idBeca);
+  if (sesiones.length === 0) {
+    document.getElementById('beca360-lista-sesiones').innerHTML = '<p style="color:var(--ink-muted);font-size:13px">No hay sesiones registradas para esta beca.</p>';
+  } else {
+    document.getElementById('beca360-lista-sesiones').innerHTML = `
+      <table style="width:100%;font-size:13px;border-collapse:collapse">
+        <thead><tr style="background:var(--blue-pale)">
+          <th style="padding:8px;text-align:left;font-size:11px;text-transform:uppercase;color:var(--blue)">ID</th>
+          <th style="padding:8px;text-align:left;font-size:11px;text-transform:uppercase;color:var(--blue)">Fecha</th>
+          <th style="padding:8px;text-align:left;font-size:11px;text-transform:uppercase;color:var(--blue)">Terapeuta</th>
+          <th style="padding:8px;text-align:left;font-size:11px;text-transform:uppercase;color:var(--blue)">Estado</th>
+          <th style="padding:8px;text-align:left;font-size:11px;text-transform:uppercase;color:var(--blue)">Importe</th>
+        </tr></thead>
+        <tbody>${sesiones.map(s => {
+          const ter = G.terapeutas.find(t=>t.id_terapeuta===s.id_terapeuta);
+          return `<tr style="border-bottom:1px solid var(--border)">
+            <td style="padding:8px;font-family:monospace;font-size:12px">${s.id_cita}</td>
+            <td style="padding:8px">${fmtFecha(s.fecha)}</td>
+            <td style="padding:8px">${ter?ter.nombre:s.id_terapeuta||'—'}</td>
+            <td style="padding:8px">${badgeEstado(s.estado)}</td>
+            <td style="padding:8px;font-family:monospace">${fmtEur(s.importe)}</td>
+          </tr>`;
+        }).join('')}</tbody>
+      </table>`;
+  }
+
+  // Paciente
+  if (pac) {
+    document.getElementById('beca360-pac-datos').innerHTML = [
+      p360Field('Nombre', ((pac.nombre||'')+' '+(pac.apellidos||'')).trim()),
+      p360Field('ID', pac.id_paciente),
+      p360Field('Teléfono', pac.telefono),
+      p360Field('Email', pac.email),
+      p360Field('Terapeuta', nomTerapeuta(pac.terapeuta_principal)),
+      p360Field('Es beca', pac.es_beca),
+    ].join('');
+  }
+
+  // Reset tabs
+  document.querySelectorAll('#page-beca360 .p360-tab').forEach((t,i)=>t.classList.toggle('active',i===0));
+  document.querySelectorAll('#page-beca360 .p360-panel').forEach((t,i)=>t.classList.toggle('active',i===0));
 }
 
 </script>
