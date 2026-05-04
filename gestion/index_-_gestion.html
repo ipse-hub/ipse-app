@@ -2547,7 +2547,7 @@ function renderSesiones() {
         <td>${badgeEstado(s.estado)}</td>
         <td class="mono">${fmtEur(s.importe)}</td>
         <td>${badgeEstado(esCobrada(s)?'Cobrado':'Pendiente')}</td>
-        <td style="text-align:center"><button onclick="toggleComprobado('${s.id_cita}',this)" title="${s.comprobado==='Sí'?'Marcar sin comprobar':'Marcar como comprobado'}" class="check-inline${s.comprobado==='Sí'?' checked':''}">${s.comprobado==='Sí'?'✓':''}</button></td>
+        <td style="text-align:center"><button onclick="event.stopPropagation();toggleComprobado('${s.id_cita}',this)" title="${s.comprobado==='Sí'?'Marcar sin comprobar':'Marcar como comprobado'}" style="background:none;border:none;cursor:pointer;padding:2px 4px;font-size:18px;line-height:1">${s.comprobado==='Sí'?'✅':'<span style="display:inline-block;width:18px;height:18px;border:2px solid #D1D5DB;border-radius:4px;vertical-align:middle"></span>'}</button></td>
       </tr>`).join('');
   }
   document.getElementById('sesiones-count').textContent = sesFiltradas.length+' sesiones';
@@ -6692,12 +6692,12 @@ async function toggleComprobado(idCita, btn) {
     if (!r.ok) throw new Error('Error ' + r.status);
     sesion.comprobado = nuevoValor;
     btn.title = nuevoValor === 'Sí' ? 'Marcar sin comprobar' : 'Marcar como comprobado';
-    btn.className = 'check-inline' + (nuevoValor === 'Sí' ? ' checked' : '');
-    btn.innerHTML = nuevoValor === 'Sí' ? '✓' : '';
+    btn.innerHTML = nuevoValor === 'Sí' ? '✅' : '<span style="display:inline-block;width:18px;height:18px;border:2px solid #D1D5DB;border-radius:4px;vertical-align:middle"></span>';
+    btn.title = nuevoValor === 'Sí' ? 'Marcar sin comprobar' : 'Marcar como comprobado';
     // Actualizar contador
     const nComp = G.sesiones.filter(s => s.comprobado === 'Sí').length;
     const total = G.sesiones.length;
-    toast(nuevoValor === 'Sí' ? '✅ Marcado como comprobado' : '○ Desmarcado', 'ok');
+    toast(nuevoValor === 'Sí' ? `✅ ${idCita} marcado como comprobado` : `○ ${idCita} desmarcado`, nuevoValor === 'Sí' ? 'ok' : 'warn', 5000);
   } catch(e) {
     toast('Error al actualizar: ' + e.message, 'err');
   } finally {
