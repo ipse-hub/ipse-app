@@ -1068,9 +1068,6 @@ textarea.form-control { min-height: 72px; transition: border-color .2s; }
         <select class="filter-select" id="bon-estado" onchange="filtrarBonos()">
           <option value="">Todos estados</option><option>Activo</option><option>Agotado</option><option>Caducado</option>
         </select>
-        <select class="filter-select" id="bon-cobrado" onchange="filtrarBonos()">
-          <option value="">Cobrado / Pendiente</option><option value="Sí">Cobrados</option><option value="No">Pendientes cobro</option>
-        </select>
         <span id="bon-count" style="font-size:12px;color:var(--ink-muted)"></span>
       </div>
       <div class="data-table-wrap">
@@ -1079,7 +1076,7 @@ textarea.form-control { min-height: 72px; transition: border-color .2s; }
             <th>ID Bono</th><th>Paciente</th><th>Tipo</th><th>Anticipo</th>
             <th>€/ses</th><th>Compra</th><th>Caducidad</th>
             <th>Ses. totales</th><th>Consumidas</th><th>Pendientes</th>
-            <th>Cobrado</th><th>Forma pago</th><th>Estado</th><th></th>
+            <th>Cobrado</th><th>Estado</th><th></th>
           </tr></thead>
           <tbody id="tbody-bonos"></tbody>
         </table>
@@ -2193,6 +2190,26 @@ async function iniciarApp() {
 }
 
 // ═══════════════════════════════════════════════════════
+//  REFRESCO DE SESIONES
+//  Actualiza G.sesiones y G.sesionesCobradas desde Supabase
+//  sin tocar el resto de datos en memoria. Se llama al navegar
+//  a cualquier página que dependa del estado actual de sesiones.
+// ═══════════════════════════════════════════════════════
+async function refrescarSesiones() {
+  try {
+    const [rows, cobrosRows] = await Promise.all([
+      sg('sesiones','order=fecha.desc&limit=2000'),
+      sg('cobros','estado=eq.Confirmado&select=id_sesion')
+    ]);
+    G.sesiones = rows;
+    G.sesionesCobradas = new Set((cobrosRows||[]).map(c=>c.id_sesion).filter(Boolean));
+  } catch(err) {
+    // Silencioso: si falla, se trabaja con los datos que hay
+    console.warn('refrescarSesiones:', err.message);
+  }
+}
+
+// ═══════════════════════════════════════════════════════
 //  HELPERS
 // ═══════════════════════════════════════════════════════
 function nomPac(id) {
@@ -2309,18 +2326,25 @@ function navigate(page) {
   }
   const titles = {dashboard:'Dashboard',kpis:'KPIs',produccion:'Producción',cobros:'Cobros',pacientes:'Paciente 360°',p360:'Expediente',terapeutas:'Terapeutas',bonos:'Bonos',becas:'Becas',servicios:'Servicios',facturas:'Facturas',agenda:'Agenda'};
   document.getElementById('topbar-title').textContent = titles[page]||page;
-  if (page==='produccion') cargarSesiones();
-  if (page==='cobros') cargarCobros();
-  if (page==='pacientes') renderPacientes();
+  // Páginas que leen G.sesiones necesitan datos frescos antes de renderizar
+  const paginasConSesiones = ['dashboard','produccion','cobros','pacientes','p360','bonos','becas','bono360','beca360','kpis'];
+  if (paginasConSesiones.includes(page)) {
+    refrescarSesiones().then(() => {
+      if (page==='dashboard')  cargarDashboard();
+      if (page==='produccion') filtrarSesiones();  // G.sesiones ya fresco por refrescarSesiones()
+      if (page==='cobros')     cargarCobros();
+      if (page==='pacientes')  renderPacientes();
+      if (page==='bonos')      renderBonos();
+      if (page==='becas')      renderBecas();
+      if (page==='kpis')       cargarKPIs();
+      // p360, bono360, beca360 se repintan al abrir el detalle concreto
+    });
+  }
+  // Páginas sin sesiones: render directo
   if (page==='terapeutas') renderTerapeutas();
-  if (page==='bonos') renderBonos();
-  if (page==='becas') renderBecas();
-  if (page==='bono360') {}
-  if (page==='beca360') {}
-  if (page==='servicios') cargarServicios();
-  if (page==='facturas') cargarFacturas();
-  if (page==='agenda') agIniciarSiNecesario();
-  if (page==='kpis') cargarKPIs();
+  if (page==='servicios')  cargarServicios();
+  if (page==='facturas')   cargarFacturas();
+  if (page==='agenda')     agIniciarSiNecesario();
 }
 
 // ═══════════════════════════════════════════════════════
@@ -2378,14 +2402,14 @@ async function cargarDashboard() {
 
     const produccion = realizadas.reduce((sum,s)=>sum+(parseFloat(s.importe)||0),0);
     const cobrado    = cobrosM.filter(c=>c.estado==='Confirmado').reduce((sum,c)=>sum+(parseFloat(c.importe)||0),0);
-    const pendiente  = realizadas.filter(s=>!esCobrada(s))
+    const pendiente  = realizadas.filter(s=>s.cerrada!=='Sí' && s.financiacion_tipo!=='BONO' && s.financiacion_tipo!=='BECA')
                                  .reduce((sum,s)=>sum+(parseFloat(s.importe)||0),0);
     const deltaCaja  = cobrado - produccion;
 
     const porTer = G.terapeutas.map(t=>{
       const sesT = realizadas.filter(s=>s.id_terapeuta===t.id_terapeuta);
       const prod = sesT.reduce((sum,s)=>sum+(parseFloat(s.importe)||0),0);
-      const pend = sesT.filter(s=>!esCobrada(s)).reduce((sum,s)=>sum+(parseFloat(s.importe)||0),0);
+      const pend = sesT.filter(s=>s.cerrada!=='Sí').reduce((sum,s)=>sum+(parseFloat(s.importe)||0),0);
       const com  = prod * (parseFloat(t.pct_com)||0);
       return {...t, sesiones:sesT.length, produccion:prod, pendiente:pend, comision:com};
     }).filter(t=>t.sesiones>0).sort((a,b)=>b.produccion-a.produccion);
@@ -2865,7 +2889,7 @@ function filtrarCobros() {
   });
 
   const total     = cobFiltrados.filter(c=>c.estado==='Confirmado').reduce((sum,c)=>sum+(parseFloat(c.importe)||0),0);
-  const pendiente = G.sesiones.filter(s=>s.estado==='Hecha'&&!esCobrada(s)).reduce((sum,s)=>sum+(parseFloat(s.importe)||0),0);
+  const pendiente = G.sesiones.filter(s=>s.estado==='Hecha'&&s.cerrada!=='Sí').reduce((sum,s)=>sum+(parseFloat(s.importe)||0),0);
   document.getElementById('cobros-total').textContent     = fmtEur(total);
   document.getElementById('cobros-pendiente').textContent = fmtEur(pendiente);
   document.getElementById('cobros-count').textContent     = cobFiltrados.length;
@@ -3032,9 +3056,9 @@ function _renderPacientesTable() {
       const sesPac = G.sesiones.filter(s=>s.id_paciente===p.id_paciente && s.estado==='Hecha')
                                .sort((a,b)=>b.fecha.localeCompare(a.fecha));
       const ultSes = sesPac.length ? fmtFecha(sesPac[0].fecha) : '<span style="color:var(--ink-muted)">—</span>';
-      // Saldo pendiente = sesiones hechas no cobradas (esCobrada() unifica BECA/BONO/SUELTA)
+      // Saldo pendiente = sesiones hechas no cobradas
       const saldo = G.sesiones
-        .filter(s=>s.id_paciente===p.id_paciente && s.estado==='Hecha' && !esCobrada(s))
+        .filter(s=>s.id_paciente===p.id_paciente && s.estado==='Hecha' && !esCobrada(s) && s.financiacion_tipo!=='BONO' && s.financiacion_tipo!=='BECA')
         .reduce((sum,s)=>sum+(parseFloat(s.importe)||0),0);
       const saldoHtml = saldo>0
         ? `<span class="pac-saldo-warn">${fmtEur(saldo)}</span>`
@@ -3846,16 +3870,10 @@ async function eliminarTerapeuta() {
 function renderBonos() {
   const q   = (document.getElementById('bon-busq')?.value||'').toLowerCase();
   const est = document.getElementById('bon-estado')?.value||'';
-  const cob = document.getElementById('bon-cobrado')?.value||'';
   const filtrados = G.bonos.filter(b=>{
     const nom=(nomPacFull(b.id_paciente)+' '+(b.tipo_bono||'')+' '+(b.id_bono||'')).toLowerCase();
     if(q&&!nom.includes(q)) return false;
     if(est&&b.estado!==est) return false;
-    if(cob) {
-      const esCob = normCobradoBono(b.cobrado)==='Cobrado';
-      if(cob==='Sí'&&!esCob) return false;
-      if(cob==='No'&&esCob) return false;
-    }
     return true;
   });
   const tbody=document.getElementById('tbody-bonos');
@@ -3872,7 +3890,6 @@ function renderBonos() {
       <td>${b.sesiones_consumidas||0}</td>
       <td><strong style="color:${parseInt(b.sesiones_pendientes)<=2?'var(--red)':'inherit'}">${b.sesiones_pendientes||0}</strong></td>
       <td>${badgeEstado(normCobradoBono(b.cobrado))}</td>
-      <td>${b.forma_pago ? `<span class="badge badge-hecha">${b.forma_pago}</span>` : '<span class="muted">—</span>'}</td>
       <td>${badgeEstado(b.estado)}</td>
       <td><button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();editarBono('${b.id_bono}')">✏️</button></td>
     </tr>`).join('')||'<tr><td colspan="13" class="empty-state">Sin bonos</td></tr>';
