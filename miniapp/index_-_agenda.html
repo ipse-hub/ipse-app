@@ -1355,7 +1355,7 @@ async function actualizarBeca(idBeca, delta) {
   const rows = await supaGet('becas', `id_beca=eq.${idBeca}`); if (!rows || !rows.length) return;
   const b = rows[0];
   const consumidas = (parseInt(b.sesiones_consumidas)||0) + delta;
-  const pendientes = Math.max((parseInt(b.sesiones_pendientes)||0) - delta, 0);
+  const pendientes = Math.max((parseInt(b.sesiones_total)||0) - consumidas, 0);
   await supaPatch('becas', `id_beca=eq.${idBeca}`, { sesiones_consumidas: consumidas, sesiones_pendientes: pendientes, fecha_ultima_sesion: new Date().toISOString().split('T')[0], estado: pendientes<=0?'Agotada':b.estado });
 }
 
@@ -1876,7 +1876,7 @@ async function guardarEstadoCita() {
         const idSes=await generarId('sesiones','id_cita','S');
         // Fix cobrado: sesiones de BONO y BECA ya están pagadas por anticipado → cobrado:'Sí'
         const cobradoSes=(tipoFin==='BONO'||tipoFin==='BECA')?'Sí':'No';
-        await supaPost('sesiones',{id_cita:idSes,fecha:G.citaActual.Fecha,hora:(G.citaActual.Hora||'').slice(0,5),financiacion_tipo:tipoFin,id_paciente:G.citaActual.ID_Paciente,id_terapeuta:G.citaActual.ID_Terapeuta||G.miId,id_servicio:G.citaActual.ID_Servicio,id_beca:tipoFin==='BECA'?idFin:'',id_bono:tipoFin==='BONO'?idFin:'',estado:G.estadoSel,importe:importe,cobrado:cobradoSes,cerrada:'No',fecha_cierre:'',notas:notas||G.citaActual.NotasAgenda||''});
+        await supaPost('sesiones',{id_cita:idSes,fecha:G.citaActual.Fecha,hora:(G.citaActual.Hora||'').slice(0,5),financiacion_tipo:tipoFin,id_paciente:G.citaActual.ID_Paciente,id_terapeuta:G.miId,id_servicio:G.citaActual.ID_Servicio,id_beca:tipoFin==='BECA'?idFin:'',id_bono:tipoFin==='BONO'?idFin:'',estado:G.estadoSel,importe:importe,cobrado:cobradoSes,cerrada:'No',fecha_cierre:'',notas:notas||G.citaActual.NotasAgenda||''});
         if(G.estadoSel==='Hecha'){
           if(tipoFin==='BONO'&&idFin)await actualizarBono(idFin,1);
           if(tipoFin==='BECA'&&idFin)await actualizarBeca(idFin,1);
