@@ -808,32 +808,80 @@ textarea.form-control { min-height: 72px; transition: border-color .2s; }
           <button class="btn btn-primary btn-sm" onclick="abrirModalCobro()">+ Cobro</button>
         </div>
       </div>
+
+      <!-- KPIs -->
       <div class="kpi-grid kpi-grid-3" style="margin-bottom:20px">
         <div class="kpi-card cyan"><div class="kpi-label">Cobrado este mes</div><div class="kpi-value" style="font-size:22px" id="cobros-total">— €</div></div>
-        <div class="kpi-card red"><div class="kpi-label">Pendiente de cobro</div><div class="kpi-value" style="font-size:22px" id="cobros-pendiente">— €</div></div>
-        <div class="kpi-card blue"><div class="kpi-label">Nº cobros</div><div class="kpi-value" style="font-size:22px" id="cobros-count">—</div></div>
+        <div class="kpi-card red" style="cursor:pointer" onclick="cobrosIrAPendientes()">
+          <div class="kpi-label">Pendiente de cobro <span id="cobros-pend-count" style="font-size:10px;margin-left:4px"></span></div>
+          <div class="kpi-value" style="font-size:22px" id="cobros-pendiente">— €</div>
+          <div style="font-size:11px;color:var(--red);margin-top:4px">Ver quién debe →</div>
+        </div>
+        <div class="kpi-card blue"><div class="kpi-label">Nº cobros este mes</div><div class="kpi-value" style="font-size:22px" id="cobros-count">—</div></div>
       </div>
-      <div class="table-toolbar">
-        <input class="search-input" placeholder="🔍 Paciente, sesión…" oninput="filtrarCobros()" id="cob-busq">
-        <label style="font-size:12px;color:var(--ink-muted)">Desde</label>
-        <input type="date" class="form-control btn-sm" id="cob-desde" style="width:140px" onchange="filtrarCobros()">
-        <label style="font-size:12px;color:var(--ink-muted)">Hasta</label>
-        <input type="date" class="form-control btn-sm" id="cob-hasta" style="width:140px" onchange="filtrarCobros()">
-        <select class="filter-select" id="cob-metodo" onchange="filtrarCobros()">
-          <option value="">Todos métodos</option>
-          <option>Efectivo</option><option>Bizum</option><option>Transferencia</option>
-        </select>
-        <button class="btn btn-secondary btn-sm" onclick="limpiarFiltrosCobros()">✕ Limpiar</button>
+
+      <!-- Pestañas internas -->
+      <div class="p360-tabs" style="margin-bottom:0">
+        <div class="p360-tab active" id="cob-tab-historial" onclick="cobrosTab('historial',this)">📋 Historial de cobros</div>
+        <div class="p360-tab" id="cob-tab-pendientes" onclick="cobrosTab('pendientes',this)">🔴 Pendientes de cobro <span id="cob-pend-badge" style="display:none;background:var(--red);color:#fff;border-radius:99px;padding:1px 7px;font-size:11px;margin-left:4px"></span></div>
       </div>
-      <div class="data-table-wrap">
-        <table class="data-table">
-          <thead><tr>
-            <th>ID Cobro</th><th>Fecha</th><th>Paciente</th><th>Sesión</th>
-            <th>Importe</th><th>Método</th><th>Estado</th><th>Notas</th><th></th>
-          </tr></thead>
-          <tbody id="tbody-cobros"></tbody>
-        </table>
-        <div class="table-footer"><span id="cobros-footer">—</span></div>
+
+      <!-- PANEL: HISTORIAL -->
+      <div id="cob-panel-historial" style="padding-top:16px">
+        <!-- Buscador estilo 360 -->
+        <div style="background:var(--white);border:1px solid var(--border);border-radius:16px;padding:20px 24px;box-shadow:var(--shadow);margin-bottom:20px">
+          <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end">
+            <div style="flex:2;min-width:180px">
+              <label style="font-size:11px;font-weight:600;color:var(--ink-muted);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:5px">Paciente o ID</label>
+              <input class="form-control" placeholder="🔍 Nombre, apellidos, ID cobro…" oninput="filtrarCobros()" id="cob-busq" style="width:100%">
+            </div>
+            <div style="min-width:130px">
+              <label style="font-size:11px;font-weight:600;color:var(--ink-muted);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:5px">Desde</label>
+              <input type="date" class="form-control" id="cob-desde" onchange="filtrarCobros()" style="width:100%">
+            </div>
+            <div style="min-width:130px">
+              <label style="font-size:11px;font-weight:600;color:var(--ink-muted);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:5px">Hasta</label>
+              <input type="date" class="form-control" id="cob-hasta" onchange="filtrarCobros()" style="width:100%">
+            </div>
+            <div style="min-width:150px">
+              <label style="font-size:11px;font-weight:600;color:var(--ink-muted);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:5px">Método</label>
+              <select class="form-control" id="cob-metodo" onchange="filtrarCobros()" style="width:100%">
+                <option value="">Todos</option>
+                <option>Efectivo</option><option>Bizum</option><option>Transferencia</option>
+              </select>
+            </div>
+            <div>
+              <button class="btn btn-secondary btn-sm" onclick="limpiarFiltrosCobros()" style="height:38px">✕ Limpiar</button>
+            </div>
+          </div>
+        </div>
+        <!-- Resultados historial -->
+        <div id="cob-resultados-wrap">
+          <div class="data-table-wrap">
+            <table class="data-table">
+              <thead><tr>
+                <th>ID Cobro</th><th>Fecha</th><th>Paciente</th><th>Sesión</th>
+                <th>Importe</th><th>Método</th><th>Estado</th><th>Notas</th><th></th>
+              </tr></thead>
+              <tbody id="tbody-cobros"></tbody>
+            </table>
+            <div class="table-footer"><span id="cobros-footer">—</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PANEL: PENDIENTES -->
+      <div id="cob-panel-pendientes" style="display:none;padding-top:16px">
+        <div style="background:var(--red-pale);border:1px solid #f5c6c3;border-radius:12px;padding:14px 18px;margin-bottom:20px;display:flex;align-items:center;gap:12px">
+          <span style="font-size:22px">⚠️</span>
+          <div>
+            <div style="font-size:14px;font-weight:700;color:var(--red)">Pacientes con sesiones sin cobrar</div>
+            <div style="font-size:12px;color:var(--ink-muted);margin-top:2px">Solo sesiones privadas sueltas (SUELTA / ADECCO). Los bonos y becas gestionan su propio cobro.</div>
+          </div>
+        </div>
+        <div id="cob-pendientes-lista">
+          <div class="loading-state"><div class="spinner"></div></div>
+        </div>
       </div>
     </div>
 
@@ -2902,7 +2950,141 @@ async function cargarCobros() {
     G.cobros = rows;
     document.getElementById('cob-desde').value = fi;
     filtrarCobros();
+    renderCobPendientes(); // cargar pendientes en segundo plano
   } catch(err) { toast('Error cargando cobros: '+err.message,'err'); }
+}
+
+// ── Gestión de pestañas internas de Cobros ──
+function cobrosTab(nombre, el) {
+  document.querySelectorAll('#page-cobros .p360-tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('cob-panel-historial').style.display  = nombre==='historial'  ? '' : 'none';
+  document.getElementById('cob-panel-pendientes').style.display = nombre==='pendientes' ? '' : 'none';
+  if (nombre==='pendientes') renderCobPendientes();
+}
+
+function cobrosIrAPendientes() {
+  document.getElementById('cob-tab-pendientes').click();
+}
+
+// ── Render bloque de pendientes agrupado por paciente ──
+function renderCobPendientes() {
+  const contenedor = document.getElementById('cob-pendientes-lista');
+  if (!contenedor) return;
+
+  // Sesiones hechas, no cobradas, solo tipo privado (SUELTA o ADECCO o sin tipo)
+  const sesPend = G.sesiones.filter(s =>
+    s.estado === 'Hecha' &&
+    !esCobrada(s) &&
+    s.financiacion_tipo !== 'BONO' &&
+    s.financiacion_tipo !== 'BECA'
+  );
+
+  if (!sesPend.length) {
+    contenedor.innerHTML = `
+      <div style="text-align:center;padding:48px 24px;background:var(--white);border-radius:16px;border:1px solid var(--border)">
+        <div style="font-size:40px;margin-bottom:12px">✅</div>
+        <div style="font-size:16px;font-weight:700;color:var(--green-dark)">¡Todo cobrado!</div>
+        <div style="font-size:13px;color:var(--ink-muted);margin-top:6px">No hay sesiones privadas pendientes de cobro.</div>
+      </div>`;
+    // Actualizar badge
+    const badge = document.getElementById('cob-pend-badge');
+    if (badge) { badge.textContent='0'; badge.style.display='none'; }
+    document.getElementById('cobros-pend-count').textContent='';
+    return;
+  }
+
+  // Agrupar por paciente
+  const byPac = {};
+  sesPend.forEach(s => {
+    if (!byPac[s.id_paciente]) byPac[s.id_paciente] = { sesiones: [], total: 0 };
+    byPac[s.id_paciente].sesiones.push(s);
+    byPac[s.id_paciente].total += parseFloat(s.importe)||0;
+  });
+
+  // Ordenar por importe desc
+  const ordenados = Object.entries(byPac).sort((a,b) => b[1].total - a[1].total);
+  const nPac = ordenados.length;
+  const nSes = sesPend.length;
+  const totalPend = sesPend.reduce((s,x)=>s+(parseFloat(x.importe)||0),0);
+
+  // Actualizar badge y contador KPI
+  const badge = document.getElementById('cob-pend-badge');
+  if (badge) { badge.textContent = nPac; badge.style.display = ''; }
+  document.getElementById('cobros-pend-count').textContent = `(${nPac} pac.)`;
+
+  contenedor.innerHTML = `
+    <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap">
+      <div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:12px 18px;flex:1;min-width:140px;text-align:center">
+        <div style="font-size:20px;font-weight:700;color:var(--red)">${fmtEur(totalPend)}</div>
+        <div style="font-size:11px;color:var(--ink-muted)">TOTAL PENDIENTE</div>
+      </div>
+      <div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:12px 18px;flex:1;min-width:140px;text-align:center">
+        <div style="font-size:20px;font-weight:700;color:var(--ink)">${nPac}</div>
+        <div style="font-size:11px;color:var(--ink-muted)">PACIENTES</div>
+      </div>
+      <div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:12px 18px;flex:1;min-width:140px;text-align:center">
+        <div style="font-size:20px;font-weight:700;color:var(--ink)">${nSes}</div>
+        <div style="font-size:11px;color:var(--ink-muted)">SESIONES</div>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+    ${ordenados.map(([idPac, data]) => {
+      const pac = G.pacientes.find(p=>p.id_paciente===idPac);
+      const nomPaciente = pac ? ((pac.nombre||'')+' '+(pac.apellidos||'')).trim() : idPac;
+      const initials = pac ? ((pac.nombre||'').charAt(0)+(pac.apellidos||'').charAt(0)).toUpperCase() : '?';
+      const ter = pac ? G.terapeutas.find(t=>t.id_terapeuta===pac.terapeuta_principal) : null;
+      const diasMax = Math.max(...data.sesiones.map(s => s.fecha ? Math.floor((new Date()-new Date(s.fecha))/86400000) : 0));
+      const alertaColor = diasMax > 30 ? 'var(--red)' : diasMax > 14 ? '#e67e00' : 'var(--ink-muted)';
+      const sesOrdenadas = [...data.sesiones].sort((a,b)=>(a.fecha||'').localeCompare(b.fecha||''));
+      return `
+        <div style="background:var(--white);border:1px solid var(--border);border-radius:14px;padding:16px 20px;box-shadow:var(--shadow)">
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:12px">
+            <div style="width:42px;height:42px;background:var(--red-pale);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:var(--red);flex-shrink:0">${initials}</div>
+            <div style="flex:1">
+              <div style="font-weight:700;font-size:15px;color:var(--ink)">${nomPaciente}</div>
+              <div style="font-size:12px;color:var(--ink-muted)">${ter ? ter.nombre : '—'} · ${data.sesiones.length} sesión${data.sesiones.length!==1?'es':''} · Más antigua: <span style="color:${alertaColor};font-weight:600">hace ${diasMax} días</span></div>
+            </div>
+            <div style="text-align:right;flex-shrink:0">
+              <div style="font-size:20px;font-weight:700;color:var(--red)">${fmtEur(data.total)}</div>
+              <button class="btn btn-secondary btn-sm" style="margin-top:4px;font-size:11px" onclick="abrirP360('${idPac}')">Ver expediente →</button>
+            </div>
+          </div>
+          <table style="width:100%;font-size:12px;border-collapse:collapse;border-top:1px solid var(--border)">
+            <thead><tr style="color:var(--ink-muted);font-size:11px;text-transform:uppercase">
+              <th style="padding:6px 4px;text-align:left;font-weight:600">Sesión</th>
+              <th style="padding:6px 4px;text-align:left;font-weight:600">Fecha</th>
+              <th style="padding:6px 4px;text-align:left;font-weight:600">Tipo</th>
+              <th style="padding:6px 4px;text-align:right;font-weight:600">Importe</th>
+              <th style="padding:6px 4px;text-align:right;font-weight:600"></th>
+            </tr></thead>
+            <tbody>
+            ${sesOrdenadas.map(s => {
+              const dias = s.fecha ? Math.floor((new Date()-new Date(s.fecha))/86400000) : '?';
+              return `<tr style="border-top:1px solid var(--border)">
+                <td style="padding:6px 4px;font-family:monospace">${s.id_cita}</td>
+                <td style="padding:6px 4px">${fmtFecha(s.fecha)} <span style="color:var(--ink-muted);font-size:10px">(${dias}d)</span></td>
+                <td style="padding:6px 4px">${s.financiacion_tipo||'SUELTA'}</td>
+                <td style="padding:6px 4px;text-align:right;font-weight:600">${fmtEur(s.importe)}</td>
+                <td style="padding:6px 4px;text-align:right"><button class="btn btn-primary btn-sm" style="font-size:11px" onclick="cobrarSesionRapido('${s.id_cita}','${idPac}','${s.importe||0}')">+ Cobrar</button></td>
+              </tr>`;
+            }).join('')}
+            </tbody>
+          </table>
+        </div>`;
+    }).join('')}
+    </div>`;
+}
+
+// ── Cobro rápido desde lista de pendientes ──
+function cobrarSesionRapido(idSesion, idPaciente, importe) {
+  // Abrir modal de cobro prerrellenado
+  abrirModalCobro();
+  setTimeout(()=>{
+    setPacienteEnModal('c-paciente-txt','c-paciente', idPaciente);
+    document.getElementById('c-sesion').value = idSesion;
+    document.getElementById('c-importe').value = importe;
+  }, 50);
 }
 
 function filtrarCobros() {
@@ -2920,13 +3102,14 @@ function filtrarCobros() {
   });
 
   const total     = cobFiltrados.filter(c=>c.estado==='Confirmado').reduce((sum,c)=>sum+(parseFloat(c.importe)||0),0);
-  const pendiente = G.sesiones.filter(s=>s.estado==='Hecha'&&s.cerrada!=='Sí').reduce((sum,s)=>sum+(parseFloat(s.importe)||0),0);
+  // Pendiente con esCobrada() correcta
+  const pendiente = G.sesiones.filter(s=>s.estado==='Hecha'&&!esCobrada(s)&&s.financiacion_tipo!=='BONO'&&s.financiacion_tipo!=='BECA').reduce((sum,s)=>sum+(parseFloat(s.importe)||0),0);
   document.getElementById('cobros-total').textContent     = fmtEur(total);
   document.getElementById('cobros-pendiente').textContent = fmtEur(pendiente);
   document.getElementById('cobros-count').textContent     = cobFiltrados.length;
 
   const tbody = document.getElementById('tbody-cobros');
-  if (!cobFiltrados.length) { tbody.innerHTML='<tr><td colspan="9" class="empty-state">Sin cobros</td></tr>'; return; }
+  if (!cobFiltrados.length) { tbody.innerHTML='<tr><td colspan="9" class="empty-state">Sin cobros para estos filtros</td></tr>'; document.getElementById('cobros-footer').textContent='—'; return; }
   tbody.innerHTML = cobFiltrados.map(c=>`
     <tr onclick="abrirCobro360('${c.id_cobro}')" style="cursor:pointer">
       <td class="mono">${c.id_cobro||'—'}</td>
