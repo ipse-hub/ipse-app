@@ -2959,11 +2959,15 @@ async function cargarCobros() {
   try {
     const hoy = new Date();
     const fi  = hoy.getFullYear()+'-'+String(hoy.getMonth()+1).padStart(2,'0')+'-01';
-    const rows = await sg('cobros',`order=fecha.desc&limit=500`);
+    const [rows, cobrosRows] = await Promise.all([
+      sg('cobros',`order=fecha.desc&limit=500`),
+      sg('cobros','estado=eq.Confirmado&select=id_sesion')
+    ]);
     G.cobros = rows;
+    G.sesionesCobradas = new Set((cobrosRows||[]).map(c=>c.id_sesion).filter(Boolean));
     document.getElementById('cob-desde').value = fi;
     filtrarCobros();
-    renderCobPendientes(); // cargar pendientes en segundo plano
+    renderCobPendientes();
   } catch(err) { toast('Error cargando cobros: '+err.message,'err'); }
 }
 
@@ -3316,24 +3320,15 @@ async function guardarCobro() {
       await sa('cobros',`id_cobro=eq.${id}`,datos);
       const idx=G.cobros.findIndex(c=>c.id_cobro===id);
       if(idx>=0) G.cobros[idx]={...G.cobros[idx],...datos};
-      if (datos.id_sesion && datos.estado==='Confirmado') {
-        if (!G.sesionesCobradas) G.sesionesCobradas = new Set();
-        G.sesionesCobradas.add(datos.id_sesion);
-      }
       toast('Cobro actualizado ✓','ok');
     } else {
       const newId = await genId('cobros','id_cobro','C');
       await sp('cobros',{...datos,id_cobro:newId});
       G.cobros.unshift({...datos,id_cobro:newId});
-      if (datos.id_sesion && datos.estado==='Confirmado') {
-        if (!G.sesionesCobradas) G.sesionesCobradas = new Set();
-        G.sesionesCobradas.add(datos.id_sesion);
-      }
       toast('Cobro registrado ✓','ok');
     }
     cerrarModal('modal-cobro');
     filtrarCobros();
-    renderCobPendientes();
   } catch(err) { toast('Error: '+err.message,'err'); }
 }
 
@@ -3341,14 +3336,11 @@ async function eliminarCobro() {
   const id = document.getElementById('c-id').value; if (!id) return;
   if (!confirm('¿Eliminar cobro '+id+'?')) return;
   try {
-    const cobro = G.cobros.find(c=>c.id_cobro===id);
     await sd('cobros',`id_cobro=eq.${id}`);
     G.cobros = G.cobros.filter(c=>c.id_cobro!==id);
-    if (cobro?.id_sesion && G.sesionesCobradas) G.sesionesCobradas.delete(cobro.id_sesion);
     toast('Cobro eliminado ✓','ok');
     cerrarModal('modal-cobro');
     filtrarCobros();
-    renderCobPendientes();
   } catch(err) { toast('Error: '+err.message,'err'); }
 }
 
