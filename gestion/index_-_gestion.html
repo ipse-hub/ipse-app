@@ -2956,7 +2956,6 @@ async function guardarCobro() {
     }
     cerrarModal('modal-cobro');
     filtrarCobros();
-    renderCobPendientes(); // refrescar lista de pendientes con el nuevo estado
   } catch(err) { toast('Error: '+err.message,'err'); }
 }
 
@@ -2972,7 +2971,6 @@ async function eliminarCobro() {
     toast('Cobro eliminado ✓','ok');
     cerrarModal('modal-cobro');
     filtrarCobros();
-    renderCobPendientes();
   } catch(err) { toast('Error: '+err.message,'err'); }
 }
 
