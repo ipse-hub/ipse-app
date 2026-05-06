@@ -1285,6 +1285,58 @@ textarea.form-control { min-height: 72px; transition: border-color .2s; }
       </div>
     </div>
 
+    <!-- ══ COBRO 360° ══════════════════════════════════════════════════════ -->
+    <div class="page" id="page-cobro360">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+        <button class="p360-back-btn" style="margin-bottom:0" onclick="navigate('cobros')">← Volver a cobros</button>
+        <button class="btn btn-secondary btn-sm" id="cobro360-btn-editar" onclick="editarCobroActual()">✏️ Editar cobro</button>
+      </div>
+      <!-- Cabecera -->
+      <div class="p360-header" id="cobro360-header">
+        <div class="p360-hav" id="cobro360-avatar">💶</div>
+        <div class="p360-hinfo">
+          <div class="p360-hname" id="cobro360-titulo">—</div>
+          <div class="p360-hmeta" id="cobro360-meta">—</div>
+          <div class="p360-hbadges" id="cobro360-badges"></div>
+        </div>
+      </div>
+      <!-- Pestañas -->
+      <div class="p360-tabs">
+        <div class="p360-tab active" onclick="cobro360Tab('resumen',this)">Resumen</div>
+        <div class="p360-tab" onclick="cobro360Tab('sesion',this)">Sesión</div>
+        <div class="p360-tab" onclick="cobro360Tab('paciente',this)">Paciente</div>
+      </div>
+      <!-- RESUMEN -->
+      <div class="p360-panel active" id="cobro360-resumen">
+        <div class="p360-card">
+          <div class="p360-stitle">Datos del cobro</div>
+          <div class="p360-fg" id="cobro360-datos"></div>
+        </div>
+        <div class="p360-card">
+          <div class="p360-stitle">Historial de cobros del paciente</div>
+          <div id="cobro360-historial"></div>
+        </div>
+      </div>
+      <!-- SESIÓN -->
+      <div class="p360-panel" id="cobro360-sesion">
+        <div class="p360-card">
+          <div class="p360-stitle">Sesión vinculada</div>
+          <div class="p360-fg" id="cobro360-ses-datos"></div>
+        </div>
+      </div>
+      <!-- PACIENTE -->
+      <div class="p360-panel" id="cobro360-paciente">
+        <div class="p360-card">
+          <div class="p360-stitle">Datos del paciente</div>
+          <div class="p360-fg" id="cobro360-pac-datos"></div>
+        </div>
+        <div class="p360-card">
+          <div class="p360-stitle">Resumen financiero del paciente</div>
+          <div id="cobro360-pac-financiero"></div>
+        </div>
+      </div>
+    </div>
+
   </div><!-- /content -->
 </main>
 
@@ -2190,26 +2242,6 @@ async function iniciarApp() {
 }
 
 // ═══════════════════════════════════════════════════════
-//  REFRESCO DE SESIONES
-//  Actualiza G.sesiones y G.sesionesCobradas desde Supabase
-//  sin tocar el resto de datos en memoria. Se llama al navegar
-//  a cualquier página que dependa del estado actual de sesiones.
-// ═══════════════════════════════════════════════════════
-async function refrescarSesiones() {
-  try {
-    const [rows, cobrosRows] = await Promise.all([
-      sg('sesiones','order=fecha.desc&limit=2000'),
-      sg('cobros','estado=eq.Confirmado&select=id_sesion')
-    ]);
-    G.sesiones = rows;
-    G.sesionesCobradas = new Set((cobrosRows||[]).map(c=>c.id_sesion).filter(Boolean));
-  } catch(err) {
-    // Silencioso: si falla, se trabaja con los datos que hay
-    console.warn('refrescarSesiones:', err.message);
-  }
-}
-
-// ═══════════════════════════════════════════════════════
 //  HELPERS
 // ═══════════════════════════════════════════════════════
 function nomPac(id) {
@@ -2320,31 +2352,30 @@ function navigate(page) {
   const navEl = document.querySelector(`.nav-item[onclick*="${page}"]`);
   if (navEl) navEl.classList.add('active');
   else {
-    // p360 highlights Pacientes
-    const pacNav = document.querySelector(`.nav-item[onclick*="pacientes"]`);
-    if (pacNav) pacNav.classList.add('active');
+    // cobro360 highlights Cobros; p360/bono360/beca360 highlights Pacientes
+    if (['cobro360'].includes(page)) {
+      const cobNav = document.querySelector(`.nav-item[onclick*="cobros"]`);
+      if (cobNav) cobNav.classList.add('active');
+    } else {
+      const pacNav = document.querySelector(`.nav-item[onclick*="pacientes"]`);
+      if (pacNav) pacNav.classList.add('active');
+    }
   }
-  const titles = {dashboard:'Dashboard',kpis:'KPIs',produccion:'Producción',cobros:'Cobros',pacientes:'Paciente 360°',p360:'Expediente',terapeutas:'Terapeutas',bonos:'Bonos',becas:'Becas',servicios:'Servicios',facturas:'Facturas',agenda:'Agenda'};
+  const titles = {dashboard:'Dashboard',kpis:'KPIs',produccion:'Producción',cobros:'Cobros',cobro360:'Cobro 360°',pacientes:'Paciente 360°',p360:'Expediente',terapeutas:'Terapeutas',bonos:'Bonos',becas:'Becas',servicios:'Servicios',facturas:'Facturas',agenda:'Agenda'};
   document.getElementById('topbar-title').textContent = titles[page]||page;
-  // Páginas que leen G.sesiones necesitan datos frescos antes de renderizar
-  const paginasConSesiones = ['dashboard','produccion','cobros','pacientes','p360','bonos','becas','bono360','beca360','kpis'];
-  if (paginasConSesiones.includes(page)) {
-    refrescarSesiones().then(() => {
-      if (page==='dashboard')  cargarDashboard();
-      if (page==='produccion') filtrarSesiones();  // G.sesiones ya fresco por refrescarSesiones()
-      if (page==='cobros')     cargarCobros();
-      if (page==='pacientes')  renderPacientes();
-      if (page==='bonos')      renderBonos();
-      if (page==='becas')      renderBecas();
-      if (page==='kpis')       cargarKPIs();
-      // p360, bono360, beca360 se repintan al abrir el detalle concreto
-    });
-  }
-  // Páginas sin sesiones: render directo
+  if (page==='produccion') cargarSesiones();
+  if (page==='cobros') cargarCobros();
+  if (page==='pacientes') renderPacientes();
   if (page==='terapeutas') renderTerapeutas();
-  if (page==='servicios')  cargarServicios();
-  if (page==='facturas')   cargarFacturas();
-  if (page==='agenda')     agIniciarSiNecesario();
+  if (page==='bonos') renderBonos();
+  if (page==='becas') renderBecas();
+  if (page==='bono360') {}
+  if (page==='beca360') {}
+  if (page==='cobro360') {}
+  if (page==='servicios') cargarServicios();
+  if (page==='facturas') cargarFacturas();
+  if (page==='agenda') agIniciarSiNecesario();
+  if (page==='kpis') cargarKPIs();
 }
 
 // ═══════════════════════════════════════════════════════
@@ -2897,7 +2928,7 @@ function filtrarCobros() {
   const tbody = document.getElementById('tbody-cobros');
   if (!cobFiltrados.length) { tbody.innerHTML='<tr><td colspan="9" class="empty-state">Sin cobros</td></tr>'; return; }
   tbody.innerHTML = cobFiltrados.map(c=>`
-    <tr onclick="editarCobro('${c.id_cobro}')">
+    <tr onclick="abrirCobro360('${c.id_cobro}')" style="cursor:pointer">
       <td class="mono">${c.id_cobro||'—'}</td>
       <td>${fmtFecha(c.fecha)}</td>
       <td class="strong">${nomPac(c.id_paciente)}</td>
@@ -7088,6 +7119,172 @@ async function abrirBeca360(idBeca) {
   // Reset tabs
   document.querySelectorAll('#page-beca360 .p360-tab').forEach((t,i)=>t.classList.toggle('active',i===0));
   document.querySelectorAll('#page-beca360 .p360-panel').forEach((t,i)=>t.classList.toggle('active',i===0));
+}
+
+// ═══════════════════════════════════════════════════════
+//  COBRO 360°
+// ═══════════════════════════════════════════════════════
+let COB360 = { id: null };
+
+function cobro360Tab(name, el) {
+  document.querySelectorAll('#page-cobro360 .p360-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('#page-cobro360 .p360-panel').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('cobro360-' + name).classList.add('active');
+}
+
+function editarCobroActual() {
+  if (COB360.id) editarCobro(COB360.id);
+}
+
+async function abrirCobro360(idCobro) {
+  COB360.id = idCobro;
+  navigate('cobro360');
+
+  let c = G.cobros.find(x => x.id_cobro === idCobro);
+  if (!c) {
+    try {
+      const rows = await sg('cobros', `id_cobro=eq.${idCobro}`);
+      if (!rows || !rows.length) { toast('Cobro no encontrado', 'err'); return; }
+      c = rows[0];
+      G.cobros.push(c);
+    } catch(e) { toast('Error cargando cobro', 'err'); return; }
+  }
+
+  const pac = G.pacientes.find(p => p.id_paciente === c.id_paciente);
+  const nomPaciente = pac ? ((pac.nombre||'')+' '+(pac.apellidos||'')).trim() : (c.id_paciente||'—');
+
+  // ── Cabecera ──
+  // Icono según método de pago
+  const iconoMetodo = {Efectivo:'💵', Bizum:'📱', Transferencia:'🏦'}[c.metodo_pago] || '💶';
+  document.getElementById('cobro360-avatar').textContent = iconoMetodo;
+  document.getElementById('cobro360-titulo').textContent = (c.id_cobro||'—') + ' · ' + nomPaciente;
+  document.getElementById('cobro360-meta').textContent = [fmtFecha(c.fecha), fmtEur(c.importe), c.metodo_pago].filter(Boolean).join(' · ');
+
+  const badges = [];
+  badges.push(badgeEstado(c.estado));
+  if (c.metodo_pago) {
+    const colMetodo = {Efectivo:'var(--green-pale)',Bizum:'var(--cyan-pale)',Transferencia:'var(--blue-pale)'}[c.metodo_pago]||'var(--cream)';
+    const inkMetodo = {Efectivo:'var(--green-dark)',Bizum:'#006a87',Transferencia:'var(--blue)'}[c.metodo_pago]||'var(--ink)';
+    badges.push(`<span style="background:${colMetodo};color:${inkMetodo};border-radius:4px;padding:2px 7px;font-size:11px;font-weight:700">${c.metodo_pago}</span>`);
+  }
+  document.getElementById('cobro360-badges').innerHTML = badges.join('');
+
+  // ── Tab Resumen: datos del cobro ──
+  // Calcular días transcurridos
+  const diasDesdeCobro = c.fecha ? Math.floor((new Date() - new Date(c.fecha)) / 86400000) : null;
+  document.getElementById('cobro360-datos').innerHTML = [
+    p360Field('ID Cobro', c.id_cobro),
+    p360Field('Fecha', fmtFecha(c.fecha) + (diasDesdeCobro !== null ? ` <span style="font-size:11px;color:var(--ink-muted)">(hace ${diasDesdeCobro} días)</span>` : '')),
+    p360Field('Paciente', `<span onclick="abrirP360('${c.id_paciente}')" style="color:var(--blue);cursor:pointer;text-decoration:underline dotted">${nomPaciente}</span>`),
+    p360Field('Importe', `<span style="font-size:16px;font-weight:700;color:var(--blue)">${fmtEur(c.importe)}</span>`),
+    p360Field('Método', c.metodo_pago||'—'),
+    p360Field('Estado', badgeEstado(c.estado)),
+    p360Field('Sesión vinculada', c.id_sesion || '—'),
+    p360Field('Notas', c.notas||'—'),
+  ].join('');
+
+  // ── Tab Resumen: historial de cobros del mismo paciente ──
+  const historial = G.cobros
+    .filter(x => x.id_paciente === c.id_paciente)
+    .sort((a,b) => (b.fecha||'').localeCompare(a.fecha||''));
+
+  const totalCobrado = historial.filter(x=>x.estado==='Confirmado').reduce((s,x)=>s+(parseFloat(x.importe)||0),0);
+
+  if (!historial.length) {
+    document.getElementById('cobro360-historial').innerHTML = '<p style="color:var(--ink-muted);font-size:13px">Sin historial de cobros.</p>';
+  } else {
+    document.getElementById('cobro360-historial').innerHTML = `
+      <div style="display:flex;gap:10px;margin-bottom:14px">
+        <div style="background:var(--cyan-pale);border-radius:8px;padding:10px 16px;flex:1;text-align:center">
+          <div style="font-size:18px;font-weight:700;color:#006a87">${fmtEur(totalCobrado)}</div>
+          <div style="font-size:11px;color:var(--ink-muted)">TOTAL COBRADO</div>
+        </div>
+        <div style="background:var(--blue-pale);border-radius:8px;padding:10px 16px;flex:1;text-align:center">
+          <div style="font-size:18px;font-weight:700;color:var(--blue)">${historial.length}</div>
+          <div style="font-size:11px;color:var(--ink-muted)">COBROS</div>
+        </div>
+      </div>
+      <table style="width:100%;font-size:13px;border-collapse:collapse">
+        <thead><tr style="background:var(--blue-pale)">
+          <th style="padding:7px 8px;text-align:left;font-size:11px;text-transform:uppercase;color:var(--blue)">ID</th>
+          <th style="padding:7px 8px;text-align:left;font-size:11px;text-transform:uppercase;color:var(--blue)">Fecha</th>
+          <th style="padding:7px 8px;text-align:left;font-size:11px;text-transform:uppercase;color:var(--blue)">Importe</th>
+          <th style="padding:7px 8px;text-align:left;font-size:11px;text-transform:uppercase;color:var(--blue)">Método</th>
+          <th style="padding:7px 8px;text-align:left;font-size:11px;text-transform:uppercase;color:var(--blue)">Estado</th>
+        </tr></thead>
+        <tbody>${historial.map(h => `
+          <tr style="border-bottom:1px solid var(--border);${h.id_cobro===idCobro?'background:var(--blue-pale);font-weight:600':''}" onclick="abrirCobro360('${h.id_cobro}')" style="cursor:pointer">
+            <td style="padding:7px 8px;font-family:monospace;font-size:12px">${h.id_cobro}</td>
+            <td style="padding:7px 8px">${fmtFecha(h.fecha)}</td>
+            <td style="padding:7px 8px;font-family:monospace">${fmtEur(h.importe)}</td>
+            <td style="padding:7px 8px">${h.metodo_pago||'—'}</td>
+            <td style="padding:7px 8px">${badgeEstado(h.estado)}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>`;
+  }
+
+  // ── Tab Sesión ──
+  const ses = c.id_sesion ? G.sesiones.find(s => s.id_cita === c.id_sesion) : null;
+  if (ses) {
+    const ter = G.terapeutas.find(t => t.id_terapeuta === ses.id_terapeuta);
+    document.getElementById('cobro360-ses-datos').innerHTML = [
+      p360Field('ID Sesión', ses.id_cita),
+      p360Field('Fecha', fmtFecha(ses.fecha)),
+      p360Field('Hora', ses.hora||'—'),
+      p360Field('Terapeuta', ter ? ter.nombre : (ses.id_terapeuta||'—')),
+      p360Field('Estado', badgeEstado(ses.estado)),
+      p360Field('Tipo financiación', ses.financiacion_tipo||'SUELTA'),
+      p360Field('Importe sesión', fmtEur(ses.importe)),
+      p360Field('Cerrada', ses.cerrada||'No'),
+      p360Field('Notas', ses.notas||'—'),
+    ].join('');
+  } else if (c.id_sesion) {
+    document.getElementById('cobro360-ses-datos').innerHTML = `<p style="color:var(--ink-muted);font-size:13px">Sesión <code>${c.id_sesion}</code> no encontrada en caché local.</p>`;
+  } else {
+    document.getElementById('cobro360-ses-datos').innerHTML = '<p style="color:var(--ink-muted);font-size:13px">Este cobro no tiene sesión vinculada.</p>';
+  }
+
+  // ── Tab Paciente ──
+  if (pac) {
+    document.getElementById('cobro360-pac-datos').innerHTML = [
+      p360Field('Nombre', `<span onclick="abrirP360('${pac.id_paciente}')" style="color:var(--blue);cursor:pointer;text-decoration:underline dotted">${nomPaciente}</span>`),
+      p360Field('ID', pac.id_paciente),
+      p360Field('Teléfono', pac.telefono||'—'),
+      p360Field('Email', pac.email||'—'),
+      p360Field('Terapeuta', nomTerapeuta(pac.terapeuta_principal)),
+      p360Field('Estado', badgeEstado(pac.estado_paciente||pac.estado)),
+    ].join('');
+
+    // Resumen financiero
+    const cobsPac = G.cobros.filter(x => x.id_paciente === pac.id_paciente);
+    const totalPac = cobsPac.filter(x=>x.estado==='Confirmado').reduce((s,x)=>s+(parseFloat(x.importe)||0),0);
+    const pendPac  = G.sesiones.filter(s=>s.id_paciente===pac.id_paciente&&s.estado==='Hecha'&&s.cerrada!=='Sí'&&s.financiacion_tipo!=='BONO'&&s.financiacion_tipo!=='BECA').reduce((s,x)=>s+(parseFloat(x.importe)||0),0);
+    const nCobPac  = cobsPac.filter(x=>x.estado==='Confirmado').length;
+    document.getElementById('cobro360-pac-financiero').innerHTML = `
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
+        <div style="text-align:center;background:var(--cyan-pale);border-radius:8px;padding:12px">
+          <div style="font-size:18px;font-weight:700;color:#006a87">${fmtEur(totalPac)}</div>
+          <div style="font-size:11px;color:var(--ink-muted)">COBRADO TOTAL</div>
+        </div>
+        <div style="text-align:center;background:${pendPac>0?'var(--red-pale)':'var(--green-pale)'};border-radius:8px;padding:12px">
+          <div style="font-size:18px;font-weight:700;color:${pendPac>0?'var(--red)':'var(--green-dark)'}">${fmtEur(pendPac)}</div>
+          <div style="font-size:11px;color:${pendPac>0?'var(--red)':'var(--green-dark)'}">PENDIENTE</div>
+        </div>
+        <div style="text-align:center;background:var(--blue-pale);border-radius:8px;padding:12px">
+          <div style="font-size:18px;font-weight:700;color:var(--blue)">${nCobPac}</div>
+          <div style="font-size:11px;color:var(--ink-muted)">Nº COBROS</div>
+        </div>
+      </div>`;
+  } else {
+    document.getElementById('cobro360-pac-datos').innerHTML = '<p style="color:var(--ink-muted);font-size:13px">Paciente no encontrado.</p>';
+    document.getElementById('cobro360-pac-financiero').innerHTML = '';
+  }
+
+  // Reset tabs
+  document.querySelectorAll('#page-cobro360 .p360-tab').forEach((t,i) => t.classList.toggle('active', i===0));
+  document.querySelectorAll('#page-cobro360 .p360-panel').forEach((t,i) => t.classList.toggle('active', i===0));
 }
 
 </script>
