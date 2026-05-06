@@ -872,10 +872,25 @@ textarea.form-control { min-height: 72px; transition: border-color .2s; }
 
       <!-- PANEL: PENDIENTES -->
       <div id="cob-panel-pendientes" style="display:none;padding-top:16px">
-        <div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:14px 20px;margin-bottom:16px;display:flex;align-items:center;gap:16px;flex-wrap:wrap">
-          <span style="font-size:13px;font-weight:600;color:var(--ink-muted)">Filtrar por servicio:</span>
-          <div id="cob-pend-filtros" style="display:flex;gap:8px;flex-wrap:wrap"></div>
-          <span id="cob-pend-resumen" style="font-size:12px;color:var(--ink-muted);margin-left:auto"></span>
+        <!-- Barra de filtros: buscador + chips de servicio -->
+        <div style="background:var(--white);border:1px solid var(--border);border-radius:16px;padding:16px 20px;margin-bottom:16px;box-shadow:var(--shadow)">
+          <!-- Buscador de paciente -->
+          <div style="position:relative;margin-bottom:14px">
+            <span style="position:absolute;left:13px;top:50%;transform:translateY(-50%);font-size:15px;pointer-events:none;color:var(--ink-muted)">🔍</span>
+            <input id="cob-pend-busq" type="text" class="form-control"
+              placeholder="Buscar paciente…"
+              oninput="cobPendFiltrar()"
+              style="padding-left:38px;font-size:14px;border-radius:10px;width:100%"
+              autocomplete="off">
+            <button id="cob-pend-busq-clear" onclick="cobPendLimpiarBusq()"
+              style="display:none;position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:16px;color:var(--ink-muted);line-height:1">✕</button>
+          </div>
+          <!-- Chips de servicio -->
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+            <span style="font-size:11px;font-weight:700;color:var(--ink-muted);text-transform:uppercase;letter-spacing:.5px;white-space:nowrap">Servicio</span>
+            <div id="cob-pend-filtros" style="display:flex;gap:6px;flex-wrap:wrap"></div>
+            <span id="cob-pend-resumen" style="font-size:12px;color:var(--ink-muted);margin-left:auto"></span>
+          </div>
         </div>
         <div id="cob-pendientes-lista">
           <div class="loading-state"><div class="spinner"></div></div>
@@ -2967,84 +2982,83 @@ function cobrosIrAPendientes() {
 
 // ── Render bloque de pendientes agrupado por paciente ──
 function renderCobPendientes(filtroServicio) {
-  filtroServicio = filtroServicio || '';
+  filtroServicio = filtroServicio != null ? filtroServicio : (window._cobPendSrv || '');
+  window._cobPendSrv = filtroServicio;
+
   const contenedor = document.getElementById('cob-pendientes-lista');
   if (!contenedor) return;
 
-  // ── Recoger todas las sesiones pendientes (no BONO, no BECA) ──
+  // ── Datos base ──
   const todasSesPend = G.sesiones.filter(s =>
-    s.estado === 'Hecha' &&
-    !esCobrada(s) &&
-    s.financiacion_tipo !== 'BONO' &&
-    s.financiacion_tipo !== 'BECA'
+    s.estado === 'Hecha' && !esCobrada(s) &&
+    s.financiacion_tipo !== 'BONO' && s.financiacion_tipo !== 'BECA'
   );
-
-  // ── Bonos activos sin confirmar cobro ──
   const bonosPend = (G.bonos||[]).filter(b =>
     normCobradoBono(b.cobrado) !== 'Cobrado' && b.estado === 'Activo'
   );
 
-  // ── Construir lista de servicios disponibles desde sesiones reales ──
+  // ── Chips de servicio ──
   const serviciosEnSes = [...new Set(todasSesPend.map(s => s.financiacion_tipo || 'SUELTA'))].sort();
   const todosServicios = bonosPend.length
     ? [...new Set([...serviciosEnSes, 'BONO'])].sort()
     : serviciosEnSes;
 
-  // ── Renderizar botones de filtro ──
+  const coloresSrv = {
+    ADECCO: { bg:'var(--cyan-pale)',  ink:'#006a87',        act:'#006a87' },
+    SUELTA: { bg:'var(--red-pale)',   ink:'var(--red)',      act:'var(--red)' },
+    BONO:   { bg:'#fff3e0',           ink:'#e67e00',         act:'#e67e00' },
+  };
+  const cDef = { bg:'var(--blue-pale)', ink:'var(--blue)', act:'var(--blue)' };
+
   const filtrosEl = document.getElementById('cob-pend-filtros');
   if (filtrosEl) {
-    const opciones = ['', ...todosServicios];
-    filtrosEl.innerHTML = opciones.map(srv => {
-      const label = srv === '' ? 'Todos' : srv;
+    filtrosEl.innerHTML = ['', ...todosServicios].map(srv => {
+      const label  = srv === '' ? 'Todos' : srv;
       const activo = filtroServicio === srv;
+      const c = coloresSrv[srv] || cDef;
+      const bg    = activo ? c.act   : 'var(--white)';
+      const color = activo ? '#fff'  : 'var(--ink)';
+      const border= activo ? c.act   : 'var(--border)';
       return `<button onclick="renderCobPendientes('${srv}')"
-        style="padding:5px 14px;border-radius:99px;border:1.5px solid ${activo?'var(--blue)':'var(--border)'};
-               background:${activo?'var(--blue)':'var(--white)'};color:${activo?'#fff':'var(--ink)'};
-               font-size:12px;font-weight:${activo?'700':'500'};cursor:pointer;white-space:nowrap">
+        style="padding:5px 14px;border-radius:99px;border:1.5px solid ${border};
+               background:${bg};color:${color};font-size:12px;
+               font-weight:${activo?'700':'500'};cursor:pointer;white-space:nowrap;
+               transition:all .15s">
         ${label}
       </button>`;
     }).join('');
   }
 
   // ── Aplicar filtro de servicio ──
-  const sesFiltradas = filtroServicio && filtroServicio !== 'BONO'
+  const sesFiltSrv = filtroServicio && filtroServicio !== 'BONO'
     ? todasSesPend.filter(s => (s.financiacion_tipo || 'SUELTA') === filtroServicio)
     : todasSesPend;
-  const bonosFiltrados = (!filtroServicio || filtroServicio === 'BONO') ? bonosPend : [];
+  const bonosFiltSrv = (!filtroServicio || filtroServicio === 'BONO') ? bonosPend : [];
 
-  // ── Agrupar sesiones por paciente ──
+  // ── Agrupar por paciente ──
   const byPac = {};
-  sesFiltradas.forEach(s => {
-    if (!byPac[s.id_paciente]) byPac[s.id_paciente] = { sesiones: [], bonos: [] };
+  sesFiltSrv.forEach(s => {
+    if (!byPac[s.id_paciente]) byPac[s.id_paciente] = { sesiones:[], bonos:[] };
     byPac[s.id_paciente].sesiones.push(s);
   });
-  // Añadir bonos al paciente correspondiente
-  bonosFiltrados.forEach(b => {
-    if (!byPac[b.id_paciente]) byPac[b.id_paciente] = { sesiones: [], bonos: [] };
+  bonosFiltSrv.forEach(b => {
+    if (!byPac[b.id_paciente]) byPac[b.id_paciente] = { sesiones:[], bonos:[] };
     byPac[b.id_paciente].bonos.push(b);
   });
 
-  const pacientes = Object.keys(byPac);
-  const totalSes  = sesFiltradas.reduce((s,x)=>s+(parseFloat(x.importe)||0),0);
-  const totalBon  = bonosFiltrados.reduce((s,b)=>s+(parseFloat(b.importe_anticipo)||0),0);
+  // ── Ordenar pacientes alfabéticamente ──
+  let pacOrdenados = Object.keys(byPac).sort((a,b) => {
+    const na = nomPacFull(a).toUpperCase(), nb = nomPacFull(b).toUpperCase();
+    return na < nb ? -1 : na > nb ? 1 : 0;
+  });
 
-  // Badge
+  // ── Actualizar badge ──
   const badge = document.getElementById('cob-pend-badge');
-  if (badge) {
-    const n = pacientes.length;
-    badge.textContent = n; badge.style.display = n ? '' : 'none';
-  }
+  if (badge) { badge.textContent = pacOrdenados.length; badge.style.display = pacOrdenados.length ? '' : 'none'; }
 
-  // Resumen
-  const resumenEl = document.getElementById('cob-pend-resumen');
-  if (resumenEl) {
-    const partes = [];
-    if (sesFiltradas.length) partes.push(sesFiltradas.length + ' ses. · ' + fmtEur(totalSes));
-    if (bonosFiltrados.length) partes.push(bonosFiltrados.length + ' bonos');
-    resumenEl.textContent = pacientes.length ? pacientes.length + ' pacientes · ' + partes.join(' · ') : '';
-  }
-
-  if (!pacientes.length) {
+  // ── Si no hay nada, mostrar estado vacío ──
+  if (!pacOrdenados.length) {
+    document.getElementById('cob-pend-resumen').textContent = '';
     contenedor.innerHTML = `
       <div style="text-align:center;padding:48px 24px;background:var(--white);border-radius:16px;border:1px solid var(--border)">
         <div style="font-size:40px;margin-bottom:12px">✅</div>
@@ -3054,28 +3068,20 @@ function renderCobPendientes(filtroServicio) {
     return;
   }
 
-  // ── Ordenar pacientes alfabéticamente ──
-  const pacOrdenados = pacientes.sort((a,b) => {
-    const na = nomPacFull(a).toUpperCase();
-    const nb = nomPacFull(b).toUpperCase();
-    return na < nb ? -1 : na > nb ? 1 : 0;
-  });
-
-  // ── Badge de servicio con color ──
+  // ── Helpers ──
   function badgeSrv(tipo) {
-    const cfg = {
-      'ADECCO':  { bg:'var(--cyan-pale)',  color:'#006a87' },
-      'SUELTA':  { bg:'var(--red-pale)',   color:'var(--red)' },
-      'BONO':    { bg:'#fff3e0',           color:'#e67e00' },
-    };
-    const c = cfg[tipo] || { bg:'var(--blue-pale)', color:'var(--blue)' };
-    return `<span style="background:${c.bg};color:${c.color};border-radius:4px;padding:1px 7px;font-size:10px;font-weight:700">${tipo}</span>`;
+    const c = coloresSrv[tipo] || cDef;
+    return `<span style="background:${c.bg};color:${c.ink};border-radius:4px;padding:1px 7px;font-size:10px;font-weight:700">${tipo}</span>`;
   }
 
-  contenedor.innerHTML = `<div style="display:flex;flex-direction:column;gap:10px">
+  // ── Renderizar todas las tarjetas en el DOM (ocultas o visibles) ──
+  const totalSesPend = sesFiltSrv.reduce((s,x)=>s+(parseFloat(x.importe)||0),0);
+  const resumenEl = document.getElementById('cob-pend-resumen');
+
+  contenedor.innerHTML = `<div id="cob-pend-cards" style="display:flex;flex-direction:column;gap:10px">
   ${pacOrdenados.map(idPac => {
     const data = byPac[idPac];
-    const pac = G.pacientes.find(p=>p.id_paciente===idPac);
+    const pac  = G.pacientes.find(p=>p.id_paciente===idPac);
     const nomPaciente = pac ? ((pac.nombre||'')+' '+(pac.apellidos||'')).trim() : idPac;
     const initials = pac ? ((pac.nombre||'').charAt(0)+(pac.apellidos||'').charAt(0)).toUpperCase() : '?';
     const ter = pac ? G.terapeutas.find(t=>t.id_terapeuta===pac.terapeuta_principal) : null;
@@ -3083,77 +3089,130 @@ function renderCobPendientes(filtroServicio) {
                    + data.bonos.reduce((s,b)=>s+(parseFloat(b.importe_anticipo)||0),0);
     const sesOrd = [...data.sesiones].sort((a,b)=>(a.fecha||'').localeCompare(b.fecha||''));
     const diasMax = sesOrd.length
-      ? Math.max(...sesOrd.map(s=>s.fecha?Math.floor((new Date()-new Date(s.fecha))/86400000):0))
-      : null;
-    const alertaColor = diasMax===null ? 'var(--ink-muted)' : diasMax>30 ? 'var(--red)' : diasMax>14 ? '#e67e00' : 'var(--ink-muted)';
+      ? Math.max(...sesOrd.map(s=>s.fecha?Math.floor((new Date()-new Date(s.fecha))/86400000):0)) : null;
+    const alertaColor = diasMax===null?'var(--ink-muted)':diasMax>30?'var(--red)':diasMax>14?'#e67e00':'var(--ink-muted)';
 
     return `
-      <div style="background:var(--white);border:1px solid var(--border);border-radius:14px;padding:16px 20px;box-shadow:var(--shadow)">
-        <!-- Cabecera paciente -->
-        <div style="display:flex;align-items:center;gap:14px;margin-bottom:12px">
-          <div style="width:40px;height:40px;background:var(--blue-pale);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:var(--blue);flex-shrink:0">${initials}</div>
-          <div style="flex:1">
-            <div style="font-weight:700;font-size:15px;color:var(--ink)">${nomPaciente}</div>
-            <div style="font-size:12px;color:var(--ink-muted)">
-              ${ter?ter.nombre:'—'}
-              ${diasMax!==null ? ' · <span style="color:'+alertaColor+';font-weight:600">más antigua hace '+diasMax+'d</span>' : ''}
-            </div>
-          </div>
-          <div style="text-align:right;flex-shrink:0">
-            <div style="font-size:20px;font-weight:700;color:var(--blue)">${fmtEur(totalPac)}</div>
-            <button class="btn btn-secondary btn-sm" style="margin-top:4px;font-size:11px" onclick="abrirP360('${idPac}')">Expediente →</button>
+    <div class="cob-pend-card" data-nombre="${nomPaciente.toLowerCase()}" style="background:var(--white);border:1px solid var(--border);border-radius:14px;padding:16px 20px;box-shadow:var(--shadow)">
+      <div style="display:flex;align-items:center;gap:14px;margin-bottom:${sesOrd.length||data.bonos.length?'12':'0'}px">
+        <div style="width:40px;height:40px;background:var(--blue-pale);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:var(--blue);flex-shrink:0">${initials}</div>
+        <div style="flex:1;min-width:0">
+          <div class="cob-pend-nombre" style="font-weight:700;font-size:15px;color:var(--ink)">${nomPaciente}</div>
+          <div style="font-size:12px;color:var(--ink-muted)">
+            ${ter?ter.nombre:'—'}${diasMax!==null?' · <span style="color:'+alertaColor+';font-weight:600">más antigua hace '+diasMax+'d</span>':''}
           </div>
         </div>
-
-        <!-- Tabla de sesiones -->
-        ${sesOrd.length ? `
-        <table style="width:100%;font-size:12px;border-collapse:collapse;border-top:1px solid var(--border)">
-          <tbody>
-          ${sesOrd.map(s => {
-            const dias = s.fecha?Math.floor((new Date()-new Date(s.fecha))/86400000):'?';
-            const tipo = s.financiacion_tipo||'SUELTA';
-            return `<tr style="border-top:1px solid var(--border)">
-              <td style="padding:6px 4px;font-family:monospace;color:var(--ink-muted);font-size:11px">${s.id_cita}</td>
-              <td style="padding:6px 4px">${fmtFecha(s.fecha)}</td>
-              <td style="padding:6px 4px;color:var(--ink-muted);font-size:11px">${dias}d</td>
-              <td style="padding:6px 4px">${badgeSrv(tipo)}</td>
-              <td style="padding:6px 4px;text-align:right;font-weight:600">${fmtEur(s.importe)}</td>
-              <td style="padding:6px 4px;text-align:right">
-                <button class="btn btn-primary btn-sm" style="font-size:11px;padding:3px 10px"
-                  onclick="cobrarSesionRapido('${s.id_cita}','${idPac}','${s.importe||0}')">+ Cobrar</button>
-              </td>
-            </tr>`;
-          }).join('')}
-          </tbody>
-        </table>` : ''}
-
-        <!-- Bonos sin confirmar -->
-        ${data.bonos.length ? `
-        <div style="${sesOrd.length?'border-top:1px solid var(--border);margin-top:8px;padding-top:8px':''}">
-        ${data.bonos.map(b => {
-          const anticipo = parseFloat(b.importe_anticipo)||0;
-          const cons = parseInt(b.sesiones_consumidas)||0;
-          const tot  = parseInt(b.sesiones_totales)||0;
-          const pct  = tot>0 ? Math.round(cons/tot*100) : 0;
-          return `<div style="display:flex;align-items:center;gap:12px;padding:6px 4px">
-            <span style="font-size:14px">🎟</span>
-            <div style="flex:1">
-              <span style="font-size:12px;font-weight:600;color:var(--ink)">${b.id_bono}</span>
-              <span style="font-size:12px;color:var(--ink-muted);margin-left:8px">${cons}/${tot} ses. · ${pct}%</span>
-              <div style="margin-top:4px;background:var(--border);border-radius:99px;height:4px;width:120px;overflow:hidden;display:inline-block;vertical-align:middle;margin-left:8px">
-                <div style="width:${pct}%;background:#e67e00;height:100%;border-radius:99px"></div>
-              </div>
+        <div style="text-align:right;flex-shrink:0">
+          <div style="font-size:20px;font-weight:700;color:var(--blue)">${fmtEur(totalPac)}</div>
+          <button class="btn btn-secondary btn-sm" style="margin-top:4px;font-size:11px" onclick="abrirP360('${idPac}')">Expediente →</button>
+        </div>
+      </div>
+      ${sesOrd.length ? `
+      <table style="width:100%;font-size:12px;border-collapse:collapse;border-top:1px solid var(--border)">
+        <tbody>${sesOrd.map(s => {
+          const dias = s.fecha?Math.floor((new Date()-new Date(s.fecha))/86400000):'?';
+          return `<tr style="border-top:1px solid var(--border)">
+            <td style="padding:6px 4px;font-family:monospace;color:var(--ink-muted);font-size:11px">${s.id_cita}</td>
+            <td style="padding:6px 4px">${fmtFecha(s.fecha)}</td>
+            <td style="padding:6px 4px;color:var(--ink-muted);font-size:11px">${dias}d</td>
+            <td style="padding:6px 4px">${badgeSrv(s.financiacion_tipo||'SUELTA')}</td>
+            <td style="padding:6px 4px;text-align:right;font-weight:600">${fmtEur(s.importe)}</td>
+            <td style="padding:6px 4px;text-align:right">
+              <button class="btn btn-primary btn-sm" style="font-size:11px;padding:3px 10px"
+                onclick="cobrarSesionRapido('${s.id_cita}','${idPac}','${s.importe||0}')">+ Cobrar</button>
+            </td>
+          </tr>`;
+        }).join('')}</tbody>
+      </table>` : ''}
+      ${data.bonos.length ? `
+      <div style="${sesOrd.length?'border-top:1px solid var(--border);margin-top:8px;padding-top:8px':''}">
+      ${data.bonos.map(b => {
+        const anticipo = parseFloat(b.importe_anticipo)||0;
+        const cons = parseInt(b.sesiones_consumidas)||0;
+        const tot  = parseInt(b.sesiones_totales)||0;
+        const pct  = tot>0?Math.round(cons/tot*100):0;
+        return `<div style="display:flex;align-items:center;gap:12px;padding:6px 4px">
+          <span style="font-size:14px">🎟</span>
+          <div style="flex:1">
+            <span style="font-size:12px;font-weight:600;color:var(--ink)">${b.id_bono}</span>
+            <span style="font-size:12px;color:var(--ink-muted);margin-left:8px">${cons}/${tot} ses. · ${pct}%</span>
+            <div style="display:inline-block;vertical-align:middle;margin-left:8px;background:var(--border);border-radius:99px;height:4px;width:100px;overflow:hidden">
+              <div style="width:${pct}%;background:#e67e00;height:100%;border-radius:99px"></div>
             </div>
-            <div style="text-align:right">
-              ${anticipo>0?`<span style="font-size:13px;font-weight:700;color:#e67e00">${fmtEur(anticipo)}</span>`:'<span style="font-size:12px;color:var(--ink-muted)">—</span>'}
-              <button class="btn btn-secondary btn-sm" style="margin-left:8px;font-size:11px" onclick="abrirBono360('${b.id_bono}')">Ver bono →</button>
-            </div>
-          </div>`;
-        }).join('')}
-        </div>` : ''}
-      </div>`;
+          </div>
+          <div style="text-align:right">
+            ${anticipo>0?`<span style="font-size:13px;font-weight:700;color:#e67e00">${fmtEur(anticipo)}</span>`:'<span style="font-size:12px;color:var(--ink-muted)">—</span>'}
+            <button class="btn btn-secondary btn-sm" style="margin-left:8px;font-size:11px" onclick="abrirBono360('${b.id_bono}')">Ver bono →</button>
+          </div>
+        </div>`;
+      }).join('')}
+      </div>` : ''}
+    </div>`;
   }).join('')}
+  </div>
+  <div id="cob-pend-empty-busq" style="display:none;text-align:center;padding:40px 24px;background:var(--white);border-radius:16px;border:1px solid var(--border);margin-top:10px">
+    <div style="font-size:32px;margin-bottom:10px">🔍</div>
+    <div style="font-size:14px;font-weight:600;color:var(--ink-muted)">Ningún paciente coincide</div>
   </div>`;
+
+  // Actualizar resumen
+  const totalSes = sesFiltSrv.reduce((s,x)=>s+(parseFloat(x.importe)||0),0);
+  if (resumenEl) {
+    const partes = [];
+    if (sesFiltSrv.length)   partes.push(sesFiltSrv.length + ' ses. · ' + fmtEur(totalSes));
+    if (bonosFiltSrv.length) partes.push(bonosFiltSrv.length + ' bono' + (bonosFiltSrv.length!==1?'s':''));
+    resumenEl.textContent = pacOrdenados.length + ' pac. · ' + partes.join(' · ');
+  }
+
+  // Aplicar filtro de búsqueda si ya hay texto
+  cobPendFiltrar();
+}
+
+// ── Live search sobre las tarjetas ya renderizadas ──
+function cobPendFiltrar() {
+  const q = ((document.getElementById('cob-pend-busq')||{}).value||'').toLowerCase().trim();
+  const cards = document.querySelectorAll('.cob-pend-card');
+  const clearBtn = document.getElementById('cob-pend-busq-clear');
+  if (clearBtn) clearBtn.style.display = q ? '' : 'none';
+
+  let visibles = 0;
+  cards.forEach(card => {
+    const nombre = (card.dataset.nombre||'');
+    const match  = !q || nombre.includes(q);
+    card.style.display = match ? '' : 'none';
+
+    // Highlight del texto buscado
+    const nomEl = card.querySelector('.cob-pend-nombre');
+    if (nomEl) {
+      if (q && match) {
+        const raw = nomEl.textContent;
+        const idx = raw.toLowerCase().indexOf(q);
+        if (idx >= 0) {
+          nomEl.innerHTML = raw.slice(0,idx)
+            + '<mark style="background:#fef08a;border-radius:3px;padding:0 2px">'
+            + raw.slice(idx, idx+q.length)
+            + '</mark>'
+            + raw.slice(idx+q.length);
+        }
+      } else {
+        nomEl.textContent = nomEl.textContent; // reset highlight
+        // Restaurar texto limpio
+        const raw = card.dataset.nombre;
+        const pac = G.pacientes.find(p=>(((p.nombre||'')+' '+(p.apellidos||'')).trim().toLowerCase())===raw);
+        if (pac) nomEl.textContent = ((pac.nombre||'')+' '+(pac.apellidos||'')).trim();
+      }
+    }
+    if (match) visibles++;
+  });
+
+  const emptyEl = document.getElementById('cob-pend-empty-busq');
+  if (emptyEl) emptyEl.style.display = (q && visibles===0) ? '' : 'none';
+}
+
+function cobPendLimpiarBusq() {
+  const inp = document.getElementById('cob-pend-busq');
+  if (inp) { inp.value = ''; inp.focus(); }
+  cobPendFiltrar();
 }
 // ── Cobro rápido desde lista de pendientes ──
 function cobrarSesionRapido(idSesion, idPaciente, importe) {
