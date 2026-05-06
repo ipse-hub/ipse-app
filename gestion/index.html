@@ -872,12 +872,10 @@ textarea.form-control { min-height: 72px; transition: border-color .2s; }
 
       <!-- PANEL: PENDIENTES -->
       <div id="cob-panel-pendientes" style="display:none;padding-top:16px">
-        <div style="background:var(--red-pale);border:1px solid #f5c6c3;border-radius:12px;padding:14px 18px;margin-bottom:20px;display:flex;align-items:center;gap:12px">
-          <span style="font-size:22px">⚠️</span>
-          <div>
-            <div style="font-size:14px;font-weight:700;color:var(--red)">Pacientes con sesiones sin cobrar</div>
-            <div style="font-size:12px;color:var(--ink-muted);margin-top:2px">Solo sesiones privadas sueltas (SUELTA / ADECCO). Los bonos y becas gestionan su propio cobro.</div>
-          </div>
+        <div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:14px 20px;margin-bottom:16px;display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+          <span style="font-size:13px;font-weight:600;color:var(--ink-muted)">Filtrar por servicio:</span>
+          <div id="cob-pend-filtros" style="display:flex;gap:8px;flex-wrap:wrap"></div>
+          <span id="cob-pend-resumen" style="font-size:12px;color:var(--ink-muted);margin-left:auto"></span>
         </div>
         <div id="cob-pendientes-lista">
           <div class="loading-state"><div class="spinner"></div></div>
@@ -2968,165 +2966,195 @@ function cobrosIrAPendientes() {
 }
 
 // ── Render bloque de pendientes agrupado por paciente ──
-function renderCobPendientes() {
+function renderCobPendientes(filtroServicio) {
+  filtroServicio = filtroServicio || '';
   const contenedor = document.getElementById('cob-pendientes-lista');
   if (!contenedor) return;
 
-  // ── Grupo 1: ADECCO — sesiones hechas no cerradas ──
-  const sesAdecco = G.sesiones.filter(s =>
-    s.estado === 'Hecha' && !esCobrada(s) && s.financiacion_tipo === 'ADECCO'
+  // ── Recoger todas las sesiones pendientes (no BONO, no BECA) ──
+  const todasSesPend = G.sesiones.filter(s =>
+    s.estado === 'Hecha' &&
+    !esCobrada(s) &&
+    s.financiacion_tipo !== 'BONO' &&
+    s.financiacion_tipo !== 'BECA'
   );
 
-  // ── Grupo 2: SUELTA — sesiones privadas sueltas sin cobro ──
-  const sesSuelta = G.sesiones.filter(s =>
-    s.estado === 'Hecha' && !esCobrada(s) &&
-    (s.financiacion_tipo === 'SUELTA' || !s.financiacion_tipo)
-  );
-
-  // ── Grupo 3: BONOS sin confirmar cobro (cobrado = Pendiente/null, estado Activo) ──
+  // ── Bonos activos sin confirmar cobro ──
   const bonosPend = (G.bonos||[]).filter(b =>
     normCobradoBono(b.cobrado) !== 'Cobrado' && b.estado === 'Activo'
-  ).sort((a,b) => nomPacFull(a.id_paciente).localeCompare(nomPacFull(b.id_paciente)));
+  );
 
-  const totalSuelta  = sesSuelta.reduce((s,x)=>s+(parseFloat(x.importe)||0),0);
-  const totalAdecco  = sesAdecco.reduce((s,x)=>s+(parseFloat(x.importe)||0),0);
-  const totalBonos   = bonosPend.reduce((s,b)=>s+(parseFloat(b.importe_anticipo)||0),0);
-  const nProblemas   = (sesAdecco.length>0?1:0) + (sesSuelta.length>0?1:0) + bonosPend.length;
+  // ── Construir lista de servicios disponibles desde sesiones reales ──
+  const serviciosEnSes = [...new Set(todasSesPend.map(s => s.financiacion_tipo || 'SUELTA'))].sort();
+  const todosServicios = bonosPend.length
+    ? [...new Set([...serviciosEnSes, 'BONO'])].sort()
+    : serviciosEnSes;
 
-  // Badge de la pestaña
+  // ── Renderizar botones de filtro ──
+  const filtrosEl = document.getElementById('cob-pend-filtros');
+  if (filtrosEl) {
+    const opciones = ['', ...todosServicios];
+    filtrosEl.innerHTML = opciones.map(srv => {
+      const label = srv === '' ? 'Todos' : srv;
+      const activo = filtroServicio === srv;
+      return `<button onclick="renderCobPendientes('${srv}')"
+        style="padding:5px 14px;border-radius:99px;border:1.5px solid ${activo?'var(--blue)':'var(--border)'};
+               background:${activo?'var(--blue)':'var(--white)'};color:${activo?'#fff':'var(--ink)'};
+               font-size:12px;font-weight:${activo?'700':'500'};cursor:pointer;white-space:nowrap">
+        ${label}
+      </button>`;
+    }).join('');
+  }
+
+  // ── Aplicar filtro de servicio ──
+  const sesFiltradas = filtroServicio && filtroServicio !== 'BONO'
+    ? todasSesPend.filter(s => (s.financiacion_tipo || 'SUELTA') === filtroServicio)
+    : todasSesPend;
+  const bonosFiltrados = (!filtroServicio || filtroServicio === 'BONO') ? bonosPend : [];
+
+  // ── Agrupar sesiones por paciente ──
+  const byPac = {};
+  sesFiltradas.forEach(s => {
+    if (!byPac[s.id_paciente]) byPac[s.id_paciente] = { sesiones: [], bonos: [] };
+    byPac[s.id_paciente].sesiones.push(s);
+  });
+  // Añadir bonos al paciente correspondiente
+  bonosFiltrados.forEach(b => {
+    if (!byPac[b.id_paciente]) byPac[b.id_paciente] = { sesiones: [], bonos: [] };
+    byPac[b.id_paciente].bonos.push(b);
+  });
+
+  const pacientes = Object.keys(byPac);
+  const totalSes  = sesFiltradas.reduce((s,x)=>s+(parseFloat(x.importe)||0),0);
+  const totalBon  = bonosFiltrados.reduce((s,b)=>s+(parseFloat(b.importe_anticipo)||0),0);
+
+  // Badge
   const badge = document.getElementById('cob-pend-badge');
   if (badge) {
-    const n = (sesAdecco.length ? 1 : 0) + (sesSuelta.length ? 1 : 0) + bonosPend.length;
+    const n = pacientes.length;
     badge.textContent = n; badge.style.display = n ? '' : 'none';
   }
-  document.getElementById('cobros-pend-count').textContent =
-    (sesAdecco.length + sesSuelta.length + bonosPend.length) > 0 ? '' : '';
 
-  if (!sesAdecco.length && !sesSuelta.length && !bonosPend.length) {
+  // Resumen
+  const resumenEl = document.getElementById('cob-pend-resumen');
+  if (resumenEl) {
+    const partes = [];
+    if (sesFiltradas.length) partes.push(sesFiltradas.length + ' ses. · ' + fmtEur(totalSes));
+    if (bonosFiltrados.length) partes.push(bonosFiltrados.length + ' bonos');
+    resumenEl.textContent = pacientes.length ? pacientes.length + ' pacientes · ' + partes.join(' · ') : '';
+  }
+
+  if (!pacientes.length) {
     contenedor.innerHTML = `
       <div style="text-align:center;padding:48px 24px;background:var(--white);border-radius:16px;border:1px solid var(--border)">
         <div style="font-size:40px;margin-bottom:12px">✅</div>
         <div style="font-size:16px;font-weight:700;color:var(--green-dark)">¡Todo en orden!</div>
-        <div style="font-size:13px;color:var(--ink-muted);margin-top:6px">No hay cobros pendientes ni bonos sin confirmar.</div>
+        <div style="font-size:13px;color:var(--ink-muted);margin-top:6px">No hay cobros pendientes para este servicio.</div>
       </div>`;
     return;
   }
 
-  // ── Helper: tarjeta de grupo de sesiones agrupadas por paciente ──
-  function renderGrupoSesiones(sesiones, accentColor, accentPale, etiqueta, botonLabel) {
-    if (!sesiones.length) return '';
-    const byPac = {};
-    sesiones.forEach(s => {
-      if (!byPac[s.id_paciente]) byPac[s.id_paciente] = { sesiones: [], total: 0 };
-      byPac[s.id_paciente].sesiones.push(s);
-      byPac[s.id_paciente].total += parseFloat(s.importe)||0;
-    });
-    const ordenados = Object.entries(byPac).sort((a,b) => b[1].total - a[1].total);
-    const totalGrupo = sesiones.reduce((s,x)=>s+(parseFloat(x.importe)||0),0);
+  // ── Ordenar pacientes alfabéticamente ──
+  const pacOrdenados = pacientes.sort((a,b) => {
+    const na = nomPacFull(a).toUpperCase();
+    const nb = nomPacFull(b).toUpperCase();
+    return na < nb ? -1 : na > nb ? 1 : 0;
+  });
 
-    return `
-      <div style="margin-bottom:24px">
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
-          <div style="height:3px;flex:1;background:${accentColor};border-radius:99px;opacity:.3"></div>
-          <div style="font-size:12px;font-weight:800;letter-spacing:1px;color:${accentColor};text-transform:uppercase">${etiqueta}</div>
-          <div style="background:${accentColor};color:#fff;border-radius:6px;padding:2px 9px;font-size:12px;font-weight:700">${fmtEur(totalGrupo)}</div>
-          <div style="height:3px;flex:1;background:${accentColor};border-radius:99px;opacity:.3"></div>
-        </div>
-        <div style="display:flex;flex-direction:column;gap:8px">
-        ${ordenados.map(([idPac, data]) => {
-          const pac = G.pacientes.find(p=>p.id_paciente===idPac);
-          const nomPaciente = pac ? ((pac.nombre||'')+' '+(pac.apellidos||'')).trim() : idPac;
-          const initials = pac ? ((pac.nombre||'').charAt(0)+(pac.apellidos||'').charAt(0)).toUpperCase() : '?';
-          const ter = pac ? G.terapeutas.find(t=>t.id_terapeuta===pac.terapeuta_principal) : null;
-          const sesOrd = [...data.sesiones].sort((a,b)=>(a.fecha||'').localeCompare(b.fecha||''));
-          const diasMax = Math.max(...sesOrd.map(s=>s.fecha?Math.floor((new Date()-new Date(s.fecha))/86400000):0));
-          const alertaColor = diasMax > 30 ? 'var(--red)' : diasMax > 14 ? '#e67e00' : 'var(--ink-muted)';
-          return `
-            <div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:14px 18px;box-shadow:var(--shadow)">
-              <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
-                <div style="width:38px;height:38px;background:${accentPale};border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:${accentColor};flex-shrink:0">${initials}</div>
-                <div style="flex:1">
-                  <div style="font-weight:700;font-size:14px;color:var(--ink)">${nomPaciente}</div>
-                  <div style="font-size:12px;color:var(--ink-muted)">${ter?ter.nombre:'—'} · ${sesOrd.length} sesión${sesOrd.length!==1?'es':''} · <span style="color:${alertaColor};font-weight:600">hace ${diasMax}d la más antigua</span></div>
-                </div>
-                <div style="text-align:right;flex-shrink:0">
-                  <div style="font-size:18px;font-weight:700;color:${accentColor}">${fmtEur(data.total)}</div>
-                  <button class="btn btn-secondary btn-sm" style="margin-top:3px;font-size:11px" onclick="abrirP360('${idPac}')">Expediente →</button>
-                </div>
-              </div>
-              <table style="width:100%;font-size:12px;border-collapse:collapse;border-top:1px solid var(--border)">
-                <tbody>
-                ${sesOrd.map(s => {
-                  const dias = s.fecha?Math.floor((new Date()-new Date(s.fecha))/86400000):'?';
-                  return `<tr style="border-top:1px solid var(--border)">
-                    <td style="padding:5px 4px;font-family:monospace;color:var(--ink-muted);font-size:11px">${s.id_cita}</td>
-                    <td style="padding:5px 4px">${fmtFecha(s.fecha)}</td>
-                    <td style="padding:5px 4px;color:var(--ink-muted)">${dias}d</td>
-                    <td style="padding:5px 4px;text-align:right;font-weight:600">${fmtEur(s.importe)}</td>
-                    <td style="padding:5px 4px;text-align:right"><button class="btn btn-primary btn-sm" style="font-size:11px;padding:3px 10px" onclick="cobrarSesionRapido('${s.id_cita}','${idPac}','${s.importe||0}')">${botonLabel}</button></td>
-                  </tr>`;
-                }).join('')}
-                </tbody>
-              </table>
-            </div>`;
-        }).join('')}
-        </div>
-      </div>`;
+  // ── Badge de servicio con color ──
+  function badgeSrv(tipo) {
+    const cfg = {
+      'ADECCO':  { bg:'var(--cyan-pale)',  color:'#006a87' },
+      'SUELTA':  { bg:'var(--red-pale)',   color:'var(--red)' },
+      'BONO':    { bg:'#fff3e0',           color:'#e67e00' },
+    };
+    const c = cfg[tipo] || { bg:'var(--blue-pale)', color:'var(--blue)' };
+    return `<span style="background:${c.bg};color:${c.color};border-radius:4px;padding:1px 7px;font-size:10px;font-weight:700">${tipo}</span>`;
   }
 
-  // ── Helper: grupo de bonos sin confirmar ──
-  function renderGrupoBonos(bonos) {
-    if (!bonos.length) return '';
+  contenedor.innerHTML = `<div style="display:flex;flex-direction:column;gap:10px">
+  ${pacOrdenados.map(idPac => {
+    const data = byPac[idPac];
+    const pac = G.pacientes.find(p=>p.id_paciente===idPac);
+    const nomPaciente = pac ? ((pac.nombre||'')+' '+(pac.apellidos||'')).trim() : idPac;
+    const initials = pac ? ((pac.nombre||'').charAt(0)+(pac.apellidos||'').charAt(0)).toUpperCase() : '?';
+    const ter = pac ? G.terapeutas.find(t=>t.id_terapeuta===pac.terapeuta_principal) : null;
+    const totalPac = data.sesiones.reduce((s,x)=>s+(parseFloat(x.importe)||0),0)
+                   + data.bonos.reduce((s,b)=>s+(parseFloat(b.importe_anticipo)||0),0);
+    const sesOrd = [...data.sesiones].sort((a,b)=>(a.fecha||'').localeCompare(b.fecha||''));
+    const diasMax = sesOrd.length
+      ? Math.max(...sesOrd.map(s=>s.fecha?Math.floor((new Date()-new Date(s.fecha))/86400000):0))
+      : null;
+    const alertaColor = diasMax===null ? 'var(--ink-muted)' : diasMax>30 ? 'var(--red)' : diasMax>14 ? '#e67e00' : 'var(--ink-muted)';
+
     return `
-      <div style="margin-bottom:24px">
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
-          <div style="height:3px;flex:1;background:#e67e00;border-radius:99px;opacity:.3"></div>
-          <div style="font-size:12px;font-weight:800;letter-spacing:1px;color:#e67e00;text-transform:uppercase">🎟 BONOS — Cobro sin confirmar</div>
-          <div style="background:#e67e00;color:#fff;border-radius:6px;padding:2px 9px;font-size:12px;font-weight:700">${bonos.length} bono${bonos.length!==1?'s':''}</div>
-          <div style="height:3px;flex:1;background:#e67e00;border-radius:99px;opacity:.3"></div>
+      <div style="background:var(--white);border:1px solid var(--border);border-radius:14px;padding:16px 20px;box-shadow:var(--shadow)">
+        <!-- Cabecera paciente -->
+        <div style="display:flex;align-items:center;gap:14px;margin-bottom:12px">
+          <div style="width:40px;height:40px;background:var(--blue-pale);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:var(--blue);flex-shrink:0">${initials}</div>
+          <div style="flex:1">
+            <div style="font-weight:700;font-size:15px;color:var(--ink)">${nomPaciente}</div>
+            <div style="font-size:12px;color:var(--ink-muted)">
+              ${ter?ter.nombre:'—'}
+              ${diasMax!==null ? ' · <span style="color:'+alertaColor+';font-weight:600">más antigua hace '+diasMax+'d</span>' : ''}
+            </div>
+          </div>
+          <div style="text-align:right;flex-shrink:0">
+            <div style="font-size:20px;font-weight:700;color:var(--blue)">${fmtEur(totalPac)}</div>
+            <button class="btn btn-secondary btn-sm" style="margin-top:4px;font-size:11px" onclick="abrirP360('${idPac}')">Expediente →</button>
+          </div>
         </div>
-        <div style="background:#fff8f0;border:1px solid #f5d9b0;border-radius:10px;padding:10px 14px;margin-bottom:10px;font-size:12px;color:#a05000">
-          ⚠️ Estos bonos están activos (en uso) pero no tienen confirmación de cobro. Verifica con el banco o con la terapeuta antes de marcarlos como cobrados.
-        </div>
-        <div style="display:flex;flex-direction:column;gap:8px">
-        ${bonos.map(b => {
-          const pac = G.pacientes.find(p=>p.id_paciente===b.id_paciente);
-          const nomPaciente = pac ? ((pac.nombre||'')+' '+(pac.apellidos||'')).trim() : b.id_paciente;
-          const initials = pac ? ((pac.nombre||'').charAt(0)+(pac.apellidos||'').charAt(0)).toUpperCase() : '?';
-          const ter = pac ? G.terapeutas.find(t=>t.id_terapeuta===pac.terapeuta_principal) : null;
+
+        <!-- Tabla de sesiones -->
+        ${sesOrd.length ? `
+        <table style="width:100%;font-size:12px;border-collapse:collapse;border-top:1px solid var(--border)">
+          <tbody>
+          ${sesOrd.map(s => {
+            const dias = s.fecha?Math.floor((new Date()-new Date(s.fecha))/86400000):'?';
+            const tipo = s.financiacion_tipo||'SUELTA';
+            return `<tr style="border-top:1px solid var(--border)">
+              <td style="padding:6px 4px;font-family:monospace;color:var(--ink-muted);font-size:11px">${s.id_cita}</td>
+              <td style="padding:6px 4px">${fmtFecha(s.fecha)}</td>
+              <td style="padding:6px 4px;color:var(--ink-muted);font-size:11px">${dias}d</td>
+              <td style="padding:6px 4px">${badgeSrv(tipo)}</td>
+              <td style="padding:6px 4px;text-align:right;font-weight:600">${fmtEur(s.importe)}</td>
+              <td style="padding:6px 4px;text-align:right">
+                <button class="btn btn-primary btn-sm" style="font-size:11px;padding:3px 10px"
+                  onclick="cobrarSesionRapido('${s.id_cita}','${idPac}','${s.importe||0}')">+ Cobrar</button>
+              </td>
+            </tr>`;
+          }).join('')}
+          </tbody>
+        </table>` : ''}
+
+        <!-- Bonos sin confirmar -->
+        ${data.bonos.length ? `
+        <div style="${sesOrd.length?'border-top:1px solid var(--border);margin-top:8px;padding-top:8px':''}">
+        ${data.bonos.map(b => {
           const anticipo = parseFloat(b.importe_anticipo)||0;
           const cons = parseInt(b.sesiones_consumidas)||0;
-          const pend = parseInt(b.sesiones_pendientes)||0;
           const tot  = parseInt(b.sesiones_totales)||0;
           const pct  = tot>0 ? Math.round(cons/tot*100) : 0;
-          return `
-            <div style="background:var(--white);border:1px solid #f5d9b0;border-radius:12px;padding:14px 18px;box-shadow:var(--shadow)">
-              <div style="display:flex;align-items:center;gap:12px">
-                <div style="width:38px;height:38px;background:#fff3e0;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">🎟</div>
-                <div style="flex:1">
-                  <div style="font-weight:700;font-size:14px;color:var(--ink)">${nomPaciente}</div>
-                  <div style="font-size:12px;color:var(--ink-muted)">${b.id_bono} · ${ter?ter.nombre:'—'} · ${cons}/${tot} ses. usadas (${pct}%)</div>
-                  <div style="margin-top:6px;background:var(--border);border-radius:99px;height:5px;width:160px;overflow:hidden">
-                    <div style="width:${pct}%;background:#e67e00;height:100%;border-radius:99px"></div>
-                  </div>
-                </div>
-                <div style="text-align:right;flex-shrink:0">
-                  ${anticipo>0 ? `<div style="font-size:16px;font-weight:700;color:#e67e00">${fmtEur(anticipo)}</div><div style="font-size:10px;color:var(--ink-muted)">anticipo</div>` : '<div style="font-size:12px;color:var(--ink-muted)">Sin importe</div>'}
-                  <button class="btn btn-secondary btn-sm" style="margin-top:6px;font-size:11px" onclick="abrirBono360('${b.id_bono}')">Ver bono →</button>
-                </div>
+          return `<div style="display:flex;align-items:center;gap:12px;padding:6px 4px">
+            <span style="font-size:14px">🎟</span>
+            <div style="flex:1">
+              <span style="font-size:12px;font-weight:600;color:var(--ink)">${b.id_bono}</span>
+              <span style="font-size:12px;color:var(--ink-muted);margin-left:8px">${cons}/${tot} ses. · ${pct}%</span>
+              <div style="margin-top:4px;background:var(--border);border-radius:99px;height:4px;width:120px;overflow:hidden;display:inline-block;vertical-align:middle;margin-left:8px">
+                <div style="width:${pct}%;background:#e67e00;height:100%;border-radius:99px"></div>
               </div>
-            </div>`;
+            </div>
+            <div style="text-align:right">
+              ${anticipo>0?`<span style="font-size:13px;font-weight:700;color:#e67e00">${fmtEur(anticipo)}</span>`:'<span style="font-size:12px;color:var(--ink-muted)">—</span>'}
+              <button class="btn btn-secondary btn-sm" style="margin-left:8px;font-size:11px" onclick="abrirBono360('${b.id_bono}')">Ver bono →</button>
+            </div>
+          </div>`;
         }).join('')}
-        </div>
+        </div>` : ''}
       </div>`;
-  }
-
-  contenedor.innerHTML =
-    renderGrupoSesiones(sesAdecco, '#006a87', 'var(--cyan-pale)', '🏢 ADECCO — Sesiones por facturar', '+ Cerrar') +
-    renderGrupoSesiones(sesSuelta, 'var(--red)', 'var(--red-pale)', '💶 PRIVADA SUELTA — Sin cobrar', '+ Cobrar') +
-    renderGrupoBonos(bonosPend);
+  }).join('')}
+  </div>`;
 }
-
 // ── Cobro rápido desde lista de pendientes ──
 function cobrarSesionRapido(idSesion, idPaciente, importe) {
   // Abrir modal de cobro prerrellenado
