@@ -1865,8 +1865,19 @@ async function guardarEstadoCita() {
   try {
     await supaPatch('agenda_datos',`id_cita=eq.${G.citaActual.ID_Cita}`,{estado_agenda:G.estadoSel,notas_agenda:notas});
     if(G.estadoSel==='Hecha'||G.estadoSel==='No-show'){
-      const tipoFin=G.citaActual.ID_Bono?'BONO':(G.citaActual.ID_Beca?'BECA':'SUELTA');
-      const idFin=G.citaActual.ID_Bono||G.citaActual.ID_Beca||'';
+      let tipoFin=G.citaActual.ID_Bono?'BONO':(G.citaActual.ID_Beca?'BECA':'SUELTA');
+      let idFin=G.citaActual.ID_Bono||G.citaActual.ID_Beca||'';
+      // Fallback: si no hay id vinculado en la cita, resolver desde el paciente
+      if(!idFin){
+        const tipoDerivado=derivarTipoFin(G.citaActual.ID_Servicio);
+        if(tipoDerivado==='BECA'){
+          idFin=await resolverBecaActiva(G.citaActual.ID_Paciente)||'';
+          if(idFin) tipoFin='BECA';
+        } else if(tipoDerivado==='BONO'){
+          idFin=await resolverBonoActivo(G.citaActual.ID_Paciente)||'';
+          if(idFin) tipoFin='BONO';
+        }
+      }
       // Buscar sesión existente por fecha+paciente+terapeuta (el id_cita en sesiones es autogenerado, no coincide con agenda)
       const horaCorta2=(G.citaActual.Hora||'').slice(0,5);
       const sesExist=await supaGet('sesiones',`fecha=eq.${G.citaActual.Fecha}&id_paciente=eq.${G.citaActual.ID_Paciente}&hora=eq.${horaCorta2}&id_terapeuta=eq.${G.citaActual.ID_Terapeuta||G.miId}`);
@@ -1895,7 +1906,21 @@ async function guardarEstadoCita() {
       } else {
         // Sesión ya existe — solo actualizar estado y gestionar cobro si procede
         const sesId=sesExist[0].id_cita;
-        await supaPatch('sesiones',`id_cita=eq.${sesId}`,{estado:G.estadoSel,notas:notas||sesExist[0].notas||''});
+        // Vincular beca/bono si la sesión existente los tiene vacíos
+        const patchSes={estado:G.estadoSel,notas:notas||sesExist[0].notas||''};
+        if(tipoFin==='BECA'&&idFin&&!sesExist[0].id_beca) patchSes.id_beca=idFin;
+        if(tipoFin==='BONO'&&idFin&&!sesExist[0].id_bono) patchSes.id_bono=idFin;
+        if(tipoFin!=='SUELTA'&&!sesExist[0].financiacion_tipo) patchSes.financiacion_tipo=tipoFin;
+        await supaPatch('sesiones',`id_cita=eq.${sesId}`,patchSes);
+        // Actualizar contadores bono/beca si la sesión estaba Programada y pasa a Hecha/No-show
+        const estadoAnterior=sesExist[0].estado||'';
+        if(estadoAnterior==='Programada'){
+          if(G.estadoSel==='Hecha'){
+            if(tipoFin==='BONO'&&idFin) await actualizarBono(idFin,1);
+            if(tipoFin==='BECA'&&idFin) await actualizarBeca(idFin,1);
+          }
+          if(G.estadoSel==='No-show'&&tipoFin==='BECA'&&idFin) await actualizarBeca(idFin,1);
+        }
         // Si el panel de cobro está visible y dice Sí, registrar cobro
         if(G.estadoSel==='Hecha'&&tipoFin==='SUELTA'){
           const panelVisible=document.getElementById('mc-cobro-panel').style.display!=='none';
