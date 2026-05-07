@@ -1887,7 +1887,9 @@ async function guardarEstadoCita() {
         const idSes=await generarId('sesiones','id_cita','S');
         // Fix cobrado: sesiones de BONO y BECA ya están pagadas por anticipado → cobrado:'Sí'
         const cobradoSes=(tipoFin==='BONO'||tipoFin==='BECA')?'Sí':'No';
-        await supaPost('sesiones',{id_cita:idSes,fecha:G.citaActual.Fecha,hora:(G.citaActual.Hora||'').slice(0,5),financiacion_tipo:tipoFin,id_paciente:G.citaActual.ID_Paciente,id_terapeuta:G.miId,id_servicio:G.citaActual.ID_Servicio,id_beca:tipoFin==='BECA'?idFin:'',id_bono:tipoFin==='BONO'?idFin:'',estado:G.estadoSel,importe:importe,cobrado:cobradoSes,cerrada:'No',fecha_cierre:'',notas:notas||G.citaActual.NotasAgenda||''});
+        // cerrada:'Sí' si es BECA/BONO y se marca Hecha o No-show → flag de "ya descontado"
+        const cerradaSes=((tipoFin==='BONO'||tipoFin==='BECA')&&(G.estadoSel==='Hecha'||G.estadoSel==='No-show'))?'Sí':'No';
+        await supaPost('sesiones',{id_cita:idSes,fecha:G.citaActual.Fecha,hora:(G.citaActual.Hora||'').slice(0,5),financiacion_tipo:tipoFin,id_paciente:G.citaActual.ID_Paciente,id_terapeuta:G.miId,id_servicio:G.citaActual.ID_Servicio,id_beca:tipoFin==='BECA'?idFin:'',id_bono:tipoFin==='BONO'?idFin:'',estado:G.estadoSel,importe:importe,cobrado:cobradoSes,cerrada:cerradaSes,fecha_cierre:'',notas:notas||G.citaActual.NotasAgenda||''});
         if(G.estadoSel==='Hecha'){
           if(tipoFin==='BONO'&&idFin)await actualizarBono(idFin,1);
           if(tipoFin==='BECA'&&idFin)await actualizarBeca(idFin,1);
@@ -1912,14 +1914,20 @@ async function guardarEstadoCita() {
         if(tipoFin==='BONO'&&idFin&&!sesExist[0].id_bono) patchSes.id_bono=idFin;
         if(tipoFin!=='SUELTA'&&!sesExist[0].financiacion_tipo) patchSes.financiacion_tipo=tipoFin;
         await supaPatch('sesiones',`id_cita=eq.${sesId}`,patchSes);
-        // Actualizar contadores bono/beca si la sesión estaba Programada y pasa a Hecha/No-show
-        const estadoAnterior=sesExist[0].estado||'';
-        if(estadoAnterior==='Programada'){
+        // Actualizar contadores bono/beca si aún no se han descontado (cerrada !== 'Sí')
+        // NOTA: usamos el campo 'cerrada' como flag de "ya contabilizado", independientemente
+        // del estado anterior. Así funciona aunque la sesión existiera en estado vacío/null.
+        const yaContabilizada = (sesExist[0].cerrada||'').toLowerCase() === 'sí' || sesExist[0].cerrada === 'Si' || sesExist[0].cerrada === 'SI';
+        if(!yaContabilizada){
           if(G.estadoSel==='Hecha'){
             if(tipoFin==='BONO'&&idFin) await actualizarBono(idFin,1);
             if(tipoFin==='BECA'&&idFin) await actualizarBeca(idFin,1);
           }
           if(G.estadoSel==='No-show'&&tipoFin==='BECA'&&idFin) await actualizarBeca(idFin,1);
+          // Marcar como cerrada para evitar doble descuento en futuras ediciones
+          if((tipoFin==='BONO'||tipoFin==='BECA')&&(G.estadoSel==='Hecha'||G.estadoSel==='No-show')){
+            await supaPatch('sesiones',`id_cita=eq.${sesId}`,{cerrada:'Sí'});
+          }
         }
         // Si el panel de cobro está visible y dice Sí, registrar cobro
         if(G.estadoSel==='Hecha'&&tipoFin==='SUELTA'){
