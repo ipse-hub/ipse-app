@@ -788,9 +788,11 @@
         <button class="btn btn-secondary" onclick="cerrarModal('modal-cita')">Cerrar</button>
         <button class="btn btn-secondary btn-icono" id="mc-btn-eliminar" onclick="eliminarCita()" title="Eliminar cita" style="background:#fff;border:1.5px solid #DA291C;color:#DA291C;display:none">🗑</button>
         <div class="spacer"></div>
-        <button class="btn btn-secondary" id="mc-btn-repetir" onclick="togglePanelRepetir()" style="background:var(--verde);border-color:var(--verde);color:#fff;display:none">🔁 Repetir</button>
-        <button class="btn btn-primary" id="mc-btn-guardar" onclick="guardarEstadoCita()">💾 Guardar</button>
-        <button class="btn btn-primary" id="mc-btn-cobrar" onclick="togglePanelCobro()" style="display:none;background:#97D700;border-color:#6a9900;color:#fff;font-size:14px;padding:9px 22px">💶 Cobrar</button>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end">
+          <button class="btn btn-secondary" id="mc-btn-repetir" onclick="togglePanelRepetir()" style="background:var(--verde);border-color:var(--verde);color:#fff;display:none">🔁 Repetir</button>
+          <button class="btn btn-primary" id="mc-btn-guardar" onclick="guardarEstadoCita()">💾 Guardar</button>
+          <button class="btn btn-primary" id="mc-btn-cobrar" onclick="togglePanelCobro()" style="display:none;background:#97D700;border-color:#6a9900;color:#fff;font-size:14px;padding:9px 22px">💶 Cobrar</button>
+        </div>
       </div>
     </div>
     <div id="mc-solo-lectura" style="display:none">
