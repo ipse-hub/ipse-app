@@ -1888,7 +1888,7 @@ async function guardarEstadoCita() {
         const idSes=await generarId('sesiones','id_cita','S');
         // Fix cobrado: sesiones de BONO y BECA ya están pagadas por anticipado → cobrado:'Sí'
         const cobradoSes=(tipoFin==='BONO'||tipoFin==='BECA')?'Sí':'No';
-        await supaPost('sesiones',{id_cita:idSes,fecha:G.citaActual.Fecha,hora:horaCorta2,financiacion_tipo:tipoFin,id_paciente:G.citaActual.ID_Paciente,id_terapeuta:idTerapeutaCita,id_servicio:G.citaActual.ID_Servicio,id_beca:tipoFin==='BECA'?idFin:'',id_bono:tipoFin==='BONO'?idFin:'',estado:G.estadoSel,importe:importe,cobrado:cobradoSes,cerrada:'No',fecha_cierre:'',notas:notas||G.citaActual.NotasAgenda||''});
+        await supaPost('sesiones',{id_cita:idSes,fecha:G.citaActual.Fecha,hora:horaCorta2,financiacion_tipo:tipoFin,id_paciente:G.citaActual.ID_Paciente,id_terapeuta:idTerapeutaCita,id_servicio:G.citaActual.ID_Servicio,id_beca:tipoFin==='BECA'?idFin:'',id_bono:tipoFin==='BONO'?idFin:'',estado:G.estadoSel,importe:importe,cerrada:cobradoSes,fecha_cierre:'',notas:notas||G.citaActual.NotasAgenda||''});
         if(G.estadoSel==='Hecha'){
           if(tipoFin==='BONO'&&idFin)await actualizarBono(idFin,1);
           if(tipoFin==='BECA'&&idFin)await actualizarBeca(idFin,1);
