@@ -1885,11 +1885,9 @@ async function guardarEstadoCita() {
       if(!sesExist||!sesExist.length){
         const importe=G.estadoSel==='No-show'&&tipoFin!=='BECA'?0:await calcularImporte(G.citaActual.ID_Servicio,tipoFin,idFin);
         const idSes=await generarId('sesiones','id_cita','S');
-        // Fix cobrado: sesiones de BONO y BECA ya están pagadas por anticipado → cobrado:'Sí'
-        const cobradoSes=(tipoFin==='BONO'||tipoFin==='BECA')?'Sí':'No';
         // cerrada:'Sí' si es BECA/BONO y se marca Hecha o No-show → flag de "ya descontado"
         const cerradaSes=((tipoFin==='BONO'||tipoFin==='BECA')&&(G.estadoSel==='Hecha'||G.estadoSel==='No-show'))?'Sí':'No';
-        await supaPost('sesiones',{id_cita:idSes,fecha:G.citaActual.Fecha,hora:(G.citaActual.Hora||'').slice(0,5),financiacion_tipo:tipoFin,id_paciente:G.citaActual.ID_Paciente,id_terapeuta:G.miId,id_servicio:G.citaActual.ID_Servicio,id_beca:tipoFin==='BECA'?idFin:'',id_bono:tipoFin==='BONO'?idFin:'',estado:G.estadoSel,importe:importe,cobrado:cobradoSes,cerrada:cerradaSes,fecha_cierre:'',notas:notas||G.citaActual.NotasAgenda||''});
+        await supaPost('sesiones',{id_cita:idSes,fecha:G.citaActual.Fecha,hora:(G.citaActual.Hora||'').slice(0,5),financiacion_tipo:tipoFin,id_paciente:G.citaActual.ID_Paciente,id_terapeuta:G.miId,id_servicio:G.citaActual.ID_Servicio,id_beca:tipoFin==='BECA'?idFin:'',id_bono:tipoFin==='BONO'?idFin:'',estado:G.estadoSel,importe:importe,cerrada:cerradaSes,fecha_cierre:'',notas:notas||G.citaActual.NotasAgenda||''});
         if(G.estadoSel==='Hecha'){
           if(tipoFin==='BONO'&&idFin)await actualizarBono(idFin,1);
           if(tipoFin==='BECA'&&idFin)await actualizarBeca(idFin,1);
@@ -2162,7 +2160,7 @@ function mostrarModalConfirmBeca({todasBecas, aviso}) {
   return new Promise(resolve => {
     document.getElementById('modal-beca-confirm')?.remove();
     const becasAnteriores  = todasBecas.filter(b=>b.anio==='24/25');
-    const becasVigentes    = todasBecas.filter(b=>b.anio==='25/26'&&b.estado!=='Suspendida');
+    const becasVigentes    = todasBecas.filter(b=>b.anio!=='24/25'&&b.estado!=='Suspendida');
     const becasSuspendidas = todasBecas.filter(b=>b.estado==='Suspendida');
     const hayAlerta = becasSuspendidas.length>0 || becasAnteriores.length>0;
     const colorHead = becasSuspendidas.length ? '#DA291C' : becasAnteriores.length ? '#F59E0B' : '#10069F';
@@ -2189,8 +2187,8 @@ function mostrarModalConfirmBeca({todasBecas, aviso}) {
 
     const filas = [
       ...becasAnteriores.map(b=>fila(b,'24/25','#F59E0B')),
-      ...becasSuspendidas.map(b=>fila(b,'25/26','#DA291C')),
-      ...becasVigentes.map(b=>fila(b,'25/26','#10069F')),
+      ...becasSuspendidas.map(b=>fila(b, b.anio||'25/26','#DA291C')),
+      ...becasVigentes.map(b=>fila(b, b.anio||'25/26','#10069F')),
     ].join('');
 
     const alertaBanner = becasSuspendidas.length
