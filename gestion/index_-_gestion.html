@@ -2877,6 +2877,32 @@ function editarSesion(id) {
   abrirModal('modal-sesion');
 }
 
+// ── Recalcula los contadores de un bono contando sus sesiones reales en G.sesiones ──
+async function recalcularContadoresBono(idBono) {
+  if (!idBono) return;
+  const bono = (G.bonos||[]).find(b => b.id_bono === idBono);
+  if (!bono) return;
+  const sesVinculadas = (G.sesiones||[]).filter(s =>
+    s.id_bono === idBono && s.estado !== 'Cancelada'
+  );
+  const consumidas = sesVinculadas.length;
+  const totales    = parseInt(bono.sesiones_totales) || 0;
+  const pendientes = Math.max(totales - consumidas, 0);
+  const valSes     = parseFloat(bono.valor_sesion) || 0;
+  const nuevoEstado = pendientes <= 0 ? 'Agotado' : 'Activo';
+  const patch = {
+    sesiones_consumidas: consumidas,
+    sesiones_pendientes: pendientes,
+    importe_devengado:   consumidas * valSes,
+    importe_pendiente:   pendientes * valSes,
+    estado:              nuevoEstado,
+  };
+  await sa('bonos', `id_bono=eq.${idBono}`, patch);
+  // Actualizar caché local
+  const idx = G.bonos.findIndex(b => b.id_bono === idBono);
+  if (idx >= 0) G.bonos[idx] = { ...G.bonos[idx], ...patch };
+}
+
 async function guardarSesion() {
   const id = document.getElementById('s-id').value;
   // Regla: no crear sesión suelta si el paciente tiene bonos activos (excepto si es beca)
@@ -2922,15 +2948,22 @@ async function guardarSesion() {
   if (!datos.fecha||!datos.id_paciente) { toast('Fecha y paciente son obligatorios','err'); return; }
   try {
     if (id) {
+      // Guardar bono anterior (por si cambia) para recalcularlo también
+      const sesAnterior = G.sesiones.find(s => s.id_cita === id);
+      const bonoAnterior = sesAnterior?.id_bono || null;
       await sa('sesiones',`id_cita=eq.${id}`,datos);
       const idx=G.sesiones.findIndex(s=>s.id_cita===id);
       if(idx>=0) G.sesiones[idx]={...G.sesiones[idx],...datos};
       toast('Sesión actualizada ✓','ok');
+      // Recalcular bono nuevo (y el anterior si era distinto)
+      if (datos.id_bono) await recalcularContadoresBono(datos.id_bono);
+      if (bonoAnterior && bonoAnterior !== datos.id_bono) await recalcularContadoresBono(bonoAnterior);
     } else {
       const newId = await genId('sesiones','id_cita','S');
       await sp('sesiones',{...datos,id_cita:newId});
       G.sesiones.unshift({...datos,id_cita:newId});
       toast('Sesión creada ✓','ok');
+      if (datos.id_bono) await recalcularContadoresBono(datos.id_bono);
     }
     cerrarModal('modal-sesion');
     filtrarSesiones();
@@ -2941,11 +2974,14 @@ async function eliminarSesion() {
   const id = document.getElementById('s-id').value; if (!id) return;
   if (!confirm('¿Eliminar sesión '+id+'? Esta acción no se puede deshacer.')) return;
   try {
+    const ses = G.sesiones.find(s => s.id_cita === id);
+    const bonoId = ses?.id_bono || null;
     await sd('sesiones',`id_cita=eq.${id}`);
     G.sesiones = G.sesiones.filter(s=>s.id_cita!==id);
     toast('Sesión eliminada ✓','ok');
     cerrarModal('modal-sesion');
     filtrarSesiones();
+    if (bonoId) await recalcularContadoresBono(bonoId);
   } catch(err) { toast('Error: '+err.message,'err'); }
 }
 
