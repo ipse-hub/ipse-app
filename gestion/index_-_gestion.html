@@ -611,7 +611,7 @@ textarea.form-control { min-height: 72px; transition: border-color .2s; }
       <div class="tabs" id="ind360-tabs" style="margin-bottom:20px">
         <div class="tab active" id="ind-tab-caja"    onclick="ind360SetTab('caja')">💰 Caja y producción</div>
         <div class="tab"        id="ind-tab-pasivo"  onclick="ind360SetTab('pasivo')">💼 Pasivo operativo</div>
-        <div class="tab"        id="ind-tab-tend"    onclick="ind360SetTab('tendencias')">📈 Tendencias</div>
+        <div class="tab"        id="ind-tab-tendencias"    onclick="ind360SetTab('tendencias')">📈 Tendencias</div>
       </div>
 
       <!-- ══ PANEL: CAJA Y PRODUCCIÓN ══ -->
@@ -2697,93 +2697,119 @@ let G_agendaHoy = [];
 //  PASIVO OPERATIVO — DETALLE
 // ═══════════════════════════════════════════════════════
 async function renderPasivoDetalle() {
-  // Recargar bonos y becas frescos para asegurar datos actualizados
+  const elBonos = document.getElementById('pasivo-bonos-detalle');
+  const elBecas = document.getElementById('pasivo-becas-detalle');
+  const elAgot  = document.getElementById('pasivo-bonos-agotados');
+
+  // Recargar bonos y becas frescos desde Supabase
   try {
     const [bonos, becas] = await Promise.all([
       sg('bonos','order=estado.asc,sesiones_pendientes.asc&limit=500'),
       sg('becas','order=estado.asc,sesiones_pendientes.asc&limit=500'),
     ]);
-    G.bonos = bonos;
-    G.becas = becas;
+    G.bonos = bonos || [];
+    G.becas = becas || [];
   } catch(e) {
-    console.warn('No se pudieron recargar bonos/becas:', e.message);
+    const msg = `<div style="padding:16px;color:var(--red);font-size:12px">Error al cargar: ${e.message}</div>`;
+    if (elBonos) elBonos.innerHTML = msg;
+    if (elBecas) elBecas.innerHTML = msg;
+    if (elAgot)  elAgot.innerHTML  = msg;
+    return;
   }
 
-  const bonosActivos  = G.bonos.filter(b=>b.estado==='Activo').sort((a,b)=>(parseInt(a.sesiones_pendientes)||0)-(parseInt(b.sesiones_pendientes)||0));
-  const becasActivas  = G.becas.filter(b=>b.estado==='Activo').sort((a,b)=>(parseInt(a.sesiones_pendientes)||0)-(parseInt(b.sesiones_pendientes)||0));
-  const bonosAgotados = G.bonos.filter(b=>b.estado!=='Activo' && (b.cobrado==='Pendiente'||!b.cobrado));
+  const bonosActivos  = (G.bonos||[]).filter(b=>b.estado==='Activo').sort((a,b)=>(parseInt(a.sesiones_pendientes)||0)-(parseInt(b.sesiones_pendientes)||0));
+  const becasActivas  = (G.becas||[]).filter(b=>b.estado==='Activo').sort((a,b)=>(parseInt(a.sesiones_pendientes)||0)-(parseInt(b.sesiones_pendientes)||0));
+  const bonosAgotados = (G.bonos||[]).filter(b=>b.estado!=='Activo' && (b.cobrado==='Pendiente'||!b.cobrado));
+
+  // Helper seguro para nombre paciente
+  const nomSafe = (id) => {
+    try { return nomPac(id)||id||'—'; } catch(e) { return id||'—'; }
+  };
 
   // Bonos activos
-  const elBonos = document.getElementById('pasivo-bonos-detalle');
   if (elBonos) {
-    if (!bonosActivos.length) { elBonos.innerHTML='<div style="padding:16px;color:var(--ink-muted);font-size:13px">Sin bonos activos</div>'; }
-    else {
-      elBonos.innerHTML = bonosActivos.map(b=>{
-        const sesPend = parseInt(b.sesiones_pendientes)||0;
-        const sesTot  = parseInt(b.sesiones_totales)||4;
-        const pct     = Math.round((1-sesPend/sesTot)*100);
-        const importeTotal = parseFloat(b.importe_total)||0;
-        const precioSes = (importeTotal>0 && sesTot>0) ? importeTotal/sesTot : 45;
-        const importePend = sesPend*precioSes;
-        const semColor = sesPend<=1 ? 'var(--red)' : sesPend<=3 ? '#F59E0B' : 'var(--green-dark)';
-        return `<div style="display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid var(--border)">
-          <div style="flex:1;min-width:0">
-            <div style="font-size:12px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${nomPac(b.id_paciente)}</div>
-            <div style="font-size:10px;color:var(--ink-muted)">${b.id_bono} · ${b.id_terapeuta||'—'}</div>
-            <div style="height:4px;background:var(--border);border-radius:2px;margin-top:4px">
-              <div style="height:4px;background:var(--blue);border-radius:2px;width:${pct}%;transition:width .3s"></div>
+    try {
+      if (!bonosActivos.length) {
+        elBonos.innerHTML='<div style="padding:16px;color:var(--ink-muted);font-size:13px">Sin bonos activos</div>';
+      } else {
+        elBonos.innerHTML = bonosActivos.map(b=>{
+          const sesPend = parseInt(b.sesiones_pendientes)||0;
+          const sesTot  = parseInt(b.sesiones_totales)||4;
+          const pct     = Math.min(Math.round((1-sesPend/sesTot)*100), 100);
+          const importeTotal = parseFloat(b.importe_total)||0;
+          const precioSes = (importeTotal>0 && sesTot>0) ? importeTotal/sesTot : 45;
+          const importePend = sesPend*precioSes;
+          const semColor = sesPend<=1 ? 'var(--red)' : sesPend<=3 ? '#F59E0B' : 'var(--green-dark)';
+          return `<div style="display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid var(--border)">
+            <div style="flex:1;min-width:0">
+              <div style="font-size:12px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${nomSafe(b.id_paciente)}</div>
+              <div style="font-size:10px;color:var(--ink-muted)">${b.id_bono||'—'} · ${b.id_terapeuta||'—'}</div>
+              <div style="height:4px;background:var(--border);border-radius:2px;margin-top:4px">
+                <div style="height:4px;background:var(--blue);border-radius:2px;width:${pct}%;transition:width .3s"></div>
+              </div>
             </div>
-          </div>
-          <div style="text-align:right;flex-shrink:0">
-            <div style="font-size:13px;font-weight:600;color:${semColor}">${sesPend} ses.</div>
-            <div style="font-size:10px;color:var(--ink-muted)">${fmtEur(importePend)}</div>
-          </div>
-        </div>`;
-      }).join('');
+            <div style="text-align:right;flex-shrink:0">
+              <div style="font-size:13px;font-weight:600;color:${semColor}">${sesPend} ses.</div>
+              <div style="font-size:10px;color:var(--ink-muted)">${fmtEur(importePend)}</div>
+            </div>
+          </div>`;
+        }).join('');
+      }
+    } catch(e) {
+      elBonos.innerHTML=`<div style="padding:16px;color:var(--red);font-size:12px">Error bonos: ${e.message}</div>`;
     }
   }
 
   // Becas activas
-  const elBecas = document.getElementById('pasivo-becas-detalle');
   if (elBecas) {
-    if (!becasActivas.length) { elBecas.innerHTML='<div style="padding:16px;color:var(--ink-muted);font-size:13px">Sin becas activas</div>'; }
-    else {
-      elBecas.innerHTML = becasActivas.map(b=>{
-        const sesPend = parseInt(b.sesiones_pendientes)||0;
-        const sesTot  = parseInt(b.sesiones_totales)||20;
-        const pct     = Math.round((1-sesPend/sesTot)*100);
-        const semColor = sesPend<=3 ? 'var(--red)' : sesPend<=6 ? '#F59E0B' : 'var(--green-dark)';
-        return `<div style="display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid var(--border)">
-          <div style="flex:1;min-width:0">
-            <div style="font-size:12px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${nomPac(b.id_paciente)}</div>
-            <div style="font-size:10px;color:var(--ink-muted)">${b.id_beca} · ${b.anio||'—'} · ${(b.notas||'').split('-')[0].trim()}</div>
-            <div style="height:4px;background:var(--border);border-radius:2px;margin-top:4px">
-              <div style="height:4px;background:var(--cyan);border-radius:2px;width:${pct}%;transition:width .3s"></div>
+    try {
+      if (!becasActivas.length) {
+        elBecas.innerHTML='<div style="padding:16px;color:var(--ink-muted);font-size:13px">Sin becas activas</div>';
+      } else {
+        elBecas.innerHTML = becasActivas.map(b=>{
+          const sesPend = parseInt(b.sesiones_pendientes)||0;
+          const sesTot  = parseInt(b.sesiones_totales)||20;
+          const pct     = Math.min(Math.round((1-sesPend/sesTot)*100), 100);
+          const semColor = sesPend<=3 ? 'var(--red)' : sesPend<=6 ? '#F59E0B' : 'var(--green-dark)';
+          const notaCorta = (b.notas||'').split('-')[0].trim().substring(0,30);
+          return `<div style="display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid var(--border)">
+            <div style="flex:1;min-width:0">
+              <div style="font-size:12px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${nomSafe(b.id_paciente)}</div>
+              <div style="font-size:10px;color:var(--ink-muted)">${b.id_beca||'—'} · ${b.anio||'—'} · ${notaCorta}</div>
+              <div style="height:4px;background:var(--border);border-radius:2px;margin-top:4px">
+                <div style="height:4px;background:var(--cyan);border-radius:2px;width:${pct}%;transition:width .3s"></div>
+              </div>
             </div>
-          </div>
-          <div style="text-align:right;flex-shrink:0">
-            <div style="font-size:13px;font-weight:600;color:${semColor}">${sesPend} ses.</div>
-            <div style="font-size:10px;color:var(--ink-muted)">${fmtEur(sesPend*45)}</div>
-          </div>
-        </div>`;
-      }).join('');
+            <div style="text-align:right;flex-shrink:0">
+              <div style="font-size:13px;font-weight:600;color:${semColor}">${sesPend} ses.</div>
+              <div style="font-size:10px;color:var(--ink-muted)">${fmtEur(sesPend*45)}</div>
+            </div>
+          </div>`;
+        }).join('');
+      }
+    } catch(e) {
+      elBecas.innerHTML=`<div style="padding:16px;color:var(--red);font-size:12px">Error becas: ${e.message}</div>`;
     }
   }
 
   // Bonos agotados pendientes de cobro
-  const elAgot = document.getElementById('pasivo-bonos-agotados');
   if (elAgot) {
-    if (!bonosAgotados.length) { elAgot.innerHTML='<div style="padding:16px;color:var(--ink-muted);font-size:13px">✓ Sin bonos agotados pendientes</div>'; }
-    else {
-      elAgot.innerHTML = `<table class="data-table"><thead><tr><th>Bono</th><th>Paciente</th><th>Terapeuta</th><th>Importe</th><th>Estado</th></tr></thead><tbody>`+
-        bonosAgotados.map(b=>`<tr>
-          <td style="font-size:11px">${b.id_bono}</td>
-          <td style="font-size:12px">${nomPac(b.id_paciente)}</td>
-          <td style="font-size:11px">${b.id_terapeuta||'—'}</td>
-          <td style="font-size:12px;font-weight:600;color:var(--red)">${fmtEur(parseFloat(b.importe_total)||0)}</td>
-          <td><span class="badge badge-cancelada">Pendiente cobro</span></td>
-        </tr>`).join('')+
-        `</tbody></table>`;
+    try {
+      if (!bonosAgotados.length) {
+        elAgot.innerHTML='<div style="padding:16px;color:var(--ink-muted);font-size:13px">✓ Sin bonos agotados pendientes</div>';
+      } else {
+        elAgot.innerHTML = `<table class="data-table"><thead><tr><th>Bono</th><th>Paciente</th><th>Terapeuta</th><th>Importe</th><th>Estado</th></tr></thead><tbody>`+
+          bonosAgotados.map(b=>`<tr>
+            <td style="font-size:11px">${b.id_bono||'—'}</td>
+            <td style="font-size:12px">${nomSafe(b.id_paciente)}</td>
+            <td style="font-size:11px">${b.id_terapeuta||'—'}</td>
+            <td style="font-size:12px;font-weight:600;color:var(--red)">${fmtEur(parseFloat(b.importe_total)||0)}</td>
+            <td><span class="badge badge-cancelada">Pendiente cobro</span></td>
+          </tr>`).join('')+
+          `</tbody></table>`;
+      }
+    } catch(e) {
+      elAgot.innerHTML=`<div style="padding:16px;color:var(--red);font-size:12px">Error agotados: ${e.message}</div>`;
     }
   }
 }
