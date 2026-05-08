@@ -542,8 +542,7 @@ textarea.form-control { min-height: 72px; transition: border-color .2s; }
   </div>
   <div class="sidebar-nav">
     <div class="nav-section">Principal</div>
-    <div class="nav-item active" onclick="navigate('dashboard')"><span class="icon">📊</span><span>Dashboard</span></div>
-    <div class="nav-item" onclick="navigate('kpis')"><span class="icon">📈</span><span>KPIs</span></div>
+    <div class="nav-item active" onclick="navigate('indicadores')"><span class="icon">📊</span><span>Indicadores 360°</span></div>
     <div class="nav-item" onclick="navigate('produccion')"><span class="icon">⚡</span><span>Producción</span></div>
     <div class="nav-item" onclick="navigate('cobros')"><span class="icon">💶</span><span>Cobros</span></div>
     <div class="nav-item" onclick="navigate('banco')"><span class="icon">🏦</span><span>Banco</span></div>
@@ -574,7 +573,7 @@ textarea.form-control { min-height: 72px; transition: border-color .2s; }
         <span style="font-size:17px;font-weight:700;color:#fff;letter-spacing:-.3px">IPSE <span style="color:var(--cyan);font-weight:400">·</span> Gestión</span>
       </div>
       <div style="width:1px;height:20px;background:rgba(255,255,255,.2)"></div>
-      <div id="topbar-title" style="font-size:13px;color:rgba(255,255,255,.7);font-weight:500">Dashboard</div>
+      <div id="topbar-title" style="font-size:13px;color:rgba(255,255,255,.7);font-weight:500">Indicadores 360°</div>
     </div>
     <div class="topbar-right">
       <span class="topbar-date" id="topbar-date"></span>
@@ -585,16 +584,15 @@ textarea.form-control { min-height: 72px; transition: border-color .2s; }
 
   <div class="content">
 
-    <!-- ══ DASHBOARD ══ -->
-    <div class="page active" id="page-dashboard">
+    <!-- ══ INDICADORES 360° ══ -->
+    <div class="page active" id="page-indicadores">
       <!-- ── CABECERA ── -->
       <div class="page-header">
         <div>
-          <h1>Dashboard IPSE</h1>
+          <h1>Indicadores 360°</h1>
           <p id="dash-periodo-label">Cargando...</p>
         </div>
         <div style="display:flex;gap:8px;align-items:center">
-          <!-- Toggle Mes / Año -->
           <div class="tabs" style="margin:0">
             <div class="tab active" id="dash-tab-mes" onclick="dashSetModo('mes')">Mes</div>
             <div class="tab" id="dash-tab-anio" onclick="dashSetModo('anio')">Año</div>
@@ -603,146 +601,178 @@ textarea.form-control { min-height: 72px; transition: border-color .2s; }
           <span id="dash-nav-label" style="font-size:14px;font-weight:600;color:var(--blue);min-width:130px;text-align:center">—</span>
           <button class="btn btn-secondary btn-sm" onclick="navegarDash(1)">▶</button>
           <button class="btn btn-secondary btn-sm" onclick="navegarDash(0)">Hoy</button>
+          <select id="ind-filtro-ter" class="filter-select" style="font-size:12px;padding:4px 8px" onchange="ind360SetTab(G._ind360Tab)">
+            <option value="">Todas las terapeutas</option>
+          </select>
         </div>
       </div>
 
-      <!-- ── KPIs ECONÓMICOS ── -->
-      <div style="font-size:10px;font-weight:700;color:var(--ink-muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">Económicos</div>
-      <div class="kpi-grid" style="margin-bottom:8px">
-        <div class="kpi-card blue">
-          <div class="kpi-label">Producción devengada</div>
-          <div class="kpi-value" id="kpi-produccion">—</div>
-          <div class="kpi-sub" id="kpi-produccion-sub">— sesiones</div>
-        </div>
-        <div class="kpi-card cyan">
-          <div class="kpi-label">Cobrado efectivo</div>
-          <div class="kpi-value" id="kpi-cobrado">—</div>
-          <div class="kpi-sub" id="kpi-cobrado-pct">—% devengado</div>
-        </div>
-        <div class="kpi-card red">
-          <div class="kpi-label">ΔCaja (Cobrado − Dev.)</div>
-          <div class="kpi-value" id="kpi-delta-caja">—</div>
-          <div class="kpi-sub" id="kpi-delta-caja-sub">—</div>
-        </div>
-        <div class="kpi-card red">
-          <div class="kpi-label">⚠️ Pendiente cobro</div>
-          <div class="kpi-value" id="kpi-pendiente">—</div>
-          <div class="kpi-sub" id="kpi-pendiente-sub">sesiones sin cobrar</div>
-        </div>
-        <div class="kpi-card green">
-          <div class="kpi-label">Margen bruto clínica</div>
-          <div class="kpi-value" id="kpi-margen">—</div>
-          <div class="kpi-sub" id="kpi-margen-sub">Prod − comisiones</div>
-        </div>
+      <!-- ── PESTAÑAS ── -->
+      <div class="tabs" id="ind360-tabs" style="margin-bottom:20px">
+        <div class="tab active" id="ind-tab-caja"    onclick="ind360SetTab('caja')">💰 Caja y producción</div>
+        <div class="tab"        id="ind-tab-pasivo"  onclick="ind360SetTab('pasivo')">💼 Pasivo operativo</div>
+        <div class="tab"        id="ind-tab-tend"    onclick="ind360SetTab('tendencias')">📈 Tendencias</div>
       </div>
 
-      <!-- ── KPIs OPERATIVOS ── -->
-      <div style="font-size:10px;font-weight:700;color:var(--ink-muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">Operativos</div>
-      <div class="kpi-grid kpi-grid-4" style="margin-bottom:24px">
-        <div class="kpi-card green">
-          <div class="kpi-label">Tasa asistencia</div>
-          <div class="kpi-value" id="kpi-tasa">—</div>
-          <div class="kpi-sub" id="kpi-tasa-sub">Realizadas / con estado</div>
-        </div>
-        <div class="kpi-card cyan">
-          <div class="kpi-label">No-shows + Canceladas</div>
-          <div class="kpi-value" id="kpi-noshow">—</div>
-          <div class="kpi-sub" id="kpi-noshow-sub">sesiones perdidas</div>
-        </div>
-        <div class="kpi-card blue">
-          <div class="kpi-label">Altas nuevas</div>
-          <div class="kpi-value" id="kpi-altas">—</div>
-          <div class="kpi-sub" id="kpi-altas-sub">— activos total</div>
-        </div>
-        <div class="kpi-card green">
-          <div class="kpi-label">Bonos / Becas activos</div>
-          <div class="kpi-value" id="kpi-bonos-becas">—</div>
-          <div class="kpi-sub" id="kpi-bonos-becas-sub">—</div>
-        </div>
-      </div>
+      <!-- ══ PANEL: CAJA Y PRODUCCIÓN ══ -->
+      <div id="ind-panel-caja">
 
-      <!-- ── FILA CENTRAL: Gráfico + Agenda del día ── -->
-      <div class="dashboard-grid" style="grid-template-columns:1fr 1fr;margin-bottom:20px">
-        <div class="card">
-          <div class="card-header">
-            <div class="card-title">📈 Producción vs Cobros — 6 meses</div>
+        <!-- Fila 1: 4 KPIs principales -->
+        <div class="kpi-grid" style="margin-bottom:16px;grid-template-columns:repeat(4,1fr)">
+          <!-- Producción -->
+          <div class="kpi-card blue" style="border-left:4px solid var(--blue)">
+            <div class="kpi-label">Producción del periodo</div>
+            <div class="kpi-value" id="kpi-produccion">—</div>
+            <div class="kpi-sub" id="kpi-produccion-sub">— sesiones realizadas</div>
           </div>
-          <div class="card-body">
-            <div class="chart-bars" id="chart-produccion"></div>
-            <div class="chart-legend">
-              <div style="display:flex;align-items:center;gap:6px;font-size:12px"><div class="legend-dot" style="background:var(--blue)"></div>Producción</div>
-              <div style="display:flex;align-items:center;gap:6px;font-size:12px"><div class="legend-dot" style="background:var(--cyan)"></div>Cobrado</div>
+          <!-- Caja real entrada -->
+          <div class="kpi-card cyan" style="border-left:4px solid var(--cyan)">
+            <div class="kpi-label">Caja real entrada</div>
+            <div class="kpi-value" id="kpi-caja-real">—</div>
+            <div class="kpi-sub">Cobros confirmados del periodo</div>
+          </div>
+          <!-- Balance del periodo (nuevo delta con semántica correcta) -->
+          <div class="kpi-card green" style="border-left:4px solid var(--green)">
+            <div class="kpi-label">Balance del periodo</div>
+            <div class="kpi-value" id="kpi-balance">—</div>
+            <div class="kpi-sub" id="kpi-balance-sub">Caja − producción</div>
+          </div>
+          <!-- Pendiente sueltas -->
+          <div class="kpi-card red" style="border-left:4px solid var(--red)">
+            <div class="kpi-label">⚠️ Sueltas sin cobrar</div>
+            <div class="kpi-value" id="kpi-pendiente">—</div>
+            <div class="kpi-sub" id="kpi-pendiente-sub">sesiones suelta pendientes</div>
+          </div>
+        </div>
+
+        <!-- Fila 2: Gráfico producción + Agenda del día -->
+        <div class="dashboard-grid" style="grid-template-columns:1fr 1fr;margin-bottom:16px">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">📈 Producción vs Cobros — 6 meses</div>
+            </div>
+            <div class="card-body">
+              <div class="chart-bars" id="chart-produccion"></div>
+              <div class="chart-legend">
+                <div style="display:flex;align-items:center;gap:6px;font-size:12px"><div class="legend-dot" style="background:var(--blue)"></div>Producción</div>
+                <div style="display:flex;align-items:center;gap:6px;font-size:12px"><div class="legend-dot" style="background:var(--cyan)"></div>Cobros entrada</div>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">📅 Agenda de hoy</div>
+              <select id="agenda-filtro-ter" class="filter-select" style="font-size:12px;padding:4px 8px" onchange="renderAgendaHoy()">
+                <option value="">Todas las terapeutas</option>
+              </select>
+            </div>
+            <div class="card-body" id="agenda-hoy" style="padding:0;max-height:320px;overflow-y:auto">
+              <div class="loading-state"><div class="spinner"></div></div>
             </div>
           </div>
         </div>
 
-        <!-- AGENDA DEL DÍA -->
-        <div class="card">
-          <div class="card-header">
-            <div class="card-title">📅 Agenda de hoy</div>
-            <select id="agenda-filtro-ter" class="filter-select" style="font-size:12px;padding:4px 8px" onchange="renderAgendaHoy()">
-              <option value="">Todas las terapeutas</option>
-            </select>
+        <!-- Fila 3: Terapeutas + KPIs operativos + Alertas -->
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;margin-bottom:20px">
+          <div class="card">
+            <div class="card-header"><div class="card-title">👩‍⚕️ Producción por terapeuta</div></div>
+            <div class="card-body" id="ranking-terapeutas"><div class="loading-state"><div class="spinner"></div></div></div>
           </div>
-          <div class="card-body" id="agenda-hoy" style="padding:0;max-height:320px;overflow-y:auto">
+          <div class="card">
+            <div class="card-header"><div class="card-title">📋 Operativo</div></div>
+            <div class="card-body">
+              <div class="kpi-grid kpi-grid-2" style="margin:0">
+                <div class="kpi-card green" style="padding:10px 12px">
+                  <div class="kpi-label" style="font-size:9px">Tasa asistencia</div>
+                  <div class="kpi-value" id="kpi-tasa" style="font-size:18px">—</div>
+                </div>
+                <div class="kpi-card cyan" style="padding:10px 12px">
+                  <div class="kpi-label" style="font-size:9px">Cancel. + No-show</div>
+                  <div class="kpi-value" id="kpi-noshow" style="font-size:18px">—</div>
+                </div>
+                <div class="kpi-card blue" style="padding:10px 12px">
+                  <div class="kpi-label" style="font-size:9px">Altas nuevas</div>
+                  <div class="kpi-value" id="kpi-altas" style="font-size:18px">—</div>
+                  <div class="kpi-sub" id="kpi-altas-sub" style="font-size:9px">activos total</div>
+                </div>
+                <div class="kpi-card green" style="padding:10px 12px">
+                  <div class="kpi-label" style="font-size:9px">Margen bruto</div>
+                  <div class="kpi-value" id="kpi-margen" style="font-size:18px">—</div>
+                  <div class="kpi-sub" id="kpi-margen-sub" style="font-size:9px">prod − comisiones</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header"><div class="card-title">🔔 Alertas</div></div>
+            <div class="card-body" id="panel-alertas"><div style="color:var(--ink-muted);font-size:13px">Sin alertas</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ PANEL: PASIVO OPERATIVO ══ -->
+      <div id="ind-panel-pasivo" style="display:none">
+
+        <!-- Resumen 3 tarjetas -->
+        <div class="kpi-grid" style="margin-bottom:16px;grid-template-columns:repeat(3,1fr)">
+          <div class="kpi-card blue" style="border-left:4px solid var(--blue)">
+            <div class="kpi-label">Bonos · servicio pendiente</div>
+            <div class="kpi-value" id="pasivo-bonos-eur">—</div>
+            <div class="kpi-sub" id="pasivo-bonos-sub">— bonos activos</div>
+          </div>
+          <div class="kpi-card cyan" style="border-left:4px solid var(--cyan)">
+            <div class="kpi-label">Becas · servicio pendiente</div>
+            <div class="kpi-value" id="pasivo-becas-ses">—</div>
+            <div class="kpi-sub" id="pasivo-becas-sub">— becas activas</div>
+          </div>
+          <div class="kpi-card red" style="border-left:4px solid var(--red)">
+            <div class="kpi-label">Total pasivo operativo</div>
+            <div class="kpi-value" id="pasivo-total">—</div>
+            <div class="kpi-sub">Servicio cobrado y aún por dar</div>
+          </div>
+        </div>
+
+        <!-- Detalle bonos -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px">
+          <div class="card">
+            <div class="card-header"><div class="card-title">🎫 Bonos activos · detalle</div></div>
+            <div class="card-body" id="pasivo-bonos-detalle" style="padding:0;max-height:400px;overflow-y:auto">
+              <div class="loading-state"><div class="spinner"></div></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header"><div class="card-title">🏛️ Becas activas · detalle</div></div>
+            <div class="card-body" id="pasivo-becas-detalle" style="padding:0;max-height:400px;overflow-y:auto">
+              <div class="loading-state"><div class="spinner"></div></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bonos agotados pendientes de cobro -->
+        <div class="card" style="margin-bottom:20px">
+          <div class="card-header"><div class="card-title">⚠️ Bonos agotados pendientes de cobro</div></div>
+          <div class="card-body" id="pasivo-bonos-agotados" style="padding:0">
             <div class="loading-state"><div class="spinner"></div></div>
           </div>
         </div>
       </div>
 
-      <!-- ── FILA INFERIOR: Terapeutas + Pasivo + Alertas ── -->
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;margin-bottom:20px">
-        <div class="card">
-          <div class="card-header"><div class="card-title">👩‍⚕️ Producción por terapeuta</div></div>
-          <div class="card-body" id="ranking-terapeutas"><div class="loading-state"><div class="spinner"></div></div></div>
+      <!-- ══ PANEL: TENDENCIAS ══ -->
+      <div id="ind-panel-tendencias" style="display:none">
+
+        <!-- Selectores periodo KPIs -->
+        <div style="display:flex;gap:10px;align-items:center;margin-bottom:16px">
+          <select id="kpi-periodo" class="kpi-periodo-sel" onchange="cargarKPIs()"></select>
+          <span style="font-size:12px;color:var(--ink-muted)">Comparar con:</span>
+          <select id="kpi-comparar" class="kpi-comparar-sel" onchange="cargarKPIs()"></select>
         </div>
 
-        <!-- PASIVO OPERATIVO -->
-        <div class="card">
-          <div class="card-header"><div class="card-title">💼 Pasivo operativo</div></div>
-          <div class="card-body" id="panel-pasivo">
-            <div style="margin-bottom:16px">
-              <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px">
-                <span style="color:var(--ink-muted)">Bonos pendientes</span>
-                <span id="pasivo-bonos-eur" style="font-weight:600;color:var(--blue)">—</span>
-              </div>
-              <div style="height:6px;background:var(--border);border-radius:3px">
-                <div id="pasivo-bonos-bar" style="height:6px;background:var(--blue);border-radius:3px;width:0;transition:width .4s"></div>
-              </div>
-              <div style="font-size:11px;color:var(--ink-muted);margin-top:3px" id="pasivo-bonos-sub">— bonos activos</div>
-            </div>
-            <div style="margin-bottom:16px">
-              <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px">
-                <span style="color:var(--ink-muted)">Becas pendientes</span>
-                <span id="pasivo-becas-ses" style="font-weight:600;color:var(--cyan)">—</span>
-              </div>
-              <div style="height:6px;background:var(--border);border-radius:3px">
-                <div id="pasivo-becas-bar" style="height:6px;background:var(--cyan);border-radius:3px;width:0;transition:width .4s"></div>
-              </div>
-              <div style="font-size:11px;color:var(--ink-muted);margin-top:3px" id="pasivo-becas-sub">— becas activas</div>
-            </div>
-            <div style="border-top:1px solid var(--border);padding-top:12px">
-              <div style="display:flex;justify-content:space-between;font-size:13px">
-                <span style="color:var(--ink-muted)">Total pasivo estimado</span>
-                <span id="pasivo-total" style="font-weight:700;color:var(--ink)">—</span>
-              </div>
-              <div style="font-size:11px;color:var(--ink-muted);margin-top:3px">Trabajo vendido, pendiente de realizar</div>
-            </div>
-          </div>
-        </div>
-
-        <div class="card">
-          <div class="card-header"><div class="card-title">🔔 Alertas</div></div>
-          <div class="card-body" id="panel-alertas"><div style="color:var(--ink-muted);font-size:13px">Sin alertas</div></div>
+        <div id="kpi-contenido">
+          <div class="kpi-loading"><div class="spinner"></div> Calculando KPIs…</div>
         </div>
       </div>
 
-      <!-- Pendiente por terapeuta (oculto en fila separada) -->
-      <div class="card" style="margin-bottom:20px">
-        <div class="card-header"><div class="card-title">💶 Pendiente de cobro por terapeuta</div></div>
-        <div class="card-body" id="pendiente-terapeutas"></div>
-      </div>
-    </div>
+    </div><!-- /page-indicadores -->
 
     <!-- ══ PRODUCCIÓN ══ -->
     <div class="page" id="page-produccion">
@@ -2103,34 +2133,6 @@ textarea.form-control { min-height: 72px; transition: border-color .2s; }
 </div>
 
 
-<!-- ═══════════════════════════════ PAGE KPIs ═══════════════════════════════ -->
-<div class="page" id="page-kpis">
-  <div class="kpi-page">
-
-    <!-- Topbar KPIs -->
-    <div class="kpi-topbar">
-      <div class="kpi-topbar-left">
-        <h1>KPIs Clave <span style="font-size:14px;color:var(--ink-muted);font-weight:400" title="Indicadores esenciales para la gestión de tu clínica">ⓘ</span></h1>
-        <p>Indicadores esenciales para la gestión de tu clínica</p>
-      </div>
-      <div class="kpi-topbar-right">
-        <select id="kpi-periodo" class="kpi-periodo-sel" onchange="cargarKPIs()">
-          <!-- poblado por JS -->
-        </select>
-        <span style="font-size:12px;color:var(--ink-muted)">Comparar con:</span>
-        <select id="kpi-comparar" class="kpi-comparar-sel" onchange="cargarKPIs()">
-          <!-- poblado por JS -->
-        </select>
-      </div>
-    </div>
-
-    <div id="kpi-contenido">
-      <div class="kpi-loading"><div class="spinner"></div> Calculando KPIs…</div>
-    </div>
-
-  </div>
-</div>
-
 
 <!-- MODAL GRÁFICO KPI -->
 <div class="kpi-modal-overlay" id="kpi-modal-overlay" onclick="if(event.target===this)cerrarKpiModal()">
@@ -2289,6 +2291,12 @@ async function iniciarApp() {
     poblarSelectoresTerapeutas();
     poblarSelectoresPacientes();
     poblarSelectoresServicios();
+    // Poblar selector terapeuta de Indicadores 360°
+    const selIndTer = document.getElementById('ind-filtro-ter');
+    if (selIndTer) {
+      selIndTer.innerHTML = '<option value="">Todas las terapeutas</option>'+
+        G.terapeutas.filter(t=>t.id_terapeuta!=='T006').map(t=>`<option value="${t.id_terapeuta}">${t.nombre}</option>`).join('');
+    }
     // Actualizar avatar topbar con el usuario logado
     const terLogada = G.terapeutas.find(t=>(t.email||'').toLowerCase()===G.email.toLowerCase());
     if (terLogada) {
@@ -2417,12 +2425,15 @@ function navigate(page) {
     if (['cobro360'].includes(page)) {
       const cobNav = document.querySelector(`.nav-item[onclick*="cobros"]`);
       if (cobNav) cobNav.classList.add('active');
+    } else if (['dashboard','kpis'].includes(page)) {
+      // compatibilidad: redirigir al nuevo Indicadores 360°
+      navigate('indicadores'); return;
     } else {
       const pacNav = document.querySelector(`.nav-item[onclick*="pacientes"]`);
       if (pacNav) pacNav.classList.add('active');
     }
   }
-  const titles = {dashboard:'Dashboard',kpis:'KPIs',produccion:'Producción',cobros:'Cobros',cobro360:'Cobro 360°',pacientes:'Paciente 360°',p360:'Expediente',terapeutas:'Terapeutas',bonos:'Bonos',becas:'Becas',servicios:'Servicios',facturas:'Facturas',agenda:'Agenda'};
+  const titles = {indicadores:'Indicadores 360°',produccion:'Producción',cobros:'Cobros',cobro360:'Cobro 360°',pacientes:'Paciente 360°',p360:'Expediente',terapeutas:'Terapeutas',bonos:'Bonos',becas:'Becas',servicios:'Servicios',facturas:'Facturas',agenda:'Agenda',banco:'Banco'};
   document.getElementById('topbar-title').textContent = titles[page]||page;
   if (page==='produccion') cargarSesiones();
   if (page==='cobros') cargarCobros();
@@ -2436,11 +2447,26 @@ function navigate(page) {
   if (page==='servicios') cargarServicios();
   if (page==='facturas') cargarFacturas();
   if (page==='agenda') agIniciarSiNecesario();
-  if (page==='kpis') cargarKPIs();
+  if (page==='indicadores') cargarDashboard();
 }
 
 // ═══════════════════════════════════════════════════════
-//  DASHBOARD
+//  INDICADORES 360° — PESTAÑAS
+// ═══════════════════════════════════════════════════════
+G._ind360Tab = 'caja';
+
+function ind360SetTab(tab) {
+  G._ind360Tab = tab;
+  ['caja','pasivo','tendencias'].forEach(t => {
+    document.getElementById('ind-panel-'+t).style.display = t===tab ? 'block' : 'none';
+    document.getElementById('ind-tab-'+t).classList.toggle('active', t===tab);
+  });
+  if (tab==='pasivo')    renderPasivoDetalle();
+  if (tab==='tendencias') cargarKPIs();
+}
+
+// ═══════════════════════════════════════════════════════
+//  DASHBOARD / INDICADORES
 // ═══════════════════════════════════════════════════════
 let G_dashModo = 'mes'; // 'mes' | 'anio'
 
@@ -2467,6 +2493,9 @@ async function cargarDashboard() {
   const m=G.dashMes, a=G.dashAnio;
   const pad=n=>String(n).padStart(2,'0');
 
+  // Filtro terapeuta
+  const filtTer = (document.getElementById('ind-filtro-ter')||{}).value || '';
+
   let fi, ff, labelPeriodo;
   if (G_dashModo==='mes') {
     fi = `${a}-${pad(m)}-01`;
@@ -2487,21 +2516,35 @@ async function cargarDashboard() {
       sg('cobros',`fecha=gte.${fi}&fecha=lt.${ff}`),
     ]);
 
-    const realizadas = sesiones.filter(s=>s.estado==='Hecha');
-    const canceladas = sesiones.filter(s=>s.estado==='Cancelada');
-    const noShows    = sesiones.filter(s=>s.estado==='No-show');
-    const conEstado  = sesiones.filter(s=>s.estado!=='Programada');
+    const sesF = filtTer ? sesiones.filter(s=>s.id_terapeuta===filtTer) : sesiones;
+    const cobF = filtTer ? cobrosM.filter(c=>c.id_terapeuta===filtTer) : cobrosM;
 
+    const realizadas = sesF.filter(s=>s.estado==='Hecha');
+    const canceladas = sesF.filter(s=>s.estado==='Cancelada');
+    const noShows    = sesF.filter(s=>s.estado==='No-show');
+    const conEstado  = sesF.filter(s=>s.estado!=='Programada');
+
+    // ── PRODUCCIÓN: sesiones realizadas × importe ──
     const produccion = realizadas.reduce((sum,s)=>sum+(parseFloat(s.importe)||0),0);
-    const cobrado    = cobrosM.filter(c=>c.estado==='Confirmado').reduce((sum,c)=>sum+(parseFloat(c.importe)||0),0);
-    const pendiente  = realizadas.filter(s=>s.cerrada!=='Sí' && s.financiacion_tipo!=='BONO' && s.financiacion_tipo!=='BECA')
-                                 .reduce((sum,s)=>sum+(parseFloat(s.importe)||0),0);
-    const deltaCaja  = cobrado - produccion;
+
+    // ── CAJA REAL: cobros confirmados del periodo (incluye prepagos de bonos/becas) ──
+    const cajaReal = cobF.filter(c=>c.estado==='Confirmado').reduce((sum,c)=>sum+(parseFloat(c.importe)||0),0);
+
+    // ── BALANCE: caja entrada − producción (positivo = más cobrado que dado, prepago disponible) ──
+    const balance = cajaReal - produccion;
+
+    // ── PENDIENTE SUELTAS: sesiones suelta realizadas sin cerrar ──
+    const pendiente = realizadas.filter(s=>
+      s.cerrada!=='Sí' &&
+      s.financiacion_tipo!=='BONO' &&
+      s.financiacion_tipo!=='BECA' &&
+      s.financiacion_tipo!=='ADECCO'
+    ).reduce((sum,s)=>sum+(parseFloat(s.importe)||0),0);
 
     const porTer = G.terapeutas.map(t=>{
       const sesT = realizadas.filter(s=>s.id_terapeuta===t.id_terapeuta);
       const prod = sesT.reduce((sum,s)=>sum+(parseFloat(s.importe)||0),0);
-      const pend = sesT.filter(s=>s.cerrada!=='Sí').reduce((sum,s)=>sum+(parseFloat(s.importe)||0),0);
+      const pend = sesT.filter(s=>s.cerrada!=='Sí'&&s.financiacion_tipo!=='BONO'&&s.financiacion_tipo!=='BECA').reduce((sum,s)=>sum+(parseFloat(s.importe)||0),0);
       const com  = prod * (parseFloat(t.pct_com)||0);
       return {...t, sesiones:sesT.length, produccion:prod, pendiente:pend, comision:com};
     }).filter(t=>t.sesiones>0).sort((a,b)=>b.produccion-a.produccion);
@@ -2510,27 +2553,26 @@ async function cargarDashboard() {
     const margen   = produccion - totalCom;
     const tasaAsist = conEstado.length>0 ? Math.round(realizadas.length/conEstado.length*100) : 0;
 
-    // KPIs económicos
+    // ── KPIs CAJA Y PRODUCCIÓN ──
     document.getElementById('kpi-produccion').textContent     = fmtEur(produccion);
     document.getElementById('kpi-produccion-sub').textContent = realizadas.length+' sesiones realizadas';
-    document.getElementById('kpi-cobrado').textContent        = fmtEur(cobrado);
-    document.getElementById('kpi-cobrado-pct').textContent    = produccion>0?Math.round(cobrado/produccion*100)+'% devengado':'—';
+    document.getElementById('kpi-caja-real').textContent      = fmtEur(cajaReal);
     document.getElementById('kpi-pendiente').textContent      = fmtEur(pendiente);
-    document.getElementById('kpi-pendiente-sub').textContent  = 'sesiones sin cobrar';
+    document.getElementById('kpi-pendiente-sub').textContent  = realizadas.filter(s=>s.cerrada!=='Sí'&&s.financiacion_tipo!=='BONO'&&s.financiacion_tipo!=='BECA'&&s.financiacion_tipo!=='ADECCO').length+' sesiones suelta sin cobrar';
     document.getElementById('kpi-margen').textContent         = fmtEur(margen);
     document.getElementById('kpi-margen-sub').textContent     = 'Com: '+fmtEur(totalCom);
 
-    // ΔCaja
-    const deltaEl    = document.getElementById('kpi-delta-caja');
-    const deltaSubEl = document.getElementById('kpi-delta-caja-sub');
-    deltaEl.textContent    = (deltaCaja>=0?'+':'')+fmtEur(deltaCaja);
-    deltaEl.style.color    = deltaCaja>=0 ? 'var(--green-dark)' : 'var(--red)';
-    deltaSubEl.textContent = deltaCaja<0 ? '⚠️ Cobras menos de lo que generas' : '✓ Cobros al día';
+    const balEl  = document.getElementById('kpi-balance');
+    const balSub = document.getElementById('kpi-balance-sub');
+    balEl.textContent = (balance>=0?'+':'')+fmtEur(balance);
+    balEl.style.color = balance>=0 ? 'var(--green-dark)' : 'var(--red)';
+    if (balance>0) balSub.textContent = '✓ Prepago disponible en caja';
+    else if (balance===0) balSub.textContent = '= Caja y producción equilibradas';
+    else balSub.textContent = '⚠️ Producción no cubierta aún por caja';
 
-    // KPIs operativos
-    document.getElementById('kpi-tasa').textContent     = tasaAsist+'%';
-    document.getElementById('kpi-noshow').textContent   = canceladas.length+' + '+noShows.length;
-    document.getElementById('kpi-noshow-sub').textContent = 'canceladas + no-shows';
+    // ── KPIs OPERATIVOS ──
+    document.getElementById('kpi-tasa').textContent   = tasaAsist+'%';
+    document.getElementById('kpi-noshow').textContent = canceladas.length+' + '+noShows.length;
 
     const altasM = G.pacientes.filter(p=>{
       if (!p.fecha_alta) return false;
@@ -2541,14 +2583,26 @@ async function cargarDashboard() {
     const activos = G.pacientes.filter(p=>p.activo!=='No').length;
     document.getElementById('kpi-altas').textContent     = altasM;
     document.getElementById('kpi-altas-sub').textContent = activos+' activos total';
+    document.getElementById('dash-periodo-label').textContent = labelPeriodo+' · '+sesiones.length+' citas totales';
 
-    const bonosAct = G.bonos.filter(b=>b.estado==='Activo').length;
-    const becasAct = G.becas.filter(b=>b.estado==='Activo').length;
-    document.getElementById('kpi-bonos-becas').textContent     = bonosAct+' / '+becasAct;
-    document.getElementById('kpi-bonos-becas-sub').textContent = 'bonos / becas activos';
-    document.getElementById('dash-periodo-label').textContent  = labelPeriodo+' · '+sesiones.length+' citas totales';
+    // ── PASIVO OPERATIVO (tarjetas resumen, siempre actualizadas) ──
+    const bonosActivos = G.bonos.filter(b=>b.estado==='Activo');
+    const becasActivas = G.becas.filter(b=>b.estado==='Activo');
+    const pasivoBonosEur = bonosActivos.reduce((sum,b)=>{
+      const sesPend = parseInt(b.sesiones_pendientes)||0;
+      const precioSes = (parseInt(b.sesiones_totales)||0)>0 ? (parseFloat(b.importe_total)||0)/parseInt(b.sesiones_totales) : 45;
+      return sum + sesPend*precioSes;
+    },0);
+    const pasivoBecasSes = becasActivas.reduce((sum,b)=>sum+(parseInt(b.sesiones_pendientes)||0),0);
+    const pasivoTotal    = pasivoBonosEur + pasivoBecasSes*45;
 
-    // Ranking terapeutas
+    document.getElementById('pasivo-bonos-eur').textContent = fmtEur(pasivoBonosEur);
+    document.getElementById('pasivo-bonos-sub').textContent = bonosActivos.length+' bonos activos · '+bonosActivos.reduce((s,b)=>s+(parseInt(b.sesiones_pendientes)||0),0)+' ses. pendientes';
+    document.getElementById('pasivo-becas-ses').textContent = fmtEur(pasivoBecasSes*45);
+    document.getElementById('pasivo-becas-sub').textContent = becasActivas.length+' becas activas · '+pasivoBecasSes+' ses. pendientes';
+    document.getElementById('pasivo-total').textContent     = '≈ '+fmtEur(pasivoTotal);
+
+    // ── RANKING TERAPEUTAS ──
     const maxProd = Math.max(...porTer.map(t=>t.produccion),1);
     document.getElementById('ranking-terapeutas').innerHTML = porTer.length ? porTer.map((t,i)=>`
       <div class="ter-row">
@@ -2564,41 +2618,18 @@ async function cargarDashboard() {
         </div>
       </div>`).join('') : '<div style="color:var(--ink-muted);font-size:13px">Sin sesiones</div>';
 
-    document.getElementById('pendiente-terapeutas').innerHTML = porTer.filter(t=>t.pendiente>0).map(t=>`
-      <div class="ter-row">
-        <div class="ter-info"><div class="ter-name">${t.nombre}</div></div>
-        <div style="font-size:14px;font-weight:600;color:var(--red)">${fmtEur(t.pendiente)}</div>
-      </div>`).join('') || '<div style="color:var(--ink-muted);font-size:13px">Sin pendiente</div>';
-
-    // Pasivo operativo
-    const bonosActivos = G.bonos.filter(b=>b.estado==='Activo');
-    const becasActivas = G.becas.filter(b=>b.estado==='Activo');
-    const pasivoBonosEur = bonosActivos.reduce((sum,b)=>{
-      const sesPend = parseInt(b.sesiones_pendientes)||0;
-      const precioSes = (parseInt(b.sesiones_totales)||0)>0 ? (parseFloat(b.importe_total)||0)/parseInt(b.sesiones_totales) : 0;
-      return sum + sesPend*precioSes;
-    },0);
-    const pasivoBecasSes = becasActivas.reduce((sum,b)=>sum+(parseInt(b.sesiones_pendientes)||0),0);
-    const pasivoTotal = pasivoBonosEur + pasivoBecasSes*45;
-    const maxPasivo = Math.max(pasivoBonosEur, pasivoBecasSes*45, 1);
-    document.getElementById('pasivo-bonos-eur').textContent = fmtEur(pasivoBonosEur);
-    document.getElementById('pasivo-bonos-sub').textContent = bonosActivos.length+' bonos · '+bonosActivos.reduce((s,b)=>s+(parseInt(b.sesiones_pendientes)||0),0)+' ses. pend.';
-    document.getElementById('pasivo-bonos-bar').style.width = Math.round(pasivoBonosEur/maxPasivo*100)+'%';
-    document.getElementById('pasivo-becas-ses').textContent = pasivoBecasSes+' sesiones';
-    document.getElementById('pasivo-becas-sub').textContent = becasActivas.length+' becas activas';
-    document.getElementById('pasivo-becas-bar').style.width = Math.round(pasivoBecasSes*45/maxPasivo*100)+'%';
-    document.getElementById('pasivo-total').textContent     = '≈ '+fmtEur(pasivoTotal);
-
-    // Alertas
+    // ── ALERTAS ──
     const alertas = [];
-    if (pendiente>500) alertas.push({icon:'💶',msg:`Pendiente de cobro acumulado: ${fmtEur(pendiente)}`});
-    if (deltaCaja < -1000) alertas.unshift({icon:'⚠️',msg:`ΔCaja negativo: cobras ${fmtEur(Math.abs(deltaCaja))} menos de lo devengado`});
+    if (pendiente>500) alertas.push({icon:'💶',msg:`Sueltas sin cobrar: ${fmtEur(pendiente)}`});
+    if (balance < -500) alertas.push({icon:'⚠️',msg:`Caja por debajo de producción en ${fmtEur(Math.abs(balance))}`});
     G.bonos.filter(b=>b.estado==='Activo'&&(parseInt(b.sesiones_pendientes)||0)<=2).forEach(b=>{
       alertas.push({icon:'🎫',msg:`Bono ${b.id_bono} — ${nomPac(b.id_paciente)}: ${b.sesiones_pendientes||0} ses. pendientes`});
     });
     G.becas.filter(b=>b.estado==='Activo'&&(parseInt(b.sesiones_pendientes)||0)<=3).forEach(b=>{
       alertas.push({icon:'🏛️',msg:`Beca ${b.id_beca} — ${nomPac(b.id_paciente)}: ${b.sesiones_pendientes||0} ses. pendientes`});
     });
+    const bonosAgotadosPend = G.bonos.filter(b=>b.estado!=='Activo' && (b.cobrado==='Pendiente'||!b.cobrado));
+    if (bonosAgotadosPend.length) alertas.push({icon:'🎫',msg:`${bonosAgotadosPend.length} bonos agotados pendientes de cobro`});
     document.getElementById('panel-alertas').innerHTML = alertas.length
       ? alertas.slice(0,10).map(a=>`<div class="alert-item"><div class="alert-icon">${a.icon}</div><div>${a.msg}</div></div>`).join('')
       : '<div style="color:var(--ink-muted);font-size:13px">✓ Sin alertas</div>';
@@ -2606,11 +2637,93 @@ async function cargarDashboard() {
     await renderAgendaHoy();
     await renderGrafico();
 
-  } catch(err) { toast('Error dashboard: '+err.message,'err'); }
+  } catch(err) { toast('Error indicadores: '+err.message,'err'); }
 }
 
 // ─── AGENDA DEL DÍA ────────────────────────────────────
 let G_agendaHoy = [];
+
+// ═══════════════════════════════════════════════════════
+//  PASIVO OPERATIVO — DETALLE
+// ═══════════════════════════════════════════════════════
+function renderPasivoDetalle() {
+  const bonosActivos  = G.bonos.filter(b=>b.estado==='Activo').sort((a,b)=>(parseInt(a.sesiones_pendientes)||0)-(parseInt(b.sesiones_pendientes)||0));
+  const becasActivas  = G.becas.filter(b=>b.estado==='Activo').sort((a,b)=>(parseInt(a.sesiones_pendientes)||0)-(parseInt(b.sesiones_pendientes)||0));
+  const bonosAgotados = G.bonos.filter(b=>b.estado!=='Activo' && (b.cobrado==='Pendiente'||!b.cobrado));
+
+  // Bonos activos
+  const elBonos = document.getElementById('pasivo-bonos-detalle');
+  if (elBonos) {
+    if (!bonosActivos.length) { elBonos.innerHTML='<div style="padding:16px;color:var(--ink-muted);font-size:13px">Sin bonos activos</div>'; }
+    else {
+      elBonos.innerHTML = bonosActivos.map(b=>{
+        const sesPend = parseInt(b.sesiones_pendientes)||0;
+        const sesTot  = parseInt(b.sesiones_totales)||1;
+        const pct     = Math.round((1-sesPend/sesTot)*100);
+        const precioSes = sesTot>0 ? (parseFloat(b.importe_total)||0)/sesTot : 45;
+        const importePend = sesPend*precioSes;
+        const semColor = sesPend<=1 ? 'var(--red)' : sesPend<=3 ? '#F59E0B' : 'var(--green-dark)';
+        return `<div style="display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid var(--border)">
+          <div style="flex:1;min-width:0">
+            <div style="font-size:12px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${nomPac(b.id_paciente)}</div>
+            <div style="font-size:10px;color:var(--ink-muted)">${b.id_bono} · ${b.id_terapeuta||'—'}</div>
+            <div style="height:4px;background:var(--border);border-radius:2px;margin-top:4px">
+              <div style="height:4px;background:var(--blue);border-radius:2px;width:${pct}%;transition:width .3s"></div>
+            </div>
+          </div>
+          <div style="text-align:right;flex-shrink:0">
+            <div style="font-size:13px;font-weight:600;color:${semColor}">${sesPend} ses.</div>
+            <div style="font-size:10px;color:var(--ink-muted)">${fmtEur(importePend)}</div>
+          </div>
+        </div>`;
+      }).join('');
+    }
+  }
+
+  // Becas activas
+  const elBecas = document.getElementById('pasivo-becas-detalle');
+  if (elBecas) {
+    if (!becasActivas.length) { elBecas.innerHTML='<div style="padding:16px;color:var(--ink-muted);font-size:13px">Sin becas activas</div>'; }
+    else {
+      elBecas.innerHTML = becasActivas.map(b=>{
+        const sesPend = parseInt(b.sesiones_pendientes)||0;
+        const sesTot  = parseInt(b.sesiones_totales)||20;
+        const pct     = Math.round((1-sesPend/sesTot)*100);
+        const semColor = sesPend<=3 ? 'var(--red)' : sesPend<=6 ? '#F59E0B' : 'var(--green-dark)';
+        return `<div style="display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid var(--border)">
+          <div style="flex:1;min-width:0">
+            <div style="font-size:12px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${nomPac(b.id_paciente)}</div>
+            <div style="font-size:10px;color:var(--ink-muted)">${b.id_beca} · ${b.anio||'—'} · ${(b.notas||'').split('-')[0].trim()}</div>
+            <div style="height:4px;background:var(--border);border-radius:2px;margin-top:4px">
+              <div style="height:4px;background:var(--cyan);border-radius:2px;width:${pct}%;transition:width .3s"></div>
+            </div>
+          </div>
+          <div style="text-align:right;flex-shrink:0">
+            <div style="font-size:13px;font-weight:600;color:${semColor}">${sesPend} ses.</div>
+            <div style="font-size:10px;color:var(--ink-muted)">${fmtEur(sesPend*45)}</div>
+          </div>
+        </div>`;
+      }).join('');
+    }
+  }
+
+  // Bonos agotados pendientes de cobro
+  const elAgot = document.getElementById('pasivo-bonos-agotados');
+  if (elAgot) {
+    if (!bonosAgotados.length) { elAgot.innerHTML='<div style="padding:16px;color:var(--ink-muted);font-size:13px">✓ Sin bonos agotados pendientes</div>'; }
+    else {
+      elAgot.innerHTML = `<table class="data-table"><thead><tr><th>Bono</th><th>Paciente</th><th>Terapeuta</th><th>Importe</th><th>Estado</th></tr></thead><tbody>`+
+        bonosAgotados.map(b=>`<tr>
+          <td style="font-size:11px">${b.id_bono}</td>
+          <td style="font-size:12px">${nomPac(b.id_paciente)}</td>
+          <td style="font-size:11px">${b.id_terapeuta||'—'}</td>
+          <td style="font-size:12px;font-weight:600;color:var(--red)">${fmtEur(parseFloat(b.importe_total)||0)}</td>
+          <td><span class="badge badge-cancelada">Pendiente cobro</span></td>
+        </tr>`).join('')+
+        `</tbody></table>`;
+    }
+  }
+}
 
 async function renderAgendaHoy() {
   const hoy = new Date().toISOString().split('T')[0];
