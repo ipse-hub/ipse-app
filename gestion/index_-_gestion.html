@@ -2477,7 +2477,7 @@ function ind360SetTab(tab) {
   }
   if (tab==='tendencias') {
     kpiPoblarPeriodos();
-    cargarKPIs();
+    setTimeout(cargarKPIs, 50);
   }
 }
 
@@ -2696,7 +2696,19 @@ let G_agendaHoy = [];
 // ═══════════════════════════════════════════════════════
 //  PASIVO OPERATIVO — DETALLE
 // ═══════════════════════════════════════════════════════
-function renderPasivoDetalle() {
+async function renderPasivoDetalle() {
+  // Recargar bonos y becas frescos para asegurar datos actualizados
+  try {
+    const [bonos, becas] = await Promise.all([
+      sg('bonos','order=estado.asc,sesiones_pendientes.asc&limit=500'),
+      sg('becas','order=estado.asc,sesiones_pendientes.asc&limit=500'),
+    ]);
+    G.bonos = bonos;
+    G.becas = becas;
+  } catch(e) {
+    console.warn('No se pudieron recargar bonos/becas:', e.message);
+  }
+
   const bonosActivos  = G.bonos.filter(b=>b.estado==='Activo').sort((a,b)=>(parseInt(a.sesiones_pendientes)||0)-(parseInt(b.sesiones_pendientes)||0));
   const becasActivas  = G.becas.filter(b=>b.estado==='Activo').sort((a,b)=>(parseInt(a.sesiones_pendientes)||0)-(parseInt(b.sesiones_pendientes)||0));
   const bonosAgotados = G.bonos.filter(b=>b.estado!=='Activo' && (b.cobrado==='Pendiente'||!b.cobrado));
@@ -6043,7 +6055,8 @@ function kpiFmtN(v,dec=0) { return parseFloat(v||0).toFixed(dec).replace('.',','
 function kpiPoblarPeriodos() {
   const selP = document.getElementById('kpi-periodo');
   const selC = document.getElementById('kpi-comparar');
-  if (!selP || selC.options.length > 1) return;
+  if (!selP || !selC) return;
+  if (selP.options.length > 1) return; // ya poblado
   const hoy = new Date();
   const meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
   const opts = [];
