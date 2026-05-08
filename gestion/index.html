@@ -2471,8 +2471,14 @@ function ind360SetTab(tab) {
     document.getElementById('ind-panel-'+t).style.display = t===tab ? 'block' : 'none';
     document.getElementById('ind-tab-'+t).classList.toggle('active', t===tab);
   });
-  if (tab==='pasivo')    renderPasivoDetalle();
-  if (tab==='tendencias') cargarKPIs();
+  if (tab==='pasivo') {
+    // Forzar render aunque los elementos ya existan
+    setTimeout(renderPasivoDetalle, 0);
+  }
+  if (tab==='tendencias') {
+    kpiPoblarPeriodos();
+    cargarKPIs();
+  }
 }
 
 // ═══════════════════════════════════════════════════════
@@ -2632,7 +2638,9 @@ async function cargarDashboard() {
     const becasActivas = G.becas.filter(b=>b.estado==='Activo');
     const pasivoBonosEur = bonosActivos.reduce((sum,b)=>{
       const sesPend = parseInt(b.sesiones_pendientes)||0;
-      const precioSes = (parseInt(b.sesiones_totales)||0)>0 ? (parseFloat(b.importe_total)||0)/parseInt(b.sesiones_totales) : 45;
+      const sesTot  = parseInt(b.sesiones_totales)||4;
+      const importeTotal = parseFloat(b.importe_total)||0;
+      const precioSes = (importeTotal>0 && sesTot>0) ? importeTotal/sesTot : 45;
       return sum + sesPend*precioSes;
     },0);
     const pasivoBecasSes = becasActivas.reduce((sum,b)=>sum+(parseInt(b.sesiones_pendientes)||0),0);
@@ -2700,9 +2708,10 @@ function renderPasivoDetalle() {
     else {
       elBonos.innerHTML = bonosActivos.map(b=>{
         const sesPend = parseInt(b.sesiones_pendientes)||0;
-        const sesTot  = parseInt(b.sesiones_totales)||1;
+        const sesTot  = parseInt(b.sesiones_totales)||4;
         const pct     = Math.round((1-sesPend/sesTot)*100);
-        const precioSes = sesTot>0 ? (parseFloat(b.importe_total)||0)/sesTot : 45;
+        const importeTotal = parseFloat(b.importe_total)||0;
+        const precioSes = (importeTotal>0 && sesTot>0) ? importeTotal/sesTot : 45;
         const importePend = sesPend*precioSes;
         const semColor = sesPend<=1 ? 'var(--red)' : sesPend<=3 ? '#F59E0B' : 'var(--green-dark)';
         return `<div style="display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid var(--border)">
