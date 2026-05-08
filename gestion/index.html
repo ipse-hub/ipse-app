@@ -617,8 +617,8 @@ textarea.form-control { min-height: 72px; transition: border-color .2s; }
       <!-- ══ PANEL: CAJA Y PRODUCCIÓN ══ -->
       <div id="ind-panel-caja">
 
-        <!-- Fila 1: 4 KPIs principales -->
-        <div class="kpi-grid" style="margin-bottom:16px;grid-template-columns:repeat(4,1fr)">
+        <!-- Fila 1: 5 KPIs principales -->
+        <div class="kpi-grid" style="margin-bottom:16px;grid-template-columns:repeat(5,1fr)">
           <!-- Producción -->
           <div class="kpi-card blue" style="border-left:4px solid var(--blue)">
             <div class="kpi-label">Producción del periodo</div>
@@ -631,7 +631,7 @@ textarea.form-control { min-height: 72px; transition: border-color .2s; }
             <div class="kpi-value" id="kpi-caja-real">—</div>
             <div class="kpi-sub">Cobros confirmados del periodo</div>
           </div>
-          <!-- Balance del periodo (nuevo delta con semántica correcta) -->
+          <!-- Balance del periodo -->
           <div class="kpi-card green" style="border-left:4px solid var(--green)">
             <div class="kpi-label">Balance del periodo</div>
             <div class="kpi-value" id="kpi-balance">—</div>
@@ -642,6 +642,16 @@ textarea.form-control { min-height: 72px; transition: border-color .2s; }
             <div class="kpi-label">⚠️ Sueltas sin cobrar</div>
             <div class="kpi-value" id="kpi-pendiente">—</div>
             <div class="kpi-sub" id="kpi-pendiente-sub">sesiones suelta pendientes</div>
+          </div>
+          <!-- Break-even -->
+          <div class="kpi-card" id="kpi-be-card" style="border-left:4px solid var(--ink-muted)">
+            <div class="kpi-label">Break-even mensual</div>
+            <div class="kpi-value" id="kpi-breakeven">—</div>
+            <div class="kpi-sub" id="kpi-breakeven-sub">sesiones necesarias</div>
+            <div style="margin-top:6px;height:5px;background:var(--border);border-radius:3px">
+              <div id="kpi-be-bar" style="height:5px;border-radius:3px;width:0%;transition:width .5s;background:var(--green)"></div>
+            </div>
+            <div class="kpi-sub" id="kpi-be-pct" style="margin-top:3px">—% cubierto</div>
           </div>
         </div>
 
@@ -2511,9 +2521,10 @@ async function cargarDashboard() {
   document.getElementById('dash-nav-label').textContent = labelPeriodo;
 
   try {
-    const [sesiones, cobrosM] = await Promise.all([
+    const [sesiones, cobrosM, costesFijos] = await Promise.all([
       sg('sesiones',`fecha=gte.${fi}&fecha=lt.${ff}&order=fecha.asc,hora.asc`),
       sg('cobros',`fecha=gte.${fi}&fecha=lt.${ff}`),
+      sg('costes_fijos','activo=eq.true&select=importe_mensual'),
     ]);
 
     const sesF = filtTer ? sesiones.filter(s=>s.id_terapeuta===filtTer) : sesiones;
@@ -2553,6 +2564,21 @@ async function cargarDashboard() {
     const margen   = produccion - totalCom;
     const tasaAsist = conEstado.length>0 ? Math.round(realizadas.length/conEstado.length*100) : 0;
 
+    // ── BREAK-EVEN ──
+    // Coste fijo mensual real desde Supabase
+    const costeFijoMes = costesFijos.reduce((s,c)=>s+parseFloat(c.importe_mensual||0),0);
+    // Precio medio real de las sesiones del periodo (o 45 si no hay datos)
+    const precioMedioReal = realizadas.length>0
+      ? produccion / realizadas.length
+      : 45;
+    // Margen por sesión = precio × 40% (clínica retiene el 40%, terapeuta cobra el 60%)
+    const margenPorSes = precioMedioReal * 0.40;
+    // Sesiones necesarias para cubrir costes fijos
+    const sesBreakEven = margenPorSes>0 ? Math.ceil(costeFijoMes / margenPorSes) : 0;
+    // % del break-even ya cubierto por las sesiones del periodo
+    const pctBE = sesBreakEven>0 ? Math.min(Math.round(realizadas.length / sesBreakEven * 100), 150) : 0;
+    const superado = realizadas.length >= sesBreakEven;
+
     // ── KPIs CAJA Y PRODUCCIÓN ──
     document.getElementById('kpi-produccion').textContent     = fmtEur(produccion);
     document.getElementById('kpi-produccion-sub').textContent = realizadas.length+' sesiones realizadas';
@@ -2561,6 +2587,22 @@ async function cargarDashboard() {
     document.getElementById('kpi-pendiente-sub').textContent  = realizadas.filter(s=>s.cerrada!=='Sí'&&s.financiacion_tipo!=='BONO'&&s.financiacion_tipo!=='BECA'&&s.financiacion_tipo!=='ADECCO').length+' sesiones suelta sin cobrar';
     document.getElementById('kpi-margen').textContent         = fmtEur(margen);
     document.getElementById('kpi-margen-sub').textContent     = 'Com: '+fmtEur(totalCom);
+
+    // ── BREAK-EVEN DOM ──
+    const beEl    = document.getElementById('kpi-breakeven');
+    const beSubEl = document.getElementById('kpi-breakeven-sub');
+    const beCard  = document.getElementById('kpi-be-card');
+    const beBar   = document.getElementById('kpi-be-bar');
+    const bePct   = document.getElementById('kpi-be-pct');
+    beEl.textContent  = sesBreakEven > 0 ? sesBreakEven+' ses.' : '—';
+    beSubEl.textContent = costeFijoMes>0
+      ? fmtEur(costeFijoMes)+' costes fijos · '+fmtEur(Math.round(margenPorSes*100)/100)+'/ses.'
+      : 'Sin costes fijos configurados';
+    beBar.style.width = Math.min(pctBE,100)+'%';
+    beBar.style.background = superado ? 'var(--green)' : pctBE>=75 ? 'var(--amber)' : 'var(--red)';
+    beCard.style.borderLeftColor = superado ? 'var(--green)' : pctBE>=75 ? 'var(--amber)' : 'var(--red)';
+    bePct.textContent = realizadas.length+' ses. realizadas · '+pctBE+'% del BE';
+    bePct.style.color = superado ? 'var(--green-dark)' : pctBE>=75 ? '#7c4a00' : 'var(--red)';
 
     const balEl  = document.getElementById('kpi-balance');
     const balSub = document.getElementById('kpi-balance-sub');
