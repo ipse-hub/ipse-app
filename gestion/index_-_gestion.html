@@ -3565,6 +3565,14 @@ async function guardarCobro() {
       G.cobros.unshift({...datos,id_cobro:newId});
       toast('Cobro registrado ✓','ok');
     }
+    // Sincronizar cerrada=Sí en la sesión vinculada si es SUELTA y está Confirmado
+    if (datos.id_sesion && datos.estado==='Confirmado') {
+      const ses = G.sesiones.find(s=>s.id_cita===datos.id_sesion);
+      if (ses && ses.financiacion_tipo!=='BONO' && ses.financiacion_tipo!=='BECA') {
+        await sa('sesiones',`id_cita=eq.${datos.id_sesion}`,{cerrada:'Sí'});
+        if (ses) ses.cerrada='Sí';
+      }
+    }
     cerrarModal('modal-cobro');
     filtrarCobros();
   } catch(err) { toast('Error: '+err.message,'err'); }
