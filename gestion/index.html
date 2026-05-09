@@ -2326,7 +2326,7 @@ async function iniciarApp() {
 function nomPac(id) {
   const p = G.pacientes.find(x=>x.id_paciente===id);
   if (!p) return id||'—';
-  return (p.alias||'') || ((p.nombre||'')+' '+(p.apellidos||'')).trim() || id;
+  return ((p.nombre||'')+' '+(p.apellidos||'')).trim() || p.alias || id;
 }
 function nomPacFull(id) {
   const p = G.pacientes.find(x=>x.id_paciente===id);
