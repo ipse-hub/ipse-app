@@ -1,1 +1,0 @@
-<div class="nav-item" onclick="navigate('facturas')"><span class="icon">🧾</span><span>Facturas</span></div>
