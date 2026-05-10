@@ -1157,7 +1157,7 @@ async function iniciarApp() {
       supaGet('pacientes',  'order=nombre.asc'),
       supaGet('servicios',  'order=id_servicio.asc'),
     ]);
-    G.terapeutas = terapeutas.map(t => ({ ID_Terapeuta: t.id_terapeuta, Nombre: t.nombre, Activa: ['Sí','Si','Activo','activo','true','TRUE'].includes(t.activa) ? 'Sí' : t.activa, Pct_Com: t.pct_com, Email: t.email }));
+    G.terapeutas = terapeutas.map(t => ({ ID_Terapeuta: t.id_terapeuta, Nombre: t.nombre, Activa: ['Sí','Si','Activo','activo','true','TRUE'].includes(t.activa) ? 'Sí' : t.activa, Pct_Com: t.pct_com, Email: t.email, Especialidad: (t.especialidad||'').toUpperCase().trim() }));
     G.pacientes  = pacientesRaw.map(p => ({ ID_Paciente: p.id_paciente, Nombre: ((p.nombre||'') + ' ' + (p.apellidos||'')).trim(), Alias: p.alias || '', Tutor1: p.tutor1 || '', Tel1: (p.telefono||'').replace(/\D/g,''), Tel2: (p.telefono2||'').replace(/\D/g,'') }));
     G.servicios  = servicios.map(s => ({ ID_Servicio: s.id_servicio, Servicio: s.servicio, Precio: s.precio, DuraciónMin: s.duracion_min, Activo: s.activo, TipoConsumo: s.tipo_consumo_default || 'Privado' }));
     G.terapeutas.forEach((t, i) => { G.colores[t.ID_Terapeuta] = PALETTE[i % PALETTE.length]; });
@@ -1370,6 +1370,35 @@ function derivarTipoFin(idServicio) {
   if (tc === 'bono') return 'BONO';
   if (tc === 'adecco' || (idServicio||'').toUpperCase().includes('ADECCO')) return 'ADECCO';
   return 'SUELTA';
+}
+// ── Regla de especialidad ─────────────────────────────────────────────────
+// LOG no puede ejecutar sesiones PSI. TO sí puede ejecutar sesiones PSI.
+// Aplica a bonos, becas y sueltas por igual.
+function detectarEspecialidadServicio(idServicio) {
+  const n = (idServicio || '').toUpperCase();
+  if (n.startsWith('PSI') || n.includes('PSICOL')) return 'PSI';
+  if (n.startsWith('LOG') || n.includes('LOGOP')) return 'LOG';
+  if (n.startsWith('TO') || n.includes('OCUP')) return 'TO';
+  const srv = G.servicios.find(s => s.ID_Servicio === idServicio);
+  if (srv) {
+    const nom = (srv.Servicio || '').toUpperCase();
+    if (nom.includes('PSI') || nom.includes('PSICOL')) return 'PSI';
+    if (nom.includes('LOG') || nom.includes('LOGOP')) return 'LOG';
+    if (nom.includes('TO ') || nom.includes('OCUP')) return 'TO';
+  }
+  return null;
+}
+// Devuelve null si OK, o string con mensaje de advertencia si hay conflicto
+function validarEspecialidadTerapeuta(idTerapeuta, idServicio) {
+  const espSrv = detectarEspecialidadServicio(idServicio);
+  if (!espSrv) return null;
+  const ter = G.terapeutas.find(t => t.ID_Terapeuta === idTerapeuta);
+  if (!ter || !ter.Especialidad) return null;
+  const espTer = ter.Especialidad; // 'LOG', 'TO', 'PSI'…
+  // TO puede hacer PSI → no bloquear
+  if (espTer === 'LOG' && espSrv === 'PSI') return `⚠️ ${ter.Nombre} es logopeda y no puede ejecutar una sesión de PSI.\n¿Continuar de todas formas?`;
+  if (espTer === 'PSI' && espSrv === 'LOG') return `⚠️ ${ter.Nombre} es psicóloga y no puede ejecutar una sesión de Logopedia.\n¿Continuar de todas formas?`;
+  return null;
 }
 function popularSelectores() {
   const opts = '<option value="">— Selecciona servicio —</option>' +
@@ -1592,6 +1621,9 @@ async function guardarNuevaCita() {
   if (!fecha||!hora||!paciente||!servicio){toast('Completa fecha, hora, paciente y servicio','err');return;}
   if (esAdmin() && !idTerapeuta){toast('Selecciona una terapeuta','err');return;}
   if ((tipoFin==='BONO'||tipoFin==='BECA') && !(await verificarBonoDisponible(paciente,tipoFin))) return;
+  // Regla especialidad: LOG no puede hacer PSI; TO sí puede
+  const avisoEsp = validarEspecialidadTerapeuta(idTerapeuta || G.miId, servicio);
+  if (avisoEsp && !confirm(avisoEsp)) return;
   // Regla: sesión suelta bloqueada si hay bonos activos (salvo beca)
   if(tipoFin==='SUELTA'){
     const bonosVivos=(G.bonos||[]).filter(b=>b.id_paciente===paciente&&b.estado==='Activo'&&parseInt(b.sesiones_pendientes||0)>0);
@@ -2572,7 +2604,8 @@ async function onMultiServicioChange(){const idServicio=document.getElementById(
 function mmAnadirFecha(){const fecha=document.getElementById('mm-nueva-fecha').value;const hora=document.getElementById('mm-nueva-hora').value;if(!fecha){toast('Indica la fecha','err');return;}if(!hora){toast('Indica la hora','err');return;}mmFechas.push({fecha,hora});document.getElementById('mm-nueva-fecha').value='';mmRenderizarLista();}
 function mmEliminarFecha(idx){mmFechas.splice(idx,1);mmRenderizarLista();}
 function mmRenderizarLista(){const c=document.getElementById('mm-lista-fechas');const r=document.getElementById('mm-resumen');if(!mmFechas.length){c.innerHTML='<div style="color:var(--muted);font-size:12px;padding:6px 0">Añade al menos una fecha.</div>';r.style.display='none';return;}c.innerHTML=mmFechas.map((f,i)=>{const d=new Date(f.fecha+'T12:00:00');return`<div style="display:flex;align-items:center;justify-content:space-between;background:#fafbff;border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-size:13px"><span><strong>${DIAS_ES[d.getDay()]} ${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()}</strong> · ${f.hora}</span><button onclick="mmEliminarFecha(${i})" style="background:none;border:none;cursor:pointer;color:#DA291C;font-size:16px;line-height:1;padding:0 4px">✕</button></div>`;}).join('');r.style.display='block';r.textContent=mmFechas.length+' cita'+(mmFechas.length>1?'s':'')+' programada'+(mmFechas.length>1?'s':'');}
-async function guardarMultiCita(){const idPaciente=document.getElementById('mm-paciente').value;const idServicio=document.getElementById('mm-servicio').value;const tipoFin=derivarTipoFin(idServicio);if(!idPaciente){toast('Selecciona un paciente','err');return;}if(!idServicio){toast('Selecciona un servicio','err');return;}if(!mmFechas.length){toast('Añade al menos una fecha','err');return;}const btn=document.getElementById('btn-crear-multicita');btn.disabled=true;btn.textContent=`⏳ Creando ${mmFechas.length} citas…`;try{for(const entrada of mmFechas)await crearCita({fecha:entrada.fecha,hora:entrada.hora,idPaciente,idServicio,tipoFin,idFin:'',notas:''});toast(`✅ ${mmFechas.length} citas creadas`,'ok');cerrarModal('modal-multicita');recargarVista();}catch(err){toast('Error: '+err.message,'err');}finally{btn.disabled=false;btn.textContent='Crear citas';}}
+async function guardarMultiCita(){const idPaciente=document.getElementById('mm-paciente').value;const idServicio=document.getElementById('mm-servicio').value;const tipoFin=derivarTipoFin(idServicio);if(!idPaciente){toast('Selecciona un paciente','err');return;}if(!idServicio){toast('Selecciona un servicio','err');return;}if(!mmFechas.length){toast('Añade al menos una fecha','err');return;}// Regla especialidad
+const avisoEspM=validarEspecialidadTerapeuta(G.miId,idServicio);if(avisoEspM&&!confirm(avisoEspM))return;const btn=document.getElementById('btn-crear-multicita');btn.disabled=true;btn.textContent=`⏳ Creando ${mmFechas.length} citas…`;try{for(const entrada of mmFechas)await crearCita({fecha:entrada.fecha,hora:entrada.hora,idPaciente,idServicio,tipoFin,idFin:'',notas:''});toast(`✅ ${mmFechas.length} citas creadas`,'ok');cerrarModal('modal-multicita');recargarVista();}catch(err){toast('Error: '+err.message,'err');}finally{btn.disabled=false;btn.textContent='Crear citas';}}
 
 // ═══════════════════════════════════════════════════════════════
 //  REPETIR CITA
