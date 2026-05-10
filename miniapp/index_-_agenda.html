@@ -1319,7 +1319,7 @@ async function crearCita(datos) {
   const idCita = await generarId('agenda_datos', 'id_cita', 'AG');
   let idBeca = '', idBono = '';
   if (datos.tipoFin === 'BECA') idBeca = datos.idFin || await resolverBecaActiva(datos.idPaciente) || '';
-  if (datos.tipoFin === 'BONO') idBono = datos.idFin || await resolverBonoActivo(datos.idPaciente) || '';
+  if (datos.tipoFin === 'BONO') idBono = datos.idFin || await resolverBonoActivo(datos.idPaciente, datos.idServicio) || '';
   await supaPost('agenda_datos', {
     id_cita: idCita, fecha: datos.fecha, hora: datos.hora,
     id_terapeuta: datos.idTerapeuta || G.miId, id_paciente: datos.idPaciente, id_servicio: datos.idServicio,
@@ -1329,8 +1329,10 @@ async function crearCita(datos) {
   });
   return idCita;
 }
-async function resolverBonoActivo(idPaciente) {
-  const rows = await supaGet('bonos', `id_paciente=eq.${idPaciente}&estado=eq.Activo&sesiones_pendientes=gt.0&order=fecha_caducidad.asc&limit=1`);
+async function resolverBonoActivo(idPaciente, idServicio) {
+  const espSrv = idServicio ? detectarEspecialidadServicio(idServicio) : null;
+  const filtroEsp = espSrv ? `&tipo_bono=eq.${espSrv}` : '';
+  const rows = await supaGet('bonos', `id_paciente=eq.${idPaciente}&estado=eq.Activo&sesiones_pendientes=gt.0${filtroEsp}&order=fecha_caducidad.asc&limit=1`);
   return rows && rows.length ? rows[0].id_bono : null;
 }
 async function resolverBecaActiva(idPaciente) {
@@ -1621,9 +1623,20 @@ async function guardarNuevaCita() {
   if (!fecha||!hora||!paciente||!servicio){toast('Completa fecha, hora, paciente y servicio','err');return;}
   if (esAdmin() && !idTerapeuta){toast('Selecciona una terapeuta','err');return;}
   if ((tipoFin==='BONO'||tipoFin==='BECA') && !(await verificarBonoDisponible(paciente,tipoFin))) return;
-  // Regla especialidad: LOG no puede hacer PSI; TO sí puede
+  // Regla especialidad: bloqueo duro, sin excepción
   const avisoEsp = validarEspecialidadTerapeuta(idTerapeuta || G.miId, servicio);
-  if (avisoEsp && !confirm(avisoEsp)) return;
+  if (avisoEsp) { toast(avisoEsp, 'err'); return; }
+  // Regla: el bono debe coincidir con la especialidad del servicio
+  if (tipoFin==='BONO') {
+    const espSrv = detectarEspecialidadServicio(servicio);
+    if (espSrv) {
+      const bonosPaciente = (G.bonos||[]).filter(b=>b.id_paciente===paciente&&b.estado==='Activo'&&parseInt(b.sesiones_pendientes||0)>0);
+      const tieneOtro = bonosPaciente.find(b=>(b.tipo_bono||'').toUpperCase()!==espSrv);
+      if (tieneOtro && !bonosPaciente.find(b=>(b.tipo_bono||'').toUpperCase()===espSrv)) {
+        toast(`🚫 El bono activo de este paciente (${tieneOtro.id_bono}) es de ${tieneOtro.tipo_bono}, no compatible con una sesión de ${espSrv}.`,'err'); return;
+      }
+    }
+  }
   // Regla: sesión suelta bloqueada si hay bonos activos
   // Excepción: paciente con beca puede tener sesiones sueltas adicionales
   if(tipoFin==='SUELTA'){
@@ -1904,7 +1917,7 @@ async function guardarEstadoCita() {
         if(tipoFin==='BECA'){
           idFin=await resolverBecaActiva(G.citaActual.ID_Paciente)||'';
         } else if(tipoFin==='BONO'){
-          idFin=await resolverBonoActivo(G.citaActual.ID_Paciente)||'';
+          idFin=await resolverBonoActivo(G.citaActual.ID_Paciente, G.citaActual.ID_Servicio)||'';
         }
       }
       // Usar siempre el terapeuta de la cita, con G.miId solo como último recurso
@@ -2603,7 +2616,7 @@ function mmAnadirFecha(){const fecha=document.getElementById('mm-nueva-fecha').v
 function mmEliminarFecha(idx){mmFechas.splice(idx,1);mmRenderizarLista();}
 function mmRenderizarLista(){const c=document.getElementById('mm-lista-fechas');const r=document.getElementById('mm-resumen');if(!mmFechas.length){c.innerHTML='<div style="color:var(--muted);font-size:12px;padding:6px 0">Añade al menos una fecha.</div>';r.style.display='none';return;}c.innerHTML=mmFechas.map((f,i)=>{const d=new Date(f.fecha+'T12:00:00');return`<div style="display:flex;align-items:center;justify-content:space-between;background:#fafbff;border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-size:13px"><span><strong>${DIAS_ES[d.getDay()]} ${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()}</strong> · ${f.hora}</span><button onclick="mmEliminarFecha(${i})" style="background:none;border:none;cursor:pointer;color:#DA291C;font-size:16px;line-height:1;padding:0 4px">✕</button></div>`;}).join('');r.style.display='block';r.textContent=mmFechas.length+' cita'+(mmFechas.length>1?'s':'')+' programada'+(mmFechas.length>1?'s':'');}
 async function guardarMultiCita(){const idPaciente=document.getElementById('mm-paciente').value;const idServicio=document.getElementById('mm-servicio').value;const tipoFin=derivarTipoFin(idServicio);if(!idPaciente){toast('Selecciona un paciente','err');return;}if(!idServicio){toast('Selecciona un servicio','err');return;}if(!mmFechas.length){toast('Añade al menos una fecha','err');return;}// Regla especialidad
-const avisoEspM=validarEspecialidadTerapeuta(G.miId,idServicio);if(avisoEspM&&!confirm(avisoEspM))return;const btn=document.getElementById('btn-crear-multicita');btn.disabled=true;btn.textContent=`⏳ Creando ${mmFechas.length} citas…`;try{for(const entrada of mmFechas)await crearCita({fecha:entrada.fecha,hora:entrada.hora,idPaciente,idServicio,tipoFin,idFin:'',notas:''});toast(`✅ ${mmFechas.length} citas creadas`,'ok');cerrarModal('modal-multicita');recargarVista();}catch(err){toast('Error: '+err.message,'err');}finally{btn.disabled=false;btn.textContent='Crear citas';}}
+const avisoEspM=validarEspecialidadTerapeuta(G.miId,idServicio);if(avisoEspM){toast(avisoEspM,'err');return;}const btn=document.getElementById('btn-crear-multicita');btn.disabled=true;btn.textContent=`⏳ Creando ${mmFechas.length} citas…`;try{for(const entrada of mmFechas)await crearCita({fecha:entrada.fecha,hora:entrada.hora,idPaciente,idServicio,tipoFin,idFin:'',notas:''});toast(`✅ ${mmFechas.length} citas creadas`,'ok');cerrarModal('modal-multicita');recargarVista();}catch(err){toast('Error: '+err.message,'err');}finally{btn.disabled=false;btn.textContent='Crear citas';}}
 
 // ═══════════════════════════════════════════════════════════════
 //  REPETIR CITA
