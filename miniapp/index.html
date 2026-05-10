@@ -1152,14 +1152,18 @@ async function iniciarApp() {
       G.miNombre        = ter.nombre;
       G.miAccesoGestion = ter.acceso_gestion === 'Sí';
     }
-    const [terapeutas, pacientesRaw, servicios] = await Promise.all([
+    const [terapeutas, pacientesRaw, servicios, bonosActivos, becasActivas] = await Promise.all([
       supaGet('terapeutas', 'activa=in.(Sí,Si,Activo,activo,true,TRUE)&order=id_terapeuta.asc'),
       supaGet('pacientes',  'order=nombre.asc'),
       supaGet('servicios',  'order=id_servicio.asc'),
+      supaGet('bonos', 'estado=eq.Activo&select=id_bono,id_paciente,tipo_bono,sesiones_pendientes,estado&limit=500'),
+      supaGet('becas', 'estado=eq.Activo&select=id_beca,id_paciente,sesiones_pendientes,estado&limit=500'),
     ]);
     G.terapeutas = terapeutas.map(t => ({ ID_Terapeuta: t.id_terapeuta, Nombre: t.nombre, Activa: ['Sí','Si','Activo','activo','true','TRUE'].includes(t.activa) ? 'Sí' : t.activa, Pct_Com: t.pct_com, Email: t.email, Especialidad: (t.especialidad||'').toUpperCase().trim() }));
     G.pacientes  = pacientesRaw.map(p => ({ ID_Paciente: p.id_paciente, Nombre: ((p.nombre||'') + ' ' + (p.apellidos||'')).trim(), Alias: p.alias || '', Tutor1: p.tutor1 || '', Tel1: (p.telefono||'').replace(/\D/g,''), Tel2: (p.telefono2||'').replace(/\D/g,'') }));
     G.servicios  = servicios.map(s => ({ ID_Servicio: s.id_servicio, Servicio: s.servicio, Precio: s.precio, DuraciónMin: s.duracion_min, Activo: s.activo, TipoConsumo: s.tipo_consumo_default || 'Privado' }));
+    G.bonos      = bonosActivos;
+    G.becas      = becasActivas;
     G.terapeutas.forEach((t, i) => { G.colores[t.ID_Terapeuta] = PALETTE[i % PALETTE.length]; });
     document.getElementById('topbar-nombre').textContent = G.miNombre;
     document.getElementById('topbar-avatar').textContent = G.miNombre.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
@@ -1396,11 +1400,15 @@ function validarEspecialidadTerapeuta(idTerapeuta, idServicio) {
   const espSrv = detectarEspecialidadServicio(idServicio);
   if (!espSrv) return null;
   const ter = G.terapeutas.find(t => t.ID_Terapeuta === idTerapeuta);
-  if (!ter || !ter.Especialidad) return null;
-  const espTer = ter.Especialidad; // 'LOG', 'TO', 'PSI'…
-  // TO puede hacer PSI → no bloquear
-  if (espTer === 'LOG' && espSrv === 'PSI') return `⚠️ ${ter.Nombre} es logopeda y no puede ejecutar una sesión de PSI.\n¿Continuar de todas formas?`;
-  if (espTer === 'PSI' && espSrv === 'LOG') return `⚠️ ${ter.Nombre} es psicóloga y no puede ejecutar una sesión de Logopedia.\n¿Continuar de todas formas?`;
+  if (!ter) return null;
+  if (!ter.Especialidad) return `🚫 ${ter.Nombre || idTerapeuta} no tiene especialidad definida en el sistema. Corrígelo en Supabase antes de crear citas.`;
+  const espTer = ter.Especialidad;
+  if (espTer === 'TODAS') return null;
+  if (espTer === 'LOG' && espSrv === 'PSI') return `🚫 ${ter.Nombre} es logopeda y no puede ejecutar sesiones de PSI.`;
+  if (espTer === 'LOG' && espSrv === 'TO')  return `🚫 ${ter.Nombre} es logopeda y no puede ejecutar sesiones de TO.`;
+  if (espTer === 'PSI' && espSrv === 'LOG') return `🚫 ${ter.Nombre} es psicóloga y no puede ejecutar sesiones de Logopedia.`;
+  if (espTer === 'PSI' && espSrv === 'TO')  return `🚫 ${ter.Nombre} es psicóloga y no puede ejecutar sesiones de TO.`;
+  if (espTer === 'TO'  && espSrv === 'LOG') return `🚫 ${ter.Nombre} es terapeuta ocupacional y no puede ejecutar sesiones de Logopedia.`;
   return null;
 }
 function popularSelectores() {
