@@ -1319,7 +1319,7 @@ async function crearCita(datos) {
   const idCita = await generarId('agenda_datos', 'id_cita', 'AG');
   let idBeca = '', idBono = '';
   if (datos.tipoFin === 'BECA') idBeca = datos.idFin || await resolverBecaActiva(datos.idPaciente) || '';
-  if (datos.tipoFin === 'BONO') idBono = datos.idFin || await resolverBonoActivo(datos.idPaciente, datos.idServicio) || '';
+  if (datos.tipoFin === 'BONO') idBono = datos.idFin || await resolverBonoActivo(datos.idPaciente, datos.idTerapeuta || G.miId) || '';
   await supaPost('agenda_datos', {
     id_cita: idCita, fecha: datos.fecha, hora: datos.hora,
     id_terapeuta: datos.idTerapeuta || G.miId, id_paciente: datos.idPaciente, id_servicio: datos.idServicio,
@@ -1329,9 +1329,10 @@ async function crearCita(datos) {
   });
   return idCita;
 }
-async function resolverBonoActivo(idPaciente, idServicio) {
-  const espSrv = idServicio ? detectarEspecialidadServicio(idServicio) : null;
-  const filtroEsp = espSrv ? `&tipo_bono=eq.${espSrv}` : '';
+async function resolverBonoActivo(idPaciente, idTerapeuta) {
+  const ter = (G.terapeutas||[]).find(t=>t.ID_Terapeuta===idTerapeuta);
+  const espTer = ter && ter.Especialidad && ter.Especialidad !== 'TODAS' ? ter.Especialidad : null;
+  const filtroEsp = espTer ? `&tipo_bono=eq.${espTer}` : '';
   const rows = await supaGet('bonos', `id_paciente=eq.${idPaciente}&estado=eq.Activo&sesiones_pendientes=gt.0${filtroEsp}&order=fecha_caducidad.asc&limit=1`);
   return rows && rows.length ? rows[0].id_bono : null;
 }
@@ -1626,15 +1627,18 @@ async function guardarNuevaCita() {
   // Regla especialidad: bloqueo duro, sin excepción
   const avisoEsp = validarEspecialidadTerapeuta(idTerapeuta || G.miId, servicio);
   if (avisoEsp) { toast(avisoEsp, 'err'); return; }
-  // Regla: el bono debe coincidir con la especialidad del servicio
+  // Regla: la terapeuta no puede imputar a un bono de especialidad distinta a la suya
   if (tipoFin==='BONO') {
-    const espSrv = detectarEspecialidadServicio(servicio);
-    if (espSrv) {
-      const bonosPaciente = (G.bonos||[]).filter(b=>b.id_paciente===paciente&&b.estado==='Activo'&&parseInt(b.sesiones_pendientes||0)>0);
-      const bonoCompatible = bonosPaciente.find(b=>(b.tipo_bono||'').toUpperCase()===espSrv);
-      if (!bonoCompatible) {
-        const ids = bonosPaciente.map(b=>`${b.id_bono}(${b.tipo_bono||'?'})`).join(', ');
-        toast(`🚫 Este paciente no tiene bono activo de ${espSrv}.${ids ? ` Bono(s) disponible(s): ${ids}.` : ' Sin bonos activos.'}`,'err'); return;
+    const bonosPaciente = (G.bonos||[]).filter(b=>b.id_paciente===paciente&&b.estado==='Activo'&&parseInt(b.sesiones_pendientes||0)>0);
+    if (bonosPaciente.length > 0) {
+      const ter = G.terapeutas.find(t=>t.ID_Terapeuta===(idTerapeuta||G.miId));
+      const espTer = ter ? ter.Especialidad : '';
+      if (espTer && espTer !== 'TODAS') {
+        const bonoCompatible = bonosPaciente.find(b=>(b.tipo_bono||'').toUpperCase()===espTer);
+        if (!bonoCompatible) {
+          const ids = bonosPaciente.map(b=>`${b.id_bono}(${b.tipo_bono||'?'})`).join(', ');
+          toast(`🚫 Tu especialidad (${espTer}) no coincide con el bono activo de este paciente: ${ids}.`,'err'); return;
+        }
       }
     }
   }
@@ -1918,7 +1922,7 @@ async function guardarEstadoCita() {
         if(tipoFin==='BECA'){
           idFin=await resolverBecaActiva(G.citaActual.ID_Paciente)||'';
         } else if(tipoFin==='BONO'){
-          idFin=await resolverBonoActivo(G.citaActual.ID_Paciente, G.citaActual.ID_Servicio)||'';
+          idFin=await resolverBonoActivo(G.citaActual.ID_Paciente, G.citaActual.ID_Terapeuta || G.miId)||'';
         }
       }
       // Usar siempre el terapeuta de la cita, con G.miId solo como último recurso
