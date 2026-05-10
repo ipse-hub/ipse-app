@@ -1631,9 +1631,10 @@ async function guardarNuevaCita() {
     const espSrv = detectarEspecialidadServicio(servicio);
     if (espSrv) {
       const bonosPaciente = (G.bonos||[]).filter(b=>b.id_paciente===paciente&&b.estado==='Activo'&&parseInt(b.sesiones_pendientes||0)>0);
-      const tieneOtro = bonosPaciente.find(b=>(b.tipo_bono||'').toUpperCase()!==espSrv);
-      if (tieneOtro && !bonosPaciente.find(b=>(b.tipo_bono||'').toUpperCase()===espSrv)) {
-        toast(`🚫 El bono activo de este paciente (${tieneOtro.id_bono}) es de ${tieneOtro.tipo_bono}, no compatible con una sesión de ${espSrv}.`,'err'); return;
+      const bonoCompatible = bonosPaciente.find(b=>(b.tipo_bono||'').toUpperCase()===espSrv);
+      if (!bonoCompatible) {
+        const ids = bonosPaciente.map(b=>`${b.id_bono}(${b.tipo_bono||'?'})`).join(', ');
+        toast(`🚫 Este paciente no tiene bono activo de ${espSrv}.${ids ? ` Bono(s) disponible(s): ${ids}.` : ' Sin bonos activos.'}`,'err'); return;
       }
     }
   }
