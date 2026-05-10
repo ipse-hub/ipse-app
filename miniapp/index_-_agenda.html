@@ -1624,17 +1624,12 @@ async function guardarNuevaCita() {
   // Regla especialidad: LOG no puede hacer PSI; TO sí puede
   const avisoEsp = validarEspecialidadTerapeuta(idTerapeuta || G.miId, servicio);
   if (avisoEsp && !confirm(avisoEsp)) return;
-  // Regla: sesión suelta bloqueada si hay bonos activos (salvo beca)
+  // Regla: sesión suelta bloqueada si hay bonos activos (sin excepciones)
   if(tipoFin==='SUELTA'){
     const bonosVivos=(G.bonos||[]).filter(b=>b.id_paciente===paciente&&b.estado==='Activo'&&parseInt(b.sesiones_pendientes||0)>0);
     if(bonosVivos.length>0){
       const ids=bonosVivos.map(b=>b.id_bono).join(', ');
-      const tieneBeca=(G.becas||[]).some(b=>b.id_paciente===paciente&&b.estado==='Activo'&&parseInt(b.sesiones_pendientes||0)>0);
-      if(tieneBeca){
-        if(!confirm('⚠️ Este paciente tiene beca(s) activa(s) pendientes. Al ser paciente de beca, ¿Realmente creas una sesión suelta?')) return;
-      } else {
-        toast('⚠️ Este paciente tiene bono(s) activo(s) con sesiones pendientes (' + ids + '). La sesión debe imputarse al bono.','err'); return;
-      }
+      toast(`🚫 Este paciente tiene bono(s) activo(s) con sesiones pendientes (${ids}). La sesión debe imputarse al bono.`,'err'); return;
     }
   }
   if (recur) {
@@ -2531,16 +2526,11 @@ async function guardarNuevoBono() {
   if(!idPaciente){toast('Selecciona un paciente','err');return;}
   if(sesionesTotales<1){toast('Indica el número de sesiones','err');return;}
   if(importeAnticipo<=0){toast('Indica el importe','err');return;}
-  // Regla: advertir si tiene bonos activos pendientes
+  // Regla: bloqueo duro — nunca dos bonos activos con sesiones pendientes
   const bonosVivos=(G.bonos||[]).filter(b=>b.id_paciente===idPaciente&&b.estado==='Activo'&&parseInt(b.sesiones_pendientes||0)>0);
   if(bonosVivos.length>0){
     const ids=bonosVivos.map(b=>b.id_bono).join(', ');
-    const tieneBeca=(G.becas||[]).some(b=>b.id_paciente===idPaciente&&b.estado==='Activo'&&parseInt(b.sesiones_pendientes||0)>0);
-    if(tieneBeca){
-      if(!confirm('⚠️ Este paciente tiene beca(s) activa(s) pendientes. Al ser paciente de beca, ¿Realmente contrata un bono?')) return;
-    } else {
-      toast('⚠️ Este paciente ya tiene bono(s) activo(s) con sesiones pendientes (' + ids + '). Usa el bono existente.','err'); return;
-    }
+    toast(`🚫 Este paciente ya tiene bono(s) activo(s) con sesiones pendientes (${ids}). Agota el bono existente antes de crear uno nuevo.`,'err'); return;
   }
   const btn=document.getElementById('btn-guardar-bono'); btn.disabled=true; btn.textContent='Guardando…';
   try {
