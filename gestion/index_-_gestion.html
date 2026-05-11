@@ -4732,7 +4732,7 @@ function poblarSelectCurso(selectId, valorActual) {
   if (!sel) return;
   const anioBase = new Date().getFullYear();
   const cursos = [];
-  for (let i = -1; i <= 3; i++) {
+  for (let i = -2; i <= 3; i++) {
     const a = anioBase + i;
     cursos.push(`${a}/${a+1}`);
   }
