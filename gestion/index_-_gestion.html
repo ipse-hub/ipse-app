@@ -1215,7 +1215,7 @@ textarea.form-control { min-height: 72px; transition: border-color .2s; }
       <div class="data-table-wrap">
         <table class="data-table">
           <thead><tr>
-            <th>ID Beca</th><th>Año</th><th>Paciente</th><th>Servicio</th>
+            <th>ID Beca</th><th>Curso</th><th>Paciente</th><th>Servicio</th>
             <th>Neto</th><th>€/ses</th><th>Ses. total</th><th>Consumidas</th>
             <th>Pendientes</th><th>Estado</th><th>Cobrado</th><th></th>
           </tr></thead>
@@ -1782,10 +1782,8 @@ textarea.form-control { min-height: 72px; transition: border-color .2s; }
             </div>
           <datalist id="dl-pac-beca"></datalist>
         </div>
-        <div class="form-group"><label class="form-label">Año *</label>
-          <select class="form-control" id="bc-anio">
-            <option>2024</option><option>2025</option><option selected>2026</option><option>2027</option>
-          </select>
+        <div class="form-group"><label class="form-label">Curso académico *</label>
+          <select class="form-control" id="bc-anio"></select>
         </div>
         <div class="form-group"><label class="form-label">Estado</label>
           <select class="form-control" id="bc-estado"><option>Activo</option><option>Agotada</option><option>Caducada</option><option>Cancelada</option></select>
@@ -4728,11 +4726,24 @@ function calcularBeca() {
   const el2=document.getElementById('bc-valor-ses');if(el2) el2.value=valS.toFixed(2);
 }
 
+// Genera opciones de curso académico dinámicamente: año anterior, actual y 3 siguientes
+function poblarSelectCurso(selectId, valorActual) {
+  const sel = document.getElementById(selectId);
+  if (!sel) return;
+  const anioBase = new Date().getFullYear();
+  const cursos = [];
+  for (let i = -1; i <= 3; i++) {
+    const a = anioBase + i;
+    cursos.push(`${a}/${a+1}`);
+  }
+  sel.innerHTML = cursos.map(c => `<option value="${c}"${c===(valorActual||cursos[1])?'selected':''}>${c}</option>`).join('');
+}
+
 function abrirModalBeca() {
   document.getElementById('bc-id').value='';
   document.getElementById('modal-bec-titulo').textContent='Nueva beca';
   setPacienteEnModal('bc-paciente-txt','bc-paciente','');
-  document.getElementById('bc-anio').value='2026';
+  poblarSelectCurso('bc-anio', null);
   document.getElementById('bc-estado').value='Activo';
   document.getElementById('bc-bruto').value='';
   document.getElementById('bc-fee').value='0';
@@ -4753,7 +4764,7 @@ function editarBeca(id) {
   document.getElementById('bc-id').value=id;
   document.getElementById('modal-bec-titulo').textContent='Editar beca · '+id;
   setPacienteEnModal('bc-paciente-txt','bc-paciente',b.id_paciente);
-  document.getElementById('bc-anio').value        = b.anio||'2026';
+  poblarSelectCurso('bc-anio', b.anio||'');
   document.getElementById('bc-estado').value      = b.estado||'Activo';
   document.getElementById('bc-bruto').value       = b.importe_bruto||0;
   document.getElementById('bc-fee').value         = b.fee_gestion||0;
@@ -4783,7 +4794,7 @@ async function guardarBeca() {
   const pend = Math.max(ses-cons,0);
   const datos = {
     id_paciente:      document.getElementById('bc-paciente').value,
-    anio:             parseInt(document.getElementById('bc-anio').value),
+    anio:             document.getElementById('bc-anio').value,
     estado:           document.getElementById('bc-estado').value,
     importe_bruto:    bruto,
     fee_gestion:      fee,
