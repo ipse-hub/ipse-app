@@ -546,6 +546,8 @@ textarea.form-control { min-height: 72px; transition: border-color .2s; }
     <div class="nav-item" onclick="navigate('produccion')"><span class="icon">⚡</span><span>Producción</span></div>
     <div class="nav-item" onclick="navigate('cobros')"><span class="icon">💶</span><span>Cobros</span></div>
     <div class="nav-item" onclick="navigate('banco')"><span class="icon">🏦</span><span>Banco</span></div>
+    <div class="nav-section">Finanzas</div>
+    <div class="nav-item" onclick="navigate('finanzas')"><span class="icon">💰</span><span>Finanzas</span></div>
     <div class="nav-section">Gestión</div>
     <div class="nav-item" onclick="navigate('pacientes')"><span class="icon">👤</span><span>Paciente 360°</span></div>
     <div class="nav-item" onclick="navigate('terapeutas')"><span class="icon">🧑‍⚕️</span><span>Terapeutas</span></div>
@@ -2102,6 +2104,164 @@ textarea.form-control { min-height: 72px; transition: border-color .2s; }
 </div>
 
 
+<!-- ═══════════════════════════════ PAGE FINANZAS ═══════════════════════════════ -->
+<div class="page" id="page-finanzas">
+  <div class="page-header">
+    <div>
+      <h1>Finanzas</h1>
+      <p>Costes fijos · P&amp;L · EBITDA · Break-even</p>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <select id="fin-anio" class="filter-select" onchange="finanzasCargar()">
+        <option value="2026">2026</option>
+        <option value="2025">2025</option>
+      </select>
+      <button class="btn btn-secondary btn-sm" onclick="finanzasCargar()">⟳ Actualizar</button>
+    </div>
+  </div>
+
+  <!-- TABS -->
+  <div class="tabs" style="margin-bottom:20px">
+    <div class="tab active" id="fin-tab-resumen"  onclick="finTab('resumen')">Resumen P&amp;L</div>
+    <div class="tab"        id="fin-tab-costes"   onclick="finTab('costes')">Costes fijos</div>
+    <div class="tab"        id="fin-tab-breakeven" onclick="finTab('breakeven')">Break-even</div>
+  </div>
+
+  <!-- ── PANEL RESUMEN P&L ── -->
+  <div id="fin-panel-resumen">
+
+    <!-- KPIs superiores -->
+    <div id="fin-kpis" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:24px"></div>
+
+    <!-- Tabla mensual -->
+    <div style="background:var(--white);border-radius:12px;border:1px solid var(--border);overflow:hidden">
+      <div style="padding:16px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+        <div style="font-size:14px;font-weight:700;color:var(--ink)">Evolución mensual</div>
+        <button class="btn btn-secondary btn-sm" onclick="finExportarExcel()">⬇ Exportar Excel</button>
+      </div>
+      <div style="overflow-x:auto">
+        <table id="fin-tabla-mensual" style="width:100%;border-collapse:collapse;font-size:12px"></table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── PANEL COSTES FIJOS ── -->
+  <div id="fin-panel-costes" style="display:none">
+    <div style="display:flex;justify-content:flex-end;margin-bottom:14px">
+      <button class="btn btn-primary btn-sm" onclick="finCosteNuevo()">+ Nuevo coste</button>
+    </div>
+    <div style="background:var(--white);border-radius:12px;border:1px solid var(--border);overflow:hidden">
+      <table id="fin-tabla-costes" style="width:100%;border-collapse:collapse;font-size:13px">
+        <thead>
+          <tr style="background:var(--cream);border-bottom:2px solid var(--border)">
+            <th style="padding:10px 14px;text-align:left;font-size:11px;letter-spacing:.5px;color:var(--ink-muted);font-weight:700">CONCEPTO</th>
+            <th style="padding:10px 14px;text-align:left;font-size:11px;letter-spacing:.5px;color:var(--ink-muted);font-weight:700">CATEGORÍA</th>
+            <th style="padding:10px 14px;text-align:right;font-size:11px;letter-spacing:.5px;color:var(--ink-muted);font-weight:700">IMPORTE REAL</th>
+            <th style="padding:10px 14px;text-align:right;font-size:11px;letter-spacing:.5px;color:var(--ink-muted);font-weight:700">€/MES</th>
+            <th style="padding:10px 14px;text-align:left;font-size:11px;letter-spacing:.5px;color:var(--ink-muted);font-weight:700">PERIODICIDAD</th>
+            <th style="padding:10px 14px;text-align:center;font-size:11px;letter-spacing:.5px;color:var(--ink-muted);font-weight:700">ACTIVO</th>
+            <th style="padding:10px 14px;text-align:left;font-size:11px;letter-spacing:.5px;color:var(--ink-muted);font-weight:700">NOTAS</th>
+            <th style="padding:10px 14px;text-align:center;font-size:11px;letter-spacing:.5px;color:var(--ink-muted);font-weight:700">ACCIÓN</th>
+          </tr>
+        </thead>
+        <tbody id="fin-costes-tbody"></tbody>
+        <tfoot id="fin-costes-tfoot"></tfoot>
+      </table>
+    </div>
+  </div>
+
+  <!-- ── PANEL BREAK-EVEN ── -->
+  <div id="fin-panel-breakeven" style="display:none">
+    <div id="fin-be-kpis" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-bottom:24px"></div>
+    <div style="background:var(--white);border-radius:12px;border:1px solid var(--border);padding:20px">
+      <div style="font-size:14px;font-weight:700;color:var(--ink);margin-bottom:16px">Break-even mensual</div>
+      <div style="overflow-x:auto">
+        <table id="fin-tabla-be" style="width:100%;border-collapse:collapse;font-size:12px"></table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── MODAL COSTE FIJO ── -->
+<div class="overlay" id="modal-coste-overlay" style="display:none" onclick="if(event.target===this)finCerrarModal()">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-coste-titulo">Nuevo coste fijo</div>
+      <button class="modal-close" onclick="finCerrarModal()">✕</button>
+    </div>
+    <div class="modal-body" style="display:flex;flex-direction:column;gap:14px">
+      <input type="hidden" id="fin-coste-id">
+      <div>
+        <label class="form-label">Concepto *</label>
+        <input class="form-input" id="fin-coste-concepto" placeholder="Nombre del coste">
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div>
+          <label class="form-label">Categoría *</label>
+          <select class="form-input" id="fin-coste-categoria">
+            <option>Laboral</option>
+            <option>Local</option>
+            <option>Suministros</option>
+            <option>Comunicaciones</option>
+            <option>Software/Tech</option>
+            <option>Seguridad</option>
+            <option>Seguro salud</option>
+            <option>Asesoría</option>
+            <option>Fiscal</option>
+            <option>Formación</option>
+            <option>Material</option>
+            <option>Previsión</option>
+            <option>Otros</option>
+          </select>
+        </div>
+        <div>
+          <label class="form-label">Periodicidad</label>
+          <select class="form-input" id="fin-coste-periodicidad" onchange="finPeriodChange()">
+            <option value="mensual">Mensual</option>
+            <option value="bimestral">Bimestral</option>
+            <option value="trimestral">Trimestral</option>
+            <option value="anual">Anual</option>
+            <option value="puntual">Puntual</option>
+            <option value="variable">Variable</option>
+          </select>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div>
+          <label class="form-label">Importe real (€)</label>
+          <input class="form-input" id="fin-coste-importe-real" type="number" step="0.01" placeholder="0.00" oninput="finAutoMensual()">
+        </div>
+        <div>
+          <label class="form-label">€/mes (mensualizado)</label>
+          <input class="form-input" id="fin-coste-importe-mensual" type="number" step="0.01" placeholder="0.00">
+        </div>
+      </div>
+      <div id="fin-meses-pago-wrap">
+        <label class="form-label">Meses de pago</label>
+        <div id="fin-meses-pago" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px">
+          <!-- generados por JS -->
+        </div>
+      </div>
+      <div>
+        <label class="form-label">Notas</label>
+        <input class="form-input" id="fin-coste-notas" placeholder="Opcional">
+      </div>
+      <div>
+        <label class="form-label">Activo desde</label>
+        <input class="form-input" id="fin-coste-fecha" type="date" value="2026-01-01">
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <input type="checkbox" id="fin-coste-activo" checked style="width:16px;height:16px;cursor:pointer">
+        <label for="fin-coste-activo" style="font-size:13px;cursor:pointer">Activo (incluir en cálculos)</label>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="finCerrarModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="finGuardarCoste()">💾 Guardar</button>
+    </div>
+  </div>
+</div>
+
 <!-- ═══════════════════════════════ PAGE AGENDA ═══════════════════════════════ -->
 <div class="page" id="page-agenda">
   <!-- Barra de control agenda -->
@@ -2443,7 +2603,7 @@ function navigate(page) {
       if (pacNav) pacNav.classList.add('active');
     }
   }
-  const titles = {indicadores:'Indicadores 360°',produccion:'Producción',cobros:'Cobros',cobro360:'Cobro 360°',pacientes:'Paciente 360°',p360:'Expediente',terapeutas:'Terapeutas',bonos:'Bonos',becas:'Becas',servicios:'Servicios',facturas:'Facturas',agenda:'Agenda',banco:'Banco'};
+  const titles = {indicadores:'Indicadores 360°',produccion:'Producción',cobros:'Cobros',cobro360:'Cobro 360°',pacientes:'Paciente 360°',p360:'Expediente',terapeutas:'Terapeutas',bonos:'Bonos',becas:'Becas',servicios:'Servicios',facturas:'Facturas',agenda:'Agenda',banco:'Banco',finanzas:'Finanzas'};
   document.getElementById('topbar-title').textContent = titles[page]||page;
   if (page==='produccion') cargarSesiones();
   if (page==='cobros') cargarCobros();
@@ -2458,6 +2618,7 @@ function navigate(page) {
   if (page==='facturas') cargarFacturas();
   if (page==='agenda') agIniciarSiNecesario();
   if (page==='indicadores') cargarDashboard();
+  if (page==='finanzas') finanzasCargar();
 }
 
 // ═══════════════════════════════════════════════════════
@@ -7857,6 +8018,429 @@ async function abrirCobro360(idCobro) {
   // Reset tabs
   document.querySelectorAll('#page-cobro360 .p360-tab').forEach((t,i) => t.classList.toggle('active', i===0));
   document.querySelectorAll('#page-cobro360 .p360-panel').forEach((t,i) => t.classList.toggle('active', i===0));
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  FINANZAS
+// ═══════════════════════════════════════════════════════════════
+
+let FIN = { costes: [], sesionesAnio: [], cobrosAnio: [], tab: 'resumen' };
+
+// ── Helpers ──────────────────────────────────────────────────
+function finFmt(n) { return new Intl.NumberFormat('es-ES',{minimumFractionDigits:2,maximumFractionDigits:2}).format(n||0)+' €'; }
+function finFmtN(n,d=1) { return new Intl.NumberFormat('es-ES',{minimumFractionDigits:d,maximumFractionDigits:d}).format(n||0); }
+
+// Coste real de un mes dado para un registro de costes_fijos
+function finCosteMes(c, mes1) {
+  if (!c.activo) return 0;
+  if (c.meses_pago && Array.isArray(c.meses_pago) && c.meses_pago.length > 0) {
+    return c.meses_pago.includes(mes1) ? parseFloat(c.importe_real||0) : 0;
+  }
+  // sin meses_pago → usa importe_mensual (ya mensualizado)
+  return parseFloat(c.importe_mensual||0);
+}
+
+// Suma de costes fijos activos para un mes
+function finTotalCostesMes(mes1) {
+  return FIN.costes.filter(c=>c.activo).reduce((s,c) => s + finCosteMes(c, mes1), 0);
+}
+
+// Total costes mensualizados (para break-even y KPI anual)
+function finTotalMensualizado() {
+  return FIN.costes.filter(c=>c.activo).reduce((s,c) => s + parseFloat(c.importe_mensual||0), 0);
+}
+
+// ── Tabs ─────────────────────────────────────────────────────
+function finTab(tab) {
+  FIN.tab = tab;
+  ['resumen','costes','breakeven'].forEach(t => {
+    document.getElementById('fin-panel-'+t).style.display = t===tab ? 'block' : 'none';
+    document.getElementById('fin-tab-'+t).classList.toggle('active', t===tab);
+  });
+  if (tab==='costes')    finRenderCostes();
+  if (tab==='breakeven') finRenderBreakeven();
+  if (tab==='resumen')   finRenderResumen();
+}
+
+// ── Carga principal ──────────────────────────────────────────
+async function finanzasCargar() {
+  const anio = parseInt(document.getElementById('fin-anio').value||2026);
+  const fi = `${anio}-01-01`;
+  const ff = `${anio+1}-01-01`;
+
+  try {
+    const [costes, sesiones, cobros] = await Promise.all([
+      supaGet('costes_fijos', 'order=categoria.asc,concepto.asc'),
+      supaGet('sesiones', `fecha=gte.${fi}&fecha=lt.${ff}&select=id_sesion,fecha,importe,estado,cerrada,financiacion_tipo`),
+      supaGet('cobros',   `fecha=gte.${fi}&fecha=lt.${ff}&select=id_cobro,fecha,importe,estado`),
+    ]);
+    FIN.costes       = costes;
+    FIN.sesionesAnio = sesiones;
+    FIN.cobrosAnio   = cobros;
+    finTab(FIN.tab);
+  } catch(e) {
+    toast('Error cargando finanzas: '+e.message,'err');
+  }
+}
+
+// ── RESUMEN P&L ──────────────────────────────────────────────
+function finRenderResumen() {
+  const anio = parseInt(document.getElementById('fin-anio').value||2026);
+  const mesActual = new Date().getFullYear()===anio ? new Date().getMonth()+1 : 12;
+
+  // Calcular datos por mes
+  const mesesData = [];
+  let totalDevengo=0, totalCobrado=0, totalCostesVar=0, totalCostesFijos=0;
+
+  for (let m=1; m<=12; m++) {
+    const fi = `${anio}-${String(m).padStart(2,'0')}-01`;
+    const ff = m<12 ? `${anio}-${String(m+1).padStart(2,'0')}-01` : `${anio+1}-01-01`;
+    const sesMes   = FIN.sesionesAnio.filter(s=>s.fecha>=fi&&s.fecha<ff&&s.estado==='Hecha');
+    const cobrMes  = FIN.cobrosAnio.filter(c=>c.fecha>=fi&&c.fecha<ff&&c.estado==='Confirmado');
+    const devengo  = sesMes.reduce((s,x)=>s+parseFloat(x.importe||0),0);
+    const cobrado  = cobrMes.reduce((s,x)=>s+parseFloat(x.importe||0),0);
+    const costesVar= devengo * 0.60;   // 60% terapeutas
+    const costesFij= finTotalCostesMes(m);
+    const ebitda   = devengo - costesVar - costesFij;
+    const margen   = devengo>0 ? (ebitda/devengo)*100 : 0;
+    const esFuturo = m > mesActual;
+
+    mesesData.push({ m, devengo, cobrado, costesVar, costesFij, ebitda, margen, sesMes:sesMes.length, esFuturo });
+    if (!esFuturo) {
+      totalDevengo   += devengo;
+      totalCobrado   += cobrado;
+      totalCostesVar += costesVar;
+      totalCostesFijos += costesFij;
+    }
+  }
+
+  const totalEbitda  = totalDevengo - totalCostesVar - totalCostesFijos;
+  const totalMargen  = totalDevengo>0 ? (totalEbitda/totalDevengo)*100 : 0;
+  const conversion   = totalDevengo>0 ? (totalCobrado/totalDevengo)*100 : 0;
+
+  // KPIs
+  const kpiColor = (v,ok,warn) => v>=ok?'var(--green-dark)':v>=warn?'#7c4a00':'var(--red)';
+  const kpiBg    = (v,ok,warn) => v>=ok?'var(--green-pale)':v>=warn?'#fffbf0':'var(--red-pale)';
+
+  document.getElementById('fin-kpis').innerHTML = `
+    ${finKpiCard('💰','Ingresos YTD',finFmt(totalDevengo),'Devengo acumulado','var(--blue)','var(--blue-pale)')}
+    ${finKpiCard('🏦','Cobrado YTD',finFmt(totalCobrado),finFmtN(conversion,1)+'% conversión','#006a87','var(--cyan-pale)')}
+    ${finKpiCard('🧾','EBITDA YTD',finFmt(totalEbitda),finFmtN(totalMargen,1)+'% margen',kpiColor(totalMargen,20,10),kpiBg(totalMargen,20,10))}
+    ${finKpiCard('📌','Costes fijos/mes',finFmt(finTotalMensualizado()),'Mensualizados','#5a3aaa','#f3f0ff')}
+  `;
+
+  // Tabla mensual
+  const th = s => `<th style="padding:9px 12px;text-align:right;font-size:10px;font-weight:700;letter-spacing:.5px;color:var(--ink-muted);white-space:nowrap">${s}</th>`;
+  const thL = s => `<th style="padding:9px 12px;text-align:left;font-size:10px;font-weight:700;letter-spacing:.5px;color:var(--ink-muted)">${s}</th>`;
+  let thead = `<thead><tr style="background:var(--cream);border-bottom:2px solid var(--border)">${thL('MES')}${th('SES.')}${th('DEVENGO')}${th('COBRADO')}${th('CONV.')}${th('COSTES VAR.')}${th('COSTES FIJOS')}${th('EBITDA')}${th('MARGEN')}</tr></thead>`;
+
+  let tbody = '<tbody>';
+  mesesData.forEach(d => {
+    const faded  = d.esFuturo ? 'opacity:.4' : '';
+    const eColor = d.ebitda>=0 ? 'var(--green-dark)' : 'var(--red)';
+    const mColor = d.margen>=20 ? 'var(--green-dark)' : d.margen>=10 ? '#7c4a00' : 'var(--red)';
+    const conv   = d.devengo>0 ? finFmtN((d.cobrado/d.devengo)*100,0)+'%' : '—';
+    const row = `<tr style="border-bottom:1px solid var(--border);${faded}">
+      <td style="padding:9px 12px;font-weight:600;color:var(--ink)">${MESES_CORTO[d.m-1]}</td>
+      <td style="padding:9px 12px;text-align:right;color:var(--ink-muted)">${d.sesMes}</td>
+      <td style="padding:9px 12px;text-align:right;font-weight:600">${finFmt(d.devengo)}</td>
+      <td style="padding:9px 12px;text-align:right">${finFmt(d.cobrado)}</td>
+      <td style="padding:9px 12px;text-align:right;color:var(--ink-muted)">${conv}</td>
+      <td style="padding:9px 12px;text-align:right;color:var(--ink-muted)">${finFmt(d.costesVar)}</td>
+      <td style="padding:9px 12px;text-align:right;color:var(--ink-muted)">${finFmt(d.costesFij)}</td>
+      <td style="padding:9px 12px;text-align:right;font-weight:700;color:${eColor}">${finFmt(d.ebitda)}</td>
+      <td style="padding:9px 12px;text-align:right;font-weight:600;color:${mColor}">${d.devengo>0?finFmtN(d.margen,1)+'%':'—'}</td>
+    </tr>`;
+    tbody += row;
+  });
+
+  // Fila total
+  const totConv = totalDevengo>0 ? finFmtN(conversion,0)+'%' : '—';
+  const totECol = totalEbitda>=0 ? 'var(--green-dark)' : 'var(--red)';
+  const totSes  = mesesData.filter(d=>!d.esFuturo).reduce((s,d)=>s+d.sesMes,0);
+  tbody += `<tr style="background:var(--blue);color:#fff;font-weight:700">
+    <td style="padding:10px 12px">TOTAL YTD</td>
+    <td style="padding:10px 12px;text-align:right">${totSes}</td>
+    <td style="padding:10px 12px;text-align:right">${finFmt(totalDevengo)}</td>
+    <td style="padding:10px 12px;text-align:right">${finFmt(totalCobrado)}</td>
+    <td style="padding:10px 12px;text-align:right">${totConv}</td>
+    <td style="padding:10px 12px;text-align:right">${finFmt(totalCostesVar)}</td>
+    <td style="padding:10px 12px;text-align:right">${finFmt(totalCostesFijos)}</td>
+    <td style="padding:10px 12px;text-align:right;color:${totalEbitda>=0?'#c8f87a':'#ffb3b3'}">${finFmt(totalEbitda)}</td>
+    <td style="padding:10px 12px;text-align:right;color:${totalEbitda>=0?'#c8f87a':'#ffb3b3'}">${totalDevengo>0?finFmtN(totalMargen,1)+'%':'—'}</td>
+  </tr>`;
+  tbody += '</tbody>';
+
+  document.getElementById('fin-tabla-mensual').innerHTML = thead + tbody;
+}
+
+function finKpiCard(icon, label, valor, sub, color, bg) {
+  return `<div style="background:${bg};border-radius:12px;padding:18px 20px;border:1px solid ${color}22">
+    <div style="font-size:22px;margin-bottom:4px">${icon}</div>
+    <div style="font-size:11px;font-weight:700;letter-spacing:.8px;color:var(--ink-muted);text-transform:uppercase;margin-bottom:6px">${label}</div>
+    <div style="font-size:22px;font-weight:700;color:${color}">${valor}</div>
+    <div style="font-size:11px;color:var(--ink-muted);margin-top:3px">${sub}</div>
+  </div>`;
+}
+
+// ── COSTES FIJOS ─────────────────────────────────────────────
+function finRenderCostes() {
+  const tbody = document.getElementById('fin-costes-tbody');
+  const tfoot = document.getElementById('fin-costes-tfoot');
+  const cats  = {};
+  const activos = FIN.costes.filter(c=>c.activo);
+  const totalMes = activos.reduce((s,c)=>s+parseFloat(c.importe_mensual||0),0);
+  const totalAnual = activos.reduce((s,c)=>s+parseFloat(c.importe_real||0)*(
+    c.meses_pago&&Array.isArray(c.meses_pago)&&c.meses_pago.length>0 ? c.meses_pago.length :
+    c.periodicidad==='mensual'?12:c.periodicidad==='bimestral'?6:c.periodicidad==='trimestral'?4:c.periodicidad==='anual'?1:0
+  ),0);
+
+  // Agrupar por categoría
+  FIN.costes.forEach(c => {
+    if (!cats[c.categoria]) cats[c.categoria] = [];
+    cats[c.categoria].push(c);
+  });
+
+  let html = '';
+  Object.keys(cats).sort().forEach(cat => {
+    const items = cats[cat];
+    const subTotal = items.filter(c=>c.activo).reduce((s,c)=>s+parseFloat(c.importe_mensual||0),0);
+    html += `<tr style="background:var(--cream)">
+      <td colspan="3" style="padding:7px 14px;font-size:11px;font-weight:700;letter-spacing:.8px;color:var(--blue);text-transform:uppercase">${cat}</td>
+      <td style="padding:7px 14px;text-align:right;font-size:11px;font-weight:700;color:var(--blue)">${finFmt(subTotal)}/mes</td>
+      <td colspan="4"></td>
+    </tr>`;
+    items.forEach(c => {
+      const esMensual = c.meses_pago&&Array.isArray(c.meses_pago)&&c.meses_pago.length>0
+        ? c.meses_pago.map(m=>MESES_CORTO[m-1]).join(', ')
+        : c.periodicidad;
+      html += `<tr style="border-bottom:1px solid var(--border);${!c.activo?'opacity:.45':''}">
+        <td style="padding:10px 14px;font-weight:500">${c.concepto}</td>
+        <td style="padding:10px 14px;color:var(--ink-muted);font-size:12px">${c.categoria}</td>
+        <td style="padding:10px 14px;text-align:right">${c.importe_real>0?finFmt(c.importe_real):'—'}</td>
+        <td style="padding:10px 14px;text-align:right;font-weight:600">${c.activo&&c.importe_mensual>0?finFmt(c.importe_mensual):'—'}</td>
+        <td style="padding:10px 14px;font-size:12px;color:var(--ink-muted)">${esMensual}</td>
+        <td style="padding:10px 14px;text-align:center">${c.activo?'<span style="color:var(--green-dark);font-weight:700">✓</span>':'<span style="color:var(--ink-muted)">—</span>'}</td>
+        <td style="padding:10px 14px;font-size:11px;color:var(--ink-muted)">${c.notas||''}</td>
+        <td style="padding:10px 14px;text-align:center;white-space:nowrap">
+          <button class="btn btn-secondary btn-sm" style="padding:3px 8px;font-size:11px" onclick="finCosteEditar(${c.id})">✏</button>
+        </td>
+      </tr>`;
+    });
+  });
+  tbody.innerHTML = html;
+  tfoot.innerHTML = `<tr style="background:var(--blue);color:#fff;font-weight:700">
+    <td colspan="3" style="padding:10px 14px">TOTAL COSTES FIJOS ACTIVOS</td>
+    <td style="padding:10px 14px;text-align:right">${finFmt(totalMes)}/mes</td>
+    <td colspan="3" style="padding:10px 14px;font-size:12px;opacity:.8">≈ ${finFmt(totalAnual)}/año</td>
+    <td></td>
+  </tr>`;
+}
+
+// ── BREAK-EVEN ───────────────────────────────────────────────
+function finRenderBreakeven() {
+  const anio = parseInt(document.getElementById('fin-anio').value||2026);
+  const mesActual = new Date().getFullYear()===anio ? new Date().getMonth()+1 : 12;
+
+  const rows = [];
+  for (let m=1; m<=12; m++) {
+    const fi = `${anio}-${String(m).padStart(2,'0')}-01`;
+    const ff = m<12 ? `${anio}-${String(m+1).padStart(2,'0')}-01` : `${anio+1}-01-01`;
+    const sesMes   = FIN.sesionesAnio.filter(s=>s.fecha>=fi&&s.fecha<ff&&s.estado==='Hecha');
+    const devengo  = sesMes.reduce((s,x)=>s+parseFloat(x.importe||0),0);
+    const pMedio   = sesMes.length>0 ? devengo/sesMes.length : 0;
+    const margenSes= pMedio * 0.40;
+    const costesFij= finTotalCostesMes(m);
+    const beNec    = margenSes>0 ? Math.ceil(costesFij/margenSes) : 0;
+    const pctBE    = beNec>0 ? Math.min((sesMes.length/beNec)*100,150) : (costesFij===0?100:0);
+    const superado = sesMes.length>=beNec && beNec>0;
+    rows.push({ m, ses:sesMes.length, pMedio, margenSes, costesFij, beNec, pctBE, superado, esFuturo:m>mesActual });
+  }
+
+  // KPIs break-even del mes actual
+  const mesData = rows[mesActual-1];
+  const beColor = mesData.superado?'var(--green-dark)':mesData.pctBE>=75?'#7c4a00':'var(--red)';
+  const beBg    = mesData.superado?'var(--green-pale)':mesData.pctBE>=75?'#fffbf0':'var(--red-pale)';
+  document.getElementById('fin-be-kpis').innerHTML = `
+    ${finKpiCard('🎯','Break-even mes actual',mesData.beNec>0?mesData.beNec+' ses.':'— ses.','Sesiones para cubrir costes fijos',beColor,beBg)}
+    ${finKpiCard('📊','Sesiones realizadas',mesData.ses+' ses.',finFmtN(mesData.pctBE,0)+'% del break-even',beColor,beBg)}
+    ${finKpiCard('💶','Margen por sesión',mesData.margenSes>0?finFmt(mesData.margenSes):'—','40% del precio medio ('+finFmt(mesData.pMedio)+')',mesData.margenSes>0?'var(--blue)':'var(--ink-muted)','var(--blue-pale)')}
+    ${finKpiCard('📌','Costes fijos mes',finFmt(mesData.costesFij),'Según tabla de costes fijos','#5a3aaa','#f3f0ff')}
+  `;
+
+  // Tabla break-even mensual
+  const th  = s => `<th style="padding:9px 12px;text-align:right;font-size:10px;font-weight:700;letter-spacing:.5px;color:var(--ink-muted)">${s}</th>`;
+  const thL = s => `<th style="padding:9px 12px;text-align:left;font-size:10px;font-weight:700;letter-spacing:.5px;color:var(--ink-muted)">${s}</th>`;
+  let html  = `<thead><tr style="background:var(--cream);border-bottom:2px solid var(--border)">${thL('MES')}${th('COSTES FIJOS')}${th('P.MEDIO SES.')}${th('MARGEN/SES.')}${th('BREAK-EVEN')}${th('SES. REALES')}${th('% BE')}${th('ESTADO')}</tr></thead><tbody>`;
+
+  rows.forEach(d => {
+    const faded = d.esFuturo ? 'opacity:.4' : '';
+    const bColor= d.superado?'var(--green-dark)':d.pctBE>=75?'#7c4a00':'var(--red)';
+    const badge = d.beNec===0 ? '<span style="color:var(--ink-muted);font-size:11px">Sin datos</span>'
+      : d.superado
+        ? '<span style="background:var(--green-pale);color:var(--green-dark);padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700">✓ Superado</span>'
+        : `<span style="background:var(--red-pale);color:var(--red);padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700">Faltan ${d.beNec-d.ses} ses.</span>`;
+
+    // Barra visual
+    const barPct = Math.min(d.pctBE,100);
+    const barColor = d.superado?'var(--green)':d.pctBE>=75?'#F59E0B':'var(--red)';
+    const barra = `<div style="display:flex;align-items:center;gap:6px">
+      <div style="flex:1;height:6px;background:var(--border);border-radius:3px;min-width:60px">
+        <div style="width:${barPct}%;height:100%;background:${barColor};border-radius:3px;transition:width .3s"></div>
+      </div>
+      <span style="font-size:11px;color:${bColor};font-weight:600;min-width:36px;text-align:right">${finFmtN(d.pctBE,0)}%</span>
+    </div>`;
+
+    html += `<tr style="border-bottom:1px solid var(--border);${faded}">
+      <td style="padding:9px 12px;font-weight:600">${MESES_CORTO[d.m-1]}</td>
+      <td style="padding:9px 12px;text-align:right">${finFmt(d.costesFij)}</td>
+      <td style="padding:9px 12px;text-align:right;color:var(--ink-muted)">${d.pMedio>0?finFmt(d.pMedio):'—'}</td>
+      <td style="padding:9px 12px;text-align:right;color:var(--ink-muted)">${d.margenSes>0?finFmt(d.margenSes):'—'}</td>
+      <td style="padding:9px 12px;text-align:right;font-weight:700">${d.beNec>0?d.beNec+' ses.':'—'}</td>
+      <td style="padding:9px 12px;text-align:right;font-weight:600;color:${bColor}">${d.ses}</td>
+      <td style="padding:9px 12px;min-width:120px">${barra}</td>
+      <td style="padding:9px 12px">${badge}</td>
+    </tr>`;
+  });
+  html += '</tbody>';
+  document.getElementById('fin-tabla-be').innerHTML = html;
+}
+
+// ── MODAL COSTE FIJO ─────────────────────────────────────────
+function finMesesCheckboxes(seleccionados=[]) {
+  const wrap = document.getElementById('fin-meses-pago');
+  wrap.innerHTML = '';
+  for (let i=1;i<=12;i++) {
+    const checked = seleccionados.includes(i) ? 'checked' : '';
+    wrap.innerHTML += `<label style="display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer;background:var(--cream);padding:3px 8px;border-radius:6px;border:1px solid var(--border)">
+      <input type="checkbox" value="${i}" ${checked} style="cursor:pointer"> ${MESES_CORTO[i-1]}
+    </label>`;
+  }
+}
+
+function finPeriodChange() {
+  const p = document.getElementById('fin-coste-periodicidad').value;
+  const wrap = document.getElementById('fin-meses-pago-wrap');
+  const mostrar = ['bimestral','trimestral','anual','puntual'].includes(p);
+  wrap.style.display = mostrar ? 'block' : 'none';
+  if (mostrar) finMesesCheckboxes();
+  finAutoMensual();
+}
+
+function finAutoMensual() {
+  const real = parseFloat(document.getElementById('fin-coste-importe-real').value||0);
+  const p    = document.getElementById('fin-coste-periodicidad').value;
+  const divs = {mensual:1,bimestral:6,trimestral:4,anual:12,puntual:12,variable:1};
+  const div  = divs[p]||1;
+  document.getElementById('fin-coste-importe-mensual').value = (real/div).toFixed(2);
+}
+
+function finCosteNuevo() {
+  document.getElementById('fin-coste-id').value = '';
+  document.getElementById('modal-coste-titulo').textContent = 'Nuevo coste fijo';
+  document.getElementById('fin-coste-concepto').value = '';
+  document.getElementById('fin-coste-categoria').value = 'Otros';
+  document.getElementById('fin-coste-periodicidad').value = 'mensual';
+  document.getElementById('fin-coste-importe-real').value = '';
+  document.getElementById('fin-coste-importe-mensual').value = '';
+  document.getElementById('fin-coste-notas').value = '';
+  document.getElementById('fin-coste-fecha').value = '2026-01-01';
+  document.getElementById('fin-coste-activo').checked = true;
+  document.getElementById('fin-meses-pago-wrap').style.display = 'none';
+  document.getElementById('modal-coste-overlay').style.display = 'flex';
+}
+
+function finCosteEditar(id) {
+  const c = FIN.costes.find(x=>x.id===id);
+  if (!c) return;
+  document.getElementById('fin-coste-id').value = id;
+  document.getElementById('modal-coste-titulo').textContent = 'Editar: '+c.concepto;
+  document.getElementById('fin-coste-concepto').value = c.concepto||'';
+  document.getElementById('fin-coste-categoria').value = c.categoria||'Otros';
+  document.getElementById('fin-coste-periodicidad').value = c.periodicidad||'mensual';
+  document.getElementById('fin-coste-importe-real').value = c.importe_real||0;
+  document.getElementById('fin-coste-importe-mensual').value = c.importe_mensual||0;
+  document.getElementById('fin-coste-notas').value = c.notas||'';
+  document.getElementById('fin-coste-fecha').value = c.fecha_desde||'2026-01-01';
+  document.getElementById('fin-coste-activo').checked = !!c.activo;
+  const hasMeses = c.meses_pago&&Array.isArray(c.meses_pago)&&c.meses_pago.length>0;
+  document.getElementById('fin-meses-pago-wrap').style.display = hasMeses ? 'block' : 'none';
+  if (hasMeses) finMesesCheckboxes(c.meses_pago);
+  document.getElementById('modal-coste-overlay').style.display = 'flex';
+}
+
+function finCerrarModal() {
+  document.getElementById('modal-coste-overlay').style.display = 'none';
+}
+
+async function finGuardarCoste() {
+  const id        = document.getElementById('fin-coste-id').value;
+  const concepto  = document.getElementById('fin-coste-concepto').value.trim();
+  const categoria = document.getElementById('fin-coste-categoria').value;
+  const period    = document.getElementById('fin-coste-periodicidad').value;
+  const impReal   = parseFloat(document.getElementById('fin-coste-importe-real').value||0);
+  const impMes    = parseFloat(document.getElementById('fin-coste-importe-mensual').value||0);
+  const notas     = document.getElementById('fin-coste-notas').value.trim();
+  const fecha     = document.getElementById('fin-coste-fecha').value||'2026-01-01';
+  const activo    = document.getElementById('fin-coste-activo').checked;
+
+  if (!concepto) { toast('El concepto es obligatorio','err'); return; }
+
+  // Meses de pago
+  const mesesChecked = [...document.querySelectorAll('#fin-meses-pago input:checked')].map(x=>parseInt(x.value));
+  const mesesPago    = mesesChecked.length>0 ? mesesChecked : null;
+
+  const payload = { concepto, categoria, importe_real:impReal, importe_mensual:impMes, periodicidad:period, meses_pago:mesesPago, activo, notas:notas||null, fecha_desde:fecha };
+
+  try {
+    if (id) {
+      await supaPatch('costes_fijos', `id=eq.${id}`, payload);
+      toast('Coste actualizado ✓','ok');
+    } else {
+      await supaPost('costes_fijos', payload);
+      toast('Coste creado ✓','ok');
+    }
+    finCerrarModal();
+    await finanzasCargar();
+  } catch(e) {
+    toast('Error: '+e.message,'err');
+  }
+}
+
+// ── EXPORTAR EXCEL ───────────────────────────────────────────
+async function finExportarExcel() {
+  const anio = parseInt(document.getElementById('fin-anio').value||2026);
+  const mesActual = new Date().getFullYear()===anio ? new Date().getMonth()+1 : 12;
+  const wb = new ExcelJS.Workbook();
+  const ws = wb.addWorksheet('P&L '+anio);
+
+  ws.columns = [
+    {header:'Mes',width:10},{header:'Sesiones',width:10},
+    {header:'Devengo',width:14},{header:'Cobrado',width:14},{header:'Conv%',width:10},
+    {header:'Costes Variables',width:18},{header:'Costes Fijos',width:14},
+    {header:'EBITDA',width:14},{header:'Margen%',width:10},
+  ];
+  ws.getRow(1).font = {bold:true};
+
+  for (let m=1;m<=12;m++) {
+    if (m>mesActual) continue;
+    const fi = `${anio}-${String(m).padStart(2,'0')}-01`;
+    const ff = m<12 ? `${anio}-${String(m+1).padStart(2,'0')}-01` : `${anio+1}-01-01`;
+    const sesMes  = FIN.sesionesAnio.filter(s=>s.fecha>=fi&&s.fecha<ff&&s.estado==='Hecha');
+    const cobrMes = FIN.cobrosAnio.filter(c=>c.fecha>=fi&&c.fecha<ff&&c.estado==='Confirmado');
+    const dev  = sesMes.reduce((s,x)=>s+parseFloat(x.importe||0),0);
+    const cob  = cobrMes.reduce((s,x)=>s+parseFloat(x.importe||0),0);
+    const cv   = dev*0.60;
+    const cf   = finTotalCostesMes(m);
+    const ebit = dev-cv-cf;
+    ws.addRow([MESES_CORTO[m-1],sesMes.length,dev,cob,dev>0?Math.round((cob/dev)*100):0,cv,cf,ebit,dev>0?Math.round((ebit/dev)*100):0]);
+  }
+
+  const buf = await wb.xlsx.writeBuffer();
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([buf]));
+  a.download = `IPSE_PL_${anio}.xlsx`;
+  a.click();
 }
 
 </script>
