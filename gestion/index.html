@@ -8084,7 +8084,7 @@ async function finanzasCargar() {
   try {
     const [costes, sesiones, cobros] = await Promise.all([
       sg('costes_fijos', 'order=categoria.asc,concepto.asc'),
-      sg('sesiones', `fecha=gte.${fi}&fecha=lt.${ff}&select=id_sesion,fecha,importe,estado,cerrada,financiacion_tipo`),
+      sg('sesiones', `fecha=gte.${fi}&fecha=lt.${ff}&select=id_cita,fecha,importe,estado,cerrada,financiacion_tipo`),
       sg('cobros',   `fecha=gte.${fi}&fecha=lt.${ff}&select=id_cobro,fecha,importe,estado`),
     ]);
     FIN.costes       = costes;
