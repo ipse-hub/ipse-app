@@ -2113,9 +2113,6 @@ textarea.form-control { min-height: 72px; transition: border-color .2s; }
 </div>
 
 
-</div>
-
-
 <!-- ═══════════════════════════════ PAGE FINANZAS ═══════════════════════════════ -->
 <div class="page" id="page-finanzas">
   <div class="page-header">
@@ -2272,6 +2269,8 @@ textarea.form-control { min-height: 72px; transition: border-color .2s; }
       <button class="btn btn-primary" onclick="finGuardarCoste()">💾 Guardar</button>
     </div>
   </div>
+</div>
+
 </div>
 
 <!-- ═══════════════════════════════ PAGE AGENDA ═══════════════════════════════ -->
@@ -2596,6 +2595,8 @@ function navigate(page) {
   // Si page-banco no es hijo directo del body, rescatarlo (puede estar atrapado en un modal)
   const pgBanco = document.getElementById('page-banco');
   if (pgBanco && pgBanco.parentElement !== document.body) document.body.appendChild(pgBanco);
+  const pgFin = document.getElementById('page-finanzas');
+  if (pgFin && pgFin.parentElement !== document.body) document.body.appendChild(pgFin);
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   document.getElementById('page-'+page).classList.add('active');
