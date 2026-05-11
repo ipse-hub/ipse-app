@@ -96,6 +96,18 @@ body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(
   overflow-y: auto;
   padding: 28px 32px;
 }
+#page-finanzas.active {
+  display: block;
+  position: fixed;
+  left: 220px;
+  top: 60px;
+  right: 0;
+  bottom: 0;
+  z-index: 10;
+  background: var(--cream);
+  overflow-y: auto;
+  padding: 28px 32px;
+}
 
 /* ── KPI GRID ── */
 .kpi-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; margin-bottom: 24px; }
@@ -8070,9 +8082,9 @@ async function finanzasCargar() {
 
   try {
     const [costes, sesiones, cobros] = await Promise.all([
-      supaGet('costes_fijos', 'order=categoria.asc,concepto.asc'),
-      supaGet('sesiones', `fecha=gte.${fi}&fecha=lt.${ff}&select=id_sesion,fecha,importe,estado,cerrada,financiacion_tipo`),
-      supaGet('cobros',   `fecha=gte.${fi}&fecha=lt.${ff}&select=id_cobro,fecha,importe,estado`),
+      sg('costes_fijos', 'order=categoria.asc,concepto.asc'),
+      sg('sesiones', `fecha=gte.${fi}&fecha=lt.${ff}&select=id_sesion,fecha,importe,estado,cerrada,financiacion_tipo`),
+      sg('cobros',   `fecha=gte.${fi}&fecha=lt.${ff}&select=id_cobro,fecha,importe,estado`),
     ]);
     FIN.costes       = costes;
     FIN.sesionesAnio = sesiones;
@@ -8394,10 +8406,10 @@ async function finGuardarCoste() {
 
   try {
     if (id) {
-      await supaPatch('costes_fijos', `id=eq.${id}`, payload);
+      await sa('costes_fijos', `id=eq.${id}`, payload);
       toast('Coste actualizado ✓','ok');
     } else {
-      await supaPost('costes_fijos', payload);
+      await sp('costes_fijos', payload);
       toast('Coste creado ✓','ok');
     }
     finCerrarModal();
