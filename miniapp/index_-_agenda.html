@@ -1197,14 +1197,14 @@ function mapearCitas(rows) {
     ID_Cita: r.id_cita, Fecha: r.fecha, Hora: r.hora ? r.hora.slice(0,5) : '',
     ID_Terapeuta: r.id_terapeuta, ID_Paciente: r.id_paciente, ID_Servicio: r.id_servicio,
     ID_Beca: r.id_beca||'', ID_Bono: r.id_bono||'',
-    EstadoAgenda: r.estado_agenda, Estado: r.estado_agenda,
-    NotasAgenda: r.notas_agenda||'', Notas: r.notas_agenda||'',
+    EstadoAgenda: r.estado, Estado: r.estado,
+    NotasAgenda: r.notas||'', Notas: r.notas||'',
     NombrePaciente:  pacMap[r.id_paciente]  || r.id_paciente  || '',
     NombreTerapeuta: terMap[r.id_terapeuta] || r.id_terapeuta || '',
     NombreServicio:  srvMap[r.id_servicio]  || r.id_servicio  || '',
     RecordatorioDiaAt: r.recordatorio_dia_at || '',
     CitaOrigenId: r.cita_origen_id || '',
-    IDCompromiso: r.id_compromiso || '',
+    IDCompromiso: r.id_serie || '',
   }));
 }
 
@@ -1287,7 +1287,7 @@ async function cargarSemana() {
   const fd = new Date(G.lunes); fd.setDate(fd.getDate()+7);
   const ff = fd.getFullYear()+'-'+pad(fd.getMonth()+1)+'-'+pad(fd.getDate());
   try {
-    G.citas = mapearCitas(await supaGet('agenda_datos', `fecha=gte.${fi}&fecha=lt.${ff}&order=fecha.asc,hora.asc`));
+    G.citas = mapearCitas(await supaGet('citas', `fecha=gte.${fi}&fecha=lt.${ff}&order=fecha.asc,hora.asc`));
     renderizarSemana(); actualizarWeekLabel(); renderizarLeyenda(); popularSelectores();
   } catch(err) { toast('Error al cargar agenda: ' + err.message, 'err'); }
 }
@@ -1300,7 +1300,7 @@ async function cargarMes() {
   const fi = ig.getFullYear()+'-'+pad(ig.getMonth()+1)+'-'+pad(ig.getDate());
   const ff = fg.getFullYear()+'-'+pad(fg.getMonth()+1)+'-'+pad(fg.getDate());
   try {
-    G.citas = mapearCitas(await supaGet('agenda_datos', `fecha=gte.${fi}&fecha=lt.${ff}&order=fecha.asc,hora.asc`));
+    G.citas = mapearCitas(await supaGet('citas', `fecha=gte.${fi}&fecha=lt.${ff}&order=fecha.asc,hora.asc`));
     renderizarMes(ig); actualizarMonthLabel(); renderizarLeyenda(); popularSelectores();
   } catch(err) { toast('Error al cargar mes: ' + err.message, 'err'); }
 }
@@ -1311,7 +1311,7 @@ async function cargarDia() {
   const fd = new Date(G.diaActual); fd.setDate(fd.getDate()+1);
   const ff = fd.getFullYear()+'-'+pad(fd.getMonth()+1)+'-'+pad(fd.getDate());
   try {
-    G.citas = mapearCitas(await supaGet('agenda_datos', `fecha=gte.${fi}&fecha=lt.${ff}&order=hora.asc`));
+    G.citas = mapearCitas(await supaGet('citas', `fecha=gte.${fi}&fecha=lt.${ff}&order=hora.asc`));
     renderizarDia(); actualizarDiaLabel(); renderizarLeyenda(); popularSelectores();
   } catch(err) { toast('Error al cargar día: ' + err.message, 'err'); }
 }
@@ -1320,15 +1320,15 @@ async function cargarDia() {
 //  OPERACIONES DE ESCRITURA
 // ═══════════════════════════════════════════════════════════════
 async function crearCita(datos) {
-  const idCita = await generarId('agenda_datos', 'id_cita', 'AG');
+  const idCita = await generarId('citas', 'id_cita', 'AG');
   let idBeca = '', idBono = '';
   if (datos.tipoFin === 'BECA') idBeca = datos.idFin || await resolverBecaActiva(datos.idPaciente) || '';
   if (datos.tipoFin === 'BONO') idBono = datos.idFin || await resolverBonoActivo(datos.idPaciente, datos.idTerapeuta || G.miId) || '';
-  await supaPost('agenda_datos', {
+  await supaPost('citas', {
     id_cita: idCita, fecha: datos.fecha, hora: datos.hora,
     id_terapeuta: datos.idTerapeuta || G.miId, id_paciente: datos.idPaciente, id_servicio: datos.idServicio,
-    id_beca: idBeca, id_bono: idBono, estado_agenda: 'Programada', id_compromiso: datos.idSerie || '',
-    notas_agenda: datos.notas || '', fecha_alta_cita: new Date().toISOString().split('T')[0],
+    id_beca: idBeca, id_bono: idBono, estado: 'Programada', id_serie: datos.idSerie || '',
+    notas: datos.notas || '', fecha_creacion: new Date().toISOString().split('T')[0],
     cita_origen_id: datos.citaOrigenId || null,
   });
   return idCita;
@@ -1741,11 +1741,9 @@ function abrirModalCita(cita) {
       (async()=>{
         try {
           // Fix Bug2: incluir id_terapeuta en la búsqueda (consistente con guardarEstadoCita)
-          const horaCorta=(cita.Hora||'').slice(0,5);
-          const idTer=cita.ID_Terapeuta||G.miId;
-          const ses=await supaGet('sesiones',`fecha=eq.${cita.Fecha}&id_paciente=eq.${cita.ID_Paciente}&hora=eq.${horaCorta}&id_terapeuta=eq.${idTer}`);
-          if(ses&&ses.length){
-            G.sesionActualId=ses[0].id_cita;
+          // Con tabla citas unificada, el id de la cita ES el id de sesión
+          G.sesionActualId=cita.ID_Cita;
+          {
             const cobrosExist=await supaGet('cobros',`id_sesion=eq.${G.sesionActualId}`);
             if(cobrosExist&&cobrosExist.length){
               const c=cobrosExist[0];
@@ -1757,7 +1755,7 @@ function abrirModalCita(cita) {
                 document.getElementById('mc-btn-repetir').style.display='none';
               }
             } else {
-              const imp=ses[0].importe||await calcularImporte(cita.ID_Servicio,tipoFin,'');
+              const imp=await calcularImporte(cita.ID_Servicio,tipoFin,'');
               const el=document.getElementById('mc-cobro-importe');
               if(el) el.textContent=imp>0?parseFloat(imp).toFixed(2).replace('.',',')+' €':'—';
               document.getElementById('mc-fecha-cobro').value=new Date().toISOString().split('T')[0];
@@ -1868,10 +1866,8 @@ async function confirmarCobro() {
   try {
     // Si no tenemos sesionActualId, buscarlo ahora (Fix Bug2: incluir id_terapeuta)
     if(!G.sesionActualId && G.citaActual){
-      const horaCorta=(G.citaActual.Hora||'').slice(0,5);
-      const idTer=G.citaActual.ID_Terapeuta||G.miId;
-      const ses=await supaGet('sesiones',`fecha=eq.${G.citaActual.Fecha}&id_paciente=eq.${G.citaActual.ID_Paciente}&hora=eq.${horaCorta}&id_terapeuta=eq.${idTer}`);
-      if(ses&&ses.length) G.sesionActualId=ses[0].id_cita;
+      // Con tabla citas unificada, id de cita = id de sesión
+      G.sesionActualId=G.citaActual.ID_Cita;
     }
     if(!G.sesionActualId){ toast('Error: sesión no encontrada en base de datos','err'); return; }
     // Comprobar que no existe ya un cobro
@@ -1911,7 +1907,7 @@ async function guardarEstadoCita() {
     try {
       const notaOriginal = '↪ Reprogramada → nueva cita del '+fmtFechaDMY(nuevaFecha)+(notas?' | '+notas:'');
       const notaNueva    = '↩ Reprogramación de cita del '+fmtFechaDMY(G.citaActual.Fecha);
-      await supaPatch('agenda_datos',`id_cita=eq.${G.citaActual.ID_Cita}`,{estado_agenda:'Reprogramada',notas_agenda:notaOriginal});
+      await supaPatch('citas',`id_cita=eq.${G.citaActual.ID_Cita}`,{estado:'Reprogramada',notas:notaOriginal});
       await crearCita({fecha:nuevaFecha,hora:nuevaHora,idPaciente:G.citaActual.ID_Paciente,idServicio:G.citaActual.ID_Servicio,tipoFin:G.citaActual.ID_Bono?'BONO':(G.citaActual.ID_Beca?'BECA':'SUELTA'),idFin:G.citaActual.ID_Bono||G.citaActual.ID_Beca||'',notas:notaNueva,citaOrigenId:G.citaActual.ID_Cita});
       toast('Cita reprogramada ✓','ok');cerrarModal('modal-cita');recargarVista();
     }catch(err){toast('Error: '+err.message,'err');}
@@ -1920,81 +1916,46 @@ async function guardarEstadoCita() {
   }
   btn.disabled=true; btn.textContent='⏳ Guardando…';
   try {
-    await supaPatch('agenda_datos',`id_cita=eq.${G.citaActual.ID_Cita}`,{estado_agenda:G.estadoSel,notas_agenda:notas});
+    // Actualizar estado en citas
+    const patchData = {estado: G.estadoSel, notas: notas};
+    // Si marcamos Hecha, actualizar también financiacion_tipo, importe y cobrado
     if(G.estadoSel==='Hecha'||G.estadoSel==='No-show'){
-      // Determinar tipo de financiación — primero desde vínculos de la cita, luego desde servicio
       let tipoFin=G.citaActual.ID_Bono?'BONO':(G.citaActual.ID_Beca?'BECA':derivarTipoFin(G.citaActual.ID_Servicio));
       let idFin=G.citaActual.ID_Bono||G.citaActual.ID_Beca||'';
-      // Fallback: si es BECA o BONO pero sin id vinculado, resolver desde el paciente
       if(!idFin){
-        if(tipoFin==='BECA'){
-          idFin=await resolverBecaActiva(G.citaActual.ID_Paciente)||'';
-        } else if(tipoFin==='BONO'){
-          idFin=await resolverBonoActivo(G.citaActual.ID_Paciente, G.citaActual.ID_Terapeuta || G.miId)||'';
-        }
+        if(tipoFin==='BECA') idFin=await resolverBecaActiva(G.citaActual.ID_Paciente)||'';
+        else if(tipoFin==='BONO') idFin=await resolverBonoActivo(G.citaActual.ID_Paciente, G.citaActual.ID_Terapeuta||G.miId)||'';
       }
-      // Usar siempre el terapeuta de la cita, con G.miId solo como último recurso
-      const idTerapeutaCita = G.citaActual.ID_Terapeuta || G.miId;
-      // Buscar sesión existente por fecha+paciente+hora+terapeuta
-      const horaCorta2=(G.citaActual.Hora||'').slice(0,5);
-      const sesExist=await supaGet('sesiones',`fecha=eq.${G.citaActual.Fecha}&id_paciente=eq.${G.citaActual.ID_Paciente}&hora=eq.${horaCorta2}&id_terapeuta=eq.${idTerapeutaCita}`);
-
-      if(!sesExist||!sesExist.length){
-        const importe=G.estadoSel==='No-show'&&tipoFin!=='BECA'?0:await calcularImporte(G.citaActual.ID_Servicio,tipoFin,idFin);
-        const idSes=await generarId('sesiones','id_cita','S');
-        // Fix cobrado: sesiones de BONO y BECA ya están pagadas por anticipado → cobrado:'Sí'
-        const cobradoSes=(tipoFin==='BONO'||tipoFin==='BECA')?'Sí':'No';
-        await supaPost('sesiones',{id_cita:idSes,fecha:G.citaActual.Fecha,hora:horaCorta2,financiacion_tipo:tipoFin,id_paciente:G.citaActual.ID_Paciente,id_terapeuta:idTerapeutaCita,id_servicio:G.citaActual.ID_Servicio,id_beca:tipoFin==='BECA'?idFin:'',id_bono:tipoFin==='BONO'?idFin:'',estado:G.estadoSel,importe:importe,cerrada:cobradoSes,fecha_cierre:'',notas:notas||G.citaActual.NotasAgenda||''});
-        if(G.estadoSel==='Hecha'){
-          if(tipoFin==='BONO'&&idFin)await actualizarBono(idFin,1);
-          if(tipoFin==='BECA'&&idFin)await actualizarBeca(idFin,1);
-          if(tipoFin==='SUELTA'){
-            const panelVisible = document.getElementById('mc-cobro-panel').style.display !== 'none';
-            const cobradoVal = document.getElementById('mc-cobrado')?.value || 'No';
-            if(panelVisible && cobradoVal === 'Sí'){
-              const fechaCobro = document.getElementById('mc-fecha-cobro').value || new Date().toISOString().split('T')[0];
-              const metodo = document.getElementById('mc-metodo-cobro').value || 'Efectivo';
-              const idCobro = await generarId('cobros','id_cobro','C');
-              await supaPost('cobros',{id_cobro:idCobro,fecha:fechaCobro,id_paciente:G.citaActual.ID_Paciente,id_sesion:idSes,importe:importe,metodo_pago:metodo,estado:'Confirmado',notas:'Cobro desde MiniApp'});
-            }
-          }
-        }
-        if(G.estadoSel==='No-show'&&tipoFin==='BECA'&&idFin)await actualizarBeca(idFin,1);
-      } else {
-        // Sesión ya existe — solo actualizar estado y gestionar cobro si procede
-        const sesId=sesExist[0].id_cita;
-        // Vincular beca/bono si la sesión existente los tiene vacíos
-        const patchSes={estado:G.estadoSel,notas:notas||sesExist[0].notas||''};
-        if(tipoFin==='BECA'&&idFin&&!sesExist[0].id_beca) patchSes.id_beca=idFin;
-        if(tipoFin==='BONO'&&idFin&&!sesExist[0].id_bono) patchSes.id_bono=idFin;
-        if(tipoFin!=='SUELTA'&&!sesExist[0].financiacion_tipo) patchSes.financiacion_tipo=tipoFin;
-        await supaPatch('sesiones',`id_cita=eq.${sesId}`,patchSes);
-        // Actualizar contadores bono/beca si la sesión estaba Programada y pasa a Hecha/No-show
-        const estadoAnterior=sesExist[0].estado||'';
-        if(estadoAnterior==='Programada'){
-          if(G.estadoSel==='Hecha'){
-            if(tipoFin==='BONO'&&idFin) await actualizarBono(idFin,1);
-            if(tipoFin==='BECA'&&idFin) await actualizarBeca(idFin,1);
-          }
-          if(G.estadoSel==='No-show'&&tipoFin==='BECA'&&idFin) await actualizarBeca(idFin,1);
-        }
-        // Si el panel de cobro está visible y dice Sí, registrar cobro
-        if(G.estadoSel==='Hecha'&&tipoFin==='SUELTA'){
+      const importe=G.estadoSel==='No-show'&&tipoFin!=='BECA'?0:await calcularImporte(G.citaActual.ID_Servicio,tipoFin,idFin);
+      patchData.financiacion_tipo=tipoFin;
+      patchData.importe=importe;
+      if(idFin&&tipoFin==='BECA') patchData.id_beca=idFin;
+      if(idFin&&tipoFin==='BONO') patchData.id_bono=idFin;
+      // BONO y BECA se consideran cobradas al marcar Hecha
+      if(tipoFin==='BONO'||tipoFin==='BECA') patchData.cobrado='Sí';
+      // Actualizar contadores bono/beca
+      if(G.estadoSel==='Hecha'){
+        if(tipoFin==='BONO'&&idFin) await actualizarBono(idFin,1);
+        if(tipoFin==='BECA'&&idFin) await actualizarBeca(idFin,1);
+        // Si SUELTA y panel cobro visible → registrar cobro
+        if(tipoFin==='SUELTA'){
           const panelVisible=document.getElementById('mc-cobro-panel').style.display!=='none';
           const cobradoVal=document.getElementById('mc-cobrado')?.value||'No';
           if(panelVisible&&cobradoVal==='Sí'){
-            const cobroExist=await supaGet('cobros',`id_sesion=eq.${sesId}`);
+            patchData.cobrado='Sí';
+            const fechaCobro=document.getElementById('mc-fecha-cobro').value||new Date().toISOString().split('T')[0];
+            const metodo=document.getElementById('mc-metodo-cobro').value||'Efectivo';
+            const cobroExist=await supaGet('cobros',`id_sesion=eq.${G.citaActual.ID_Cita}`);
             if(!cobroExist||!cobroExist.length){
-              const impSes=sesExist[0].importe||await calcularImporte(G.citaActual.ID_Servicio,tipoFin,idFin);
               const idCobro=await generarId('cobros','id_cobro','C');
-              const fechaCobro=document.getElementById('mc-fecha-cobro').value||new Date().toISOString().split('T')[0];
-              const metodo=document.getElementById('mc-metodo-cobro').value||'Efectivo';
-              await supaPost('cobros',{id_cobro:idCobro,fecha:fechaCobro,id_paciente:G.citaActual.ID_Paciente,id_sesion:sesId,importe:impSes,metodo_pago:metodo,estado:'Confirmado',notas:'Cobro desde MiniApp'});
+              await supaPost('cobros',{id_cobro:idCobro,fecha:fechaCobro,id_paciente:G.citaActual.ID_Paciente,id_sesion:G.citaActual.ID_Cita,importe:importe,metodo_pago:metodo,estado:'Confirmado',notas:'Cobro desde MiniApp'});
             }
           }
         }
       }
+      if(G.estadoSel==='No-show'&&tipoFin==='BECA'&&idFin) await actualizarBeca(idFin,1);
     }
+    await supaPatch('citas',`id_cita=eq.${G.citaActual.ID_Cita}`,patchData);
     toast('Estado actualizado ✓','ok'); cerrarModal('modal-cita'); recargarVista();
   }catch(err){toast('Error: '+err.message,'err');}
   finally{btn.disabled=false;btn.textContent='Guardar';}
@@ -2004,21 +1965,13 @@ async function eliminarCita() {
   if(!window.confirm(`¿Eliminar la cita de ${cita.NombrePaciente||'este paciente'} el ${fmtFechaDMY(cita.Fecha)} a las ${cita.Hora}?\n\nSe eliminarán también la sesión y el cobro asociados si existen.`))return;
   const btn=document.getElementById('mc-btn-eliminar'); btn.disabled=true; btn.textContent='⏳';
   try {
-    // 1. Buscar sesión asociada por fecha+hora+paciente
-    const horaCorta=(cita.Hora||'').slice(0,5);
-    const ses=await supaGet('sesiones',`fecha=eq.${cita.Fecha}&id_paciente=eq.${cita.ID_Paciente}&hora=eq.${horaCorta}`);
-    if(ses&&ses.length){
-      const sesId=ses[0].id_cita;
-      // 2. Borrar cobros de esa sesión
-      await supaDelete('cobros',`id_sesion=eq.${sesId}`);
-      // 3. Revertir bono/beca si aplica
-      if(ses[0].financiacion_tipo==='BONO'&&ses[0].id_bono)await actualizarBono(ses[0].id_bono,-1);
-      if(ses[0].financiacion_tipo==='BECA'&&ses[0].id_beca)await actualizarBeca(ses[0].id_beca,-1);
-      // 4. Borrar sesión
-      await supaDelete('sesiones',`id_cita=eq.${sesId}`);
-    }
-    // 5. Borrar cita de agenda
-    await supaDelete('agenda_datos',`id_cita=eq.${cita.ID_Cita}`);
+    // 1. Borrar cobros vinculados a esta cita
+    await supaDelete('cobros',`id_sesion=eq.${cita.ID_Cita}`);
+    // 2. Revertir contadores bono/beca si aplica
+    if(cita.ID_Bono) await actualizarBono(cita.ID_Bono,-1);
+    if(cita.ID_Beca) await actualizarBeca(cita.ID_Beca,-1);
+    // 3. Borrar cita
+    await supaDelete('citas',`id_cita=eq.${cita.ID_Cita}`);
     toast('Cita eliminada ✓','ok'); cerrarModal('modal-cita'); recargarVista();
   }
   catch(err){toast('Error: '+err.message,'err');}
@@ -2036,8 +1989,8 @@ function abrirEditCitaDesdeModal() {
     hora:          c.Hora,
     id_terapeuta:  c.ID_Terapeuta,
     id_paciente:   c.ID_Paciente,
-    estado_agenda: c.EstadoAgenda || c.Estado,
-    notas_agenda:  c.NotasAgenda || c.Notas || '',
+    estado: c.EstadoAgenda || c.Estado,
+    notas:  c.NotasAgenda || c.Notas || '',
   };
   cerrarModal('modal-cita');
   adminAbrirEditCita(r);
@@ -2660,10 +2613,10 @@ function togglePanelRepetir(){const panel=document.getElementById('mc-repetir-pa
 function cerrarPanelRepetir(){document.getElementById('mc-repetir-panel').style.display='none';document.getElementById('mc-rep-preview').innerHTML='';}
 function actualizarPreviewRepetir(){const cita=G.citaActual;if(!cita)return;const hasta=document.getElementById('mc-rep-hasta').value;const cadaDias=parseInt(document.getElementById('mc-rep-cada').value)||7;const preview=document.getElementById('mc-rep-preview');if(!hasta||hasta<=cita.Fecha){preview.innerHTML='';return;}const agosto=[...diasDeAgosto(new Date().getFullYear()),...diasDeAgosto(new Date().getFullYear()+1)];const fechas=calcularFechasRecurrentes(cita.Fecha,hasta,cadaDias,agosto);if(!fechas.length){preview.innerHTML='<strong>Sin repeticiones</strong> en ese rango.';return;}const etiquetas=fechas.map(f=>{const d=new Date(f+'T12:00:00');return DIAS_ES[d.getDay()]+' '+d.getDate()+'/'+(d.getMonth()+1);});preview.innerHTML=`<strong>${fechas.length} citas nuevas</strong>: `+etiquetas.join(' · ');}
 async function confirmarRepetirCita(){const cita=G.citaActual;if(!cita)return;const hasta=document.getElementById('mc-rep-hasta').value;const cadaDias=parseInt(document.getElementById('mc-rep-cada').value)||7;if(!hasta){toast('Indica la fecha hasta la que repetir','err');return;}const agosto=[...diasDeAgosto(new Date().getFullYear()),...diasDeAgosto(new Date().getFullYear()+1)];const fechas=calcularFechasRecurrentes(cita.Fecha,hasta,cadaDias,agosto);if(!fechas.length){toast('No hay fechas válidas','err');return;}const btn=document.getElementById('mc-btn-confirmar-repetir');btn.disabled=true;btn.textContent=`⏳ Creando ${fechas.length} citas…`;
-// Usar id_compromiso de la cita origen si ya tiene serie, o crear uno nuevo
+// Usar id_serie de la cita origen si ya tiene serie, o crear uno nuevo
 const idSerie = cita.IDCompromiso || ('SER-'+Date.now());
 // Si la cita origen no tiene serie, asignarle la misma
-if (!cita.IDCompromiso) await supaPatch('agenda_datos',`id_cita=eq.${cita.ID_Cita}`,{id_compromiso:idSerie});
+if (!cita.IDCompromiso) await supaPatch('citas',`id_cita=eq.${cita.ID_Cita}`,{id_serie:idSerie});
 try{for(const f of fechas)await crearCita({fecha:f,hora:cita.Hora,idPaciente:cita.ID_Paciente,idServicio:cita.ID_Servicio,tipoFin:cita.ID_Beca?'BECA':(cita.ID_Bono?'BONO':'SUELTA'),idFin:cita.ID_Beca||cita.ID_Bono||'',notas:'',idSerie});toast(`✅ ${fechas.length} citas creadas`,'ok');cerrarModal('modal-cita');recargarVista();}catch(err){toast('Error: '+err.message,'err');}finally{btn.disabled=false;btn.textContent='Crear repeticiones';}}
 
 // ═══════════════════════════════════════════════════════════════
@@ -2695,8 +2648,8 @@ async function onCancelSerieModo() {
   try {
     const serie = G.citaActual.IDCompromiso;
     const hoy = new Date().toISOString().split('T')[0];
-    const rows = await supaGet('agenda_datos',
-      `id_compromiso=eq.${serie}&estado_agenda=eq.Programada&fecha=gte.${hoy}&order=fecha.asc`);
+    const rows = await supaGet('citas',
+      `id_serie=eq.${serie}&estado=eq.Programada&fecha=gte.${hoy}&order=fecha.asc`);
     if (!rows.length) { lista.innerHTML = '<div style="color:var(--muted);padding:6px">Sin citas programadas en la serie.</div>'; return; }
     lista.innerHTML = rows.map(r => `
       <label style="display:flex;align-items:center;gap:8px;padding:5px 4px;cursor:pointer;border-bottom:1px solid #f5e8e8">
@@ -2716,23 +2669,23 @@ async function ejecutarCancelSerie() {
   btn.disabled = true; btn.textContent = '⏳ Cancelando…';
   try {
     if (modo === 'solo') {
-      await supaPatch('agenda_datos', `id_cita=eq.${G.citaActual.ID_Cita}`, {estado_agenda:'Cancelada'});
+      await supaPatch('citas', `id_cita=eq.${G.citaActual.ID_Cita}`, {estado:'Cancelada'});
       toast('Cita cancelada ✓', 'ok');
     } else if (modo === 'siguientes') {
-      await supaPatch('agenda_datos',
-        `id_compromiso=eq.${serie}&estado_agenda=eq.Programada&fecha=gte.${G.citaActual.Fecha}`,
-        {estado_agenda:'Cancelada'});
+      await supaPatch('citas',
+        `id_serie=eq.${serie}&estado=eq.Programada&fecha=gte.${G.citaActual.Fecha}`,
+        {estado:'Cancelada'});
       toast('Citas siguientes canceladas ✓', 'ok');
     } else if (modo === 'todas') {
-      await supaPatch('agenda_datos',
-        `id_compromiso=eq.${serie}&estado_agenda=eq.Programada`,
-        {estado_agenda:'Cancelada'});
+      await supaPatch('citas',
+        `id_serie=eq.${serie}&estado=eq.Programada`,
+        {estado:'Cancelada'});
       toast('Toda la serie cancelada ✓', 'ok');
     } else if (modo === 'seleccion') {
       const checks = [...document.querySelectorAll('input[name="cancel-serie-chk"]:checked')];
       if (!checks.length) { toast('Selecciona al menos una cita','err'); btn.disabled=false; btn.textContent='❌ Cancelar selección'; return; }
       for (const chk of checks) {
-        await supaPatch('agenda_datos', `id_cita=eq.${chk.value}`, {estado_agenda:'Cancelada'});
+        await supaPatch('citas', `id_cita=eq.${chk.value}`, {estado:'Cancelada'});
       }
       toast(`${checks.length} cita${checks.length>1?'s':''} cancelada${checks.length>1?'s':''} ✓`, 'ok');
     }
@@ -2758,7 +2711,7 @@ async function moverCita(cita, nuevaFecha, nuevaHora) {
   const nombrePac = cita.NombrePaciente || 'este paciente';
   if (!window.confirm(`Mover cita de ${nombrePac}\nDe: ${fmtFechaDMY(cita.Fecha)} ${cita.Hora}\nA:  ${fmtFechaDMY(nuevaFecha)} ${nuevaHora}`)) return;
   try {
-    await supaPatch('agenda_datos', `id_cita=eq.${cita.ID_Cita}`, { fecha: nuevaFecha, hora: nuevaHora });
+    await supaPatch('citas', `id_cita=eq.${cita.ID_Cita}`, { fecha: nuevaFecha, hora: nuevaHora });
     toast(`Cita movida a ${fmtFechaDMY(nuevaFecha)} ${nuevaHora} ✓`, 'ok');
     recargarVista();
   } catch(err) { toast('Error al mover: ' + err.message, 'err'); }
@@ -2943,7 +2896,7 @@ async function adminCargarCitas() {
     let params='order=fecha.desc,hora.asc&limit=50';
     if(idPac) params=`id_paciente=eq.${idPac}&`+params;
     if(fecha) params=`fecha=eq.${fecha}&`+params;
-    const rows=await supaGet('agenda_datos',params);
+    const rows=await supaGet('citas',params);
     if(!rows.length){lista.innerHTML='<div style="color:var(--muted);font-size:13px">Sin citas.</div>';return;}
     const pacMap={},terMap={},srvMap={};
     G.pacientes.forEach(p=>{pacMap[p.ID_Paciente]=p.Nombre;});
@@ -2951,16 +2904,16 @@ async function adminCargarCitas() {
     G.servicios.forEach(s=>{srvMap[s.ID_Servicio]=s.Servicio;});
     const colorEstado={Hecha:'#97D700',Programada:'#00B5E2','No-show':'#DA291C',Reprogramada:'#F59E0B',Cancelada:'#9CA3AF'};
     lista.innerHTML=rows.map(r=>`
-      <div class="admin-card" style="border-left:4px solid ${colorEstado[r.estado_agenda]||'#ccc'}">
+      <div class="admin-card" style="border-left:4px solid ${colorEstado[r.estado]||'#ccc'}">
         <div class="admin-card-header">
           <div><div class="admin-card-id">${r.id_cita}</div><div style="font-size:13px;font-weight:600;margin-top:2px">${pacMap[r.id_paciente]||r.id_paciente}</div><div style="font-size:12px;color:var(--muted)">${terMap[r.id_terapeuta]||r.id_terapeuta} · ${srvMap[r.id_servicio]||r.id_servicio}</div></div>
           <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
-            <span class="admin-card-estado" style="background:${colorEstado[r.estado_agenda]||'#ccc'};color:${r.estado_agenda==='Programada'||r.estado_agenda==='Reprogramada'?'#1a1b2e':'#fff'}">${r.estado_agenda}</span>
+            <span class="admin-card-estado" style="background:${colorEstado[r.estado]||'#ccc'};color:${r.estado==='Programada'||r.estado==='Reprogramada'?'#1a1b2e':'#fff'}">${r.estado}</span>
             <button class="btn btn-secondary" style="font-size:11px;padding:4px 10px" onclick='adminAbrirEditCita(${JSON.stringify(r).replace(/'/g,"&#39;")})'>✏️ Editar</button>
           </div>
         </div>
         <div class="admin-card-row"><span>Fecha / Hora</span><strong>${fmtFechaDMY(r.fecha)} · ${(r.hora||'').slice(0,5)}</strong></div>
-        ${r.notas_agenda?`<div class="admin-card-row"><span>Notas</span><strong>${r.notas_agenda}</strong></div>`:''}
+        ${r.notas?`<div class="admin-card-row"><span>Notas</span><strong>${r.notas}</strong></div>`:''}
       </div>`).join('');
   }catch(err){lista.innerHTML='<div style="color:var(--rojo)">Error: '+err.message+'</div>';}
 }
@@ -2969,8 +2922,8 @@ function adminAbrirEditCita(r) {
   document.getElementById('aec-id').textContent=r.id_cita;
   document.getElementById('aec-fecha').value=r.fecha||'';
   document.getElementById('aec-hora').value=(r.hora||'').slice(0,5);
-  document.getElementById('aec-estado').value=r.estado_agenda||'Programada';
-  document.getElementById('aec-notas').value=r.notas_agenda||'';
+  document.getElementById('aec-estado').value=r.estado||'Programada';
+  document.getElementById('aec-notas').value=r.notas||'';
   const selTer=document.getElementById('aec-terapeuta');
   selTer.innerHTML=G.terapeutas.map(t=>`<option value="${t.ID_Terapeuta}" ${t.ID_Terapeuta===r.id_terapeuta?'selected':''}>${t.Nombre}</option>`).join('');
   const pac=G.pacientes.find(p=>p.ID_Paciente===r.id_paciente);
@@ -2983,7 +2936,7 @@ async function adminGuardarCita() {
   const r=adminCitaEditando; if(!r)return;
   const btn=document.getElementById('aec-btn-guardar'); btn.disabled=true; btn.textContent='⏳ Guardando…';
   try {
-    await supaPatch('agenda_datos',`id_cita=eq.${r.id_cita}`,{fecha:document.getElementById('aec-fecha').value,hora:document.getElementById('aec-hora').value,id_terapeuta:document.getElementById('aec-terapeuta').value,id_paciente:document.getElementById('aec-pac').value,estado_agenda:document.getElementById('aec-estado').value,notas_agenda:document.getElementById('aec-notas').value.trim()});
+    await supaPatch('citas',`id_cita=eq.${r.id_cita}`,{fecha:document.getElementById('aec-fecha').value,hora:document.getElementById('aec-hora').value,id_terapeuta:document.getElementById('aec-terapeuta').value,id_paciente:document.getElementById('aec-pac').value,estado:document.getElementById('aec-estado').value,notas:document.getElementById('aec-notas').value.trim()});
     toast('Cita actualizada ✓','ok'); cerrarModal('modal-admin-cita'); adminCargarCitas(); recargarVista();
   }catch(err){toast('Error: '+err.message,'err');}
   finally{btn.disabled=false;btn.textContent='Guardar cita';}
@@ -2993,7 +2946,7 @@ async function adminEliminarCita() {
   const pacMap={}; G.pacientes.forEach(p=>{pacMap[p.ID_Paciente]=p.Nombre;});
   if(!window.confirm(`¿Eliminar cita ${r.id_cita} de ${pacMap[r.id_paciente]||r.id_paciente} el ${fmtFechaDMY(r.fecha)}?\n\nEsta acción no se puede deshacer.`))return;
   const btn=document.getElementById('aec-btn-eliminar'); btn.disabled=true;
-  try { await supaDelete('agenda_datos',`id_cita=eq.${r.id_cita}`); toast('Cita eliminada ✓','ok'); cerrarModal('modal-admin-cita'); adminCargarCitas(); recargarVista(); }
+  try { await supaDelete('citas',`id_cita=eq.${r.id_cita}`); toast('Cita eliminada ✓','ok'); cerrarModal('modal-admin-cita'); adminCargarCitas(); recargarVista(); }
   catch(err){toast('Error: '+err.message,'err');}
   finally{btn.disabled=false;}
 }
@@ -3136,7 +3089,7 @@ async function enviarRecordatorioDiaDesdePantalla(idCita, btn) {
     btn.disabled = true; btn.textContent = '⏳';
     try {
       const ahora = new Date().toISOString();
-      await supaPatch('agenda_datos', `id_cita=eq.${idCita}`, { recordatorio_dia_at: ahora });
+      await supaPatch('citas', `id_cita=eq.${idCita}`, { recordatorio_dia_at: ahora });
       const idx = G.citas.findIndex(c => c.ID_Cita === idCita);
       if (idx >= 0) G.citas[idx].RecordatorioDiaAt = ahora;
       toast('Recordatorio registrado ✓', 'ok');
@@ -3181,7 +3134,7 @@ async function enviarRecordatorioDia(idCita,btn) {
     btn.textContent='⏳';btn.disabled=true;
     try {
       const ahora=new Date().toISOString();
-      await supaPatch('agenda_datos',`id_cita=eq.${idCita}`,{recordatorio_dia_at:ahora});
+      await supaPatch('citas',`id_cita=eq.${idCita}`,{recordatorio_dia_at:ahora});
       const idx=G.citas.findIndex(c=>c.ID_Cita===idCita);
       if(idx>=0)G.citas[idx].RecordatorioDiaAt=ahora;
       toast('Recordatorio registrado ✓','ok');
@@ -3207,11 +3160,11 @@ async function cargarRecordatoriosMensuales() {
     let rows;
     if (esMesPasado) {
       const filtroTer = esAdmin() ? '' : `id_terapeuta=eq.${G.miId}&`;
-      rows=await supaGet('sesiones',`${filtroTer}fecha=gte.${fi}&fecha=lt.${ff}&estado=eq.Hecha&order=fecha.asc`);
+      rows=await supaGet('citas',`${filtroTer}fecha=gte.${fi}&fecha=lt.${ff}&estado=eq.Hecha&order=fecha.asc`);
       // Normalizar campos al mismo formato que agenda_datos
       rows=rows.map(r=>({...r, id_paciente:r.id_paciente, recordatorio_mes_at:r.recordatorio_mes_at}));
     } else {
-      rows=await supaGet('agenda_datos',`fecha=gte.${fi}&fecha=lt.${ff}&estado_agenda=eq.Programada&order=fecha.asc,hora.asc`);
+      rows=await supaGet('citas',`fecha=gte.${fi}&fecha=lt.${ff}&estado=eq.Programada&order=fecha.asc,hora.asc`);
       rows=rows.map(r=>({...r, recordatorio_mes_at:r.recordatorio_mes_at||null}));
     }
 
@@ -3250,10 +3203,10 @@ async function enviarRecordatorioMes(idPac,btn,fuente) {
   const pad=n=>String(n).padStart(2,'0');
   const fi=`${anio}-${pad(mes)}-01`;const fd=new Date(anio,mes,1);
   const ff=`${fd.getFullYear()}-${pad(fd.getMonth()+1)}-01`;
-  const usaSesiones = fuente==='sesiones';
-  const filtroTer = (!usaSesiones || esAdmin()) ? '' : `id_terapeuta=eq.${G.miId}&`;
-  const tabla = usaSesiones ? 'sesiones' : 'agenda_datos';
-  const filtroEstado = usaSesiones ? '&estado=eq.Hecha' : '&estado_agenda=eq.Programada';
+  const usaSesiones = fuente==='sesiones'; // fuente sigue siendo útil para el texto del recordatorio
+  const filtroTer = esAdmin() ? '' : `id_terapeuta=eq.${G.miId}&`;
+  const tabla = 'citas';
+  const filtroEstado = usaSesiones ? '&estado=eq.Hecha' : '&estado=eq.Programada';
   const rows=await supaGet(tabla,`${filtroTer}id_paciente=eq.${idPac}&fecha=gte.${fi}&fecha=lt.${ff}${filtroEstado}`);
   const diasEs=['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
   const fechasTexto=rows.map(s=>{const d=new Date(s.fecha+'T12:00:00');return`- ${diasEs[d.getDay()]} ${d.getDate()}${s.hora?' a las '+(s.hora||'').slice(0,5):''}`;}).join('\n');
@@ -3292,7 +3245,7 @@ async function pac360Cargar() {
     const pacientes = await supaGet('pacientes', 'order=apellidos.asc,nombre.asc&limit=500');
 
     // 2. Sesiones agrupadas por paciente (conteo)
-    const sesiones = await supaGet('sesiones', 'select=id_paciente,id_terapeuta&limit=5000');
+    const sesiones = await supaGet('citas', 'select=id_paciente,id_terapeuta&limit=5000');
     const sesCount = {}, sesTer = {};
     sesiones.forEach(s => {
       sesCount[s.id_paciente] = (sesCount[s.id_paciente] || 0) + 1;

@@ -2284,7 +2284,7 @@ async function iniciarApp() {
       sg('servicios','order=id_servicio.asc'),
       sg('bonos','order=fecha_compra.desc&limit=2000'),
       sg('becas','order=anio.desc,id_paciente.asc&limit=2000'),
-      sg('sesiones','order=fecha.desc&limit=2000'),
+      sg('citas','order=fecha.desc&limit=2000'),
     ]);
     G.terapeutas = ters;
     G.pacientes  = pacs;
@@ -2526,7 +2526,7 @@ async function cargarDashboard() {
 
   try {
     const [sesiones, cobrosM, costesFijos] = await Promise.all([
-      sg('sesiones',`fecha=gte.${fi}&fecha=lt.${ff}&order=fecha.asc,hora.asc`),
+      sg('citas',`fecha=gte.${fi}&fecha=lt.${ff}&order=fecha.asc,hora.asc`),
       sg('cobros',`fecha=gte.${fi}&fecha=lt.${ff}`),
       sg('costes_fijos','activo=eq.true&select=importe_mensual'),
     ]);
@@ -2816,7 +2816,7 @@ async function renderAgendaHoy() {
   const hoy = new Date().toISOString().split('T')[0];
   try {
     if (!G_agendaHoy.length || G_agendaHoy._fecha !== hoy) {
-      const rows = await sg('sesiones', `fecha=eq.${hoy}&order=hora.asc`);
+      const rows = await sg('citas', `fecha=eq.${hoy}&order=hora.asc`);
       G_agendaHoy = rows;
       G_agendaHoy._fecha = hoy;
       const sel = document.getElementById('agenda-filtro-ter');
@@ -2868,7 +2868,7 @@ async function renderGrafico() {
     const fi=`${anio}-${pad(mes)}-01`;
     const fd=new Date(anio,mes,1); const ff=`${fd.getFullYear()}-${pad(fd.getMonth()+1)}-01`;
     const [ses, cob] = await Promise.all([
-      sg('sesiones',`fecha=gte.${fi}&fecha=lt.${ff}&estado=eq.Hecha&select=importe`),
+      sg('citas',`fecha=gte.${fi}&fecha=lt.${ff}&estado=eq.Hecha&select=importe`),
       sg('cobros',`fecha=gte.${fi}&fecha=lt.${ff}&estado=eq.Confirmado&select=importe`),
     ]);
     const prod = ses.reduce((s,r)=>s+(parseFloat(r.importe)||0),0);
@@ -2896,7 +2896,7 @@ async function cargarSesiones() {
   document.getElementById('tbody-sesiones').innerHTML = '<tr><td colspan="10" class="loading-state"><div class="spinner"></div></td></tr>';
   try {
     const [rows, cobrosRows] = await Promise.all([
-      sg('sesiones','order=fecha.desc,hora.asc&limit=500'),
+      sg('citas','order=fecha.desc,hora.asc&limit=500'),
       sg('cobros','estado=eq.Confirmado&select=id_sesion')
     ]);
     G.sesiones = rows;
@@ -3147,7 +3147,7 @@ async function guardarSesion() {
       // Guardar bono anterior (por si cambia) para recalcularlo también
       const sesAnterior = G.sesiones.find(s => s.id_cita === id);
       const bonoAnterior = sesAnterior?.id_bono || null;
-      await sa('sesiones',`id_cita=eq.${id}`,datos);
+      await sa('citas',`id_cita=eq.${id}`,datos);
       const idx=G.sesiones.findIndex(s=>s.id_cita===id);
       if(idx>=0) G.sesiones[idx]={...G.sesiones[idx],...datos};
       toast('Sesión actualizada ✓','ok');
@@ -3156,7 +3156,7 @@ async function guardarSesion() {
       if (bonoAnterior && bonoAnterior !== datos.id_bono) await recalcularContadoresBono(bonoAnterior);
     } else {
       const newId = await genId('sesiones','id_cita','S');
-      await sp('sesiones',{...datos,id_cita:newId});
+      await sp('citas',{...datos,id_cita:newId});
       G.sesiones.unshift({...datos,id_cita:newId});
       toast('Sesión creada ✓','ok');
       if (datos.id_bono) await recalcularContadoresBono(datos.id_bono);
@@ -3172,7 +3172,7 @@ async function eliminarSesion() {
   try {
     const ses = G.sesiones.find(s => s.id_cita === id);
     const bonoId = ses?.id_bono || null;
-    await sd('sesiones',`id_cita=eq.${id}`);
+    await sd('citas',`id_cita=eq.${id}`);
     G.sesiones = G.sesiones.filter(s=>s.id_cita!==id);
     toast('Sesión eliminada ✓','ok');
     cerrarModal('modal-sesion');
@@ -3836,7 +3836,7 @@ async function abrirP360(idPaciente) {
 async function p360CargarDatos(idPaciente, p) {
   try {
     const [sesiones, cobros] = await Promise.all([
-      sg('sesiones', `id_paciente=eq.${idPaciente}&order=fecha.desc&limit=500`),
+      sg('citas', `id_paciente=eq.${idPaciente}&order=fecha.desc&limit=500`),
       sg('cobros',   `id_paciente=eq.${idPaciente}&order=fecha.desc&limit=50`),
     ]);
     P360.sesiones = sesiones;
@@ -5179,7 +5179,7 @@ async function cargarLineasDesdeSesiones() {
     let params = `id_paciente=eq.${pacId}&estado=eq.Hecha`;
     if (desde) params += `&fecha=gte.${desde}`;
     if (hasta) params += `&fecha=lte.${hasta}`;
-    const sesiones = await sg('sesiones', params + '&order=fecha.asc');
+    const sesiones = await sg('citas', params + '&order=fecha.asc');
     if (!sesiones.length) { toast('No hay sesiones Hecha en ese período', 'err'); return; }
 
     // Agrupa por terapeuta+servicio para crear líneas limpias
@@ -5739,7 +5739,7 @@ async function agCargar() {
   }
   try {
     // Sin limit — igual que la MiniApp
-    AG.citas = await sg('agenda_datos', `fecha=gte.${fi}&fecha=lt.${ff}&order=fecha.asc,hora.asc`);
+    AG.citas = await sg('citas', `fecha=gte.${fi}&fecha=lt.${ff}&order=fecha.asc,hora.asc`);
 
   } catch(e) {
     AG.citas = [];
@@ -5885,7 +5885,7 @@ function agCitaElConPos(c, col, totalCols) {
   const nombre = pac ? (pac.alias || ((pac.nombre||'')+' '+(pac.apellidos||'')).trim()) : (c.id_paciente||'—');
   const ter = G.terapeutas.find(t=>t.id_terapeuta===c.id_terapeuta);
   const terNom = ter ? ter.nombre.split(' ')[0] : '';
-  const estado = c.estado_agenda || c.estado || 'Programada';
+  const estado = c.estado || c.estado || 'Programada';
 
   // Subcolumnas: dividir el ancho disponible entre totalCols
   const pct = 100 / totalCols;
@@ -5994,7 +5994,7 @@ function agAbrirModal(cita) {
   const ter = G.terapeutas.find(t=>t.id_terapeuta===cita.id_terapeuta);
   const srv = G.servicios.find(s=>s.id_servicio===cita.id_servicio);
   const nombre = pac ? (pac.alias || ((pac.nombre||'')+' '+(pac.apellidos||'')).trim()) : '—';
-  const estado = cita.estado_agenda || cita.estado || 'Programada';
+  const estado = cita.estado || cita.estado || 'Programada';
   const estadoColor = { Programada:'#00B5E2', Hecha:'#97D700', 'No-show':'#DA291C', Reprogramada:'#F59E0B', Cancelada:'#9CA3AF' }[estado] || '#888';
 
   // Crear overlay si no existe
@@ -6020,7 +6020,7 @@ function agAbrirModal(cita) {
         <div style="display:flex;justify-content:space-between;margin-bottom:5px"><span style="font-size:11px;color:var(--ink-muted);font-weight:600;text-transform:uppercase;letter-spacing:.4px">Terapeuta</span><span style="font-size:13px;font-weight:500">${ter?.nombre||'—'}</span></div>
         <div style="display:flex;justify-content:space-between;margin-bottom:5px"><span style="font-size:11px;color:var(--ink-muted);font-weight:600;text-transform:uppercase;letter-spacing:.4px">Fecha / Hora</span><span style="font-size:13px;font-weight:500">${cita.fecha||'—'} · ${(cita.hora||'').slice(0,5)||'—'}</span></div>
         <div style="display:flex;justify-content:space-between"><span style="font-size:11px;color:var(--ink-muted);font-weight:600;text-transform:uppercase;letter-spacing:.4px">Estado</span><span style="font-size:12px;font-weight:700;padding:2px 10px;border-radius:12px;background:${estadoColor}22;color:${estadoColor}">${estado}</span></div>
-        ${cita.notas_agenda ? `<div style="margin-top:8px;font-size:12px;color:var(--ink-muted);font-style:italic">${cita.notas_agenda}</div>` : ''}
+        ${cita.notas ? `<div style="margin-top:8px;font-size:12px;color:var(--ink-muted);font-style:italic">${cita.notas}</div>` : ''}
       </div>
       <div style="display:flex;justify-content:space-between;align-items:center;padding-top:14px;border-top:1px solid var(--border)">
         <button onclick="agEliminarCita('${cita.id_cita}')" style="background:#fff;border:1.5px solid var(--red);color:var(--red);border-radius:8px;padding:8px 16px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer">🗑 Eliminar en cascada</button>
@@ -6040,19 +6040,13 @@ async function agEliminarCita(idCita) {
   try {
     // 1. Buscar sesión
     const horaCorta = (cita.hora||'').slice(0,5);
-    const ses = await sg('sesiones', `fecha=eq.${cita.fecha}&id_paciente=eq.${cita.id_paciente}&hora=eq.${horaCorta}&id_terapeuta=eq.${cita.id_terapeuta}`);
-    if (ses && ses.length) {
-      const sesId = ses[0].id_cita;
-      // 2. Borrar cobros
-      await sd('cobros', `id_sesion=eq.${sesId}`);
-      // 3. Revertir bono/beca
-      if (ses[0].financiacion_tipo==='BONO' && ses[0].id_bono) await agRevertirBono(ses[0].id_bono);
-      if (ses[0].financiacion_tipo==='BECA' && ses[0].id_beca) await agRevertirBeca(ses[0].id_beca);
-      // 4. Borrar sesión
-      await sd('sesiones', `id_cita=eq.${sesId}`);
-    }
-    // 5. Borrar cita
-    await sd('agenda_datos', `id_cita=eq.${idCita}`);
+    // 1. Borrar cobros vinculados
+    await sd('cobros', `id_sesion=eq.${idCita}`);
+    // 2. Revertir bono/beca si aplica
+    if (cita.id_bono) await agRevertirBono(cita.id_bono);
+    if (cita.id_beca) await agRevertirBeca(cita.id_beca);
+    // 3. Borrar cita
+    await sd('citas', `id_cita=eq.${idCita}`);
     toast('Cita eliminada ✓','ok');
     agCargar();
   } catch(e) {
@@ -6187,15 +6181,15 @@ async function cargarKPIs() {
 
   try {
     const [sesiones, cobros, bonos, becas, todas_sesiones] = await Promise.all([
-      sg('sesiones', `fecha=gte.${kpiFechaIni(anioS,mesS)}&fecha=lt.${kpiFechaFin(anioS,mesS)}&select=id_cita,fecha,estado,importe,id_terapeuta,id_servicio,financiacion_tipo`),
+      sg('citas', `fecha=gte.${kpiFechaIni(anioS,mesS)}&fecha=lt.${kpiFechaFin(anioS,mesS)}&select=id_cita,fecha,estado,importe,id_terapeuta,id_servicio,financiacion_tipo`),
       sg('cobros',   `fecha=gte.${kpiFechaIni(anioS,mesS)}&fecha=lt.${kpiFechaFin(anioS,mesS)}&select=importe,fecha`),
       sg('bonos',    `estado=eq.Activo&select=sesiones_totales,sesiones_consumidas,importe_anticipo,valor_sesion`),
       sg('becas',    `estado=eq.Activo&select=sesiones_total,sesiones_consumidas,valor_sesion,importe_neto`),
-      sg('sesiones', `estado=eq.Hecha&select=fecha,importe&order=fecha.asc&limit=5000`),
+      sg('citas', `estado=eq.Hecha&select=fecha,importe&order=fecha.asc&limit=5000`),
     ]);
 
     // Mes comparación
-    const sesC = await sg('sesiones', `fecha=gte.${kpiFechaIni(anioC,mesC)}&fecha=lt.${kpiFechaFin(anioC,mesC)}&select=estado,importe`);
+    const sesC = await sg('citas', `fecha=gte.${kpiFechaIni(anioC,mesC)}&fecha=lt.${kpiFechaFin(anioC,mesC)}&select=estado,importe`);
     const cobC = await sg('cobros',   `fecha=gte.${kpiFechaIni(anioC,mesC)}&fecha=lt.${kpiFechaFin(anioC,mesC)}&select=importe`);
 
     // ── CÁLCULOS MES ACTUAL ────────────────────────────
@@ -6517,7 +6511,7 @@ async function kgCargarHistorial(mesActualAnio, mesActualMes) {
   for (let i = 0; i < meses.length; i += 4) {
     const batch = meses.slice(i, i+4);
     const results = await Promise.all(batch.map(({anio,mes}) => Promise.all([
-      sg('sesiones', `fecha=gte.${kpiFechaIni(anio,mes)}&fecha=lt.${kpiFechaFin(anio,mes)}&estado=eq.Hecha&select=importe`),
+      sg('citas', `fecha=gte.${kpiFechaIni(anio,mes)}&fecha=lt.${kpiFechaFin(anio,mes)}&estado=eq.Hecha&select=importe`),
       sg('cobros',   `fecha=gte.${kpiFechaIni(anio,mes)}&fecha=lt.${kpiFechaFin(anio,mes)}&select=importe`),
     ])));
     results.forEach(([ses, cob]) => {
@@ -6993,7 +6987,7 @@ async function bancoRecalcular() {
 
   try {
     const [ses, pacs, bons, becs] = await Promise.all([
-      sg('sesiones','select=*&limit=2000'),
+      sg('citas','select=*&limit=2000'),
       sg('pacientes','select=id_paciente,nombre,apellidos,alias&limit=500'),
       sg('bonos','select=*&limit=500'),
       sg('becas','select=*&limit=500'),
