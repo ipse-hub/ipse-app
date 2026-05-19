@@ -1,0 +1,1285 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IPSE · Agenda</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --azul:   #10069F;
+  --cyan:   #00B5E2;
+  --rojo:   #DA291C;
+  --verde:  #97D700;
+  --amber:  #F59E0B;
+  --bg:     #F4F5F9;
+  --surface:#FFFFFF;
+  --border: #E2E4EE;
+  --text:   #1A1B2E;
+  --muted:  #6B7280;
+  --shadow: 0 2px 8px rgba(16,6,159,.08);
+  --radius: 10px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);font-size:14px;display:flex;flex-direction:column}
+
+/* ── TOPBAR ── */
+.topbar{background:var(--azul);color:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 18px;height:46px;box-shadow:0 2px 12px rgba(16,6,159,.3);position:relative;z-index:10;flex-shrink:0}
+.topbar-logo{font-size:16px;font-weight:600;letter-spacing:-.3px;display:flex;align-items:center;gap:8px;text-decoration:none;color:#fff}
+.topbar-logo span{color:var(--cyan)}
+.topbar-right{display:flex;align-items:center;gap:8px}
+.topbar-nombre{font-size:12px;opacity:.75;font-weight:500}
+.avatar{width:28px;height:28px;border-radius:50%;background:var(--cyan);color:var(--azul);font-weight:700;font-size:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.topbar-btn{background:rgba(255,255,255,.15);border:none;color:#fff;border-radius:6px;padding:4px 10px;cursor:pointer;font-size:12px;font-family:inherit;font-weight:500;transition:background .15s;display:flex;align-items:center;gap:5px}
+.topbar-btn:hover{background:rgba(255,255,255,.25)}
+.topbar-btn svg{width:13px;height:13px}
+
+/* ── LAYOUT ── */
+.app-body{display:flex;flex:1;min-height:0;overflow:hidden}
+
+/* ── SIDEBAR ── */
+.sidebar{width:200px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;overflow-y:auto}
+.sidebar-section{padding:14px 12px 6px}
+.sidebar-section-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:8px;padding:0 6px}
+.btn-nueva-cita{background:var(--azul);color:#fff;border:none;border-radius:10px;padding:9px 14px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;width:100%;transition:all .15s;margin-bottom:8px}
+.btn-nueva-cita:hover{background:#0b0580}
+.btn-nueva-cita svg{width:15px;height:15px}
+.btn-actualizar{background:rgba(16,6,159,.07);color:var(--azul);border:1.5px solid rgba(16,6,159,.18);border-radius:10px;padding:7px 14px;font-family:inherit;font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;width:100%;transition:all .15s;margin-bottom:4px}
+.btn-actualizar:hover{background:rgba(16,6,159,.14);border-color:var(--azul)}
+.btn-actualizar svg{width:13px;height:13px}
+.sidebar-divider{border:none;border-top:1px solid var(--border);margin:8px 12px}
+.ter-row{display:flex;align-items:center;gap:8px;padding:5px 10px;border-radius:7px;font-size:12px;font-weight:500;color:var(--muted);cursor:pointer;transition:background .15s;margin-bottom:1px;user-select:none}
+.ter-row:hover{background:var(--bg)}
+.ter-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.ter-row input[type=checkbox]{accent-color:var(--azul);width:13px;height:13px;cursor:pointer;flex-shrink:0}
+
+/* ── ÁREA AGENDA ── */
+.main{flex:1;min-width:0;display:flex;flex-direction:column;padding:12px 16px 0;overflow:hidden}
+
+/* ── NAV SEMANA ── */
+.week-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:8px 14px;box-shadow:var(--shadow);flex-shrink:0}
+.week-nav-left{display:flex;gap:6px;align-items:center}
+.nav-btn{background:none;border:1px solid var(--border);border-radius:6px;padding:5px 13px;cursor:pointer;font-family:inherit;font-size:13px;color:var(--azul);font-weight:500;transition:all .15s}
+.nav-btn:hover{background:var(--azul);color:#fff;border-color:var(--azul)}
+.btn-hoy{background:var(--azul)!important;color:#fff!important;border-color:var(--azul)!important}
+.week-label{font-size:16px;font-weight:700;min-width:180px;text-align:center}
+.view-toggle{display:flex;gap:2px;background:var(--border);border-radius:8px;padding:2px}
+.view-btn{border:none;background:none;border-radius:6px;padding:4px 12px;font-size:12px;font-weight:600;color:var(--muted);cursor:pointer;transition:all .15s;font-family:inherit}
+.view-btn.active{background:var(--azul);color:#fff}
+
+/* ── GRID ── */
+.week-grid{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow);flex:1;min-height:0;display:flex;flex-direction:column}
+.grid-header{display:grid;grid-template-columns:52px repeat(7,1fr);background:var(--azul);color:#fff;flex-shrink:0}
+.gh-cell{padding:10px 6px;text-align:center;font-size:12px;font-weight:500;border-right:1px solid rgba(255,255,255,.1)}
+.gh-cell:last-child{border-right:none}
+.gh-cell .dia-num{font-size:18px;font-weight:700;display:block;line-height:1.2}
+.gh-cell.hoy{background:rgba(0,181,226,.25)}
+.gh-cell.finde{background:rgba(255,255,255,.06)}
+.grid-scroll{flex:1;overflow-y:auto;min-height:0}
+.grid-body{display:grid;grid-template-columns:52px repeat(7,1fr)}
+.time-col{border-right:1px solid var(--border)}
+.time-slot{height:52px;display:flex;align-items:flex-start;padding:4px 5px 0;font-size:10px;font-family:'DM Mono',monospace;color:var(--muted);border-bottom:1px solid var(--border)}
+.day-col{border-right:1px solid var(--border);position:relative}
+.day-col:last-child{border-right:none}
+.day-col.hoy-bg{background:rgba(0,181,226,.03)}
+.day-col.finde-bg{background:rgba(0,0,0,.012)}
+.day-slot{height:52px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .1s}
+.day-slot:hover{background:rgba(16,6,159,.04)}
+/* citas */
+.cita{position:absolute;left:2px;right:2px;border-radius:5px;padding:3px 5px;font-size:11px;font-weight:500;overflow:hidden;cursor:pointer;z-index:2;border-left:3px solid rgba(0,0,0,.18);box-shadow:0 1px 4px rgba(0,0,0,.12);display:flex;flex-direction:column;justify-content:flex-start;transition:opacity .1s,transform .1s;color:#fff}
+.cita:hover{opacity:.9;transform:scale(1.01)}
+.cita-nombre{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.3}
+.cita-info{opacity:.85;font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* estado visual */
+.cita.estado-Hecha{opacity:.75}
+.cita.estado-Cancelada{opacity:.45;text-decoration:line-through}
+.cita.estado-Noshow{border-style:dashed}
+
+/* ── OVERLAY / MODAL ── */
+.overlay{display:none;position:fixed;inset:0;background:rgba(16,6,80,.55);z-index:200;align-items:center;justify-content:center;backdrop-filter:blur(3px)}
+.overlay.visible{display:flex}
+
+.modal{background:var(--surface);border-radius:16px;width:82vw;max-width:1060px;height:84vh;display:flex;flex-direction:column;box-shadow:0 24px 80px rgba(0,0,0,.28);animation:modalIn .2s ease;overflow:hidden}
+@keyframes modalIn{from{opacity:0;transform:scale(.97) translateY(8px)}to{opacity:1;transform:scale(1) translateY(0)}}
+
+.modal-header{display:flex;align-items:center;justify-content:space-between;padding:18px 28px 16px;border-bottom:1px solid var(--border);flex-shrink:0}
+.modal-title{font-size:17px;font-weight:700;color:var(--azul);display:flex;align-items:center;gap:9px}
+.modal-title svg{width:19px;height:19px;stroke:var(--cyan)}
+.modal-header-right{display:flex;align-items:center;gap:10px}
+.date-chip{font-size:12px;font-family:'DM Mono',monospace;background:var(--bg);border:1px solid var(--border);border-radius:20px;padding:3px 12px;color:var(--muted)}
+.modal-close{background:none;border:none;cursor:pointer;color:var(--muted);font-size:20px;line-height:1;padding:4px 7px;border-radius:6px;transition:all .15s}
+.modal-close:hover{background:var(--bg);color:var(--text)}
+
+.modal-body{display:grid;grid-template-columns:1fr 1px 1fr;flex:1;min-height:0;overflow:hidden}
+.modal-col{padding:22px 28px;overflow-y:auto;height:100%}
+.modal-col::-webkit-scrollbar{width:4px}
+.modal-col::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+.col-divider{background:var(--border)}
+
+.modal-footer{display:flex;align-items:center;gap:8px;padding:14px 28px;border-top:1px solid var(--border);flex-shrink:0}
+.footer-spacer{flex:1}
+
+/* secciones */
+.section{margin-bottom:22px}
+.section:last-child{margin-bottom:0}
+.sec-label{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.sec-label::after{content:'';flex:1;height:1px;background:var(--border)}
+
+/* form */
+.fg{margin-bottom:10px}
+.fg:last-child{margin-bottom:0}
+.fl{display:block;font-size:11px;font-weight:600;color:var(--muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:.04em}
+.fc{width:100%;border:1.5px solid var(--border);border-radius:8px;padding:9px 12px;font-family:inherit;font-size:14px;color:var(--text);background:var(--bg);transition:border-color .15s;outline:none;appearance:none;-webkit-appearance:none}
+.fc:focus{border-color:var(--azul);background:#fff;box-shadow:0 0 0 3px rgba(16,6,159,.08)}
+select.fc{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24'%3E%3Cpath fill='%236B7280' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;padding-right:28px}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
+/* búsqueda paciente */
+.pac-input-wrap{position:relative}
+.pac-dropdown{position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--surface);border:1.5px solid var(--border);border-radius:8px;box-shadow:0 4px 20px rgba(0,0,0,.1);z-index:10;max-height:200px;overflow-y:auto;display:none}
+.pac-dropdown.visible{display:block}
+.pac-option{padding:9px 13px;cursor:pointer;border-bottom:1px solid var(--border);transition:background .1s}
+.pac-option:last-child{border-bottom:none}
+.pac-option:hover{background:var(--bg)}
+.pac-option-nombre{font-size:13px;font-weight:600;color:var(--text)}
+.pac-option-meta{font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;margin-top:1px}
+.pac-seleccionado{background:var(--bg);border:1.5px solid var(--verde);border-radius:8px;padding:9px 13px;margin-top:6px;display:none}
+.pac-seleccionado.visible{display:block}
+.pac-sel-nombre{font-size:14px;font-weight:600;color:var(--text);margin-bottom:2px}
+.pac-sel-meta{font-size:11px;color:var(--muted);font-family:'DM Mono',monospace}
+.pac-sel-clear{float:right;background:none;border:none;color:var(--muted);cursor:pointer;font-size:16px;line-height:1;padding:0 2px;transition:color .15s}
+.pac-sel-clear:hover{color:var(--rojo)}
+
+/* alertas bono/beca */
+.alert{border-radius:8px;padding:9px 12px;font-size:13px;display:flex;align-items:flex-start;gap:8px;line-height:1.45;margin-bottom:10px}
+.alert svg{width:14px;height:14px;flex-shrink:0;margin-top:1px}
+.alert-green{background:#f0fff4;border:1px solid #86efac;color:#166534}
+.alert-blue{background:#eff6ff;border:1px solid #93c5fd;color:#1e40af}
+.alert-amber{background:#fffbeb;border:1px solid var(--amber);color:#78350f}
+.alert-neutral{background:var(--bg);border:1px solid var(--border);color:var(--muted);align-items:center}
+
+/* alta rápida */
+.altas-rapidas{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.btn-alta{display:inline-flex;align-items:center;gap:5px;padding:5px 11px;border-radius:7px;border:1.5px solid;background:var(--surface);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .18s;white-space:nowrap}
+.btn-alta svg{width:12px;height:12px;flex-shrink:0}
+.btn-alta.pac{border-color:#10069F;color:#10069F;background:#EEF0FF}
+.btn-alta.pac:hover{background:#10069F;color:#fff}
+.btn-alta.bono{border-color:#0369a1;color:#0369a1;background:#e0f2fe}
+.btn-alta.bono:hover{background:#0369a1;color:#fff}
+.btn-alta.beca{border-color:#2d6a00;color:#2d6a00;background:#f0fff4}
+.btn-alta.beca:hover{background:#2d6a00;color:#fff}
+
+/* pills modalidad */
+.pill-row{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.pill{padding:6px 13px;border-radius:20px;font-size:13px;font-weight:500;border:1.5px solid var(--border);background:var(--surface);color:var(--muted);cursor:pointer;transition:all .15s;user-select:none}
+.pill:hover{border-color:var(--azul);color:var(--azul)}
+.pill.sel{background:#f0f7ff;border-color:var(--azul);color:var(--azul)}
+.pill.sel-beca{background:#f0fff4;border-color:#4a7c00;color:#2d4a00}
+.pill.sel-otros{background:#fff8f0;border-color:#b45309;color:#b45309}
+
+/* precio */
+.precio-box{display:flex;align-items:center;gap:10px;background:var(--bg);border:1.5px solid var(--border);border-radius:8px;padding:10px 14px}
+.precio-num{font-size:22px;font-weight:700;color:var(--azul);font-family:'DM Mono',monospace}
+.precio-suffix{font-size:13px;color:var(--muted)}
+.otros-select{border-color:#b45309!important;background:#fff8f0!important;color:#b45309!important;font-weight:700;font-size:15px}
+
+/* toggle repetir */
+.toggle-fila{display:flex;align-items:center;gap:10px;cursor:pointer;user-select:none}
+.toggle{position:relative;width:36px;height:20px;flex-shrink:0}
+.toggle input{opacity:0;width:0;height:0;position:absolute}
+.slider{position:absolute;inset:0;background:var(--border);border-radius:20px;cursor:pointer;transition:.2s}
+.slider::before{content:'';position:absolute;width:14px;height:14px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.2s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.toggle input:checked+.slider{background:var(--azul)}
+.toggle input:checked+.slider::before{transform:translateX(16px)}
+.toggle-lbl{font-size:13px;color:var(--muted);font-weight:500}
+.recur-box{background:var(--bg);border:1.5px solid var(--border);border-radius:8px;padding:12px;margin-top:10px;display:none}
+.recur-box.open{display:block}
+.recur-info{font-size:12px;color:var(--muted);margin-top:8px;line-height:1.5}
+.recur-info strong{color:var(--azul)}
+
+/* estado */
+.estado-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.est-btn{border:1.5px solid var(--border);border-radius:8px;padding:9px 10px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;background:var(--bg);color:var(--muted);transition:all .15s;display:flex;align-items:center;gap:6px}
+.est-btn svg{width:14px;height:14px;flex-shrink:0}
+.est-btn:hover{border-color:var(--azul);color:var(--azul);background:#f0f7ff}
+.est-btn.sel-Hecha{background:#f0fff4;border-color:#4a7c00;color:#166534}
+.est-btn.sel-Noshow{background:#fff0f0;border-color:var(--rojo);color:var(--rojo)}
+.est-btn.sel-Reprogramada{background:#fffbeb;border-color:var(--amber);color:#78350f}
+.est-btn.sel-Cancelada{background:#F3F4F6;border-color:#9CA3AF;color:#374151}
+
+/* forma cobro */
+.pago-section{transition:opacity .2s}
+.pago-section.locked{opacity:.35;pointer-events:none}
+.check-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
+.check-item{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted);cursor:pointer;user-select:none;background:var(--bg);border:1.5px solid var(--border);border-radius:8px;padding:7px 11px;transition:all .15s}
+.check-item:hover{border-color:var(--azul);color:var(--azul)}
+.check-item input{width:14px;height:14px;accent-color:var(--azul);cursor:pointer;flex-shrink:0}
+.pago-hint{font-size:11px;color:var(--muted);margin-bottom:8px;font-style:italic;display:flex;align-items:center;gap:5px}
+
+/* botones */
+.btn{padding:9px 18px;border-radius:8px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all .15s;display:inline-flex;align-items:center;gap:6px}
+.btn svg{width:14px;height:14px}
+.btn-secondary{background:var(--bg);color:var(--muted);border:1.5px solid var(--border)}
+.btn-secondary:hover{border-color:var(--azul);color:var(--azul)}
+.btn-primary{background:var(--azul);color:#fff}
+.btn-primary:hover{background:#0b0580}
+.btn-danger{background:#FEE2E2;color:var(--rojo)}
+.btn-danger:hover{background:var(--rojo);color:#fff}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+
+/* spinner botón */
+.btn-spinner{width:14px;height:14px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite;flex-shrink:0}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* toast */
+#toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(10px);background:#1A1B2E;color:#fff;border-radius:10px;padding:10px 20px;font-size:13px;font-weight:500;z-index:9999;opacity:0;transition:all .3s;pointer-events:none;white-space:nowrap;font-family:'DM Sans',sans-serif}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+#toast.error{background:var(--rojo)}
+#toast.success{background:#166534}
+
+/* notas */
+.notas-ta{resize:vertical;min-height:80px}
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <a class="topbar-logo" href="../hub.html">IPSE <span>·</span> Agenda</a>
+  <div class="topbar-right">
+    <span class="topbar-nombre" id="topbar-nombre"></span>
+    <div class="avatar" id="topbar-avatar">–</div>
+    <button class="topbar-btn" onclick="cerrarSesion()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      Salir
+    </button>
+  </div>
+</div>
+
+<div class="app-body">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sidebar-section">
+      <button class="btn-nueva-cita" onclick="abrirModalNueva()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Nueva cita
+      </button>
+      <button class="btn-actualizar" onclick="cargarCitas()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/></svg>
+        Actualizar
+      </button>
+    </div>
+    <hr class="sidebar-divider">
+    <div class="sidebar-section" style="padding-top:6px">
+      <div class="sidebar-section-title">Terapeutas</div>
+      <div id="ter-lista"><!-- inyectado por JS --></div>
+    </div>
+  </div>
+
+  <!-- ÁREA AGENDA -->
+  <div class="main">
+    <div class="week-nav">
+      <div class="week-nav-left">
+        <button class="nav-btn" onclick="semanaAnterior()">← Anterior</button>
+        <button class="nav-btn btn-hoy" onclick="irAHoy()">Hoy</button>
+        <button class="nav-btn" onclick="semanaSiguiente()">Siguiente →</button>
+      </div>
+      <span class="week-label" id="week-label"></span>
+      <div class="view-toggle">
+        <button class="view-btn">Día</button>
+        <button class="view-btn active">Semana</button>
+        <button class="view-btn">Mes</button>
+      </div>
+    </div>
+
+    <div class="week-grid">
+      <div class="grid-header" id="grid-header"><!-- inyectado --></div>
+      <div class="grid-scroll">
+        <div class="grid-body" id="grid-body"><!-- inyectado --></div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /app-body -->
+
+<!-- ══ MODAL NUEVA / EDITAR CITA ══ -->
+<div class="overlay" id="overlay" onclick="clickOverlay(event)">
+<div class="modal" id="modal">
+
+  <div class="modal-header">
+    <div class="modal-title" id="modal-title">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      Nueva cita
+    </div>
+    <div class="modal-header-right">
+      <span class="date-chip" id="modal-fecha-chip"></span>
+      <button class="modal-close" onclick="cerrarModal()">✕</button>
+    </div>
+  </div>
+
+  <div class="modal-body">
+
+    <!-- ══ COL IZQUIERDA ══ -->
+    <div class="modal-col">
+
+      <!-- PACIENTE -->
+      <div class="section">
+        <div class="sec-label">Paciente</div>
+        <div class="fg">
+          <div class="pac-input-wrap">
+            <input type="text" class="fc" id="pac-input" placeholder="Buscar por nombre o apellidos…" oninput="buscarPaciente(this.value)" autocomplete="off">
+            <div class="pac-dropdown" id="pac-dropdown"></div>
+          </div>
+          <div class="pac-seleccionado" id="pac-seleccionado">
+            <button class="pac-sel-clear" onclick="limpiarPaciente()" title="Cambiar paciente">✕</button>
+            <div class="pac-sel-nombre" id="pac-sel-nombre"></div>
+            <div class="pac-sel-meta" id="pac-sel-meta"></div>
+          </div>
+        </div>
+        <div class="altas-rapidas">
+          <button class="btn-alta pac" onclick="toast('Alta de paciente — próximamente')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            + Nuevo paciente
+          </button>
+          <button class="btn-alta bono" onclick="toast('Nuevo bono — próximamente')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+            + Nuevo bono
+          </button>
+          <button class="btn-alta beca" onclick="toast('Nueva beca — próximamente')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+            + Nueva beca
+          </button>
+        </div>
+      </div>
+
+      <!-- BONO / BECA ACTIVO -->
+      <div class="section" id="sec-bono-beca" style="display:none">
+        <div class="sec-label">Bono / Beca</div>
+        <div id="bono-beca-info"></div>
+      </div>
+
+      <!-- SESIÓN -->
+      <div class="section">
+        <div class="sec-label">Sesión</div>
+        <div class="fg">
+          <label class="fl">Especialidad</label>
+          <select class="fc" id="sel-especialidad">
+            <!-- opciones según el profesional logado -->
+          </select>
+        </div>
+        <div class="form-row">
+          <div class="fg">
+            <label class="fl">Fecha</label>
+            <input type="date" class="fc" id="inp-fecha" onchange="actualizarRecur()">
+          </div>
+          <div class="fg">
+            <label class="fl">Hora</label>
+            <input type="time" class="fc" id="inp-hora" value="09:00" onchange="actualizarRecur()">
+          </div>
+        </div>
+        <div class="fg">
+          <label class="fl">Duración</label>
+          <select class="fc" id="sel-duracion">
+            <option value="60">60 min</option>
+            <option value="45">45 min</option>
+            <option value="30">30 min</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- MODALIDAD PAGO -->
+      <div class="section">
+        <div class="sec-label">Modalidad de pago</div>
+        <div class="pill-row" id="pill-row">
+          <span class="pill" onclick="selPill(this,'BECA',45)"    data-mod="BECA">Beca</span>
+          <span class="pill" onclick="selPill(this,'BONO',45)"    data-mod="BONO">Bono</span>
+          <span class="pill" onclick="selPill(this,'PRIVADO_SU',50)" data-mod="PRIVADO_SU">Privado S/U</span>
+          <span class="pill" onclick="selPill(this,'ADECCO',40)"  data-mod="ADECCO">Adecco</span>
+          <span class="pill" onclick="selPill(this,'OTROS',null)" data-mod="OTROS">Otros</span>
+        </div>
+        <div class="fg">
+          <label class="fl">Precio</label>
+          <div class="precio-box" id="precio-box">
+            <span class="precio-num" id="precio-num">–</span>
+            <span class="precio-suffix">€ / sesión</span>
+          </div>
+          <select class="fc otros-select" id="otros-select" style="display:none" onchange="document.getElementById('precio-num').textContent=this.value">
+            <option value="45">45 € / sesión</option>
+            <option value="40">40 € / sesión</option>
+            <option value="35">35 € / sesión</option>
+            <option value="30">30 € / sesión</option>
+          </select>
+        </div>
+      </div>
+
+    </div><!-- /col izq -->
+
+    <div class="col-divider"></div>
+
+    <!-- ══ COL DERECHA ══ -->
+    <div class="modal-col">
+
+      <!-- REPETIR -->
+      <div class="section" id="sec-repetir">
+        <div class="sec-label">Repetir cita</div>
+        <label class="toggle-fila">
+          <div class="toggle">
+            <input type="checkbox" id="chk-recur" onchange="toggleRecur(this)">
+            <span class="slider"></span>
+          </div>
+          <span class="toggle-lbl">Crear citas automáticamente</span>
+        </label>
+        <div class="recur-box" id="recur-box">
+          <div class="form-row">
+            <div class="fg">
+              <label class="fl">Frecuencia</label>
+              <select class="fc" id="recur-frec" onchange="calcRecur()">
+                <option value="7">Semanal</option>
+                <option value="14">Quincenal</option>
+              </select>
+            </div>
+            <div class="fg">
+              <label class="fl">Durante</label>
+              <select class="fc" id="recur-dur" onchange="calcRecur()">
+                <option value="4">1 mes (~4 citas)</option>
+                <option value="8">2 meses (~8 citas)</option>
+                <option value="13" selected>3 meses (~13 citas)</option>
+              </select>
+            </div>
+          </div>
+          <div class="recur-info" id="recur-info"></div>
+        </div>
+      </div>
+
+      <!-- ESTADO -->
+      <div class="section">
+        <div class="sec-label">Estado de la cita</div>
+        <div class="estado-grid">
+          <button class="est-btn" onclick="selEstado(this,'Hecha')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>Hecha
+          </button>
+          <button class="est-btn" onclick="selEstado(this,'No show')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>No show
+          </button>
+          <button class="est-btn" onclick="selEstado(this,'Reprogramada')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/></svg>Reprogramada
+          </button>
+          <button class="est-btn" onclick="selEstado(this,'Cancelada')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>Cancelada
+          </button>
+        </div>
+        <div class="alert alert-amber" id="noshow-hint" style="display:none;margin-top:8px">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          <span>No show con beca/bono activo: <strong>se descuenta una sesión</strong></span>
+        </div>
+      </div>
+
+      <!-- FORMA COBRO -->
+      <div class="section pago-section locked" id="pago-section">
+        <div class="sec-label">Forma de cobro</div>
+        <div class="pago-hint" id="pago-hint">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px;flex-shrink:0"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          Disponible al marcar como Hecha
+        </div>
+        <div class="check-row">
+          <label class="check-item"><input type="radio" name="forma-cobro" value="Efectivo"> Efectivo</label>
+          <label class="check-item"><input type="radio" name="forma-cobro" value="Bizum"> Bizum</label>
+          <label class="check-item"><input type="radio" name="forma-cobro" value="Transferencia"> Transferencia</label>
+          <label class="check-item"><input type="radio" name="forma-cobro" value="No pagado"> No pagado</label>
+        </div>
+      </div>
+
+      <!-- NOTAS -->
+      <div class="section">
+        <div class="sec-label">Notas de sesión</div>
+        <textarea class="fc notas-ta" id="inp-notas" rows="4" placeholder="Observaciones, motivo de cancelación…"></textarea>
+      </div>
+
+    </div><!-- /col der -->
+
+  </div><!-- /modal-body -->
+
+  <div class="modal-footer">
+    <button class="btn btn-danger" id="btn-eliminar" style="display:none" onclick="eliminarCita()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+      Eliminar
+    </button>
+    <div class="footer-spacer"></div>
+    <button class="btn btn-secondary" onclick="cerrarModal()">Cancelar</button>
+    <button class="btn btn-primary" id="btn-guardar" onclick="guardarCita()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+      Guardar cita
+    </button>
+  </div>
+
+</div><!-- /modal -->
+</div><!-- /overlay -->
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<script>
+/* ═══════════════════════════════════════════
+   CONFIGURACIÓN
+═══════════════════════════════════════════ */
+const SUPA_URL = 'https://vlplebjqhufbzfncrawf.supabase.co';
+const SUPA_KEY = 'sb_publishable_Qt604gEH_lfx89HkPElvcA_OGwbKeDO';
+
+const ESPECIALIDADES = { PSI:'Psicología', LOG:'Logopedia', TO:'Ter. Ocupacional', PDG:'Pedagogía' };
+const PRECIOS_MOD    = { BECA:45, BONO:45, PRIVADO_SU:50, ADECCO:40 };
+const COLORES_PRO    = {}; // se rellena al cargar profesionales
+
+/* Colores fallback por posición */
+const PALETA = ['#10069F','#00B5E2','#97D700','#F59E0B','#DA291C','#7C3AED'];
+
+/* ═══════════════════════════════════════════
+   ESTADO GLOBAL
+═══════════════════════════════════════════ */
+let G = {
+  sesion:         null,   // {access_token, user_id, email, expires_at}
+  profesional:    null,   // {id, nombre, apellidos, especialidades, color_agenda, es_admin}
+  profesionales:  [],     // todos para el filtro sidebar
+  pacientes:      [],     // cargados al buscar
+  bonosBecas:     [],     // del paciente seleccionado
+  citas:          [],     // semana actual
+  terFiltro:      new Set(), // IDs de profesionales visibles
+  semanaIni:      null,   // Date del lunes actual
+  modalCitaId:    null,   // null = nueva, string = edición
+  modalPacId:     null,
+  modalMod:       null,
+  modalEstado:    'Programada',
+  busquedaTimer:  null
+};
+
+/* ═══════════════════════════════════════════
+   HELPERS SUPABASE
+═══════════════════════════════════════════ */
+async function supaGet(path) {
+  const res = await fetch(`${SUPA_URL}/rest/v1/${path}`, {
+    headers: { 'apikey': SUPA_KEY, 'Authorization': `Bearer ${G.sesion.access_token}` }
+  });
+  if (!res.ok) throw new Error(`GET ${path} → ${res.status}`);
+  return res.json();
+}
+async function supaPost(table, body) {
+  const res = await fetch(`${SUPA_URL}/rest/v1/${table}`, {
+    method: 'POST',
+    headers: {
+      'apikey': SUPA_KEY,
+      'Authorization': `Bearer ${G.sesion.access_token}`,
+      'Content-Type': 'application/json',
+      'Prefer': 'return=representation'
+    },
+    body: JSON.stringify(body)
+  });
+  if (!res.ok) { const t = await res.text(); throw new Error(t); }
+  return res.json();
+}
+async function supaPatch(table, id, body) {
+  const res = await fetch(`${SUPA_URL}/rest/v1/${table}?id=eq.${id}`, {
+    method: 'PATCH',
+    headers: {
+      'apikey': SUPA_KEY,
+      'Authorization': `Bearer ${G.sesion.access_token}`,
+      'Content-Type': 'application/json',
+      'Prefer': 'return=representation'
+    },
+    body: JSON.stringify(body)
+  });
+  if (!res.ok) { const t = await res.text(); throw new Error(t); }
+  return res.json();
+}
+async function supaDelete(table, id) {
+  const res = await fetch(`${SUPA_URL}/rest/v1/${table}?id=eq.${id}`, {
+    method: 'DELETE',
+    headers: { 'apikey': SUPA_KEY, 'Authorization': `Bearer ${G.sesion.access_token}` }
+  });
+  if (!res.ok) { const t = await res.text(); throw new Error(t); }
+}
+
+/* ═══════════════════════════════════════════
+   AUTENTICACIÓN
+═══════════════════════════════════════════ */
+function cerrarSesion() {
+  localStorage.removeItem('ipse_sesion');
+  window.location.href = '../index.html';
+}
+
+async function init() {
+  // Verificar sesión
+  try {
+    const raw = localStorage.getItem('ipse_sesion');
+    if (!raw) throw new Error('sin sesión');
+    G.sesion = JSON.parse(raw);
+    if (!G.sesion.access_token || G.sesion.expires_at < Date.now() + 60_000) throw new Error('caducada');
+  } catch {
+    window.location.href = '../index.html';
+    return;
+  }
+
+  // Cargar profesional logado
+  try {
+    const data = await supaGet(`profesionales?auth_user_id=eq.${G.sesion.user_id}&select=id,nombre,apellidos,especialidades,color_agenda,es_admin`);
+    if (!data.length) throw new Error('no encontrado');
+    G.profesional = data[0];
+  } catch {
+    toast('Error cargando perfil', true);
+    return;
+  }
+
+  // Topbar
+  const ini = (G.profesional.nombre?.[0] || '') + (G.profesional.apellidos?.[0] || '');
+  document.getElementById('topbar-nombre').textContent = `${G.profesional.nombre} ${G.profesional.apellidos}`.trim();
+  document.getElementById('topbar-avatar').textContent = ini;
+
+  // Cargar todos los profesionales para el sidebar
+  try {
+    const pros = await supaGet(`profesionales?activa=eq.Si&select=id,nombre,apellidos,color_agenda&order=nombre.asc&limit=50`);
+    G.profesionales = pros;
+    pros.forEach((p, i) => {
+      COLORES_PRO[p.id] = p.color_agenda || PALETA[i % PALETA.length];
+      G.terFiltro.add(p.id);
+    });
+    renderSidebar();
+  } catch { /* sidebar sin filtro */ }
+
+  // Especialidades en el modal
+  const selEsp = document.getElementById('sel-especialidad');
+  const esps = G.profesional.especialidades || [];
+  if (esps.length === 0) {
+    selEsp.innerHTML = '<option value="">Sin especialidad asignada</option>';
+  } else {
+    selEsp.innerHTML = esps.map(e => `<option value="${e}">${ESPECIALIDADES[e] || e}</option>`).join('');
+  }
+
+  // Semana actual
+  G.semanaIni = getLunes(new Date());
+  renderCabecera();
+  await cargarCitas();
+}
+
+/* ═══════════════════════════════════════════
+   SIDEBAR — FILTRO TERAPEUTAS
+═══════════════════════════════════════════ */
+function renderSidebar() {
+  const lista = document.getElementById('ter-lista');
+  lista.innerHTML = G.profesionales.map(p => `
+    <label class="ter-row">
+      <input type="checkbox" data-id="${p.id}" checked onchange="toggleTerapeuta('${p.id}', this.checked)">
+      <div class="ter-dot" style="background:${COLORES_PRO[p.id]}"></div>
+      ${p.nombre} ${p.apellidos || ''}
+    </label>
+  `).join('');
+}
+
+function toggleTerapeuta(id, checked) {
+  if (checked) G.terFiltro.add(id);
+  else         G.terFiltro.delete(id);
+  aplicarFiltro();
+}
+
+function aplicarFiltro() {
+  document.querySelectorAll('.cita[data-pro]').forEach(el => {
+    el.style.display = G.terFiltro.has(el.dataset.pro) ? '' : 'none';
+  });
+}
+
+/* ═══════════════════════════════════════════
+   SEMANA — NAVEGACIÓN Y CABECERA
+═══════════════════════════════════════════ */
+function getLunes(d) {
+  const r = new Date(d);
+  const dia = r.getDay();
+  const diff = (dia === 0) ? -6 : 1 - dia;
+  r.setDate(r.getDate() + diff);
+  r.setHours(0,0,0,0);
+  return r;
+}
+function addDias(d, n) { const r = new Date(d); r.setDate(r.getDate() + n); return r; }
+function fmtFecha(d) {
+  return d.toLocaleDateString('es-ES', { day:'numeric', month:'long', year:'numeric' });
+}
+function fmtISO(d) { return d.toISOString().split('T')[0]; }
+
+function semanaAnterior()  { G.semanaIni = addDias(G.semanaIni, -7); renderCabecera(); cargarCitas(); }
+function semanaSiguiente() { G.semanaIni = addDias(G.semanaIni,  7); renderCabecera(); cargarCitas(); }
+function irAHoy()          { G.semanaIni = getLunes(new Date());     renderCabecera(); cargarCitas(); }
+
+function renderCabecera() {
+  const lun = G.semanaIni;
+  const dom = addDias(lun, 6);
+  const hoy = new Date(); hoy.setHours(0,0,0,0);
+
+  // Label semana
+  const optsCorto = { day:'numeric', month:'short' };
+  document.getElementById('week-label').textContent =
+    `${lun.toLocaleDateString('es-ES', optsCorto)} – ${dom.toLocaleDateString('es-ES', { day:'numeric', month:'short', year:'numeric' })}`;
+
+  // Cabecera grid
+  const dias = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
+  const header = document.getElementById('grid-header');
+  header.innerHTML = `<div class="gh-cell" style="font-size:10px;opacity:.3"></div>` +
+    dias.map((d, i) => {
+      const fecha = addDias(lun, i);
+      const esHoy = fecha.getTime() === hoy.getTime();
+      const esFinde = i >= 5;
+      return `<div class="gh-cell${esHoy?' hoy':''}${esFinde?' finde':''}">
+        <span class="dia-num">${fecha.getDate()}</span>${d}${esHoy?' ●':''}
+      </div>`;
+    }).join('');
+}
+
+/* ═══════════════════════════════════════════
+   CARGA Y RENDER DE CITAS
+═══════════════════════════════════════════ */
+const HORAS_GRID = [];
+for (let h = 8; h <= 20; h++) HORAS_GRID.push(h);
+const TOP_HORA = 8;
+const SLOT_H   = 52; // px por hora
+
+async function cargarCitas() {
+  const desde = fmtISO(G.semanaIni);
+  const hasta = fmtISO(addDias(G.semanaIni, 6));
+  try {
+    const citas = await supaGet(
+      `citas_v2?fecha=gte.${desde}&fecha=lte.${hasta}&select=id,id_paciente,id_profesional,especialidad,fecha,hora,duracion_min,modalidad_pago,precio,estado,notas&order=hora.asc&limit=500`
+    );
+    G.citas = citas;
+
+    // Cargar pacientes de estas citas para mostrar nombres
+    const ids = [...new Set(citas.map(c => c.id_paciente))];
+    let pacMap = {};
+    if (ids.length) {
+      const pacs = await supaGet(`pacientes_v2?id=in.(${ids.join(',')})&select=id,nombre,apellidos,alias&limit=500`);
+      pacs.forEach(p => { pacMap[p.id] = p; });
+    }
+
+    renderGrid(citas, pacMap);
+  } catch (err) {
+    console.error('Error cargando citas:', err);
+    toast('Error al cargar citas', true);
+  }
+}
+
+function renderGrid(citas, pacMap) {
+  const hoy = new Date(); hoy.setHours(0,0,0,0);
+  const body = document.getElementById('grid-body');
+  body.innerHTML = '';
+
+  // Columna de horas
+  const timeCol = document.createElement('div');
+  timeCol.className = 'time-col';
+  HORAS_GRID.forEach(h => {
+    const s = document.createElement('div');
+    s.className = 'time-slot';
+    s.textContent = `${h}:00`;
+    timeCol.appendChild(s);
+  });
+  body.appendChild(timeCol);
+
+  // 7 columnas de días
+  for (let i = 0; i < 7; i++) {
+    const fecha = addDias(G.semanaIni, i);
+    const fechaISO = fmtISO(fecha);
+    const esHoy = fecha.getTime() === hoy.getTime();
+    const esFinde = i >= 5;
+
+    const col = document.createElement('div');
+    col.className = `day-col${esHoy?' hoy-bg':''}${esFinde?' finde-bg':''}`;
+
+    // Slots vacíos (clickables para nueva cita)
+    HORAS_GRID.forEach(h => {
+      const s = document.createElement('div');
+      s.className = 'day-slot';
+      s.onclick = () => abrirModalNueva(fechaISO, `${String(h).padStart(2,'0')}:00`);
+      col.appendChild(s);
+    });
+
+    // Pintar citas de este día
+    const citasDia = citas.filter(c => c.fecha === fechaISO);
+    citasDia.forEach(cita => {
+      const [hh, mm] = cita.hora.split(':').map(Number);
+      const top    = ((hh - TOP_HORA) + mm/60) * SLOT_H;
+      const height = Math.max(SLOT_H - 3, SLOT_H); // siempre 1h visual
+
+      const pac    = pacMap[cita.id_paciente];
+      const nombre = pac ? (pac.alias || `${pac.nombre} ${pac.apellidos || ''}`.trim()) : cita.id_paciente;
+      const color  = COLORES_PRO[cita.id_profesional] || '#10069F';
+      const espLabel = ESPECIALIDADES[cita.especialidad] || cita.especialidad || '';
+
+      const el = document.createElement('div');
+      el.className = `cita estado-${cita.estado?.replace(' ','') || 'Programada'}`;
+      el.dataset.pro = cita.id_profesional;
+      el.style.cssText = `top:${top}px;height:${SLOT_H - 3}px;background:${color}`;
+      el.innerHTML = `
+        <div class="cita-nombre">${nombre}</div>
+        <div class="cita-info">${espLabel} · ${cita.modalidad_pago || ''}${cita.estado && cita.estado!=='Programada'?' · '+cita.estado:''}</div>
+      `;
+      el.onclick = (e) => { e.stopPropagation(); abrirModalEditar(cita, pac); };
+      if (!G.terFiltro.has(cita.id_profesional)) el.style.display = 'none';
+      col.appendChild(el);
+    });
+
+    body.appendChild(col);
+  }
+}
+
+/* ═══════════════════════════════════════════
+   MODAL — ABRIR / CERRAR
+═══════════════════════════════════════════ */
+function abrirModalNueva(fecha, hora) {
+  resetModal();
+  G.modalCitaId = null;
+  document.getElementById('modal-title').innerHTML = `
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+    Nueva cita`;
+  document.getElementById('btn-eliminar').style.display = 'none';
+  document.getElementById('sec-repetir').style.display = '';
+
+  // Fecha y hora
+  const f = fecha || fmtISO(new Date());
+  document.getElementById('inp-fecha').value = f;
+  document.getElementById('inp-hora').value  = hora || '09:00';
+  document.getElementById('modal-fecha-chip').textContent = new Date(f + 'T12:00:00').toLocaleDateString('es-ES', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+
+  abrirOverlay();
+}
+
+function abrirModalEditar(cita, pac) {
+  resetModal();
+  G.modalCitaId = cita.id;
+
+  document.getElementById('modal-title').innerHTML = `
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+    Editar cita`;
+  document.getElementById('btn-eliminar').style.display = '';
+  document.getElementById('sec-repetir').style.display = 'none';
+
+  // Paciente
+  if (pac) {
+    G.modalPacId = pac.id;
+    mostrarPacienteSeleccionado(pac);
+  }
+
+  // Fecha / hora
+  document.getElementById('inp-fecha').value = cita.fecha;
+  document.getElementById('inp-hora').value  = cita.hora?.substring(0,5) || '09:00';
+  document.getElementById('modal-fecha-chip').textContent = new Date(cita.fecha + 'T12:00:00').toLocaleDateString('es-ES', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+
+  // Especialidad
+  const sel = document.getElementById('sel-especialidad');
+  if (cita.especialidad) sel.value = cita.especialidad;
+
+  // Duración
+  document.getElementById('sel-duracion').value = cita.duracion_min || '60';
+
+  // Modalidad
+  if (cita.modalidad_pago) {
+    const pill = document.querySelector(`.pill[data-mod="${cita.modalidad_pago}"]`);
+    if (pill) {
+      const precio = PRECIOS_MOD[cita.modalidad_pago] || null;
+      selPill(pill, cita.modalidad_pago, precio, true);
+    }
+    if (cita.precio) document.getElementById('precio-num').textContent = cita.precio;
+  }
+
+  // Estado
+  if (cita.estado && cita.estado !== 'Programada') {
+    const btn = [...document.querySelectorAll('.est-btn')].find(b => b.textContent.trim() === cita.estado);
+    if (btn) selEstado(btn, cita.estado);
+  }
+
+  // Forma cobro
+  if (cita.forma_cobro) {
+    const radio = document.querySelector(`input[name="forma-cobro"][value="${cita.forma_cobro}"]`);
+    if (radio) radio.checked = true;
+  }
+
+  // Notas
+  document.getElementById('inp-notas').value = cita.notas || '';
+
+  // Bono/beca del paciente
+  if (pac) cargarBonoBeca(pac.id);
+
+  abrirOverlay();
+}
+
+function abrirOverlay() {
+  document.getElementById('overlay').classList.add('visible');
+  document.body.style.overflow = 'hidden';
+}
+
+function cerrarModal() {
+  document.getElementById('overlay').classList.remove('visible');
+  document.body.style.overflow = '';
+}
+
+function clickOverlay(e) {
+  if (e.target === document.getElementById('overlay')) cerrarModal();
+}
+
+function resetModal() {
+  G.modalPacId  = null;
+  G.modalMod    = null;
+  G.modalEstado = 'Programada';
+
+  document.getElementById('pac-input').value = '';
+  document.getElementById('pac-dropdown').classList.remove('visible');
+  document.getElementById('pac-seleccionado').classList.remove('visible');
+  document.getElementById('sec-bono-beca').style.display = 'none';
+  document.getElementById('bono-beca-info').innerHTML = '';
+
+  document.querySelectorAll('.pill').forEach(p => p.classList.remove('sel','sel-beca','sel-otros'));
+  document.getElementById('precio-box').style.display = '';
+  document.getElementById('precio-num').textContent = '–';
+  document.getElementById('otros-select').style.display = 'none';
+
+  document.querySelectorAll('.est-btn').forEach(b => b.classList.remove('sel-Hecha','sel-Noshow','sel-Reprogramada','sel-Cancelada'));
+  document.getElementById('pago-section').classList.add('locked');
+  document.getElementById('pago-hint').style.display = '';
+  document.getElementById('noshow-hint').style.display = 'none';
+  document.querySelectorAll('input[name="forma-cobro"]').forEach(r => r.checked = false);
+
+  document.getElementById('chk-recur').checked = false;
+  document.getElementById('recur-box').classList.remove('open');
+  document.getElementById('inp-notas').value = '';
+
+  const btn = document.getElementById('btn-guardar');
+  btn.disabled = false;
+  btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Guardar cita`;
+}
+
+/* ═══════════════════════════════════════════
+   BÚSQUEDA DE PACIENTE
+═══════════════════════════════════════════ */
+function buscarPaciente(val) {
+  clearTimeout(G.busquedaTimer);
+  const dropdown = document.getElementById('pac-dropdown');
+  if (val.length < 2) { dropdown.classList.remove('visible'); return; }
+  G.busquedaTimer = setTimeout(async () => {
+    try {
+      const q = encodeURIComponent(val);
+      const res = await supaGet(`pacientes_v2?or=(nombre.ilike.*${q}*,apellidos.ilike.*${q}*)&activo=eq.Si&select=id,nombre,apellidos,alias,fecha_nacimiento&limit=20`);
+      if (!res.length) {
+        dropdown.innerHTML = `<div class="pac-option"><div class="pac-option-nombre" style="color:var(--muted)">Sin resultados</div></div>`;
+      } else {
+        dropdown.innerHTML = res.map(p => {
+          const edad = p.fecha_nacimiento ? calcularEdad(p.fecha_nacimiento) + ' años' : '';
+          const nombre = `${p.nombre} ${p.apellidos || ''}`.trim();
+          return `<div class="pac-option" onclick="seleccionarPaciente(${JSON.stringify(p).replace(/"/g,'&quot;')})">
+            <div class="pac-option-nombre">${nombre}</div>
+            <div class="pac-option-meta">${p.id}${edad?' · '+edad:''}</div>
+          </div>`;
+        }).join('');
+      }
+      dropdown.classList.add('visible');
+    } catch { dropdown.classList.remove('visible'); }
+  }, 300);
+}
+
+function calcularEdad(fechaNac) {
+  const hoy = new Date();
+  const nac = new Date(fechaNac);
+  let edad = hoy.getFullYear() - nac.getFullYear();
+  const m = hoy.getMonth() - nac.getMonth();
+  if (m < 0 || (m === 0 && hoy.getDate() < nac.getDate())) edad--;
+  return edad;
+}
+
+function seleccionarPaciente(pac) {
+  G.modalPacId = pac.id;
+  document.getElementById('pac-input').value = '';
+  document.getElementById('pac-dropdown').classList.remove('visible');
+  mostrarPacienteSeleccionado(pac);
+  cargarBonoBeca(pac.id);
+}
+
+function mostrarPacienteSeleccionado(pac) {
+  const nombre = pac.alias || `${pac.nombre} ${pac.apellidos || ''}`.trim();
+  const edad   = pac.fecha_nacimiento ? calcularEdad(pac.fecha_nacimiento) + ' años' : '';
+  document.getElementById('pac-sel-nombre').textContent = nombre;
+  document.getElementById('pac-sel-meta').textContent   = `${pac.id}${edad?' · '+edad:''}`;
+  document.getElementById('pac-seleccionado').classList.add('visible');
+}
+
+function limpiarPaciente() {
+  G.modalPacId = null;
+  document.getElementById('pac-seleccionado').classList.remove('visible');
+  document.getElementById('sec-bono-beca').style.display = 'none';
+  document.getElementById('bono-beca-info').innerHTML = '';
+  document.getElementById('pac-input').value = '';
+  document.getElementById('pac-input').focus();
+}
+
+/* ═══════════════════════════════════════════
+   BONO / BECA ACTIVO DEL PACIENTE
+═══════════════════════════════════════════ */
+async function cargarBonoBeca(idPaciente) {
+  try {
+    const bb = await supaGet(`bonos_becas?id_paciente=eq.${idPaciente}&activo=eq.Si&select=id,tipo,especialidad,sesiones_total,sesiones_consumidas,fecha_vencimiento&limit=10`);
+    G.bonosBecas = bb;
+    const sec   = document.getElementById('sec-bono-beca');
+    const info  = document.getElementById('bono-beca-info');
+
+    if (!bb.length) {
+      sec.style.display = '';
+      info.innerHTML = `<div class="alert alert-neutral">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        Sin bono ni beca activa
+      </div>`;
+      return;
+    }
+
+    sec.style.display = '';
+    info.innerHTML = bb.map(b => {
+      const restantes = b.sesiones_total - b.sesiones_consumidas;
+      const cls       = b.tipo === 'BECA' ? 'alert-green' : 'alert-blue';
+      const vence     = b.fecha_vencimiento ? ` · vence ${new Date(b.fecha_vencimiento).toLocaleDateString('es-ES',{day:'numeric',month:'short',year:'numeric'})}` : '';
+      return `<div class="alert ${cls}" style="margin-bottom:6px">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+        <span><strong>${b.tipo}</strong> · ${ESPECIALIDADES[b.especialidad]||b.especialidad} · Quedan <strong>${restantes} de ${b.sesiones_total}</strong> sesiones${vence}</span>
+      </div>`;
+    }).join('');
+  } catch { /* silencioso */ }
+}
+
+/* ═══════════════════════════════════════════
+   MODALIDAD PAGO / PRECIO
+═══════════════════════════════════════════ */
+function selPill(el, mod, precio, skipFocus) {
+  document.querySelectorAll('.pill').forEach(p => p.classList.remove('sel','sel-beca','sel-otros'));
+  G.modalMod = mod;
+
+  if      (mod === 'BECA')  el.classList.add('sel-beca');
+  else if (mod === 'OTROS') el.classList.add('sel-otros');
+  else                      el.classList.add('sel');
+
+  const box    = document.getElementById('precio-box');
+  const num    = document.getElementById('precio-num');
+  const otros  = document.getElementById('otros-select');
+
+  if (mod === 'OTROS') {
+    box.style.display   = 'none';
+    otros.style.display = '';
+    if (!skipFocus) otros.focus();
+  } else {
+    box.style.display   = '';
+    otros.style.display = 'none';
+    num.textContent     = precio ?? '–';
+  }
+
+  // Marcar no-show hint si hay bono/beca
+  if (G.bonosBecas?.length) {
+    document.getElementById('noshow-hint').style.display =
+      G.modalEstado === 'No show' ? 'flex' : 'none';
+  }
+}
+
+/* ═══════════════════════════════════════════
+   ESTADO
+═══════════════════════════════════════════ */
+function selEstado(btn, tipo) {
+  document.querySelectorAll('.est-btn').forEach(b => b.classList.remove('sel-Hecha','sel-Noshow','sel-Reprogramada','sel-Cancelada'));
+
+  if (G.modalEstado === tipo) {
+    G.modalEstado = 'Programada';
+    document.getElementById('pago-section').classList.add('locked');
+    document.getElementById('pago-hint').style.display = '';
+    document.getElementById('noshow-hint').style.display = 'none';
+    return;
+  }
+
+  G.modalEstado = tipo;
+  btn.classList.add('sel-' + tipo.replace(' ',''));
+
+  const locked = tipo !== 'Hecha';
+  document.getElementById('pago-section').classList.toggle('locked', locked);
+  document.getElementById('pago-hint').style.display = locked ? '' : 'none';
+  document.getElementById('noshow-hint').style.display =
+    (tipo === 'No show' && G.bonosBecas?.length) ? 'flex' : 'none';
+}
+
+/* ═══════════════════════════════════════════
+   REPETIR CITA
+═══════════════════════════════════════════ */
+function toggleRecur(cb) {
+  document.getElementById('recur-box').classList.toggle('open', cb.checked);
+  if (cb.checked) calcRecur();
+}
+function actualizarRecur() {
+  if (document.getElementById('chk-recur').checked) calcRecur();
+}
+function calcRecur() {
+  const dias  = parseInt(document.getElementById('recur-frec').value);
+  const n     = parseInt(document.getElementById('recur-dur').value);
+  const hora  = document.getElementById('inp-hora').value || '09:00';
+  const fecha = document.getElementById('inp-fecha').value;
+  const frecLabel = dias === 7 ? 'semanal' : 'quincenal';
+
+  if (!fecha) { document.getElementById('recur-info').innerHTML = ''; return; }
+
+  const fechaFin = new Date(fecha + 'T12:00:00');
+  fechaFin.setDate(fechaFin.getDate() + (n - 1) * dias);
+
+  document.getElementById('recur-info').innerHTML =
+    `Se crearán <strong>${n} citas</strong> a las ${hora} (${frecLabel}) hasta el <strong>${fmtFecha(fechaFin)}</strong>`;
+}
+
+/* ═══════════════════════════════════════════
+   GUARDAR CITA
+═══════════════════════════════════════════ */
+async function guardarCita() {
+  // Validaciones básicas
+  if (!G.modalPacId) { toast('Selecciona un paciente', true); return; }
+  if (!G.modalMod)   { toast('Selecciona una modalidad de pago', true); return; }
+
+  const fecha = document.getElementById('inp-fecha').value;
+  const hora  = document.getElementById('inp-hora').value;
+  if (!fecha) { toast('Indica la fecha', true); return; }
+  if (!hora)  { toast('Indica la hora', true); return; }
+
+  // Precio
+  let precio;
+  if (G.modalMod === 'OTROS') {
+    precio = parseFloat(document.getElementById('otros-select').value);
+  } else {
+    const txt = document.getElementById('precio-num').textContent;
+    precio = parseFloat(txt);
+    if (isNaN(precio)) { toast('El precio no es válido', true); return; }
+  }
+
+  // Forma cobro
+  const formaCobro = document.querySelector('input[name="forma-cobro"]:checked')?.value || null;
+
+  // Bono/beca asociado (el primero activo que coincide con especialidad, si existe)
+  const especialidad = document.getElementById('sel-especialidad').value;
+  let idBonoBeca = null;
+  if (['BECA','BONO'].includes(G.modalMod) && G.bonosBecas?.length) {
+    const match = G.bonosBecas.find(b => b.tipo === G.modalMod && b.especialidad === especialidad);
+    if (match) idBonoBeca = match.id;
+  }
+
+  const payload = {
+    id_paciente:    G.modalPacId,
+    id_profesional: G.profesional.id,
+    especialidad:   especialidad,
+    fecha:          fecha,
+    hora:           hora,
+    duracion_min:   parseInt(document.getElementById('sel-duracion').value),
+    modalidad_pago: G.modalMod,
+    id_bono_beca:   idBonoBeca,
+    precio:         precio,
+    estado:         G.modalEstado,
+    forma_cobro:    formaCobro,
+    cobrado:        formaCobro && formaCobro !== 'No pagado' ? 'Si' : 'No',
+    notas:          document.getElementById('inp-notas').value.trim() || null
+  };
+
+  // Botón — estado cargando
+  const btn = document.getElementById('btn-guardar');
+  btn.disabled = true;
+  btn.innerHTML = `<div class="btn-spinner"></div> Guardando…`;
+
+  try {
+    if (G.modalCitaId) {
+      // EDITAR
+      await supaPatch('citas_v2', G.modalCitaId, payload);
+      toast('Cita actualizada', false, true);
+    } else {
+      // CREAR — generar ID
+      const count = await supaGet('citas_v2?select=id&order=id.desc&limit=1');
+      const ultimo = count[0]?.id || 'CIT-000';
+      const num    = parseInt(ultimo.split('-')[1] || '0') + 1;
+      payload.id   = `CIT-${String(num).padStart(3,'0')}`;
+
+      // Repetición de citas
+      const repet = document.getElementById('chk-recur').checked;
+      if (repet) {
+        const dias = parseInt(document.getElementById('recur-frec').value);
+        const n    = parseInt(document.getElementById('recur-dur').value);
+        const lote = [];
+        for (let i = 0; i < n; i++) {
+          const f = new Date(fecha + 'T12:00:00');
+          f.setDate(f.getDate() + i * dias);
+          // Saltar agosto
+          if (f.getMonth() === 7) continue;
+          const citaRep = { ...payload };
+          citaRep.id    = `CIT-${String(num + i).padStart(3,'0')}`;
+          citaRep.fecha = fmtISO(f);
+          lote.push(citaRep);
+        }
+        await supaPost('citas_v2', lote);
+        toast(`${lote.length} citas creadas`, false, true);
+      } else {
+        await supaPost('citas_v2', payload);
+        toast('Cita guardada', false, true);
+      }
+
+      // Si estado Hecha y forma cobro → crear registro en cobros_v2
+      if (G.modalEstado === 'Hecha' && formaCobro && formaCobro !== 'No pagado') {
+        const cobCount = await supaGet('cobros_v2?select=id&order=id.desc&limit=1');
+        const cobUlt   = cobCount[0]?.id || 'COB-000';
+        const cobNum   = parseInt(cobUlt.split('-')[1] || '0') + 1;
+        await supaPost('cobros_v2', {
+          id:          `COB-${String(cobNum).padStart(3,'0')}`,
+          id_cita:     payload.id,
+          id_paciente: G.modalPacId,
+          id_bono_beca: idBonoBeca,
+          fecha:       fecha,
+          importe:     precio,
+          metodo:      formaCobro,
+          concepto:    `Sesión ${especialidad} — ${fecha}`,
+          conciliado:  'No'
+        });
+      }
+    }
+
+    cerrarModal();
+    await cargarCitas();
+  } catch (err) {
+    console.error('Error guardando:', err);
+    toast('Error al guardar la cita', true);
+    btn.disabled = false;
+    btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Guardar cita`;
+  }
+}
+
+/* ═══════════════════════════════════════════
+   ELIMINAR CITA
+═══════════════════════════════════════════ */
+async function eliminarCita() {
+  if (!G.modalCitaId) return;
+  if (!confirm('¿Eliminar esta cita? Esta acción no se puede deshacer.')) return;
+  try {
+    await supaDelete('citas_v2', G.modalCitaId);
+    cerrarModal();
+    await cargarCitas();
+    toast('Cita eliminada', false, true);
+  } catch (err) {
+    console.error('Error eliminando:', err);
+    toast('Error al eliminar', true);
+  }
+}
+
+/* ═══════════════════════════════════════════
+   TOAST
+═══════════════════════════════════════════ */
+let toastTimer;
+function toast(msg, esError, esExito) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className   = 'show' + (esError ? ' error' : esExito ? ' success' : '');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.className = '', 3000);
+}
+
+/* ═══════════════════════════════════════════
+   ARRANQUE
+═══════════════════════════════════════════ */
+init();
+</script>
+</body>
+</html>
