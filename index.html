@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IPSE · Acceso</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --azul:   #10069F;
+  --cyan:   #00B5E2;
+  --rojo:   #DA291C;
+  --verde:  #97D700;
+  --amber:  #F59E0B;
+  --bg:     #F4F5F9;
+  --surface:#FFFFFF;
+  --border: #E2E4EE;
+  --text:   #1A1B2E;
+  --muted:  #6B7280;
+  --shadow: 0 2px 8px rgba(16,6,159,.08);
+  --radius: 12px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 14px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ── Fondo decorativo ── */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 70% 50% at 20% 10%, rgba(16,6,159,.08) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 60% at 80% 90%, rgba(0,181,226,.07) 0%, transparent 60%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ── Card central ── */
+.login-card {
+  position: relative;
+  z-index: 1;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  box-shadow:
+    0 4px 24px rgba(16,6,159,.10),
+    0 1px 4px rgba(0,0,0,.04);
+  width: 100%;
+  max-width: 420px;
+  padding: 44px 40px 36px;
+  margin: 24px;
+}
+
+/* ── Logo ── */
+.logo-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 32px;
+  gap: 10px;
+}
+.logo-mark {
+  width: 52px;
+  height: 52px;
+  background: var(--azul);
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 16px rgba(16,6,159,.3);
+}
+.logo-mark svg {
+  width: 28px;
+  height: 28px;
+  stroke: #fff;
+}
+.logo-text {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--azul);
+  letter-spacing: -.5px;
+}
+.logo-text span {
+  color: var(--cyan);
+}
+.logo-sub {
+  font-size: 12px;
+  color: var(--muted);
+  font-weight: 500;
+  letter-spacing: .01em;
+}
+
+/* ── Formulario ── */
+.form-group {
+  margin-bottom: 16px;
+}
+.form-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  margin-bottom: 6px;
+}
+.input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+/* Icono decorativo izquierdo */
+.input-wrap .ico-left {
+  position: absolute;
+  left: 13px;
+  width: 16px;
+  height: 16px;
+  stroke: var(--muted);
+  pointer-events: none;
+  transition: stroke .15s;
+  flex-shrink: 0;
+}
+.input-wrap:focus-within .ico-left {
+  stroke: var(--azul);
+}
+.form-control {
+  width: 100%;
+  border: 1.5px solid var(--border);
+  border-radius: 9px;
+  padding: 11px 14px 11px 40px;
+  font-family: inherit;
+  font-size: 14px;
+  color: var(--text);
+  background: var(--bg);
+  outline: none;
+  transition: border-color .15s, background .15s, box-shadow .15s;
+  appearance: none;
+}
+.form-control:focus {
+  border-color: var(--azul);
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(16,6,159,.09);
+}
+/* Input contraseña: reservar espacio a la derecha para el ojo */
+#password { padding-right: 44px; }
+
+/* Toggle contraseña — posicionado dentro del wrap */
+.toggle-pwd {
+  position: absolute;
+  right: 10px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 5px;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  transition: color .15s;
+  line-height: 0;
+}
+.toggle-pwd:hover { color: var(--azul); }
+.toggle-pwd svg { width: 16px; height: 16px; display: block; }
+
+/* ── Error ── */
+.error-msg {
+  display: none;
+  background: #FEF2F2;
+  border: 1px solid #FECACA;
+  border-radius: 8px;
+  padding: 10px 13px;
+  font-size: 13px;
+  color: var(--rojo);
+  margin-bottom: 16px;
+  align-items: center;
+  gap: 8px;
+}
+.error-msg.visible { display: flex; }
+.error-msg svg { width: 15px; height: 15px; flex-shrink: 0; }
+
+/* ── Botón ── */
+.btn-login {
+  width: 100%;
+  background: var(--azul);
+  color: #fff;
+  border: none;
+  border-radius: 9px;
+  padding: 13px 20px;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .15s, transform .1s, box-shadow .15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 2px 12px rgba(16,6,159,.25);
+  margin-top: 4px;
+}
+.btn-login:hover {
+  background: #0b0580;
+  box-shadow: 0 4px 18px rgba(16,6,159,.35);
+}
+.btn-login:active { transform: scale(.99); }
+.btn-login:disabled {
+  background: var(--muted);
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+}
+.btn-login svg { width: 17px; height: 17px; }
+
+/* ── Spinner ── */
+.spinner {
+  width: 17px; height: 17px;
+  border: 2.5px solid rgba(255,255,255,.35);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin .65s linear infinite;
+  flex-shrink: 0;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Footer ── */
+.login-footer {
+  text-align: center;
+  margin-top: 24px;
+  font-size: 11px;
+  color: var(--muted);
+  font-family: 'DM Mono', monospace;
+}
+
+/* ── Responsive ── */
+@media (max-width: 480px) {
+  .login-card { padding: 36px 24px 28px; }
+}
+</style>
+</head>
+<body>
+
+<div class="login-card">
+
+  <!-- Logo -->
+  <div class="logo-wrap">
+    <div class="logo-mark">
+      <!-- Icono: cerebro simplificado / mente -->
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96-.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 1.44-3.16A2.5 2.5 0 0 1 9.5 2z"/>
+        <path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96-.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-1.44-3.16A2.5 2.5 0 0 0 14.5 2z"/>
+      </svg>
+    </div>
+    <div>
+      <div class="logo-text">IPSE <span>·</span> Acceso</div>
+      <div class="logo-sub">Instituto Psicoeducativo</div>
+    </div>
+  </div>
+
+  <!-- Error -->
+  <div class="error-msg" id="error-msg">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <circle cx="12" cy="12" r="10"/>
+      <line x1="12" y1="8" x2="12" y2="12"/>
+      <line x1="12" y1="16" x2="12.01" y2="16"/>
+    </svg>
+    <span id="error-txt">Email o contraseña incorrectos.</span>
+  </div>
+
+  <!-- Formulario -->
+  <form id="login-form" onsubmit="handleLogin(event)" novalidate>
+
+    <div class="form-group">
+      <label class="form-label" for="email">Email</label>
+      <div class="input-wrap">
+        <input
+          type="email"
+          id="email"
+          class="form-control"
+          placeholder="tu@email.com"
+          autocomplete="email"
+          required
+          inputmode="email"
+        >
+        <svg class="ico-left" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+          <polyline points="22,6 12,13 2,6"/>
+        </svg>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" for="password">Contraseña</label>
+      <div class="input-wrap">
+        <input
+          type="password"
+          id="password"
+          class="form-control"
+          placeholder="••••••••"
+          autocomplete="current-password"
+          required
+        >
+        <svg class="ico-left" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+          <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+        </svg>
+        <button type="button" class="toggle-pwd" id="toggle-pwd" onclick="togglePwd()" aria-label="Mostrar / ocultar contraseña">
+          <svg id="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+            <circle cx="12" cy="12" r="3"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <button type="submit" class="btn-login" id="btn-login">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+        <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
+        <polyline points="10 17 15 12 10 7"/>
+        <line x1="15" y1="12" x2="3" y2="12"/>
+      </svg>
+      Entrar
+    </button>
+
+  </form>
+
+  <div class="login-footer">
+    IPSE · Sistema de gestión v2
+  </div>
+
+</div>
+
+<script>
+/* ─────────────────────────────────────────
+   Configuración Supabase
+───────────────────────────────────────── */
+const SUPA_URL = 'https://vlplebjqhufbzfncrawf.supabase.co';
+const SUPA_KEY = 'sb_publishable_Qt604gEH_lfx89HkPElvcA_OGwbKeDO';
+
+/* ─────────────────────────────────────────
+   Toggle contraseña visible / oculta
+───────────────────────────────────────── */
+let pwdVisible = false;
+function togglePwd() {
+  pwdVisible = !pwdVisible;
+  const inp  = document.getElementById('password');
+  const icon = document.getElementById('eye-icon');
+  inp.type = pwdVisible ? 'text' : 'password';
+  icon.innerHTML = pwdVisible
+    ? /* ojo cerrado */
+      `<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
+       <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
+       <line x1="1" y1="1" x2="23" y2="23"/>`
+    : /* ojo abierto */
+      `<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+       <circle cx="12" cy="12" r="3"/>`;
+}
+
+/* ─────────────────────────────────────────
+   Mostrar / ocultar error
+───────────────────────────────────────── */
+function mostrarError(msg) {
+  const el = document.getElementById('error-msg');
+  document.getElementById('error-txt').textContent = msg;
+  el.classList.add('visible');
+}
+function ocultarError() {
+  document.getElementById('error-msg').classList.remove('visible');
+}
+
+/* ─────────────────────────────────────────
+   Estado botón: cargando / normal
+───────────────────────────────────────── */
+function setBtnCargando(cargando) {
+  const btn = document.getElementById('btn-login');
+  if (cargando) {
+    btn.disabled = true;
+    btn.innerHTML = `<div class="spinner"></div> Entrando…`;
+  } else {
+    btn.disabled = false;
+    btn.innerHTML = `
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+        <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
+        <polyline points="10 17 15 12 10 7"/>
+        <line x1="15" y1="12" x2="3" y2="12"/>
+      </svg>
+      Entrar`;
+  }
+}
+
+/* ─────────────────────────────────────────
+   Login principal
+───────────────────────────────────────── */
+async function handleLogin(e) {
+  e.preventDefault();
+  ocultarError();
+
+  const email    = document.getElementById('email').value.trim();
+  const password = document.getElementById('password').value;
+
+  // Validación básica
+  if (!email || !password) {
+    mostrarError('Por favor, introduce email y contraseña.');
+    return;
+  }
+
+  setBtnCargando(true);
+
+  try {
+    /* 1. Autenticar contra Supabase Auth */
+    const res = await fetch(`${SUPA_URL}/auth/v1/token?grant_type=password`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPA_KEY
+      },
+      body: JSON.stringify({ email, password })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      // Supabase devuelve error_description en inglés — traducimos los más comunes
+      const msg = traducirError(data.error_description || data.msg || 'Error desconocido.');
+      mostrarError(msg);
+      setBtnCargando(false);
+      return;
+    }
+
+    /* 2. Guardar sesión en localStorage */
+    const sesion = {
+      access_token:  data.access_token,
+      refresh_token: data.refresh_token,
+      expires_at:    Date.now() + data.expires_in * 1000,
+      user_id:       data.user.id,
+      email:         data.user.email
+    };
+    localStorage.setItem('ipse_sesion', JSON.stringify(sesion));
+
+    /* 3. Ir a hub.html */
+    window.location.href = 'hub.html';
+
+  } catch (err) {
+    console.error('Error de red:', err);
+    mostrarError('Error de conexión. Comprueba tu internet e inténtalo de nuevo.');
+    setBtnCargando(false);
+  }
+}
+
+/* ─────────────────────────────────────────
+   Traducciones de errores Supabase → ES
+───────────────────────────────────────── */
+function traducirError(msg) {
+  const m = msg.toLowerCase();
+  if (m.includes('invalid login') || m.includes('invalid credentials'))
+    return 'Email o contraseña incorrectos.';
+  if (m.includes('email not confirmed'))
+    return 'Cuenta no confirmada. Contacta con Abraham.';
+  if (m.includes('too many requests'))
+    return 'Demasiados intentos. Espera unos minutos e inténtalo de nuevo.';
+  if (m.includes('user not found'))
+    return 'No existe una cuenta con ese email.';
+  return 'Error al iniciar sesión. Inténtalo de nuevo.';
+}
+
+/* ─────────────────────────────────────────
+   Al cargar: si ya hay sesión válida, ir a hub
+───────────────────────────────────────── */
+(function comprobarSesion() {
+  try {
+    const raw = localStorage.getItem('ipse_sesion');
+    if (!raw) return;
+    const sesion = JSON.parse(raw);
+    // Margen de 60 segundos para no redirigir con token a punto de caducar
+    if (sesion.access_token && sesion.expires_at > Date.now() + 60_000) {
+      window.location.href = 'hub.html';
+    }
+  } catch { /* sesión corrupta — la ignoramos */ }
+})();
+
+/* ─────────────────────────────────────────
+   Enter en cualquier campo envía el form
+   (ya cubierto por type="submit", pero por si acaso)
+───────────────────────────────────────── */
+document.getElementById('email').addEventListener('keydown', e => {
+  if (e.key === 'Enter') document.getElementById('password').focus();
+});
+</script>
+
+</body>
+</html>
