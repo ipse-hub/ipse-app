@@ -161,6 +161,13 @@ select.fc{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.o
 .alert-neutral{background:var(--bg);border:1px solid var(--border);color:var(--muted);align-items:center}
 
 /* alta rápida */
+/* Panel nuevo paciente */
+.nuevo-pac-panel{background:#EEF0FF;border:1.5px solid var(--azul);border-radius:10px;padding:14px;margin-top:10px}
+.nuevo-pac-titulo{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--azul);margin-bottom:10px}
+.np-id-preview{margin-top:10px;font-size:12px;color:var(--muted);background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:8px 12px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.np-id-preview strong{font-size:14px;color:var(--azul);font-family:'DM Mono',monospace;letter-spacing:.04em}
+.np-id-aviso{color:var(--rojo);font-size:11px;font-weight:600}
+.np-footer{display:flex;justify-content:flex-end;gap:8px;margin-top:12px}
 .altas-rapidas{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
 .btn-alta{display:inline-flex;align-items:center;gap:5px;padding:5px 11px;border-radius:7px;border:1.5px solid;background:var(--surface);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .18s;white-space:nowrap}
 .btn-alta svg{width:12px;height:12px;flex-shrink:0}
@@ -340,7 +347,7 @@ select.fc{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.o
           </div>
         </div>
         <div class="altas-rapidas">
-          <button class="btn-alta pac" onclick="toast('Alta de paciente — próximamente')">
+          <button class="btn-alta pac" id="btn-nuevo-pac" onclick="toggleNuevoPaciente()">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
             + Nuevo paciente
           </button>
@@ -352,6 +359,38 @@ select.fc{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.o
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
             + Nueva beca
           </button>
+        </div>
+
+        <!-- ── PANEL NUEVO PACIENTE ── -->
+        <div class="nuevo-pac-panel" id="nuevo-pac-panel" style="display:none">
+          <div class="nuevo-pac-titulo">Alta de paciente</div>
+          <div class="form-row">
+            <div class="fg">
+              <label class="fl">Nombre *</label>
+              <input type="text" class="fc" id="np-nombre" placeholder="Nombre" oninput="actualizarIdPreview()" autocomplete="off">
+            </div>
+            <div class="fg">
+              <label class="fl">Apellidos *</label>
+              <input type="text" class="fc" id="np-apellidos" placeholder="Apellidos" oninput="actualizarIdPreview()" autocomplete="off">
+            </div>
+          </div>
+          <div class="fg" style="margin-top:8px">
+            <label class="fl">N.º expediente físico * <span style="font-weight:400;color:var(--muted)">(4 dígitos)</span></label>
+            <input type="text" class="fc" id="np-expediente" placeholder="0467" maxlength="4"
+              inputmode="numeric" pattern="[0-9]*"
+              oninput="this.value=this.value.replace(/\D/g,'');actualizarIdPreview()" autocomplete="off">
+          </div>
+          <div class="np-id-preview" id="np-id-preview" style="display:none">
+            ID que se asignará: <strong id="np-id-val"></strong>
+            <span class="np-id-aviso" id="np-id-aviso" style="display:none">⚠️ Este ID ya existe</span>
+          </div>
+          <div class="np-footer">
+            <button class="btn btn-secondary" style="font-size:12px;padding:7px 14px" onclick="cerrarNuevoPaciente()">Cancelar</button>
+            <button class="btn btn-primary" style="font-size:12px;padding:7px 14px" id="btn-crear-pac" onclick="crearNuevoPaciente()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              Crear paciente
+            </button>
+          </div>
         </div>
       </div>
 
@@ -931,6 +970,7 @@ function resetModal() {
   document.getElementById('pac-seleccionado').classList.remove('visible');
   document.getElementById('sec-bono-beca').style.display = 'none';
   document.getElementById('bono-beca-info').innerHTML = '';
+  cerrarNuevoPaciente();
 
   document.querySelectorAll('.pill').forEach(p => p.classList.remove('sel','sel-beca','sel-otros'));
   document.getElementById('precio-box').style.display = '';
@@ -950,6 +990,122 @@ function resetModal() {
   const btn = document.getElementById('btn-guardar');
   btn.disabled = false;
   btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Guardar cita`;
+}
+
+/* ═══════════════════════════════════════════
+   NUEVO PACIENTE — PANEL INLINE
+═══════════════════════════════════════════ */
+function toggleNuevoPaciente() {
+  const panel = document.getElementById('nuevo-pac-panel');
+  const abierto = panel.style.display !== 'none';
+  if (abierto) {
+    cerrarNuevoPaciente();
+  } else {
+    panel.style.display = '';
+    document.getElementById('np-nombre').focus();
+  }
+}
+
+function cerrarNuevoPaciente() {
+  document.getElementById('nuevo-pac-panel').style.display = 'none';
+  document.getElementById('np-nombre').value     = '';
+  document.getElementById('np-apellidos').value  = '';
+  document.getElementById('np-expediente').value = '';
+  document.getElementById('np-id-preview').style.display = 'none';
+  document.getElementById('np-id-aviso').style.display   = 'none';
+}
+
+function generarIniciales(nombre, apellidos) {
+  // 1ª letra del nombre + 1ª del 1er apellido + 1ª del 2º apellido
+  const partes = [];
+  const n = nombre.trim();
+  if (n) partes.push(n[0]);
+  const aps = apellidos.trim().split(/\s+/);
+  if (aps[0]) partes.push(aps[0][0]);
+  if (aps[1]) partes.push(aps[1][0]);
+  return partes.join('').toUpperCase().replace(/[^A-ZÁÉÍÓÚÜÑ]/gi, '');
+}
+
+let npCheckTimer = null;
+function actualizarIdPreview() {
+  const nombre     = document.getElementById('np-nombre').value;
+  const apellidos  = document.getElementById('np-apellidos').value;
+  const expediente = document.getElementById('np-expediente').value;
+
+  const preview  = document.getElementById('np-id-preview');
+  const valEl    = document.getElementById('np-id-val');
+  const avisoEl  = document.getElementById('np-id-aviso');
+
+  if (!nombre || !apellidos || expediente.length < 1) {
+    preview.style.display = 'none';
+    return;
+  }
+
+  const iniciales = generarIniciales(nombre, apellidos);
+  const numStr    = expediente.padStart(4, '0');
+  const idGen     = `${iniciales}-${numStr}`;
+
+  valEl.textContent = idGen;
+  preview.style.display = 'flex';
+  avisoEl.style.display = 'none';
+
+  // Verificar colisión en Supabase (debounce 400ms)
+  clearTimeout(npCheckTimer);
+  npCheckTimer = setTimeout(async () => {
+    try {
+      const res = await supaGet(`pacientes_v2?id=eq.${idGen}&select=id&limit=1`);
+      avisoEl.style.display = res.length ? '' : 'none';
+    } catch { /* silencioso */ }
+  }, 400);
+}
+
+async function crearNuevoPaciente() {
+  const nombre     = document.getElementById('np-nombre').value.trim();
+  const apellidos  = document.getElementById('np-apellidos').value.trim();
+  const expediente = document.getElementById('np-expediente').value.trim();
+
+  if (!nombre)              { toast('Indica el nombre del paciente', true); return; }
+  if (!apellidos)           { toast('Indica los apellidos del paciente', true); return; }
+  if (!expediente)          { toast('Indica el número de expediente', true); return; }
+  if (expediente.length > 4 || !/^\d+$/.test(expediente)) {
+    toast('El expediente debe ser un número de hasta 4 dígitos', true); return;
+  }
+
+  const iniciales = generarIniciales(nombre, apellidos);
+  const numStr    = expediente.padStart(4, '0');
+  const idPaciente = `${iniciales}-${numStr}`;
+
+  // Verificar que no existe
+  const existe = await supaGet(`pacientes_v2?id=eq.${idPaciente}&select=id&limit=1`);
+  if (existe.length) {
+    toast(`El ID ${idPaciente} ya existe. Revisa las iniciales o el expediente.`, true);
+    document.getElementById('np-id-aviso').style.display = '';
+    return;
+  }
+
+  const btn = document.getElementById('btn-crear-pac');
+  btn.disabled = true;
+  btn.innerHTML = `<div class="btn-spinner"></div> Creando…`;
+
+  try {
+    const nuevoPac = {
+      id:       idPaciente,
+      nombre:   nombre,
+      apellidos: apellidos,
+      activo:   'Si'
+    };
+    await supaPost('pacientes_v2', nuevoPac);
+    toast(`Paciente ${idPaciente} creado`, false, true);
+    cerrarNuevoPaciente();
+    // Seleccionar automáticamente en el modal
+    seleccionarPaciente({ id: idPaciente, nombre, apellidos, alias: null, fecha_nacimiento: null });
+  } catch (err) {
+    console.error('Error creando paciente:', err);
+    toast('Error al crear el paciente', true);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> Crear paciente`;
+  }
 }
 
 /* ═══════════════════════════════════════════
