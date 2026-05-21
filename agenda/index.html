@@ -1207,7 +1207,7 @@ function buscarPaciente(val) {
   G.busquedaTimer = setTimeout(async () => {
     try {
       const q = encodeURIComponent(val);
-      const res = await supaGet(`pacientes_v2?or=(nombre.ilike.*${q}*,apellidos.ilike.*${q}*)&activo=eq.Si&select=id,nombre,apellidos,alias,fecha_nacimiento&limit=20`);
+      const res = await supaGet(`pacientes_v2?or=(nombre.ilike.*${q}*,apellidos.ilike.*${q}*,id.ilike.*${q}*)&activo=eq.Si&select=id,nombre,apellidos,alias,fecha_nacimiento&limit=20`);
       if (!res.length) {
         dropdown.innerHTML = `<div class="pac-option"><div class="pac-option-nombre" style="color:var(--muted)">Sin resultados</div></div>`;
       } else {
