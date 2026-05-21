@@ -101,7 +101,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);fon
 .overlay{display:none;position:fixed;inset:0;background:rgba(16,6,80,.55);z-index:200;align-items:center;justify-content:center;backdrop-filter:blur(3px)}
 .overlay.visible{display:flex}
 
-.modal{background:var(--surface);border-radius:16px;width:90vw;max-width:1160px;height:90vh;display:flex;flex-direction:column;box-shadow:0 24px 80px rgba(0,0,0,.28);animation:modalIn .2s ease;overflow:hidden}
+.modal{background:var(--surface);border-radius:16px;width:90vw;max-width:1160px;max-height:95vh;display:flex;flex-direction:column;box-shadow:0 24px 80px rgba(0,0,0,.28);animation:modalIn .2s ease;overflow:hidden}
 @keyframes modalIn{from{opacity:0;transform:scale(.97) translateY(8px)}to{opacity:1;transform:scale(1) translateY(0)}}
 
 .modal-header{display:flex;align-items:center;justify-content:space-between;padding:18px 28px 16px;border-bottom:1px solid var(--border);flex-shrink:0}
@@ -113,7 +113,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);fon
 .modal-close:hover{background:var(--bg);color:var(--text)}
 
 .modal-body{display:grid;grid-template-columns:1fr 1px 1fr;flex:1;min-height:0;overflow:hidden}
-.modal-col{padding:22px 28px;overflow-y:auto;height:100%;min-height:0}
+.modal-col{padding:22px 28px;overflow-y:auto;max-height:calc(95vh - 120px);min-height:0}
 .modal-col::-webkit-scrollbar{width:4px}
 .modal-col::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
 .col-divider{background:var(--border)}
