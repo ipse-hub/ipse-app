@@ -118,8 +118,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);fon
 .mes-header-dias{display:grid;grid-template-columns:repeat(7,1fr);background:var(--azul);color:#fff;flex-shrink:0}
 .mes-hd{padding:8px 4px;text-align:center;font-size:11px;font-weight:600;letter-spacing:.04em;border-right:1px solid rgba(255,255,255,.1)}
 .mes-hd:last-child{border-right:none}
-.mes-scroll{flex:1;overflow-y:auto;min-height:0}
-.mes-body{display:grid;grid-template-columns:repeat(7,1fr);grid-auto-rows:minmax(80px,1fr)}
+.mes-scroll{flex:1;overflow:hidden;min-height:0;display:flex;flex-direction:column}
+.mes-body{display:grid;grid-template-columns:repeat(7,1fr);flex:1;min-height:0}
 .mes-dia{border-right:1px solid var(--border);border-bottom:1px solid var(--border);padding:4px;cursor:pointer;transition:background .1s;overflow:hidden}
 .mes-dia:hover{background:rgba(16,6,159,.03)}
 .mes-dia:nth-child(7n){border-right:none}
@@ -1136,6 +1136,11 @@ function renderMes(citas, pacMap) {
 
   const body = document.getElementById('mes-body');
   body.innerHTML = '';
+
+  // Filas dinámicas según número de semanas del mes
+  const msDay = 86400000;
+  const numSemanas = Math.ceil((fin - getLunes(primerDia)) / (7 * msDay)) + 1;
+  body.style.gridTemplateRows = `repeat(${numSemanas}, 1fr)`;
 
   while (cursor <= fin) {
     const fecha    = new Date(cursor);
