@@ -113,7 +113,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);fon
 .modal-close:hover{background:var(--bg);color:var(--text)}
 
 .modal-body{display:grid;grid-template-columns:1fr 1px 1fr;flex:1;min-height:0;overflow:hidden}
-.modal-col{padding:22px 28px;overflow-y:auto;height:100%}
+.modal-col{padding:22px 28px;overflow-y:auto;height:100%;min-height:0}
 .modal-col::-webkit-scrollbar{width:4px}
 .modal-col::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
 .col-divider{background:var(--border)}
@@ -414,9 +414,15 @@ select.fc{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.o
         <!-- ── PANEL NUEVO BONO ── -->
         <div class="nuevo-bono-panel" id="nuevo-bono-panel" style="display:none">
           <div class="nuevo-bona-titulo">Alta de bono · 4 sesiones / 180 €</div>
-          <div class="fg">
-            <label class="fl">Fecha de inicio *</label>
-            <input type="date" class="fc" id="bono-fecha-inicio" oninput="actualizarResumenBono()">
+          <div class="form-row">
+            <div class="fg">
+              <label class="fl">Fecha de inicio *</label>
+              <input type="date" class="fc" id="bono-fecha-inicio" oninput="actualizarResumenBono()">
+            </div>
+            <div class="fg">
+              <label class="fl">Fecha de fin *</label>
+              <input type="date" class="fc" id="bono-fecha-fin" oninput="actualizarResumenBono()">
+            </div>
           </div>
           <div class="bb-resumen" id="bono-resumen" style="display:none"></div>
           <div class="np-footer">
@@ -431,9 +437,15 @@ select.fc{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.o
         <!-- ── PANEL NUEVA BECA ── -->
         <div class="nuevo-beca-panel" id="nuevo-beca-panel" style="display:none">
           <div class="nuevo-beca-titulo">Alta de beca · 20 sesiones / 913 €</div>
-          <div class="fg">
-            <label class="fl">Fecha de inicio *</label>
-            <input type="date" class="fc" id="beca-fecha-inicio" oninput="actualizarResumenBeca()">
+          <div class="form-row">
+            <div class="fg">
+              <label class="fl">Fecha de inicio *</label>
+              <input type="date" class="fc" id="beca-fecha-inicio" oninput="actualizarResumenBeca()">
+            </div>
+            <div class="fg">
+              <label class="fl">Fecha de fin *</label>
+              <input type="date" class="fc" id="beca-fecha-fin" oninput="actualizarResumenBeca()">
+            </div>
           </div>
           <div class="bb-resumen" id="beca-resumen" style="display:none"></div>
           <div class="np-footer">
@@ -1296,11 +1308,14 @@ async function cargarBonoBeca(idPaciente) {
 function toggleNuevoBono() {
   const panel = document.getElementById('nuevo-bono-panel');
   if (panel.style.display !== 'none') { cerrarNuevoBono(); return; }
-  cerrarNuevaBeca(); // no los dos a la vez
+  cerrarNuevaBeca();
   panel.style.display = '';
-  // Prerellenar con fecha de hoy
   const hoy = fmtISO(new Date());
   document.getElementById('bono-fecha-inicio').value = hoy;
+  // Fin por defecto: +2 meses
+  const fin = new Date(hoy + 'T12:00:00');
+  fin.setMonth(fin.getMonth() + 2);
+  document.getElementById('bono-fecha-fin').value = fmtISO(fin);
   actualizarResumenBono();
   document.getElementById('bono-fecha-inicio').focus();
 }
@@ -1308,20 +1323,26 @@ function toggleNuevoBono() {
 function cerrarNuevoBono() {
   document.getElementById('nuevo-bono-panel').style.display = 'none';
   document.getElementById('bono-fecha-inicio').value = '';
+  document.getElementById('bono-fecha-fin').value = '';
   document.getElementById('bono-resumen').style.display = 'none';
 }
 
 function actualizarResumenBono() {
-  const fi = document.getElementById('bono-fecha-inicio').value;
+  const fi  = document.getElementById('bono-fecha-inicio').value;
+  const ff  = document.getElementById('bono-fecha-fin').value;
   const res = document.getElementById('bono-resumen');
   if (!fi) { res.style.display = 'none'; return; }
-  const inicio = new Date(fi + 'T12:00:00');
-  const fin    = new Date(inicio);
-  fin.setMonth(fin.getMonth() + 2);
+  // Si cambia inicio y fin aún no está tocado, recalcular fin
+  if (!ff) {
+    const fin = new Date(fi + 'T12:00:00');
+    fin.setMonth(fin.getMonth() + 2);
+    document.getElementById('bono-fecha-fin').value = fmtISO(fin);
+  }
+  const finVal = document.getElementById('bono-fecha-fin').value;
   const fmtOpts = { day:'numeric', month:'long', year:'numeric' };
   res.innerHTML = `
-    <strong>Inicio:</strong> ${inicio.toLocaleDateString('es-ES', fmtOpts)}<br>
-    <strong>Vence:</strong> ${fin.toLocaleDateString('es-ES', fmtOpts)}<br>
+    <strong>Inicio:</strong> ${new Date(fi + 'T12:00:00').toLocaleDateString('es-ES', fmtOpts)}<br>
+    <strong>Vence:</strong> ${finVal ? new Date(finVal + 'T12:00:00').toLocaleDateString('es-ES', fmtOpts) : '—'}<br>
     <strong>Sesiones:</strong> 4 &nbsp;·&nbsp; <strong>Importe:</strong> 180 €
   `;
   res.style.display = '';
@@ -1330,13 +1351,11 @@ function actualizarResumenBono() {
 async function crearNuevoBono() {
   if (!G.modalPacId) { toast('Selecciona un paciente primero', true); return; }
   const fi = document.getElementById('bono-fecha-inicio').value;
+  const ff = document.getElementById('bono-fecha-fin').value;
   if (!fi) { toast('Indica la fecha de inicio del bono', true); return; }
+  if (!ff) { toast('Indica la fecha de fin del bono', true); return; }
+  if (ff < fi) { toast('La fecha de fin no puede ser anterior al inicio', true); return; }
 
-  const inicio = new Date(fi + 'T12:00:00');
-  const fin    = new Date(inicio);
-  fin.setMonth(fin.getMonth() + 2);
-
-  // Generar ID
   const ultimos = await supaGet(`bonos_becas?select=id&order=id.desc&limit=1`);
   const ultId   = ultimos[0]?.id || 'BB-000';
   const num     = parseInt(ultId.replace(/\D/g,'') || '0') + 1;
@@ -1354,17 +1373,15 @@ async function crearNuevoBono() {
       sesiones_totales:    4,
       sesiones_consumidas: 0,
       fecha_inicio:        fi,
-      fecha_fin:           fmtISO(fin),
+      fecha_fin:           ff,
       anticipo_recibido:   'No',
       cobrado:             'No',
       importe_total:       180
     });
     toast(`Bono ${nuevoId} creado`, false, true);
     cerrarNuevoBono();
-    // Auto-seleccionar modalidad BONO en la cita
     const pillBono = document.querySelector('.pill[data-mod="BONO"]');
     if (pillBono) selPill(pillBono, 'BONO', 45);
-    // Recargar bloque bono/beca
     await cargarBonoBeca(G.modalPacId);
   } catch (err) {
     console.error('Error creando bono:', err);
@@ -1381,10 +1398,12 @@ async function crearNuevoBono() {
 function toggleNuevaBeca() {
   const panel = document.getElementById('nuevo-beca-panel');
   if (panel.style.display !== 'none') { cerrarNuevaBeca(); return; }
-  cerrarNuevoBono(); // no los dos a la vez
+  cerrarNuevoBono();
   panel.style.display = '';
-  const hoy = fmtISO(new Date());
+  const hoy  = fmtISO(new Date());
+  const anio = new Date().getFullYear();
   document.getElementById('beca-fecha-inicio').value = hoy;
+  document.getElementById('beca-fecha-fin').value    = `${anio}-12-31`;
   actualizarResumenBeca();
   document.getElementById('beca-fecha-inicio').focus();
 }
@@ -1392,20 +1411,19 @@ function toggleNuevaBeca() {
 function cerrarNuevaBeca() {
   document.getElementById('nuevo-beca-panel').style.display = 'none';
   document.getElementById('beca-fecha-inicio').value = '';
+  document.getElementById('beca-fecha-fin').value    = '';
   document.getElementById('beca-resumen').style.display = 'none';
 }
 
 function actualizarResumenBeca() {
-  const fi = document.getElementById('beca-fecha-inicio').value;
+  const fi  = document.getElementById('beca-fecha-inicio').value;
+  const ff  = document.getElementById('beca-fecha-fin').value;
   const res = document.getElementById('beca-resumen');
   if (!fi) { res.style.display = 'none'; return; }
-  const inicio = new Date(fi + 'T12:00:00');
-  const anio   = inicio.getFullYear();
-  const fin    = new Date(anio, 11, 31); // 31 dic año en curso
   const fmtOpts = { day:'numeric', month:'long', year:'numeric' };
   res.innerHTML = `
-    <strong>Inicio:</strong> ${inicio.toLocaleDateString('es-ES', fmtOpts)}<br>
-    <strong>Vence:</strong> 31 de diciembre de ${anio}<br>
+    <strong>Inicio:</strong> ${new Date(fi + 'T12:00:00').toLocaleDateString('es-ES', fmtOpts)}<br>
+    <strong>Vence:</strong> ${ff ? new Date(ff + 'T12:00:00').toLocaleDateString('es-ES', fmtOpts) : '—'}<br>
     <strong>Sesiones:</strong> 20 &nbsp;·&nbsp; <strong>45 € / sesión</strong><br>
     <strong>Neto:</strong> 900 € &nbsp;·&nbsp; <strong>Fee gestión:</strong> 13 € &nbsp;·&nbsp; <strong>Bruto:</strong> 913 €
   `;
@@ -1415,13 +1433,11 @@ function actualizarResumenBeca() {
 async function crearNuevaBeca() {
   if (!G.modalPacId) { toast('Selecciona un paciente primero', true); return; }
   const fi = document.getElementById('beca-fecha-inicio').value;
+  const ff = document.getElementById('beca-fecha-fin').value;
   if (!fi) { toast('Indica la fecha de inicio de la beca', true); return; }
+  if (!ff) { toast('Indica la fecha de fin de la beca', true); return; }
+  if (ff < fi) { toast('La fecha de fin no puede ser anterior al inicio', true); return; }
 
-  const inicio = new Date(fi + 'T12:00:00');
-  const anio   = inicio.getFullYear();
-  const fin    = `${anio}-12-31`;
-
-  // Generar ID
   const ultimos = await supaGet(`bonos_becas?select=id&order=id.desc&limit=1`);
   const ultId   = ultimos[0]?.id || 'BB-000';
   const num     = parseInt(ultId.replace(/\D/g,'') || '0') + 1;
@@ -1439,17 +1455,15 @@ async function crearNuevaBeca() {
       sesiones_totales:    20,
       sesiones_consumidas: 0,
       fecha_inicio:        fi,
-      fecha_fin:           fin,
+      fecha_fin:           ff,
       anticipo_recibido:   'No',
       cobrado:             'No',
       importe_total:       913
     });
     toast(`Beca ${nuevoId} creada`, false, true);
     cerrarNuevaBeca();
-    // Auto-seleccionar modalidad BECA en la cita
     const pillBeca = document.querySelector('.pill[data-mod="BECA"]');
     if (pillBeca) selPill(pillBeca, 'BECA', 45);
-    // Recargar bloque bono/beca
     await cargarBonoBeca(G.modalPacId);
   } catch (err) {
     console.error('Error creando beca:', err);
