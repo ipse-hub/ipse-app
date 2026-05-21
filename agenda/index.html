@@ -249,41 +249,14 @@ select.fc{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.o
 /* notas */
 .notas-ta{resize:vertical;min-height:80px}
 
-/* ── VISTA DÍA ── */
-.dia-grid{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow);flex:1;min-height:0;display:flex;flex-direction:column}
-.dia-header{background:var(--azul);color:#fff;padding:12px 20px;display:flex;align-items:center;gap:12px;flex-shrink:0}
-.dia-header-num{font-size:32px;font-weight:700;line-height:1}
-.dia-header-info{display:flex;flex-direction:column}
-.dia-header-nombre{font-size:15px;font-weight:600}
-.dia-header-sub{font-size:12px;opacity:.7}
-.dia-scroll{flex:1;overflow-y:auto;min-height:0}
-.dia-body{display:grid;grid-template-columns:52px 1fr}
-.dia-cita-row{display:contents}
-.dia-cita{margin:2px 4px 2px 0;border-radius:8px;padding:10px 14px;cursor:pointer;color:#fff;border-left:4px solid rgba(0,0,0,.2);box-shadow:0 1px 4px rgba(0,0,0,.1);transition:opacity .15s,transform .15s;display:flex;flex-direction:column;gap:2px}
-.dia-cita:hover{opacity:.9;transform:translateX(2px)}
-.dia-cita-nombre{font-size:14px;font-weight:700}
-.dia-cita-meta{font-size:12px;opacity:.85}
-.dia-cita-estado{font-size:11px;opacity:.75;margin-top:2px}
-.dia-slot-vacio{height:52px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .1s}
-.dia-slot-vacio:hover{background:rgba(16,6,159,.04)}
-
-/* ── VISTA MES ── */
-.mes-grid{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow);flex:1;min-height:0;display:flex;flex-direction:column}
-.mes-header-dias{display:grid;grid-template-columns:repeat(7,1fr);background:var(--azul);color:#fff;flex-shrink:0}
-.mes-hd{padding:8px 6px;text-align:center;font-size:11px;font-weight:600;letter-spacing:.04em;border-right:1px solid rgba(255,255,255,.1)}
-.mes-hd:last-child{border-right:none}
-.mes-scroll{flex:1;overflow-y:auto;min-height:0;display:flex;flex-direction:column}
-.mes-body{display:grid;grid-template-columns:repeat(7,1fr);flex:1;grid-auto-rows:1fr}
-.mes-dia{border-right:1px solid var(--border);border-bottom:1px solid var(--border);padding:4px;min-height:90px;cursor:pointer;transition:background .1s;display:flex;flex-direction:column;position:relative}
-.mes-dia:hover{background:rgba(16,6,159,.03)}
-.mes-dia.otro-mes{background:#fafafa}
-.mes-dia.otro-mes .mes-dia-num{color:#ccc}
-.mes-dia.hoy-mes{background:rgba(0,181,226,.04)}
-.mes-dia-num{font-size:13px;font-weight:700;color:var(--text);width:24px;height:24px;display:flex;align-items:center;justify-content:center;border-radius:50%;margin-bottom:2px;flex-shrink:0}
-.mes-dia.hoy-mes .mes-dia-num{background:var(--azul);color:#fff}
-.mes-cita-pill{font-size:10px;font-weight:600;color:#fff;border-radius:4px;padding:1px 5px;margin-bottom:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;line-height:1.6}
-.mes-mas{font-size:10px;color:var(--muted);font-weight:600;padding:1px 4px;cursor:pointer}
-.mes-mas:hover{color:var(--azul)}
+/* panel bono/beca (igual que nuevo-pac-panel pero con colores propios) */
+.nuevo-bono-panel{background:#e0f2fe;border:1.5px solid #0369a1;border-radius:10px;padding:14px;margin-top:10px}
+.nuevo-bona-titulo{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#0369a1;margin-bottom:10px}
+.nuevo-beca-panel{background:#f0fff4;border:1.5px solid #2d6a00;border-radius:10px;padding:14px;margin-top:10px}
+.nuevo-beca-titulo{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#2d6a00;margin-bottom:10px}
+.bb-resumen{background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:10px 12px;margin-top:10px;font-size:12px;color:var(--muted);line-height:1.7}
+.bb-resumen strong{color:var(--text)}
+.btn-alta:disabled{opacity:.4;cursor:not-allowed;pointer-events:none}
 
 /* recordatorios */
 .rec-row{display:flex;gap:8px;margin-top:4px}
@@ -335,42 +308,22 @@ select.fc{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.o
   <div class="main">
     <div class="week-nav">
       <div class="week-nav-left">
-        <button class="nav-btn" onclick="navAnterior()">← Anterior</button>
+        <button class="nav-btn" onclick="semanaAnterior()">← Anterior</button>
         <button class="nav-btn btn-hoy" onclick="irAHoy()">Hoy</button>
-        <button class="nav-btn" onclick="navSiguiente()">Siguiente →</button>
+        <button class="nav-btn" onclick="semanaSiguiente()">Siguiente →</button>
       </div>
       <span class="week-label" id="week-label"></span>
       <div class="view-toggle">
-        <button class="view-btn" id="vbtn-dia" onclick="cambiarVista('dia')">Día</button>
-        <button class="view-btn active" id="vbtn-semana" onclick="cambiarVista('semana')">Semana</button>
-        <button class="view-btn" id="vbtn-mes" onclick="cambiarVista('mes')">Mes</button>
+        <button class="view-btn">Día</button>
+        <button class="view-btn active">Semana</button>
+        <button class="view-btn">Mes</button>
       </div>
     </div>
 
-    <!-- Vista semana -->
-    <div class="week-grid" id="vista-semana">
+    <div class="week-grid">
       <div class="grid-header" id="grid-header"><!-- inyectado --></div>
       <div class="grid-scroll">
         <div class="grid-body" id="grid-body"><!-- inyectado --></div>
-      </div>
-    </div>
-
-    <!-- Vista día -->
-    <div class="dia-grid" id="vista-dia" style="display:none">
-      <div class="dia-header" id="dia-header"><!-- inyectado --></div>
-      <div class="dia-scroll">
-        <div class="dia-body" id="dia-body"><!-- inyectado --></div>
-      </div>
-    </div>
-
-    <!-- Vista mes -->
-    <div class="mes-grid" id="vista-mes" style="display:none">
-      <div class="mes-header-dias">
-        <div class="mes-hd">LUN</div><div class="mes-hd">MAR</div><div class="mes-hd">MIÉ</div>
-        <div class="mes-hd">JUE</div><div class="mes-hd">VIE</div><div class="mes-hd">SÁB</div><div class="mes-hd">DOM</div>
-      </div>
-      <div class="mes-scroll">
-        <div class="mes-body" id="mes-body"><!-- inyectado --></div>
       </div>
     </div>
   </div>
@@ -416,11 +369,11 @@ select.fc{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.o
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
             + Nuevo paciente
           </button>
-          <button class="btn-alta bono" onclick="toast('Nuevo bono — próximamente')">
+          <button class="btn-alta bono" id="btn-nuevo-bono" disabled onclick="toggleNuevoBono()">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
             + Nuevo bono
           </button>
-          <button class="btn-alta beca" onclick="toast('Nueva beca — próximamente')">
+          <button class="btn-alta beca" id="btn-nuevo-beca" disabled onclick="toggleNuevaBeca()">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
             + Nueva beca
           </button>
@@ -454,6 +407,40 @@ select.fc{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.o
             <button class="btn btn-primary" style="font-size:12px;padding:7px 14px" id="btn-crear-pac" onclick="crearNuevoPaciente()">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
               Crear paciente
+            </button>
+          </div>
+        </div>
+
+        <!-- ── PANEL NUEVO BONO ── -->
+        <div class="nuevo-bono-panel" id="nuevo-bono-panel" style="display:none">
+          <div class="nuevo-bona-titulo">Alta de bono · 4 sesiones / 180 €</div>
+          <div class="fg">
+            <label class="fl">Fecha de inicio *</label>
+            <input type="date" class="fc" id="bono-fecha-inicio" oninput="actualizarResumenBono()">
+          </div>
+          <div class="bb-resumen" id="bono-resumen" style="display:none"></div>
+          <div class="np-footer">
+            <button class="btn btn-secondary" style="font-size:12px;padding:7px 14px" onclick="cerrarNuevoBono()">Cancelar</button>
+            <button class="btn btn-primary" style="font-size:12px;padding:7px 14px;background:#0369a1" id="btn-crear-bono" onclick="crearNuevoBono()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+              Crear bono
+            </button>
+          </div>
+        </div>
+
+        <!-- ── PANEL NUEVA BECA ── -->
+        <div class="nuevo-beca-panel" id="nuevo-beca-panel" style="display:none">
+          <div class="nuevo-beca-titulo">Alta de beca · 20 sesiones / 913 €</div>
+          <div class="fg">
+            <label class="fl">Fecha de inicio *</label>
+            <input type="date" class="fc" id="beca-fecha-inicio" oninput="actualizarResumenBeca()">
+          </div>
+          <div class="bb-resumen" id="beca-resumen" style="display:none"></div>
+          <div class="np-footer">
+            <button class="btn btn-secondary" style="font-size:12px;padding:7px 14px" onclick="cerrarNuevaBeca()">Cancelar</button>
+            <button class="btn btn-primary" style="font-size:12px;padding:7px 14px;background:#2d6a00" id="btn-crear-beca" onclick="crearNuevaBeca()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+              Crear beca
             </button>
           </div>
         </div>
@@ -779,11 +766,7 @@ async function init() {
   }
 
   // Semana actual
-  const hoyInit = new Date();
-  G.semanaIni = getLunes(hoyInit);
-  G.diaActual = new Date(hoyInit); G.diaActual.setHours(0,0,0,0);
-  G.mesActual = new Date(hoyInit.getFullYear(), hoyInit.getMonth(), 1);
-  G.vista = 'semana';
+  G.semanaIni = getLunes(new Date());
   renderCabecera();
   await cargarCitas();
 }
@@ -815,55 +798,7 @@ function aplicarFiltro() {
 }
 
 /* ═══════════════════════════════════════════
-   VISTAS — CONTROL
-═══════════════════════════════════════════ */
-G.vista = 'semana'; // 'dia' | 'semana' | 'mes'
-G.diaActual = null; // Date — para vista día
-
-function cambiarVista(v) {
-  G.vista = v;
-  document.getElementById('vista-semana').style.display = v === 'semana' ? '' : 'none';
-  document.getElementById('vista-dia').style.display    = v === 'dia'    ? '' : 'none';
-  document.getElementById('vista-mes').style.display    = v === 'mes'    ? '' : 'none';
-  document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById(`vbtn-${v}`).classList.add('active');
-  renderCabecera();
-  cargarCitas();
-}
-
-function navAnterior() {
-  if (G.vista === 'semana') { G.semanaIni = addDias(G.semanaIni, -7); }
-  else if (G.vista === 'dia') { G.diaActual = addDias(G.diaActual, -1); }
-  else if (G.vista === 'mes') { G.mesActual = new Date(G.mesActual.getFullYear(), G.mesActual.getMonth() - 1, 1); }
-  renderCabecera(); cargarCitas();
-}
-
-function navSiguiente() {
-  if (G.vista === 'semana') { G.semanaIni = addDias(G.semanaIni, 7); }
-  else if (G.vista === 'dia') { G.diaActual = addDias(G.diaActual, 1); }
-  else if (G.vista === 'mes') { G.mesActual = new Date(G.mesActual.getFullYear(), G.mesActual.getMonth() + 1, 1); }
-  renderCabecera(); cargarCitas();
-}
-
-function semanaAnterior()  { G.semanaIni = addDias(G.semanaIni, -7); renderCabecera(); cargarCitas(); }
-function semanaSiguiente() { G.semanaIni = addDias(G.semanaIni,  7); renderCabecera(); cargarCitas(); }
-
-function irAHoy() {
-  const hoy = new Date();
-  G.semanaIni  = getLunes(hoy);
-  G.diaActual  = new Date(hoy); G.diaActual.setHours(0,0,0,0);
-  G.mesActual  = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
-  renderCabecera(); cargarCitas();
-}
-
-function irADia(fecha) {
-  G.diaActual = new Date(fecha + 'T12:00:00');
-  G.diaActual.setHours(0,0,0,0);
-  cambiarVista('dia');
-}
-
-/* ═══════════════════════════════════════════
-   SEMANA — HELPERS
+   SEMANA — NAVEGACIÓN Y CABECERA
 ═══════════════════════════════════════════ */
 function getLunes(d) {
   const r = new Date(d);
@@ -874,37 +809,37 @@ function getLunes(d) {
   return r;
 }
 function addDias(d, n) { const r = new Date(d); r.setDate(r.getDate() + n); return r; }
-function fmtFecha(d) { return d.toLocaleDateString('es-ES', { day:'numeric', month:'long', year:'numeric' }); }
+function fmtFecha(d) {
+  return d.toLocaleDateString('es-ES', { day:'numeric', month:'long', year:'numeric' });
+}
 function fmtISO(d) { return d.toISOString().split('T')[0]; }
 
+function semanaAnterior()  { G.semanaIni = addDias(G.semanaIni, -7); renderCabecera(); cargarCitas(); }
+function semanaSiguiente() { G.semanaIni = addDias(G.semanaIni,  7); renderCabecera(); cargarCitas(); }
+function irAHoy()          { G.semanaIni = getLunes(new Date());     renderCabecera(); cargarCitas(); }
+
 function renderCabecera() {
+  const lun = G.semanaIni;
+  const dom = addDias(lun, 6);
   const hoy = new Date(); hoy.setHours(0,0,0,0);
 
-  if (G.vista === 'semana') {
-    const lun = G.semanaIni;
-    const dom = addDias(lun, 6);
-    const optsCorto = { day:'numeric', month:'short' };
-    document.getElementById('week-label').textContent =
-      `${lun.toLocaleDateString('es-ES', optsCorto)} – ${dom.toLocaleDateString('es-ES', { day:'numeric', month:'short', year:'numeric' })}`;
-    const dias = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
-    const header = document.getElementById('grid-header');
-    header.innerHTML = `<div class="gh-cell" style="font-size:10px;opacity:.3"></div>` +
-      dias.map((d, i) => {
-        const fecha = addDias(lun, i);
-        const esHoy = fecha.getTime() === hoy.getTime();
-        const esFinde = i >= 5;
-        return `<div class="gh-cell${esHoy?' hoy':''}${esFinde?' finde':''}">
-          <span class="dia-num">${fecha.getDate()}</span>${d}${esHoy?' ●':''}
-        </div>`;
-      }).join('');
-  } else if (G.vista === 'dia') {
-    document.getElementById('week-label').textContent =
-      G.diaActual.toLocaleDateString('es-ES', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
-  } else if (G.vista === 'mes') {
-    document.getElementById('week-label').textContent =
-      G.mesActual.toLocaleDateString('es-ES', { month:'long', year:'numeric' })
-       .replace(/^\w/, c => c.toUpperCase());
-  }
+  // Label semana
+  const optsCorto = { day:'numeric', month:'short' };
+  document.getElementById('week-label').textContent =
+    `${lun.toLocaleDateString('es-ES', optsCorto)} – ${dom.toLocaleDateString('es-ES', { day:'numeric', month:'short', year:'numeric' })}`;
+
+  // Cabecera grid
+  const dias = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
+  const header = document.getElementById('grid-header');
+  header.innerHTML = `<div class="gh-cell" style="font-size:10px;opacity:.3"></div>` +
+    dias.map((d, i) => {
+      const fecha = addDias(lun, i);
+      const esHoy = fecha.getTime() === hoy.getTime();
+      const esFinde = i >= 5;
+      return `<div class="gh-cell${esHoy?' hoy':''}${esFinde?' finde':''}">
+        <span class="dia-num">${fecha.getDate()}</span>${d}${esHoy?' ●':''}
+      </div>`;
+    }).join('');
 }
 
 /* ═══════════════════════════════════════════
@@ -913,28 +848,18 @@ function renderCabecera() {
 const HORAS_GRID = [];
 for (let h = 8; h <= 20; h++) HORAS_GRID.push(h);
 const TOP_HORA = 8;
-const SLOT_H   = 52;
+const SLOT_H   = 52; // px por hora
 
 async function cargarCitas() {
-  let desde, hasta;
-  if (G.vista === 'semana') {
-    desde = fmtISO(G.semanaIni);
-    hasta = fmtISO(addDias(G.semanaIni, 6));
-  } else if (G.vista === 'dia') {
-    desde = hasta = fmtISO(G.diaActual);
-  } else {
-    // mes: primer día del mes → último día
-    const m = G.mesActual;
-    desde = fmtISO(new Date(m.getFullYear(), m.getMonth(), 1));
-    hasta = fmtISO(new Date(m.getFullYear(), m.getMonth() + 1, 0));
-  }
-
+  const desde = fmtISO(G.semanaIni);
+  const hasta = fmtISO(addDias(G.semanaIni, 6));
   try {
     const citas = await supaGet(
-      `citas_v2?fecha=gte.${desde}&fecha=lte.${hasta}&select=id,id_paciente,id_profesional,especialidad,fecha,hora,duracion_min,modalidad_pago,precio,estado,notas&order=hora.asc&limit=2000`
+      `citas_v2?fecha=gte.${desde}&fecha=lte.${hasta}&select=id,id_paciente,id_profesional,especialidad,fecha,hora,duracion_min,modalidad_pago,precio,estado,notas&order=hora.asc&limit=500`
     );
     G.citas = citas;
 
+    // Cargar pacientes de estas citas para mostrar nombres
     const ids = [...new Set(citas.map(c => c.id_paciente))];
     let pacMap = {};
     if (ids.length) {
@@ -942,9 +867,7 @@ async function cargarCitas() {
       pacs.forEach(p => { pacMap[p.id] = p; });
     }
 
-    if (G.vista === 'semana') renderGrid(citas, pacMap);
-    else if (G.vista === 'dia') renderDia(citas, pacMap);
-    else renderMes(citas, pacMap);
+    renderGrid(citas, pacMap);
   } catch (err) {
     console.error('Error cargando citas:', err);
     toast('Error al cargar citas', true);
@@ -1015,147 +938,6 @@ function renderGrid(citas, pacMap) {
 }
 
 /* ═══════════════════════════════════════════
-   RENDER VISTA DÍA
-═══════════════════════════════════════════ */
-function renderDia(citas, pacMap) {
-  const hoy = new Date(); hoy.setHours(0,0,0,0);
-  const fecha = G.diaActual;
-  const fechaISO = fmtISO(fecha);
-  const esHoy = fecha.getTime() === hoy.getTime();
-
-  // Cabecera del día
-  const header = document.getElementById('dia-header');
-  header.innerHTML = `
-    <div class="dia-header-num">${fecha.getDate()}</div>
-    <div class="dia-header-info">
-      <div class="dia-header-nombre">${fecha.toLocaleDateString('es-ES',{weekday:'long'}).replace(/^\w/,c=>c.toUpperCase())}${esHoy?' · Hoy':''}</div>
-      <div class="dia-header-sub">${fecha.toLocaleDateString('es-ES',{month:'long',year:'numeric'})}</div>
-    </div>`;
-
-  const body = document.getElementById('dia-body');
-  body.innerHTML = '';
-
-  // Columna de horas
-  const timeCol = document.createElement('div');
-  timeCol.className = 'time-col';
-  HORAS_GRID.forEach(h => {
-    const s = document.createElement('div');
-    s.className = 'time-slot';
-    s.textContent = `${h}:00`;
-    timeCol.appendChild(s);
-  });
-  body.appendChild(timeCol);
-
-  // Columna de citas del día
-  const col = document.createElement('div');
-  col.style.cssText = 'position:relative;';
-
-  HORAS_GRID.forEach(h => {
-    const s = document.createElement('div');
-    s.className = 'dia-slot-vacio';
-    s.onclick = () => abrirModalNueva(fechaISO, `${String(h).padStart(2,'0')}:00`);
-    col.appendChild(s);
-  });
-
-  const citasDia = citas.filter(c => c.fecha === fechaISO && G.terFiltro.has(c.id_profesional));
-  citasDia.forEach(cita => {
-    const [hh, mm] = cita.hora.split(':').map(Number);
-    const top = ((hh - TOP_HORA) + mm/60) * SLOT_H;
-    const pac = pacMap[cita.id_paciente];
-    const nombre = pac ? (pac.alias || `${pac.nombre} ${pac.apellidos || ''}`.trim()) : cita.id_paciente;
-    const color = COLORES_PRO[cita.id_profesional] || '#10069F';
-    const espLabel = ESPECIALIDADES[cita.especialidad] || cita.especialidad || '';
-    const terNombre = G.profesionales.find(p => p.id === cita.id_profesional);
-    const terLabel = terNombre ? terNombre.nombre : '';
-
-    const el = document.createElement('div');
-    el.className = 'dia-cita';
-    el.style.cssText = `position:absolute;left:4px;right:4px;top:${top}px;min-height:${SLOT_H - 4}px;background:${color}`;
-    el.innerHTML = `
-      <div class="dia-cita-nombre">${nombre}</div>
-      <div class="dia-cita-meta">${espLabel} · ${terLabel} · ${cita.hora?.substring(0,5)}</div>
-      ${cita.estado && cita.estado !== 'Programada' ? `<div class="dia-cita-estado">${cita.estado}</div>` : ''}`;
-    el.onclick = () => abrirModalEditar(cita, pac);
-    col.appendChild(el);
-  });
-
-  body.appendChild(col);
-}
-
-/* ═══════════════════════════════════════════
-   RENDER VISTA MES
-═══════════════════════════════════════════ */
-function renderMes(citas, pacMap) {
-  const hoy = new Date(); hoy.setHours(0,0,0,0);
-  const m = G.mesActual;
-  const primerDia = new Date(m.getFullYear(), m.getMonth(), 1);
-  const ultimoDia = new Date(m.getFullYear(), m.getMonth() + 1, 0);
-
-  // Primer lunes a mostrar (puede ser del mes anterior)
-  let cursor = getLunes(primerDia);
-  // Si el lunes es exactamente el primer día del mes, bien; si no, retrocedemos
-  const body = document.getElementById('mes-body');
-  body.innerHTML = '';
-
-  // Generar todas las celdas hasta cubrir el mes completo
-  // Necesitamos llegar al domingo >= último día del mes
-  const fin = getLunes(ultimoDia);
-  fin.setDate(fin.getDate() + 6); // domingo de esa semana
-
-  while (cursor <= fin) {
-    const fecha = new Date(cursor);
-    const fechaISO = fmtISO(fecha);
-    const esMesActual = fecha.getMonth() === m.getMonth();
-    const esHoy = fecha.getTime() === hoy.getTime();
-
-    const celda = document.createElement('div');
-    celda.className = `mes-dia${!esMesActual?' otro-mes':''}${esHoy?' hoy-mes':''}`;
-    celda.onclick = () => irADia(fechaISO);
-
-    const numEl = document.createElement('div');
-    numEl.className = 'mes-dia-num';
-    numEl.textContent = fecha.getDate();
-    celda.appendChild(numEl);
-
-    // Citas de este día (filtradas por terapeuta visible)
-    const citasDia = citas
-      .filter(c => c.fecha === fechaISO && G.terFiltro.has(c.id_profesional))
-      .sort((a, b) => a.hora.localeCompare(b.hora));
-
-    const MAX_PILLS = 3;
-    citasDia.slice(0, MAX_PILLS).forEach(cita => {
-      const pac = pacMap[cita.id_paciente];
-      const nombre = pac
-        ? (pac.alias || `${pac.nombre} ${pac.apellidos || ''}`.trim())
-        : cita.id_paciente;
-      const color = COLORES_PRO[cita.id_profesional] || '#10069F';
-      const hora = cita.hora?.substring(0,5) || '';
-
-      const pill = document.createElement('div');
-      pill.className = 'mes-cita-pill';
-      pill.style.background = color;
-      pill.textContent = `${hora} ${nombre}`;
-      pill.onclick = (e) => {
-        e.stopPropagation();
-        abrirModalEditar(cita, pac);
-      };
-      celda.appendChild(pill);
-    });
-
-    if (citasDia.length > MAX_PILLS) {
-      const mas = document.createElement('div');
-      mas.className = 'mes-mas';
-      mas.textContent = `+${citasDia.length - MAX_PILLS} más`;
-      mas.onclick = (e) => { e.stopPropagation(); irADia(fechaISO); };
-      celda.appendChild(mas);
-    }
-
-    body.appendChild(celda);
-    cursor = addDias(cursor, 1);
-  }
-}
-
-/* ═══════════════════════════════════════════
    MODAL — ABRIR / CERRAR
 ═══════════════════════════════════════════ */
 function abrirModalNueva(fecha, hora) {
@@ -1190,6 +972,8 @@ function abrirModalEditar(cita, pac) {
   if (pac) {
     G.modalPacId = pac.id;
     mostrarPacienteSeleccionado(pac);
+    document.getElementById('btn-nuevo-bono').disabled = false;
+    document.getElementById('btn-nuevo-beca').disabled = false;
   }
 
   // Fecha / hora
@@ -1260,6 +1044,10 @@ function resetModal() {
   document.getElementById('sec-bono-beca').style.display = 'none';
   document.getElementById('bono-beca-info').innerHTML = '';
   cerrarNuevoPaciente();
+  cerrarNuevoBono();
+  cerrarNuevaBeca();
+  document.getElementById('btn-nuevo-bono').disabled = true;
+  document.getElementById('btn-nuevo-beca').disabled = true;
 
   document.querySelectorAll('.pill').forEach(p => p.classList.remove('sel','sel-beca','sel-otros'));
   document.getElementById('precio-box').style.display = '';
@@ -1439,6 +1227,9 @@ function seleccionarPaciente(pac) {
   document.getElementById('pac-input').value = '';
   document.getElementById('pac-dropdown').classList.remove('visible');
   mostrarPacienteSeleccionado(pac);
+  // Habilitar botones alta rápida de bono/beca
+  document.getElementById('btn-nuevo-bono').disabled = false;
+  document.getElementById('btn-nuevo-beca').disabled = false;
   cargarBonoBeca(pac.id);
 }
 
@@ -1457,6 +1248,11 @@ function limpiarPaciente() {
   document.getElementById('bono-beca-info').innerHTML = '';
   document.getElementById('pac-input').value = '';
   document.getElementById('pac-input').focus();
+  // Deshabilitar y cerrar paneles bono/beca
+  document.getElementById('btn-nuevo-bono').disabled = true;
+  document.getElementById('btn-nuevo-beca').disabled = true;
+  cerrarNuevoBono();
+  cerrarNuevaBeca();
 }
 
 /* ═══════════════════════════════════════════
@@ -1464,10 +1260,13 @@ function limpiarPaciente() {
 ═══════════════════════════════════════════ */
 async function cargarBonoBeca(idPaciente) {
   try {
-    const bb = await supaGet(`bonos_becas?id_paciente=eq.${idPaciente}&activo=eq.Si&select=id,tipo,especialidad,sesiones_total,sesiones_consumidas,fecha_vencimiento&limit=10`);
+    const hoy = fmtISO(new Date());
+    const bb  = await supaGet(
+      `bonos_becas?id_paciente=eq.${idPaciente}&fecha_fin=gte.${hoy}&select=id,tipo,sesiones_totales,sesiones_consumidas,fecha_inicio,fecha_fin,importe_total&order=fecha_fin.asc&limit=20`
+    );
     G.bonosBecas = bb;
-    const sec   = document.getElementById('sec-bono-beca');
-    const info  = document.getElementById('bono-beca-info');
+    const sec  = document.getElementById('sec-bono-beca');
+    const info = document.getElementById('bono-beca-info');
 
     if (!bb.length) {
       sec.style.display = '';
@@ -1480,15 +1279,185 @@ async function cargarBonoBeca(idPaciente) {
 
     sec.style.display = '';
     info.innerHTML = bb.map(b => {
-      const restantes = b.sesiones_total - b.sesiones_consumidas;
-      const cls       = b.tipo === 'BECA' ? 'alert-green' : 'alert-blue';
-      const vence     = b.fecha_vencimiento ? ` · vence ${new Date(b.fecha_vencimiento).toLocaleDateString('es-ES',{day:'numeric',month:'short',year:'numeric'})}` : '';
+      const restantes = (b.sesiones_totales || 0) - (b.sesiones_consumidas || 0);
+      const cls  = b.tipo === 'BECA' ? 'alert-green' : 'alert-blue';
+      const vence = b.fecha_fin ? ` · vence ${new Date(b.fecha_fin + 'T12:00:00').toLocaleDateString('es-ES',{day:'numeric',month:'short',year:'numeric'})}` : '';
       return `<div class="alert ${cls}" style="margin-bottom:6px">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
-        <span><strong>${b.tipo}</strong> · ${ESPECIALIDADES[b.especialidad]||b.especialidad} · Quedan <strong>${restantes} de ${b.sesiones_total}</strong> sesiones${vence}</span>
+        <span><strong>${b.tipo}</strong> · Quedan <strong>${restantes} de ${b.sesiones_totales}</strong> sesiones${vence}</span>
       </div>`;
     }).join('');
-  } catch { /* silencioso */ }
+  } catch (e) { console.error('cargarBonoBeca:', e); }
+}
+
+/* ═══════════════════════════════════════════
+   NUEVO BONO — PANEL INLINE
+═══════════════════════════════════════════ */
+function toggleNuevoBono() {
+  const panel = document.getElementById('nuevo-bono-panel');
+  if (panel.style.display !== 'none') { cerrarNuevoBono(); return; }
+  cerrarNuevaBeca(); // no los dos a la vez
+  panel.style.display = '';
+  // Prerellenar con fecha de hoy
+  const hoy = fmtISO(new Date());
+  document.getElementById('bono-fecha-inicio').value = hoy;
+  actualizarResumenBono();
+  document.getElementById('bono-fecha-inicio').focus();
+}
+
+function cerrarNuevoBono() {
+  document.getElementById('nuevo-bono-panel').style.display = 'none';
+  document.getElementById('bono-fecha-inicio').value = '';
+  document.getElementById('bono-resumen').style.display = 'none';
+}
+
+function actualizarResumenBono() {
+  const fi = document.getElementById('bono-fecha-inicio').value;
+  const res = document.getElementById('bono-resumen');
+  if (!fi) { res.style.display = 'none'; return; }
+  const inicio = new Date(fi + 'T12:00:00');
+  const fin    = new Date(inicio);
+  fin.setMonth(fin.getMonth() + 2);
+  const fmtOpts = { day:'numeric', month:'long', year:'numeric' };
+  res.innerHTML = `
+    <strong>Inicio:</strong> ${inicio.toLocaleDateString('es-ES', fmtOpts)}<br>
+    <strong>Vence:</strong> ${fin.toLocaleDateString('es-ES', fmtOpts)}<br>
+    <strong>Sesiones:</strong> 4 &nbsp;·&nbsp; <strong>Importe:</strong> 180 €
+  `;
+  res.style.display = '';
+}
+
+async function crearNuevoBono() {
+  if (!G.modalPacId) { toast('Selecciona un paciente primero', true); return; }
+  const fi = document.getElementById('bono-fecha-inicio').value;
+  if (!fi) { toast('Indica la fecha de inicio del bono', true); return; }
+
+  const inicio = new Date(fi + 'T12:00:00');
+  const fin    = new Date(inicio);
+  fin.setMonth(fin.getMonth() + 2);
+
+  // Generar ID
+  const ultimos = await supaGet(`bonos_becas?select=id&order=id.desc&limit=1`);
+  const ultId   = ultimos[0]?.id || 'BB-000';
+  const num     = parseInt(ultId.replace(/\D/g,'') || '0') + 1;
+  const nuevoId = `BB-${String(num).padStart(3,'0')}`;
+
+  const btn = document.getElementById('btn-crear-bono');
+  btn.disabled = true;
+  btn.innerHTML = `<div class="btn-spinner"></div> Creando…`;
+
+  try {
+    await supaPost('bonos_becas', {
+      id:                  nuevoId,
+      id_paciente:         G.modalPacId,
+      tipo:                'BONO',
+      sesiones_totales:    4,
+      sesiones_consumidas: 0,
+      fecha_inicio:        fi,
+      fecha_fin:           fmtISO(fin),
+      anticipo_recibido:   'No',
+      cobrado:             'No',
+      importe_total:       180
+    });
+    toast(`Bono ${nuevoId} creado`, false, true);
+    cerrarNuevoBono();
+    // Auto-seleccionar modalidad BONO en la cita
+    const pillBono = document.querySelector('.pill[data-mod="BONO"]');
+    if (pillBono) selPill(pillBono, 'BONO', 45);
+    // Recargar bloque bono/beca
+    await cargarBonoBeca(G.modalPacId);
+  } catch (err) {
+    console.error('Error creando bono:', err);
+    toast('Error al crear el bono', true);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg> Crear bono`;
+  }
+}
+
+/* ═══════════════════════════════════════════
+   NUEVA BECA — PANEL INLINE
+═══════════════════════════════════════════ */
+function toggleNuevaBeca() {
+  const panel = document.getElementById('nuevo-beca-panel');
+  if (panel.style.display !== 'none') { cerrarNuevaBeca(); return; }
+  cerrarNuevoBono(); // no los dos a la vez
+  panel.style.display = '';
+  const hoy = fmtISO(new Date());
+  document.getElementById('beca-fecha-inicio').value = hoy;
+  actualizarResumenBeca();
+  document.getElementById('beca-fecha-inicio').focus();
+}
+
+function cerrarNuevaBeca() {
+  document.getElementById('nuevo-beca-panel').style.display = 'none';
+  document.getElementById('beca-fecha-inicio').value = '';
+  document.getElementById('beca-resumen').style.display = 'none';
+}
+
+function actualizarResumenBeca() {
+  const fi = document.getElementById('beca-fecha-inicio').value;
+  const res = document.getElementById('beca-resumen');
+  if (!fi) { res.style.display = 'none'; return; }
+  const inicio = new Date(fi + 'T12:00:00');
+  const anio   = inicio.getFullYear();
+  const fin    = new Date(anio, 11, 31); // 31 dic año en curso
+  const fmtOpts = { day:'numeric', month:'long', year:'numeric' };
+  res.innerHTML = `
+    <strong>Inicio:</strong> ${inicio.toLocaleDateString('es-ES', fmtOpts)}<br>
+    <strong>Vence:</strong> 31 de diciembre de ${anio}<br>
+    <strong>Sesiones:</strong> 20 &nbsp;·&nbsp; <strong>45 € / sesión</strong><br>
+    <strong>Neto:</strong> 900 € &nbsp;·&nbsp; <strong>Fee gestión:</strong> 13 € &nbsp;·&nbsp; <strong>Bruto:</strong> 913 €
+  `;
+  res.style.display = '';
+}
+
+async function crearNuevaBeca() {
+  if (!G.modalPacId) { toast('Selecciona un paciente primero', true); return; }
+  const fi = document.getElementById('beca-fecha-inicio').value;
+  if (!fi) { toast('Indica la fecha de inicio de la beca', true); return; }
+
+  const inicio = new Date(fi + 'T12:00:00');
+  const anio   = inicio.getFullYear();
+  const fin    = `${anio}-12-31`;
+
+  // Generar ID
+  const ultimos = await supaGet(`bonos_becas?select=id&order=id.desc&limit=1`);
+  const ultId   = ultimos[0]?.id || 'BB-000';
+  const num     = parseInt(ultId.replace(/\D/g,'') || '0') + 1;
+  const nuevoId = `BB-${String(num).padStart(3,'0')}`;
+
+  const btn = document.getElementById('btn-crear-beca');
+  btn.disabled = true;
+  btn.innerHTML = `<div class="btn-spinner"></div> Creando…`;
+
+  try {
+    await supaPost('bonos_becas', {
+      id:                  nuevoId,
+      id_paciente:         G.modalPacId,
+      tipo:                'BECA',
+      sesiones_totales:    20,
+      sesiones_consumidas: 0,
+      fecha_inicio:        fi,
+      fecha_fin:           fin,
+      anticipo_recibido:   'No',
+      cobrado:             'No',
+      importe_total:       913
+    });
+    toast(`Beca ${nuevoId} creada`, false, true);
+    cerrarNuevaBeca();
+    // Auto-seleccionar modalidad BECA en la cita
+    const pillBeca = document.querySelector('.pill[data-mod="BECA"]');
+    if (pillBeca) selPill(pillBeca, 'BECA', 45);
+    // Recargar bloque bono/beca
+    await cargarBonoBeca(G.modalPacId);
+  } catch (err) {
+    console.error('Error creando beca:', err);
+    toast('Error al crear la beca', true);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg> Crear beca`;
+  }
 }
 
 /* ═══════════════════════════════════════════
@@ -1599,11 +1568,11 @@ async function guardarCita() {
   // Forma cobro
   const formaCobro = document.querySelector('input[name="forma-cobro"]:checked')?.value || null;
 
-  // Bono/beca asociado (el primero activo que coincide con especialidad, si existe)
+  // Bono/beca asociado (el primero vigente que coincide con el tipo de modalidad)
   const especialidad = document.getElementById('sel-especialidad').value;
   let idBonoBeca = null;
   if (['BECA','BONO'].includes(G.modalMod) && G.bonosBecas?.length) {
-    const match = G.bonosBecas.find(b => b.tipo === G.modalMod && b.especialidad === especialidad);
+    const match = G.bonosBecas.find(b => b.tipo === G.modalMod);
     if (match) idBonoBeca = match.id;
   }
 
