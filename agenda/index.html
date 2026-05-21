@@ -1312,11 +1312,11 @@ function toggleNuevoBono() {
   panel.style.display = '';
   const hoy = fmtISO(new Date());
   document.getElementById('bono-fecha-inicio').value = hoy;
-  // Fin por defecto: +2 meses
   const fin = new Date(hoy + 'T12:00:00');
   fin.setMonth(fin.getMonth() + 2);
   document.getElementById('bono-fecha-fin').value = fmtISO(fin);
   actualizarResumenBono();
+  setTimeout(() => panel.scrollIntoView({ behavior:'smooth', block:'nearest' }), 50);
   document.getElementById('bono-fecha-inicio').focus();
 }
 
@@ -1405,6 +1405,7 @@ function toggleNuevaBeca() {
   document.getElementById('beca-fecha-inicio').value = hoy;
   document.getElementById('beca-fecha-fin').value    = `${anio}-12-31`;
   actualizarResumenBeca();
+  setTimeout(() => panel.scrollIntoView({ behavior:'smooth', block:'nearest' }), 50);
   document.getElementById('beca-fecha-inicio').focus();
 }
 
