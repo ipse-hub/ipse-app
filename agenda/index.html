@@ -966,13 +966,11 @@ async function cargarCitas() {
   } else if (G.vista === 'dia') {
     desde = hasta = fmtISO(G.diaActual);
   } else {
-    // mes: primer día visible (lunes de la semana del 1) al último día visible
+    // mes: siempre 6 semanas fijas (42 dias desde el primer lunes)
     const primerDia = new Date(G.mesActual.getFullYear(), G.mesActual.getMonth(), 1);
-    const ultimoDia = new Date(G.mesActual.getFullYear(), G.mesActual.getMonth() + 1, 0);
-    desde = fmtISO(getLunes(primerDia));
-    const finSem = getLunes(ultimoDia);
-    finSem.setDate(finSem.getDate() + 6);
-    hasta = fmtISO(finSem);
+    const inicioMes = getLunes(primerDia);
+    desde = fmtISO(inicioMes);
+    hasta = fmtISO(addDias(inicioMes, 41));
   }
 
   try {
@@ -1130,17 +1128,13 @@ function renderMes(citas, pacMap) {
   const primerDia = new Date(m.getFullYear(), m.getMonth(), 1);
   const ultimoDia = new Date(m.getFullYear(), m.getMonth() + 1, 0);
 
+  // Siempre 6 semanas fijas (42 días desde el primer lunes visible)
   let cursor = getLunes(primerDia);
-  const fin  = getLunes(ultimoDia);
-  fin.setDate(fin.getDate() + 6);
+  const fin  = addDias(cursor, 41); // 6 semanas x 7 dias - 1
 
   const body = document.getElementById('mes-body');
   body.innerHTML = '';
-
-  // Calcular semanas y distribuir filas uniformemente
-  const _inicio = getLunes(primerDia);
-  const _nSem = Math.round((fin.getTime() - _inicio.getTime()) / (7*86400000)) + 1;
-  body.style.gridTemplateRows = `repeat(${_nSem}, 1fr)`;
+  body.style.gridTemplateRows = 'repeat(6, 1fr)';
 
   while (cursor <= fin) {
     const fecha    = new Date(cursor);
