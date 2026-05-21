@@ -118,9 +118,9 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);fon
 .mes-header-dias{display:grid;grid-template-columns:repeat(7,1fr);background:var(--azul);color:#fff;flex-shrink:0}
 .mes-hd{padding:8px 4px;text-align:center;font-size:11px;font-weight:600;letter-spacing:.04em;border-right:1px solid rgba(255,255,255,.1)}
 .mes-hd:last-child{border-right:none}
-.mes-scroll{flex:1;overflow:hidden;min-height:0;display:flex;flex-direction:column}
-.mes-body{display:grid;grid-template-columns:repeat(7,1fr);flex:1;min-height:0}
-.mes-dia{border-right:1px solid var(--border);border-bottom:1px solid var(--border);padding:4px;cursor:pointer;transition:background .1s;overflow:hidden}
+.mes-scroll{flex:1;overflow:hidden;min-height:0;display:flex;flex-direction:column;align-items:stretch}
+.mes-body{display:grid;grid-template-columns:repeat(7,1fr);flex:1;min-height:0;align-content:stretch}
+.mes-dia{border-right:1px solid var(--border);border-bottom:1px solid var(--border);padding:4px;cursor:pointer;transition:background .1s;overflow:hidden;display:flex;flex-direction:column}
 .mes-dia:hover{background:rgba(16,6,159,.03)}
 .mes-dia:nth-child(7n){border-right:none}
 .mes-dia.otro-mes{background:rgba(0,0,0,.015)}
