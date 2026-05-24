@@ -416,14 +416,6 @@ select.fc{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.o
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
             + Nuevo paciente
           </button>
-          <button class="btn-alta bono" id="btn-nuevo-bono" disabled onclick="toggleNuevoBono()">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
-            + Nuevo bono
-          </button>
-          <button class="btn-alta beca" id="btn-nuevo-beca" disabled onclick="toggleNuevaBeca()">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
-            + Nueva beca
-          </button>
         </div>
 
         <!-- PANEL NUEVO PACIENTE -->
@@ -458,7 +450,13 @@ select.fc{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.o
           </div>
         </div>
 
-        <!-- PANEL NUEVO BONO -->
+      </div>
+
+      <!-- BONO / BECA ACTIVO -->
+      <div class="section" id="sec-bono-beca" style="display:none">
+        <div class="sec-label">Bono / Beca</div>
+        <div id="bono-beca-info"></div>
+        <!-- PANEL NUEVO BONO (movido aquí) -->
         <div class="nuevo-bono-panel" id="nuevo-bono-panel" style="display:none">
           <div class="nuevo-bona-titulo">Alta de bono · 4 sesiones / 180 €</div>
           <div class="form-row">
@@ -480,8 +478,7 @@ select.fc{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.o
             </button>
           </div>
         </div>
-
-        <!-- PANEL NUEVA BECA -->
+        <!-- PANEL NUEVA BECA (movido aquí) -->
         <div class="nuevo-beca-panel" id="nuevo-beca-panel" style="display:none">
           <div class="nuevo-beca-titulo">Alta de beca · 20 sesiones / 913 €</div>
           <div class="form-row">
@@ -503,12 +500,6 @@ select.fc{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.o
             </button>
           </div>
         </div>
-      </div>
-
-      <!-- BONO / BECA ACTIVO -->
-      <div class="section" id="sec-bono-beca" style="display:none">
-        <div class="sec-label">Bono / Beca</div>
-        <div id="bono-beca-info"></div>
       </div>
 
       <!-- SESIÓN -->
@@ -552,7 +543,7 @@ select.fc{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.o
           <span class="pill" onclick="selPill(this,'BECA',45)"       data-mod="BECA">Beca</span>
           <span class="pill" onclick="selPill(this,'BONO',45)"       data-mod="BONO">Bono</span>
           <span class="pill" onclick="selPill(this,'PRIVADO_SU',50)" data-mod="PRIVADO_SU">Privado S/U</span>
-          <span class="pill" onclick="selPill(this,'ADECCO',40)"     data-mod="ADECCO">Adecco</span>
+          <span class="pill" onclick="selPill(this,'ADECCO',50)"     data-mod="ADECCO">Adecco</span>
           <span class="pill" onclick="selPill(this,'OTROS',null)"    data-mod="OTROS">Otros</span>
         </div>
         <div class="fg">
@@ -694,7 +685,7 @@ const SUPA_URL = 'https://vlplebjqhufbzfncrawf.supabase.co';
 const SUPA_KEY = 'sb_publishable_Qt604gEH_lfx89HkPElvcA_OGwbKeDO';
 
 const ESPECIALIDADES = { PSI:'Psicología', LOG:'Logopedia', TO:'Ter. Ocupacional', PDG:'Pedagogía' };
-const PRECIOS_MOD    = { BECA:45, BONO:45, PRIVADO_SU:50, ADECCO:40 };
+const PRECIOS_MOD    = { BECA:45, BONO:45, PRIVADO_SU:50, ADECCO:50 };
 const COLORES_PRO    = {};
 const PALETA = ['#10069F','#00B5E2','#97D700','#F59E0B','#DA291C','#7C3AED'];
 
@@ -1218,8 +1209,6 @@ function abrirModalEditar(cita, pac) {
   if (pac) {
     G.modalPacId = pac.id;
     mostrarPacienteSeleccionado(pac);
-    document.getElementById('btn-nuevo-bono').disabled = false;
-    document.getElementById('btn-nuevo-beca').disabled = false;
   }
 
   document.getElementById('inp-fecha').value = cita.fecha;
@@ -1285,8 +1274,6 @@ function resetModal() {
   cerrarNuevoPaciente();
   cerrarNuevoBono();
   cerrarNuevaBeca();
-  document.getElementById('btn-nuevo-bono').disabled = true;
-  document.getElementById('btn-nuevo-beca').disabled = true;
 
   document.querySelectorAll('.pill').forEach(p => p.classList.remove('sel','sel-beca','sel-otros'));
   document.getElementById('precio-box').style.display = '';
@@ -1447,8 +1434,6 @@ function seleccionarPaciente(pac) {
   document.getElementById('pac-input').value = '';
   document.getElementById('pac-dropdown').classList.remove('visible');
   mostrarPacienteSeleccionado(pac);
-  document.getElementById('btn-nuevo-bono').disabled = false;
-  document.getElementById('btn-nuevo-beca').disabled = false;
   cargarBonoBeca(pac.id);
 }
 
@@ -1467,8 +1452,6 @@ function limpiarPaciente() {
   document.getElementById('bono-beca-info').innerHTML = '';
   document.getElementById('pac-input').value = '';
   document.getElementById('pac-input').focus();
-  document.getElementById('btn-nuevo-bono').disabled = true;
-  document.getElementById('btn-nuevo-beca').disabled = true;
   cerrarNuevoBono();
   cerrarNuevaBeca();
 }
@@ -1487,10 +1470,23 @@ async function cargarBonoBeca(idPaciente) {
     const info = document.getElementById('bono-beca-info');
 
     sec.style.display = '';
+    cerrarNuevoBono();
+    cerrarNuevaBeca();
+
     if (!bb.length) {
-      info.innerHTML = `<div class="alert alert-neutral">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-        Sin bono ni beca activa
+      info.innerHTML = `<div class="alert alert-amber" style="margin-bottom:10px">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        <span>Este paciente no tiene bono ni beca activa. ¿Deseas crear uno?</span>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn-alta bono" onclick="toggleNuevoBono()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+          Nuevo bono
+        </button>
+        <button class="btn-alta beca" onclick="toggleNuevaBeca()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+          Nueva beca
+        </button>
       </div>`;
       return;
     }
@@ -1768,9 +1764,13 @@ async function guardarCita() {
   const formaCobro  = document.querySelector('input[name="forma-cobro"]:checked')?.value || null;
   const especialidad = document.getElementById('sel-especialidad').value;
   let idBonoBeca = null;
-  if (['BECA','BONO'].includes(G.modalMod) && G.bonosBecas?.length) {
-    const match = G.bonosBecas.find(b => b.tipo === G.modalMod);
-    if (match) idBonoBeca = match.id;
+  if (['BECA','BONO'].includes(G.modalMod)) {
+    const match = G.bonosBecas?.find(b => b.tipo === G.modalMod);
+    if (!match) {
+      toast(`Este paciente no tiene ${G.modalMod === 'BECA' ? 'beca' : 'bono'} activo. Crea uno primero desde el bloque Bono / Beca.`, true);
+      return;
+    }
+    idBonoBeca = match.id;
   }
 
   const payload = {
