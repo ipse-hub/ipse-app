@@ -453,6 +453,54 @@ select.fc{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.o
 
       </div>
 
+      <!-- ALTA RÁPIDA BONO/BECA (se muestra desde col derecha al clicar pill sin activo) -->
+      <div id="bb-alta-wrap" style="display:none">
+        <!-- PANEL NUEVO BONO -->
+        <div class="nuevo-bono-panel" id="nuevo-bono-panel" style="display:none">
+          <div class="nuevo-bona-titulo">Alta de bono · 4 sesiones / 180 €</div>
+          <div class="form-row">
+            <div class="fg">
+              <label class="fl">Fecha de inicio *</label>
+              <input type="date" class="fc" id="bono-fecha-inicio" oninput="actualizarResumenBono()">
+            </div>
+            <div class="fg">
+              <label class="fl">Fecha de fin *</label>
+              <input type="date" class="fc" id="bono-fecha-fin" oninput="actualizarResumenBono()">
+            </div>
+          </div>
+          <div class="bb-resumen" id="bono-resumen" style="display:none"></div>
+          <div class="np-footer">
+            <button class="btn btn-secondary" style="font-size:12px;padding:7px 14px" onclick="cerrarNuevoBono()">Cancelar</button>
+            <button class="btn btn-primary" style="font-size:12px;padding:7px 14px;background:#0369a1" id="btn-crear-bono" onclick="crearNuevoBono()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+              Crear bono
+            </button>
+          </div>
+        </div>
+        <!-- PANEL NUEVA BECA -->
+        <div class="nuevo-beca-panel" id="nuevo-beca-panel" style="display:none">
+          <div class="nuevo-beca-titulo">Alta de beca · 20 sesiones / 913 €</div>
+          <div class="form-row">
+            <div class="fg">
+              <label class="fl">Fecha de inicio *</label>
+              <input type="date" class="fc" id="beca-fecha-inicio" oninput="actualizarResumenBeca()">
+            </div>
+            <div class="fg">
+              <label class="fl">Fecha de fin *</label>
+              <input type="date" class="fc" id="beca-fecha-fin" oninput="actualizarResumenBeca()">
+            </div>
+          </div>
+          <div class="bb-resumen" id="beca-resumen" style="display:none"></div>
+          <div class="np-footer">
+            <button class="btn btn-secondary" style="font-size:12px;padding:7px 14px" onclick="cerrarNuevaBeca()">Cancelar</button>
+            <button class="btn btn-primary" style="font-size:12px;padding:7px 14px;background:#2d6a00" id="btn-crear-beca" onclick="crearNuevaBeca()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+              Crear beca
+            </button>
+          </div>
+        </div>
+      </div>
+
       <!-- SESIÓN -->
       <div class="section">
         <div class="sec-label">Sesión</div>
@@ -509,64 +557,20 @@ select.fc{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.o
             <option value="30">30 € / sesión</option>
           </select>
         </div>
-        <!-- AVISO + ALTA BONO/BECA (aparece al clicar Bono/Beca sin activo) -->
+        <!-- AVISO sin bono/beca activo — aparece al clicar Bono/Beca sin tenerlo -->
         <div id="bb-aviso-wrap" style="display:none;margin-top:10px">
-          <div class="alert alert-amber" style="margin-bottom:10px">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-            <span id="bb-aviso-texto">Este paciente no tiene bono activo. ¿Deseas crear uno?</span>
+          <div class="alert alert-amber" style="margin-bottom:8px">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;width:14px;height:14px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            <span id="bb-aviso-texto">Sin bono activo. ¿Deseas crear uno?</span>
           </div>
-          <div style="display:flex;gap:8px;flex-wrap:wrap" id="bb-aviso-botones">
+          <div style="display:flex;gap:8px">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
               Nuevo bono
             </button>
-            <button class="btn-alta beca" id="bb-btn-nueva-beca" onclick="toggleNuevaBeca()">
+            <button class="btn-alta beca" id="bb-btn-nueva-beca" onclick="mostrarPanelBeca()">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
               Nueva beca
             </button>
-          </div>
-          <!-- PANEL NUEVO BONO -->
-          <div class="nuevo-bono-panel" id="nuevo-bono-panel" style="display:none;margin-top:10px">
-            <div class="nuevo-bona-titulo">Alta de bono · 4 sesiones / 180 €</div>
-            <div class="form-row">
-              <div class="fg">
-                <label class="fl">Fecha de inicio *</label>
-                <input type="date" class="fc" id="bono-fecha-inicio" oninput="actualizarResumenBono()">
-              </div>
-              <div class="fg">
-                <label class="fl">Fecha de fin *</label>
-                <input type="date" class="fc" id="bono-fecha-fin" oninput="actualizarResumenBono()">
-              </div>
-            </div>
-            <div class="bb-resumen" id="bono-resumen" style="display:none"></div>
-            <div class="np-footer">
-              <button class="btn btn-secondary" style="font-size:12px;padding:7px 14px" onclick="cerrarNuevoBono()">Cancelar</button>
-              <button class="btn btn-primary" style="font-size:12px;padding:7px 14px;background:#0369a1" id="btn-crear-bono" onclick="crearNuevoBono()">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
-                Crear bono
-              </button>
-            </div>
-          </div>
-          <!-- PANEL NUEVA BECA -->
-          <div class="nuevo-beca-panel" id="nuevo-beca-panel" style="display:none;margin-top:10px">
-            <div class="nuevo-beca-titulo">Alta de beca · 20 sesiones / 913 €</div>
-            <div class="form-row">
-              <div class="fg">
-                <label class="fl">Fecha de inicio *</label>
-                <input type="date" class="fc" id="beca-fecha-inicio" oninput="actualizarResumenBeca()">
-              </div>
-              <div class="fg">
-                <label class="fl">Fecha de fin *</label>
-                <input type="date" class="fc" id="beca-fecha-fin" oninput="actualizarResumenBeca()">
-              </div>
-            </div>
-            <div class="bb-resumen" id="beca-resumen" style="display:none"></div>
-            <div class="np-footer">
-              <button class="btn btn-secondary" style="font-size:12px;padding:7px 14px" onclick="cerrarNuevaBeca()">Cancelar</button>
-              <button class="btn btn-primary" style="font-size:12px;padding:7px 14px;background:#2d6a00" id="btn-crear-beca" onclick="crearNuevaBeca()">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
-                Crear beca
-              </button>
-            </div>
           </div>
         </div>
       </div>
@@ -1461,6 +1465,7 @@ function limpiarPaciente() {
   document.getElementById('pac-input').focus();
   cerrarNuevoBono();
   cerrarNuevaBeca();
+  ocultarAvisoBonoBeca();
 }
 
 /* ═══════════════════════════════════════════
@@ -1476,26 +1481,37 @@ async function cargarBonoBeca(idPaciente) {
   } catch (e) { console.error('cargarBonoBeca:', e); }
 }
 
+/* Muestra aviso en col derecha + abre panel en col izquierda */
 function mostrarAvisoBonoBeca(tipo) {
-  // tipo: 'BONO' o 'BECA'
-  const wrap = document.getElementById('bb-aviso-wrap');
+  const wrap  = document.getElementById('bb-aviso-wrap');
   const texto = document.getElementById('bb-aviso-texto');
   wrap.style.display = '';
-  cerrarNuevoBono();
-  cerrarNuevaBeca();
   if (tipo === 'BONO') {
-    texto.textContent = 'Este paciente no tiene bono activo. ¿Deseas crear uno?';
-    toggleNuevoBono();
+    texto.textContent = 'Sin bono activo. ¿Deseas crear uno?';
+    mostrarPanelBono();
   } else {
-    texto.textContent = 'Este paciente no tiene beca activa. ¿Deseas crear una?';
-    toggleNuevaBeca();
+    texto.textContent = 'Sin beca activa. ¿Deseas crear una?';
+    mostrarPanelBeca();
   }
 }
 
 function ocultarAvisoBonoBeca() {
   document.getElementById('bb-aviso-wrap').style.display = 'none';
+  document.getElementById('bb-alta-wrap').style.display  = 'none';
   cerrarNuevoBono();
   cerrarNuevaBeca();
+}
+
+function mostrarPanelBono() {
+  document.getElementById('bb-alta-wrap').style.display = '';
+  cerrarNuevaBeca();
+  toggleNuevoBono();
+}
+
+function mostrarPanelBeca() {
+  document.getElementById('bb-alta-wrap').style.display = '';
+  cerrarNuevoBono();
+  toggleNuevaBeca();
 }
 
 /* ═══════════════════════════════════════════
@@ -1660,18 +1676,15 @@ async function crearNuevaBeca() {
    MODALIDAD PAGO / PRECIO
 ═══════════════════════════════════════════ */
 function selPill(el, mod, precio, skipFocus) {
-  // Si se clica Bono o Beca, comprobar si hay activo antes de seleccionar
+  // Para Bono/Beca: verificar si hay activo antes de seleccionar
   if (['BECA','BONO'].includes(mod)) {
     const match = G.bonosBecas?.find(b => b.tipo === mod);
     if (!match) {
-      // No hay activo: mostrar aviso + panel de alta, NO seleccionar la pill
       mostrarAvisoBonoBeca(mod);
-      return;
+      return; // no seleccionar la pill hasta que haya activo
     }
-    // Hay activo: ocultar aviso por si estaba visible
     ocultarAvisoBonoBeca();
   } else {
-    // Otra modalidad: ocultar aviso si estaba visible
     ocultarAvisoBonoBeca();
   }
 
@@ -1776,7 +1789,7 @@ async function guardarCita() {
   let idBonoBeca = null;
   if (['BECA','BONO'].includes(G.modalMod)) {
     const match = G.bonosBecas?.find(b => b.tipo === G.modalMod);
-    if (!match) { toast(`Selecciona o crea un ${G.modalMod === 'BECA' ? 'beca' : 'bono'} activo antes de guardar`, true); return; }
+    if (!match) { toast(`Crea un ${G.modalMod === 'BECA' ? 'beca' : 'bono'} activo antes de guardar`, true); return; }
     idBonoBeca = match.id;
   }
 
