@@ -5,1026 +5,1304 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>IPSE · Gestión</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-/* ── Variables ── */
 :root {
-  --azul:    #10069F;
-  --azul-dk: #0b0478;
-  --cyan:    #00B5E2;
-  --rojo:    #DA291C;
-  --verde:   #97D700;
-  --amber:   #F59E0B;
-  --naranja: #C06519;
-  --bg:      #F4F5F9;
-  --surface: #FFFFFF;
-  --border:  #E2E4EE;
-  --text:    #1A1B2E;
-  --muted:   #6B7280;
-  --shadow:  0 2px 8px rgba(16,6,159,.08);
-  --radius:  12px;
-  --sidebar-w: 220px;
-  --topbar-h:  52px;
+  --azul:       #10069F;
+  --azul-light: #3428C0;
+  --azul-pale:  #E8E6F8;
+  --cyan:       #00B5E2;
+  --cyan-pale:  #E0F5FB;
+  --verde:      #97D700;
+  --verde-dark: #5A8000;
+  --verde-pale: #EDF7CC;
+  --rojo:       #DA291C;
+  --rojo-pale:  #FCE8E6;
+  --amber:      #F59E0B;
+  --amber-pale: #FEF3C7;
+  --ink:        #1A1F35;
+  --ink-light:  #3A4060;
+  --ink-muted:  #6B7490;
+  --border:     #E4E8F0;
+  --cream:      #F2F4F8;
+  --white:      #FFFFFF;
+  --shadow:     0 2px 10px rgba(16,6,159,.07);
+  --shadow-lg:  0 8px 28px rgba(16,6,159,.13);
+  --radius:     10px;
 }
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden}
+body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--ink);font-size:13px;display:flex;flex-direction:column}
 
-* { box-sizing: border-box; margin: 0; padding: 0; }
+/* ── TOPBAR ── */
+.topbar{background:var(--azul);color:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 20px;height:46px;flex-shrink:0;box-shadow:0 2px 12px rgba(16,6,159,.3);z-index:10;position:relative}
+.topbar-logo{font-size:15px;font-weight:700;letter-spacing:.5px;display:flex;align-items:center;gap:8px;text-decoration:none;color:#fff}
+.topbar-logo span{color:var(--cyan)}
+.topbar-app{font-size:11px;color:rgba(255,255,255,.6);margin-left:4px;font-weight:400}
+.topbar-right{display:flex;align-items:center;gap:8px}
+.topbar-nombre{font-size:12px;opacity:.7;font-weight:500}
+.avatar{width:28px;height:28px;border-radius:50%;background:var(--cyan);color:var(--azul);font-weight:700;font-size:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-family:'DM Mono',monospace}
+.topbar-btn{background:rgba(255,255,255,.15);border:none;color:#fff;border-radius:6px;padding:4px 10px;cursor:pointer;font-size:12px;font-family:inherit;font-weight:500;transition:background .15s;display:flex;align-items:center;gap:5px}
+.topbar-btn:hover{background:rgba(255,255,255,.25)}
+.topbar-btn svg{width:13px;height:13px}
+.topbar-back{background:rgba(255,255,255,.12);border:none;color:rgba(255,255,255,.8);border-radius:6px;padding:4px 10px;cursor:pointer;font-size:12px;font-family:inherit;font-weight:500;transition:all .15s;text-decoration:none;display:flex;align-items:center;gap:5px}
+.topbar-back:hover{background:rgba(255,255,255,.22);color:#fff}
+.topbar-back svg{width:13px;height:13px}
 
-body {
-  font-family: 'DM Sans', sans-serif;
-  background: var(--bg);
-  color: var(--text);
-  font-size: 14px;
-  height: 100vh;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-}
+/* ── LAYOUT ── */
+.app-body{display:flex;flex:1;min-height:0;overflow:hidden}
 
-/* ══════════════════════════════
-   TOPBAR
-══════════════════════════════ */
-.topbar {
-  height: var(--topbar-h);
-  background: var(--azul);
-  color: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 20px 0 0;
-  flex-shrink: 0;
-  box-shadow: 0 2px 12px rgba(16,6,159,.3);
-  z-index: 100;
-}
+/* ── SIDEBAR ── */
+.sidebar{width:200px;background:var(--white);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0}
+.sidebar-section{padding:14px 12px 6px}
+.sidebar-section-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-muted);margin-bottom:8px;padding:0 6px}
+.nav-item{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:500;color:var(--ink-muted);transition:all .15s;margin-bottom:2px;user-select:none}
+.nav-item:hover{background:var(--cream);color:var(--ink)}
+.nav-item.active{background:var(--azul-pale);color:var(--azul);font-weight:700}
+.nav-item svg{width:16px;height:16px;flex-shrink:0;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.nav-badge{margin-left:auto;background:var(--rojo);color:#fff;border-radius:99px;padding:1px 7px;font-size:10px;font-weight:700}
+.sidebar-footer{margin-top:auto;padding:14px 12px;border-top:1px solid var(--border)}
 
-.topbar-left {
-  display: flex;
-  align-items: center;
-  height: 100%;
-}
+/* ── MAIN ── */
+.main{flex:1;min-width:0;overflow:hidden;display:flex;flex-direction:column}
 
-.topbar-logo {
-  width: var(--sidebar-w);
-  height: 100%;
-  display: flex;
-  align-items: center;
-  padding: 0 20px;
-  gap: 10px;
-  border-right: 1px solid rgba(255,255,255,.12);
-  flex-shrink: 0;
-}
+/* ── MÓDULOS ── */
+.modulo{display:none;flex:1;min-height:0;flex-direction:column}
+.modulo.active{display:flex}
 
-.topbar-logo-mark {
-  width: 28px;
-  height: 28px;
-  background: rgba(255,255,255,.15);
-  border-radius: 7px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-.topbar-logo-mark svg { width: 15px; height: 15px; stroke: #fff; }
+/* ── LISTA PACIENTES ── */
+.lista-wrap{flex:1;min-height:0;display:flex;flex-direction:column;padding:16px 20px}
+.lista-toolbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-shrink:0;flex-wrap:wrap}
+.search-input{padding:7px 12px 7px 34px;border:1px solid var(--border);border-radius:8px;font-family:inherit;font-size:13px;background:var(--white);color:var(--ink);outline:none;width:260px;transition:border-color .2s;position:relative}
+.search-input:focus{border-color:var(--azul)}
+.search-wrap{position:relative;flex-shrink:0}
+.search-wrap svg{position:absolute;left:10px;top:50%;transform:translateY(-50%);width:15px;height:15px;stroke:var(--ink-muted);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;pointer-events:none}
+.filter-select{padding:7px 10px;border:1px solid var(--border);border-radius:8px;font-family:inherit;font-size:12px;background:var(--white);color:var(--ink);outline:none;cursor:pointer}
+.filter-select:focus{border-color:var(--azul)}
+.lista-count{font-size:12px;color:var(--ink-muted);margin-left:auto}
+.table-wrap{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;flex:1;min-height:0;display:flex;flex-direction:column;box-shadow:var(--shadow)}
+.data-table{width:100%;border-collapse:collapse;font-size:13px}
+.data-table thead{position:sticky;top:0;z-index:2}
+.data-table th{padding:10px 14px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-muted);background:var(--cream);border-bottom:1px solid var(--border);font-weight:600;white-space:nowrap;user-select:none;cursor:pointer}
+.data-table th:hover{color:var(--azul)}
+.data-table td{padding:10px 14px;border-bottom:1px solid var(--border);color:var(--ink-light)}
+.data-table tr:last-child td{border-bottom:none}
+.data-table tbody tr{cursor:pointer;transition:background .1s}
+.data-table tbody tr:hover td{background:var(--cream)}
+.table-scroll{flex:1;overflow-y:auto;min-height:0}
+td.strong{color:var(--ink);font-weight:600}
+td.mono{font-family:'DM Mono',monospace;font-size:12px;color:var(--azul)}
+td.muted{color:var(--ink-muted);font-size:12px}
+.badge{display:inline-flex;align-items:center;gap:3px;padding:2px 7px;border-radius:99px;font-size:11px;font-weight:600;white-space:nowrap}
+.badge-ok{background:var(--verde-pale);color:var(--verde-dark)}
+.badge-warn{background:var(--amber-pale);color:#92400E}
+.badge-err{background:var(--rojo-pale);color:#991B1B}
+.badge-info{background:var(--azul-pale);color:var(--azul)}
+.badge-cyan{background:var(--cyan-pale);color:#075985}
+.badge-muted{background:var(--cream);color:var(--ink-muted);border:1px solid var(--border)}
+.table-footer{padding:9px 14px;border-top:1px solid var(--border);font-size:12px;color:var(--ink-muted);background:var(--cream);flex-shrink:0}
+.empty-state{text-align:center;padding:48px 20px;color:var(--ink-muted);font-size:14px}
+.empty-state svg{width:40px;height:40px;stroke:var(--border);fill:none;stroke-width:1.5;margin-bottom:12px;display:block;margin-left:auto;margin-right:auto}
 
-.topbar-logo-text {
-  font-size: 15px;
-  font-weight: 700;
-  letter-spacing: -.3px;
-  line-height: 1.1;
-}
-.topbar-logo-text span { color: var(--cyan); font-weight: 400; font-size: 11px; display: block; letter-spacing: .2px; opacity: .8; }
+/* ── FICHA 360 ── */
+.p360-wrap{flex:1;min-height:0;overflow-y:auto;padding:16px 20px}
+.p360-topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-shrink:0}
+.btn-back{display:inline-flex;align-items:center;gap:6px;background:none;border:1px solid var(--border);border-radius:7px;padding:6px 12px;font-size:12px;color:var(--ink-muted);cursor:pointer;font-family:inherit;transition:all .15s}
+.btn-back:hover{background:var(--cream);color:var(--ink)}
+.btn-back svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 13px;border-radius:8px;border:1px solid var(--border);font-size:12px;font-weight:500;cursor:pointer;font-family:inherit;transition:all .15s}
+.btn svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.btn-sec{background:var(--white);color:var(--ink-light)}
+.btn-sec:hover{background:var(--cream)}
+.btn-pri{background:var(--azul);color:#fff;border-color:var(--azul)}
+.btn-pri:hover{background:var(--azul-light)}
 
-.topbar-breadcrumb {
-  padding: 0 20px;
-  font-size: 13px;
-  font-weight: 500;
-  opacity: .7;
-  letter-spacing: -.1px;
-}
-.topbar-breadcrumb b { opacity: 1; color: #fff; font-weight: 600; }
+/* Header ficha */
+.p360-hdr{background:var(--white);border:1px solid var(--border);border-radius:12px;padding:16px 20px;display:flex;align-items:flex-start;gap:14px;margin-bottom:12px;box-shadow:var(--shadow)}
+.p360-avatar{width:52px;height:52px;background:var(--azul-pale);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:700;color:var(--azul);flex-shrink:0;font-family:'DM Mono',monospace}
+.p360-hinfo{flex:1;min-width:0}
+.p360-hname{font-size:18px;font-weight:700;color:var(--ink);line-height:1.2}
+.p360-hid{font-family:'DM Mono',monospace;font-size:13px;font-weight:600;color:var(--azul);background:var(--azul-pale);padding:2px 8px;border-radius:5px;display:inline-block;margin-top:4px}
+.p360-hmeta{font-size:12px;color:var(--ink-muted);margin-top:3px}
+.p360-hcontact{display:flex;gap:16px;margin-top:7px;flex-wrap:wrap}
+.p360-hci{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--ink-light)}
+.p360-hci svg{width:13px;height:13px;stroke:var(--ink-muted);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+.p360-hci a{color:var(--azul);text-decoration:none;font-weight:500}
+.p360-hci a:hover{text-decoration:underline}
+.p360-hbadges{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+.p360-hactions{display:flex;gap:8px;flex-shrink:0;align-items:flex-start}
 
-.topbar-right {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
+/* Pestañas */
+.p360-tabs{display:flex;gap:2px;background:var(--cream);border-radius:10px;padding:3px;border:1px solid var(--border);margin-bottom:14px}
+.p360-tab{flex:1;text-align:center;padding:7px 8px;border-radius:8px;font-size:12px;font-weight:500;cursor:pointer;color:var(--ink-muted);transition:all .15s;white-space:nowrap}
+.p360-tab:hover{color:var(--ink)}
+.p360-tab.active{background:var(--white);color:var(--azul);font-weight:700;box-shadow:0 1px 4px rgba(16,6,159,.1)}
 
-.topbar-nombre {
-  font-size: 13px;
-  opacity: .75;
-  font-weight: 500;
-}
+.p360-panel{display:none}
+.p360-panel.active{display:block}
 
-.avatar {
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  background: var(--cyan);
-  color: var(--azul);
-  font-weight: 700;
-  font-size: 11px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  letter-spacing: -.3px;
-}
+/* Cards */
+.card{background:var(--white);border:1px solid var(--border);border-radius:12px;padding:16px 18px;margin-bottom:10px;box-shadow:var(--shadow)}
+.card-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--azul);margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.card-title-right{font-weight:400;font-size:10px;color:var(--ink-muted)}
 
-.btn-topbar {
-  background: rgba(255,255,255,.13);
-  border: none;
-  color: #fff;
-  border-radius: 7px;
-  padding: 5px 11px;
-  cursor: pointer;
-  font-size: 12px;
-  font-family: inherit;
-  font-weight: 500;
-  transition: background .15s;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  text-decoration: none;
-}
-.btn-topbar:hover { background: rgba(255,255,255,.23); }
-.btn-topbar svg { width: 13px; height: 13px; flex-shrink: 0; }
+/* KPIs */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:10px}
+.kpi{background:var(--white);border:1px solid var(--border);border-radius:10px;padding:12px 14px}
+.kpi-l{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-muted);margin-bottom:4px}
+.kpi-v{font-size:22px;font-weight:300;color:var(--ink);line-height:1;letter-spacing:-.3px}
+.kpi-s{font-size:11px;color:var(--ink-muted);margin-top:2px}
+.kpi.green .kpi-v{color:var(--verde-dark)}
+.kpi.red .kpi-v{color:var(--rojo)}
+.kpi.blue .kpi-v{color:var(--azul)}
 
-/* ══════════════════════════════
-   LAYOUT PRINCIPAL
-══════════════════════════════ */
-.app-body {
-  flex: 1;
-  display: flex;
-  overflow: hidden;
-}
+/* Grid de campos */
+.fg2{display:grid;grid-template-columns:1fr 1fr;gap:10px 24px}
+.fg3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px 24px}
+.fl{font-size:11px;color:var(--ink-muted);margin-bottom:2px}
+.fv{font-size:13px;color:var(--ink);font-weight:500}
+.fv.empty{color:var(--ink-muted);font-style:italic;font-weight:400}
+.fv.mono{font-family:'DM Mono',monospace;color:var(--azul);font-size:12px}
+.fv a{color:var(--azul);text-decoration:none;font-weight:500}
+.fv a:hover{text-decoration:underline}
 
-/* ══════════════════════════════
-   SIDEBAR
-══════════════════════════════ */
-.sidebar {
-  width: var(--sidebar-w);
-  background: var(--surface);
-  border-right: 1px solid var(--border);
-  display: flex;
-  flex-direction: column;
-  flex-shrink: 0;
-  overflow-y: auto;
-  overflow-x: hidden;
-}
+/* Grid 2col resumen */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
 
-.sidebar-section {
-  padding: 16px 12px 8px;
-}
+/* Próximas citas */
+.prox-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)}
+.prox-row:last-child{border-bottom:none}
+.prox-date{background:var(--azul-pale);color:var(--azul);border-radius:8px;padding:6px 10px;text-align:center;min-width:46px;flex-shrink:0}
+.prox-d{font-size:18px;font-weight:700;line-height:1;font-family:'DM Mono',monospace}
+.prox-m{font-size:10px;text-transform:uppercase;letter-spacing:.05em}
+.prox-info{flex:1}
+.prox-ter{font-size:13px;font-weight:500;color:var(--ink)}
+.prox-esp{font-size:11px;color:var(--ink-muted)}
+.prox-hora{font-size:12px;font-weight:600;color:var(--azul);font-family:'DM Mono',monospace}
 
-.sidebar-label {
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: .08em;
-  text-transform: uppercase;
-  color: var(--muted);
-  padding: 0 8px;
-  margin-bottom: 4px;
-}
+/* Bono/beca barra */
+.bono-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)}
+.bono-row:last-child{border-bottom:none}
+.bono-info{flex:1;min-width:0}
+.bono-name{font-size:13px;font-weight:600;color:var(--ink)}
+.bono-det{font-size:11px;color:var(--ink-muted);margin-top:2px;font-family:'DM Mono',monospace}
+.bono-bar-wrap{width:90px;flex-shrink:0;text-align:right}
+.bono-frac{font-size:11px;color:var(--ink-muted);margin-bottom:4px}
+.bono-bar{height:5px;background:var(--border);border-radius:99px;overflow:hidden}
+.bono-fill{height:100%;border-radius:99px}
+.bono-fill.ok{background:var(--verde-dark)}
+.bono-fill.warn{background:var(--amber)}
+.bono-fill.danger{background:var(--rojo)}
 
-.nav-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 10px;
-  border-radius: 8px;
-  cursor: pointer;
-  color: var(--muted);
-  font-size: 13.5px;
-  font-weight: 500;
-  transition: all .15s;
-  border: none;
-  background: none;
-  width: 100%;
-  text-align: left;
-  position: relative;
-  text-decoration: none;
-}
+/* Cobros */
+.cobro-r{display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border)}
+.cobro-r:last-child{border-bottom:none}
+.cobro-lbl{font-size:13px;color:var(--ink)}
+.cobro-meta{font-size:11px;color:var(--ink-muted)}
+.cobro-imp{font-size:14px;font-weight:600;color:var(--verde-dark);font-family:'DM Mono',monospace}
 
-.nav-item:hover {
-  background: var(--bg);
-  color: var(--text);
-}
+/* Saldo financiero */
+.fin-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border)}
+.fin-row:last-child{border-bottom:none}
+.fin-lbl{font-size:12px;color:var(--ink-muted)}
+.fin-val{font-size:14px;font-weight:600;font-family:'DM Mono',monospace;color:var(--ink)}
+.fin-val.ok{color:var(--verde-dark)}
+.fin-val.warn{color:var(--rojo)}
 
-.nav-item.active {
-  background: #EEF0FF;
-  color: var(--azul);
-  font-weight: 600;
-}
+/* Sesiones historial */
+.ses-row{display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)}
+.ses-row:last-child{border-bottom:none}
+.ses-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:4px}
+.ses-dot.hecha{background:var(--verde-dark)}
+.ses-dot.noshow{background:var(--rojo)}
+.ses-dot.prog{background:var(--azul)}
+.ses-dot.cancelada{background:var(--ink-muted)}
+.ses-body{flex:1;min-width:0}
+.ses-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.ses-fecha{font-size:12px;color:var(--ink-muted);font-family:'DM Mono',monospace;white-space:nowrap}
+.ses-ter{font-size:12px;font-weight:500;color:var(--ink)}
+.ses-esp{font-size:11px;color:var(--ink-muted);background:var(--cream);padding:1px 6px;border-radius:4px}
+.ses-nota{font-size:12px;color:var(--ink-light);margin-top:3px;line-height:1.4}
+.ses-estado{font-size:11px;font-weight:600;margin-left:auto;flex-shrink:0;white-space:nowrap}
+.es-hecha{color:var(--verde-dark)}
+.es-noshow{color:var(--rojo)}
+.es-prog{color:var(--azul)}
+.es-cancelada{color:var(--ink-muted)}
 
-.nav-item.active .nav-icon { opacity: 1; }
+/* Consentimiento */
+.consent-row{display:flex;align-items:center;gap:8px}
+.consent-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
 
-.nav-icon {
-  width: 32px;
-  height: 32px;
-  border-radius: 7px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  transition: all .15s;
-}
-.nav-icon svg { width: 16px; height: 16px; }
+/* Spinner */
+.spinner{display:inline-block;width:16px;height:16px;border:2px solid var(--border);border-top-color:var(--azul);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-row{text-align:center;padding:24px;color:var(--ink-muted)}
 
-.nav-item:not(.active) .nav-icon {
-  background: transparent;
-}
-.nav-item.active .nav-icon {
-  background: rgba(16,6,159,.1);
-}
-.nav-item.active .nav-icon svg { stroke: var(--azul); }
+/* Toast */
+.toast{position:fixed;bottom:20px;right:20px;background:var(--ink);color:#fff;border-radius:8px;padding:10px 16px;font-size:13px;font-weight:500;z-index:9999;opacity:0;transition:opacity .25s;pointer-events:none;max-width:320px}
+.toast.show{opacity:1}
+.toast.err{background:var(--rojo)}
+.toast.ok{background:var(--verde-dark)}
 
-/* Colores de iconos por módulo */
-.nav-item[data-modulo="agenda"]       .nav-icon svg { stroke: var(--azul); }
-.nav-item[data-modulo="pacientes"]    .nav-icon svg { stroke: #059669; }
-.nav-item[data-modulo="bonos-becas"]  .nav-icon svg { stroke: #7c3aed; }
-.nav-item[data-modulo="cobros"]       .nav-icon svg { stroke: var(--amber); }
-.nav-item[data-modulo="finanzas"]     .nav-icon svg { stroke: var(--naranja); }
-.nav-item[data-modulo="profesionales"].nav-icon svg { stroke: var(--cyan); }
-.nav-item[data-modulo="config"]       .nav-icon svg { stroke: var(--muted); }
-
-.nav-badge {
-  margin-left: auto;
-  background: var(--rojo);
-  color: #fff;
-  font-size: 10px;
-  font-weight: 700;
-  padding: 1px 6px;
-  border-radius: 20px;
-  line-height: 1.6;
-}
-
-.sidebar-divider {
-  height: 1px;
-  background: var(--border);
-  margin: 8px 12px;
-}
-
-.sidebar-footer {
-  margin-top: auto;
-  padding: 12px;
-  border-top: 1px solid var(--border);
-}
-
-.sidebar-version {
-  font-size: 10px;
-  color: var(--muted);
-  font-family: 'DM Mono', monospace;
-  padding: 0 8px;
-  opacity: .6;
-}
-
-/* ══════════════════════════════
-   ÁREA DE CONTENIDO
-══════════════════════════════ */
-.main {
-  flex: 1;
-  overflow-y: auto;
-  overflow-x: hidden;
-  display: flex;
-  flex-direction: column;
-}
-
-/* Cada módulo ocupa el main */
-.modulo {
-  display: none;
-  flex: 1;
-  flex-direction: column;
-}
-.modulo.visible {
-  display: flex;
-}
-
-/* ── Cabecera de módulo ── */
-.modulo-header {
-  padding: 24px 28px 20px;
-  border-bottom: 1px solid var(--border);
-  background: var(--surface);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  flex-shrink: 0;
-}
-
-.modulo-titulo {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.modulo-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-.modulo-icon svg { width: 20px; height: 20px; }
-
-.modulo-titulo h1 {
-  font-size: 20px;
-  font-weight: 700;
-  letter-spacing: -.4px;
-  color: var(--text);
-}
-.modulo-titulo p {
-  font-size: 12px;
-  color: var(--muted);
-  font-weight: 400;
-  margin-top: 1px;
-}
-
-/* ── Contenido placeholder ── */
-.modulo-body {
-  flex: 1;
-  padding: 28px;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-/* ── Placeholder genérico ── */
-.placeholder-wrap {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 16px;
-  padding: 60px 20px;
-  text-align: center;
-}
-
-.placeholder-icon {
-  width: 72px;
-  height: 72px;
-  border-radius: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 4px;
-}
-.placeholder-icon svg { width: 36px; height: 36px; }
-
-.placeholder-wrap h2 {
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--text);
-  letter-spacing: -.3px;
-}
-
-.placeholder-wrap p {
-  font-size: 13.5px;
-  color: var(--muted);
-  max-width: 420px;
-  line-height: 1.6;
-}
-
-.placeholder-tag {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: 20px;
-  padding: 5px 14px;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--muted);
-  font-family: 'DM Mono', monospace;
-  margin-top: 4px;
-}
-.placeholder-tag::before {
-  content: '';
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--amber);
-}
-
-/* ══════════════════════════════
-   MÓDULO AGENDA (iframe)
-══════════════════════════════ */
-#mod-agenda .modulo-body {
-  padding: 0;
-}
-.agenda-iframe-wrap {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-}
-.agenda-iframe-wrap iframe {
-  flex: 1;
-  border: none;
-  width: 100%;
-  height: 100%;
-}
-
-/* ══════════════════════════════
-   COLORES POR MÓDULO
-══════════════════════════════ */
-#mod-agenda      .modulo-icon { background: #EEF0FF; }
-#mod-agenda      .modulo-icon svg { stroke: var(--azul); }
-#mod-agenda      .modulo-titulo h1 { color: var(--azul); }
-#mod-agenda      .placeholder-icon { background: #EEF0FF; }
-#mod-agenda      .placeholder-icon svg { stroke: var(--azul); }
-
-#mod-pacientes   .modulo-icon { background: #ECFDF5; }
-#mod-pacientes   .modulo-icon svg { stroke: #059669; }
-#mod-pacientes   .modulo-titulo h1 { color: #059669; }
-#mod-pacientes   .placeholder-icon { background: #ECFDF5; }
-#mod-pacientes   .placeholder-icon svg { stroke: #059669; }
-
-#mod-bonos-becas .modulo-icon { background: #F5F3FF; }
-#mod-bonos-becas .modulo-icon svg { stroke: #7c3aed; }
-#mod-bonos-becas .modulo-titulo h1 { color: #7c3aed; }
-#mod-bonos-becas .placeholder-icon { background: #F5F3FF; }
-#mod-bonos-becas .placeholder-icon svg { stroke: #7c3aed; }
-
-#mod-cobros      .modulo-icon { background: #FFFBEB; }
-#mod-cobros      .modulo-icon svg { stroke: #D97706; }
-#mod-cobros      .modulo-titulo h1 { color: #D97706; }
-#mod-cobros      .placeholder-icon { background: #FFFBEB; }
-#mod-cobros      .placeholder-icon svg { stroke: #D97706; }
-
-#mod-finanzas    .modulo-icon { background: #FFF7ED; }
-#mod-finanzas    .modulo-icon svg { stroke: var(--naranja); }
-#mod-finanzas    .modulo-titulo h1 { color: var(--naranja); }
-#mod-finanzas    .placeholder-icon { background: #FFF7ED; }
-#mod-finanzas    .placeholder-icon svg { stroke: var(--naranja); }
-
-#mod-profesionales .modulo-icon { background: #E0F7FF; }
-#mod-profesionales .modulo-icon svg { stroke: #0284C7; }
-#mod-profesionales .modulo-titulo h1 { color: #0284C7; }
-#mod-profesionales .placeholder-icon { background: #E0F7FF; }
-#mod-profesionales .placeholder-icon svg { stroke: #0284C7; }
-
-#mod-config      .modulo-icon { background: var(--bg); }
-#mod-config      .modulo-icon svg { stroke: var(--muted); }
-#mod-config      .placeholder-icon { background: var(--bg); }
-#mod-config      .placeholder-icon svg { stroke: var(--muted); }
-
-/* ══════════════════════════════
-   CARGANDO
-══════════════════════════════ */
-#loading-overlay {
-  position: fixed;
-  inset: 0;
-  background: var(--bg);
-  z-index: 999;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  font-size: 14px;
-  color: var(--muted);
-  font-weight: 500;
-}
-.spinner {
-  width: 20px; height: 20px;
-  border: 2.5px solid var(--border);
-  border-top-color: var(--azul);
-  border-radius: 50%;
-  animation: spin .65s linear infinite;
-}
-@keyframes spin { to { transform: rotate(360deg); } }
-
-/* ══════════════════════════════
-   RESPONSIVE — sidebar colapsado
-══════════════════════════════ */
-@media (max-width: 768px) {
-  :root { --sidebar-w: 52px; }
-  .nav-item span { display: none; }
-  .nav-badge { display: none; }
-  .sidebar-label { display: none; }
-  .sidebar-divider { margin: 8px 6px; }
-  .topbar-logo-text { display: none; }
-  .topbar-breadcrumb { display: none; }
-  .sidebar-version { display: none; }
-  .topbar-nombre { display: none; }
-  .nav-item { justify-content: center; padding: 8px; }
-  .nav-icon { width: 36px; height: 36px; }
-}
+/* Modal edición */
+.overlay{display:none;position:fixed;inset:0;background:rgba(16,6,159,.18);z-index:500;align-items:center;justify-content:center;backdrop-filter:blur(3px)}
+.overlay.open{display:flex}
+.modal{background:var(--white);border-radius:16px;box-shadow:var(--shadow-lg);width:680px;max-width:96vw;max-height:92vh;overflow-y:auto;animation:modalIn .2s ease}
+@keyframes modalIn{from{transform:translateY(16px) scale(.97);opacity:0}to{transform:none;opacity:1}}
+.modal-hdr{padding:20px 24px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.modal-title{font-size:16px;font-weight:700}
+.modal-close{width:28px;height:28px;border-radius:50%;background:var(--cream);border:none;cursor:pointer;font-size:16px;color:var(--ink-muted);display:flex;align-items:center;justify-content:center;transition:background .15s}
+.modal-close:hover{background:var(--border)}
+.modal-body{padding:20px 24px}
+.modal-footer{padding:14px 24px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end}
+.form-group{margin-bottom:14px}
+.form-group label{display:block;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-muted);margin-bottom:5px}
+.form-input,.form-select{width:100%;padding:8px 11px;border:1px solid var(--border);border-radius:8px;font-family:inherit;font-size:13px;color:var(--ink);background:var(--white);outline:none;transition:border-color .2s}
+.form-input:focus,.form-select:focus{border-color:var(--azul)}
+.form-grid2{display:grid;grid-template-columns:1fr 1fr;gap:0 16px}
+.form-section{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--azul);padding:10px 0 6px;border-bottom:1px solid var(--border);margin-bottom:14px}
 </style>
 </head>
 <body>
 
-<!-- OVERLAY CARGA -->
-<div id="loading-overlay">
-  <div class="spinner"></div>
-  Cargando…
-</div>
-
-<!-- ══ TOPBAR ══ -->
+<!-- ── TOPBAR ── -->
 <div class="topbar">
-  <div class="topbar-left">
-    <div class="topbar-logo">
-      <div class="topbar-logo-mark">
-        <svg viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
-          <polyline points="9 22 9 12 15 12 15 22"/>
-        </svg>
-      </div>
-      <div class="topbar-logo-text">
-        IPSE
-        <span>Gestión</span>
-      </div>
-    </div>
-    <div class="topbar-breadcrumb" id="topbar-breadcrumb">
-      <b id="topbar-modulo-nombre">—</b>
-    </div>
+  <div style="display:flex;align-items:center;gap:12px">
+    <a class="topbar-back" href="../hub.html">
+      <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+      Hub
+    </a>
+    <div class="topbar-logo">IPSE<span>·</span><span class="topbar-app">Gestión</span></div>
   </div>
   <div class="topbar-right">
     <span class="topbar-nombre" id="topbar-nombre"></span>
-    <div class="avatar" id="topbar-avatar">–</div>
-    <a class="btn-topbar" href="../hub.html">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <polyline points="15 18 9 12 15 6"/>
-      </svg>
-      Hub
-    </a>
-    <button class="btn-topbar" onclick="cerrarSesion()">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-        <polyline points="16 17 21 12 16 7"/>
-        <line x1="21" y1="12" x2="9" y2="12"/>
-      </svg>
+    <div class="avatar" id="topbar-avatar">—</div>
+    <button class="topbar-btn" onclick="cerrarSesion()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
       Salir
     </button>
   </div>
 </div>
 
-<!-- ══ CUERPO ══ -->
+<!-- ── APP BODY ── -->
 <div class="app-body">
 
-  <!-- ── SIDEBAR ── -->
-  <nav class="sidebar">
-
+  <!-- SIDEBAR -->
+  <div class="sidebar">
     <div class="sidebar-section">
-      <div class="sidebar-label">Principal</div>
-
-      <button class="nav-item active" data-modulo="agenda" onclick="navegarA('agenda')">
-        <div class="nav-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="3" y="4" width="18" height="18" rx="2"/>
-            <line x1="16" y1="2" x2="16" y2="6"/>
-            <line x1="8" y1="2" x2="8" y2="6"/>
-            <line x1="3" y1="10" x2="21" y2="10"/>
-            <line x1="8" y1="14" x2="8.01" y2="14"/>
-            <line x1="12" y1="14" x2="12.01" y2="14"/>
-            <line x1="16" y1="14" x2="16.01" y2="14"/>
-          </svg>
-        </div>
-        <span>Agenda</span>
-      </button>
-
-      <button class="nav-item" data-modulo="pacientes" onclick="navegarA('pacientes')">
-        <div class="nav-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-            <circle cx="9" cy="7" r="4"/>
-            <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
-            <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-          </svg>
-        </div>
-        <span>Pacientes</span>
-        <!-- badge de pendientes se inyecta por JS -->
-      </button>
-
+      <div class="sidebar-section-title">Módulos</div>
+      <div class="nav-item active" id="nav-pacientes" onclick="navTo('pacientes')">
+        <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        Pacientes
+      </div>
+      <div class="nav-item" id="nav-bonos" onclick="navTo('bonos')" style="opacity:.45;pointer-events:none">
+        <svg viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+        Bonos y becas
+      </div>
+      <div class="nav-item" id="nav-cobros" onclick="navTo('cobros')" style="opacity:.45;pointer-events:none">
+        <svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+        Cobros
+      </div>
     </div>
-
-    <div class="sidebar-divider"></div>
-
-    <div class="sidebar-section">
-      <div class="sidebar-label">Económico</div>
-
-      <button class="nav-item" data-modulo="bonos-becas" onclick="navegarA('bonos-becas')">
-        <div class="nav-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
-            <line x1="1" y1="10" x2="23" y2="10"/>
-          </svg>
-        </div>
-        <span>Bonos y becas</span>
-      </button>
-
-      <button class="nav-item" data-modulo="cobros" onclick="navegarA('cobros')">
-        <div class="nav-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="12" y1="1" x2="12" y2="23"/>
-            <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
-          </svg>
-        </div>
-        <span>Cobros</span>
-      </button>
-
-      <button class="nav-item" data-modulo="finanzas" onclick="navegarA('finanzas')">
-        <div class="nav-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
-          </svg>
-        </div>
-        <span>Finanzas</span>
-      </button>
-
-    </div>
-
-    <div class="sidebar-divider"></div>
-
-    <div class="sidebar-section">
-      <div class="sidebar-label">Administración</div>
-
-      <button class="nav-item" data-modulo="profesionales" onclick="navegarA('profesionales')">
-        <div class="nav-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-            <circle cx="12" cy="7" r="4"/>
-          </svg>
-        </div>
-        <span>Profesionales</span>
-      </button>
-
-      <button class="nav-item" data-modulo="config" onclick="navegarA('config')">
-        <div class="nav-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="3"/>
-            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
-          </svg>
-        </div>
-        <span>Configuración</span>
-      </button>
-
-    </div>
-
     <div class="sidebar-footer">
-      <div class="sidebar-version">v2.0 · IPSE Gestión</div>
+      <div style="font-size:10px;color:var(--ink-muted)">IPSE · Gestión v0.1</div>
     </div>
-  </nav>
+  </div>
 
-  <!-- ══ MAIN ══ -->
-  <main class="main">
+  <!-- MAIN -->
+  <div class="main">
 
-    <!-- ─── AGENDA ─── -->
-    <div class="modulo visible" id="mod-agenda">
-      <div class="modulo-header">
-        <div class="modulo-titulo">
-          <div class="modulo-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="3" y="4" width="18" height="18" rx="2"/>
-              <line x1="16" y1="2" x2="16" y2="6"/>
-              <line x1="8" y1="2" x2="8" y2="6"/>
-              <line x1="3" y1="10" x2="21" y2="10"/>
-            </svg>
-          </div>
-          <div>
-            <h1>Agenda</h1>
-            <p>Vista completa — todos los profesionales · solo tú puedes eliminar citas</p>
-          </div>
-        </div>
-      </div>
-      <div class="modulo-body">
-        <div class="placeholder-wrap">
-          <div class="placeholder-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="3" y="4" width="18" height="18" rx="2"/>
-              <line x1="16" y1="2" x2="16" y2="6"/>
-              <line x1="8" y1="2" x2="8" y2="6"/>
-              <line x1="3" y1="10" x2="21" y2="10"/>
-              <line x1="8" y1="14" x2="8.01" y2="14"/>
-              <line x1="12" y1="14" x2="12.01" y2="14"/>
-              <line x1="16" y1="14" x2="16.01" y2="14"/>
-            </svg>
-          </div>
-          <h2>Agenda de administración</h2>
-          <p>Vista completa de todas las citas de todos los profesionales, con capacidad de eliminar. Será un clon de la agenda de las profesionales integrado aquí.</p>
-          <div class="placeholder-tag">Próximamente</div>
-        </div>
-      </div>
-    </div>
+    <!-- ── MÓDULO PACIENTES ── -->
+    <div class="modulo active" id="mod-pacientes">
 
-    <!-- ─── PACIENTES ─── -->
-    <div class="modulo" id="mod-pacientes">
-      <div class="modulo-header">
-        <div class="modulo-titulo">
-          <div class="modulo-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-              <circle cx="9" cy="7" r="4"/>
-              <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
-              <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-            </svg>
+      <!-- LISTA -->
+      <div class="lista-wrap" id="pac-lista-view">
+        <div class="lista-toolbar">
+          <div class="search-wrap">
+            <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input class="search-input" id="pac-search" type="text" placeholder="Nombre, apellidos o INI-NNNN…" oninput="filtrarPacientes()" autocomplete="off">
           </div>
-          <div>
-            <h1>Pacientes</h1>
-            <p>Fichas 360° · datos incompletos · contacto con tutores</p>
-          </div>
+          <select class="filter-select" id="pac-filtro-estado" onchange="filtrarPacientes()">
+            <option value="">Todos</option>
+            <option value="Si">Activos</option>
+            <option value="No">Baja</option>
+          </select>
+          <select class="filter-select" id="pac-filtro-incompleto" onchange="filtrarPacientes()">
+            <option value="">Completos e incompletos</option>
+            <option value="incompleto">Ficha incompleta</option>
+          </select>
+          <span class="lista-count" id="pac-count"></span>
         </div>
-      </div>
-      <div class="modulo-body">
-        <div class="placeholder-wrap">
-          <div class="placeholder-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-              <circle cx="9" cy="7" r="4"/>
-              <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
-              <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-            </svg>
-          </div>
-          <h2>Fichas de pacientes</h2>
-          <p>Lista completa con filtro de incompletos, ficha 360° con todas las pestañas, y botón de solicitud de datos por WhatsApp al tutor.</p>
-          <div class="placeholder-tag">En construcción</div>
-        </div>
-      </div>
-    </div>
 
-    <!-- ─── BONOS Y BECAS ─── -->
-    <div class="modulo" id="mod-bonos-becas">
-      <div class="modulo-header">
-        <div class="modulo-titulo">
-          <div class="modulo-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
-              <line x1="1" y1="10" x2="23" y2="10"/>
-            </svg>
+        <div class="table-wrap">
+          <div class="table-scroll">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Expediente</th>
+                  <th>Nombre</th>
+                  <th>Edad</th>
+                  <th>Estado</th>
+                  <th>Bono / beca</th>
+                  <th>Próx. cita</th>
+                  <th>Ficha</th>
+                </tr>
+              </thead>
+              <tbody id="pac-tbody"></tbody>
+            </table>
           </div>
-          <div>
-            <h1>Bonos y becas</h1>
-            <p>Estado de cada bono y beca · cobros · sesiones consumidas</p>
-          </div>
+          <div class="table-footer" id="pac-footer"></div>
         </div>
       </div>
-      <div class="modulo-body">
-        <div class="placeholder-wrap">
-          <div class="placeholder-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
-              <line x1="1" y1="10" x2="23" y2="10"/>
-            </svg>
-          </div>
-          <h2>Bonos y becas</h2>
-          <p>Listado con sesiones consumidas vs. totales, vencimiento, estado de cobro. Desde aquí se marca anticipo recibido, cobrado, y se ajustan fechas.</p>
-          <div class="placeholder-tag">Próximamente</div>
-        </div>
-      </div>
-    </div>
 
-    <!-- ─── COBROS ─── -->
-    <div class="modulo" id="mod-cobros">
-      <div class="modulo-header">
-        <div class="modulo-titulo">
-          <div class="modulo-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-              <line x1="12" y1="1" x2="12" y2="23"/>
-              <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
-            </svg>
+      <!-- FICHA 360 -->
+      <div style="display:none;flex:1;min-height:0;overflow-y:auto;" id="pac-360-view">
+        <div class="p360-wrap">
+          <div class="p360-topbar">
+            <button class="btn-back" onclick="volverLista()">
+              <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+              Volver a pacientes
+            </button>
+            <div style="display:flex;gap:8px" id="p360-topbar-btns">
+              <button class="btn btn-sec" onclick="abrirEdicion()">
+                <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                Editar
+              </button>
+            </div>
           </div>
-          <div>
-            <h1>Cobros</h1>
-            <p>Registro completo · conciliación bancaria · métodos de pago</p>
-          </div>
-        </div>
-      </div>
-      <div class="modulo-body">
-        <div class="placeholder-wrap">
-          <div class="placeholder-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-              <line x1="12" y1="1" x2="12" y2="23"/>
-              <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
-            </svg>
-          </div>
-          <h2>Registro de cobros</h2>
-          <p>Todos los cobros de <code>cobros_v2</code> con filtros por fecha, profesional y método. Conciliación bancaria y registro de cobros manuales.</p>
-          <div class="placeholder-tag">Próximamente</div>
-        </div>
-      </div>
-    </div>
 
-    <!-- ─── FINANZAS ─── -->
-    <div class="modulo" id="mod-finanzas">
-      <div class="modulo-header">
-        <div class="modulo-titulo">
-          <div class="modulo-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-              <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
-            </svg>
+          <!-- Cabecera -->
+          <div class="p360-hdr" id="p360-hdr">
+            <div class="p360-avatar" id="p360-avatar">—</div>
+            <div class="p360-hinfo">
+              <div class="p360-hname" id="p360-nombre">—</div>
+              <div class="p360-hid" id="p360-id">—</div>
+              <div class="p360-hmeta" id="p360-meta"></div>
+              <div class="p360-hcontact" id="p360-contact"></div>
+              <div class="p360-hbadges" id="p360-badges"></div>
+            </div>
+            <div class="p360-hactions" id="p360-hactions"></div>
           </div>
-          <div>
-            <h1>Finanzas</h1>
-            <p>P&amp;L · costes fijos · previsión de ingresos · gráficos</p>
-          </div>
-        </div>
-      </div>
-      <div class="modulo-body">
-        <div class="placeholder-wrap">
-          <div class="placeholder-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-              <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
-            </svg>
-          </div>
-          <h2>Panel financiero</h2>
-          <p>P&amp;L mensual, costes fijos, resultado neto. Previsión de ingresos basada en bonos y becas activos. Gráficos de evolución.</p>
-          <div class="placeholder-tag">Próximamente</div>
-        </div>
-      </div>
-    </div>
 
-    <!-- ─── PROFESIONALES ─── -->
-    <div class="modulo" id="mod-profesionales">
-      <div class="modulo-header">
-        <div class="modulo-titulo">
-          <div class="modulo-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-              <circle cx="12" cy="7" r="4"/>
-            </svg>
+          <!-- Pestañas -->
+          <div class="p360-tabs" id="p360-tabs">
+            <div class="p360-tab active" onclick="p360Tab('resumen',this)">Resumen</div>
+            <div class="p360-tab" onclick="p360Tab('datos',this)">Datos</div>
+            <div class="p360-tab" onclick="p360Tab('clinica',this)">Clínica</div>
+            <div class="p360-tab" onclick="p360Tab('historial',this)">Historial</div>
+            <!-- Económico: solo admin, se añade dinámicamente -->
           </div>
-          <div>
-            <h1>Profesionales</h1>
-            <p>Alta y baja · acceso admin · colores · reseteo de contraseña</p>
+
+          <!-- PANEL: RESUMEN -->
+          <div class="p360-panel active" id="p360-resumen">
+            <div class="kpis" id="p360-kpis">
+              <div class="kpi"><div class="kpi-l">Sesiones</div><div class="kpi-v" id="kpi-ses">—</div><div class="kpi-s">realizadas</div></div>
+              <div class="kpi green"><div class="kpi-l">Asistencia</div><div class="kpi-v" id="kpi-asist">—</div><div class="kpi-s" id="kpi-asist-s"></div></div>
+              <div class="kpi red"><div class="kpi-l">No-shows</div><div class="kpi-v" id="kpi-noshow">—</div><div class="kpi-s">acumulados</div></div>
+              <div class="kpi blue"><div class="kpi-l">Última sesión</div><div class="kpi-v" id="kpi-ultima" style="font-size:14px;font-weight:500;padding-top:5px">—</div><div class="kpi-s" id="kpi-ultima-s"></div></div>
+            </div>
+            <div class="grid2">
+              <div class="card" style="margin-bottom:0" id="p360-bonobeca-card">
+                <div class="card-title" id="p360-bonobeca-title">Bono / Beca activo</div>
+                <div id="p360-bonobeca-body"><div class="empty-state" style="padding:14px;text-align:left;color:var(--ink-muted);font-size:12px">Sin bono ni beca activa</div></div>
+              </div>
+              <!-- Saldo: solo admin, se renderiza condicionalmente -->
+              <div class="card" style="margin-bottom:0" id="p360-saldo-card">
+                <div class="card-title">Saldo económico</div>
+                <div id="p360-saldo-body"><div class="loading-row"><span class="spinner"></span></div></div>
+              </div>
+            </div>
+            <div class="card" style="margin-top:10px">
+              <div class="card-title">Próximas citas</div>
+              <div id="p360-proximas"><div class="loading-row"><span class="spinner"></span></div></div>
+            </div>
           </div>
-        </div>
-      </div>
-      <div class="modulo-body">
-        <div class="placeholder-wrap">
-          <div class="placeholder-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-              <circle cx="12" cy="7" r="4"/>
-            </svg>
+
+          <!-- PANEL: DATOS -->
+          <div class="p360-panel" id="p360-datos">
+            <div class="card">
+              <div class="card-title">Identidad</div>
+              <div class="fg3" id="p360-identidad"></div>
+            </div>
+            <div class="card">
+              <div class="card-title">Datos escolares</div>
+              <div class="fg2" id="p360-escolar"></div>
+            </div>
+            <div class="card">
+              <div class="card-title">Tutor 1 <span class="card-title-right" id="p360-tutor1-label"></span></div>
+              <div class="fg3" id="p360-tutor1"></div>
+            </div>
+            <div class="card" id="p360-tutor2-card">
+              <div class="card-title">Tutor 2 <span class="card-title-right" id="p360-tutor2-label"></span></div>
+              <div class="fg3" id="p360-tutor2"></div>
+            </div>
+            <div class="card">
+              <div class="card-title">Consentimiento informado</div>
+              <div id="p360-consent"></div>
+            </div>
           </div>
-          <h2>Gestión de profesionales</h2>
-          <p>Alta de nuevas profesionales (genera invite de Supabase Auth), edición de especialidades y color de agenda, control de acceso a gestión y reseteo de contraseña.</p>
-          <div class="placeholder-tag">Próximamente</div>
+
+          <!-- PANEL: CLÍNICA -->
+          <div class="p360-panel" id="p360-clinica">
+            <div class="card">
+              <div class="card-title">Profesionales asignados</div>
+              <div class="fg2" id="p360-pros"></div>
+            </div>
+            <div class="card">
+              <div class="card-title">Ficha clínica</div>
+              <div id="p360-clinica-body"></div>
+            </div>
+            <div class="card">
+              <div class="card-title">Informes PDF
+                <button class="btn btn-sec" style="padding:3px 8px;font-size:11px" onclick="alert('Función de subida de PDFs pendiente')">
+                  <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                  Subir
+                </button>
+              </div>
+              <div id="p360-informes"><div class="empty-state" style="padding:14px;text-align:left;font-size:12px">Sin informes subidos</div></div>
+            </div>
+          </div>
+
+          <!-- PANEL: HISTORIAL -->
+          <div class="p360-panel" id="p360-historial">
+            <div class="card">
+              <div class="card-title">Diario de sesiones
+                <button class="btn btn-sec" style="padding:3px 8px;font-size:11px" onclick="descargarDiarioPDF()">
+                  <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                  PDF
+                </button>
+              </div>
+              <div id="p360-sesiones"><div class="loading-row"><span class="spinner"></span></div></div>
+            </div>
+          </div>
+
+          <!-- PANEL: ECONÓMICO (solo admin) -->
+          <div class="p360-panel" id="p360-economico" style="display:none">
+            <div class="kpis" id="p360-eco-kpis" style="grid-template-columns:repeat(3,1fr)">
+              <div class="kpi"><div class="kpi-l">Total devengado</div><div class="kpi-v" id="ekpi-dev" style="font-size:16px;font-weight:500;padding-top:4px">—</div></div>
+              <div class="kpi green"><div class="kpi-l">Cobrado</div><div class="kpi-v" id="ekpi-cob" style="font-size:16px;font-weight:500;padding-top:4px">—</div></div>
+              <div class="kpi red"><div class="kpi-l">Pendiente</div><div class="kpi-v" id="ekpi-pend" style="font-size:16px;font-weight:500;padding-top:4px">—</div></div>
+            </div>
+            <div class="card">
+              <div class="card-title">Bonos y becas</div>
+              <div id="p360-eco-bonos"><div class="loading-row"><span class="spinner"></span></div></div>
+            </div>
+            <div class="card">
+              <div class="card-title">Historial de cobros</div>
+              <div id="p360-eco-cobros"><div class="loading-row"><span class="spinner"></span></div></div>
+            </div>
+          </div>
+
         </div>
       </div>
     </div>
 
-    <!-- ─── CONFIGURACIÓN ─── -->
-    <div class="modulo" id="mod-config">
-      <div class="modulo-header">
-        <div class="modulo-titulo">
-          <div class="modulo-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="12" cy="12" r="3"/>
-              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
-            </svg>
-          </div>
-          <div>
-            <h1>Configuración</h1>
-            <p>Parámetros generales · utilidades de mantenimiento</p>
-          </div>
-        </div>
-      </div>
-      <div class="modulo-body">
-        <div class="placeholder-wrap">
-          <div class="placeholder-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="12" cy="12" r="3"/>
-              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
-            </svg>
-          </div>
-          <h2>Configuración</h2>
-          <p>Parámetros generales de la clínica: precios por defecto, fee de beca, plantillas de mensajes WhatsApp, y utilidades de mantenimiento de datos.</p>
-          <div class="placeholder-tag">Próximamente</div>
-        </div>
-      </div>
-    </div>
+  </div><!-- /main -->
+</div><!-- /app-body -->
 
-  </main>
+<!-- ── MODAL EDICIÓN PACIENTE ── -->
+<div class="overlay" id="overlay-edicion" onclick="clickOverlayEdicion(event)">
+  <div class="modal">
+    <div class="modal-hdr">
+      <div class="modal-title" id="modal-edicion-title">Editar paciente</div>
+      <button class="modal-close" onclick="cerrarEdicion()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-section">Identidad</div>
+      <div class="form-grid2">
+        <div class="form-group"><label>Nombre</label><input class="form-input" id="ed-nombre" type="text"></div>
+        <div class="form-group"><label>Apellidos</label><input class="form-input" id="ed-apellidos" type="text"></div>
+      </div>
+      <div class="form-grid2">
+        <div class="form-group"><label>Alias (agenda)</label><input class="form-input" id="ed-alias" type="text" placeholder="Nombre corto para la agenda"></div>
+        <div class="form-group"><label>Fecha de nacimiento</label><input class="form-input" id="ed-fnac" type="date"></div>
+      </div>
+      <div class="form-grid2">
+        <div class="form-group"><label>DNI / NIE del paciente</label><input class="form-input" id="ed-dni" type="text"></div>
+        <div class="form-group"><label>Estado</label>
+          <select class="form-select" id="ed-activo">
+            <option value="Si">Activo</option>
+            <option value="No">Baja</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-grid2">
+        <div class="form-group"><label>Dirección</label><input class="form-input" id="ed-direccion" type="text"></div>
+        <div class="form-group"><label>Municipio</label><input class="form-input" id="ed-municipio" type="text"></div>
+      </div>
+      <div class="form-grid2">
+        <div class="form-group"><label>Código postal</label><input class="form-input" id="ed-cp" type="text" style="width:120px"></div>
+        <div class="form-group"><label>Centro escolar</label><input class="form-input" id="ed-centro" type="text"></div>
+      </div>
+      <div class="form-group"><label>Curso escolar</label><input class="form-input" id="ed-curso" type="text" placeholder="3.º Primaria" style="width:200px"></div>
+
+      <div class="form-section">Tutor 1 / Contacto principal</div>
+      <div class="form-grid2">
+        <div class="form-group"><label>Nombre del tutor</label><input class="form-input" id="ed-t1-nombre" type="text"></div>
+        <div class="form-group"><label>DNI / NIE tutor 1</label><input class="form-input" id="ed-t1-dni" type="text"></div>
+      </div>
+      <div class="form-grid2">
+        <div class="form-group"><label>Teléfono</label><input class="form-input" id="ed-t1-tel" type="tel"></div>
+        <div class="form-group"><label>Email</label><input class="form-input" id="ed-t1-email" type="email"></div>
+      </div>
+      <div class="form-group"><label>Dirección tutor 1</label><input class="form-input" id="ed-t1-dir" type="text"></div>
+
+      <div class="form-section">Tutor 2 (opcional)</div>
+      <div class="form-grid2">
+        <div class="form-group"><label>Nombre del tutor</label><input class="form-input" id="ed-t2-nombre" type="text"></div>
+        <div class="form-group"><label>DNI / NIE tutor 2</label><input class="form-input" id="ed-t2-dni" type="text"></div>
+      </div>
+      <div class="form-grid2">
+        <div class="form-group"><label>Teléfono</label><input class="form-input" id="ed-t2-tel" type="tel"></div>
+        <div class="form-group"><label>Email</label><input class="form-input" id="ed-t2-email" type="email"></div>
+      </div>
+
+      <div class="form-section">Clínica</div>
+      <div class="form-grid2">
+        <div class="form-group"><label>Diagnóstico</label><input class="form-input" id="ed-diagnostico" type="text"></div>
+        <div class="form-group"><label>Ámbito</label>
+          <select class="form-select" id="ed-ambito">
+            <option value="">—</option>
+            <option value="salud_mental">Salud Mental</option>
+            <option value="neurologia">Neurología</option>
+            <option value="otro">Otro</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-grid2">
+        <div class="form-group"><label>Derivación</label>
+          <select class="form-select" id="ed-derivacion">
+            <option value="">—</option>
+            <option value="Si">Sí</option>
+            <option value="No">No</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Consentimiento</label>
+          <select class="form-select" id="ed-consentimiento">
+            <option value="Pendiente">Pendiente</option>
+            <option value="Firmado">Firmado</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group"><label>Alergias</label><input class="form-input" id="ed-alergias" type="text"></div>
+      <div class="form-group"><label>Notas generales</label><textarea class="form-input" id="ed-notas" rows="3" style="resize:vertical"></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-sec" onclick="cerrarEdicion()">Cancelar</button>
+      <button class="btn btn-pri" onclick="guardarEdicion()" id="btn-guardar-edicion">Guardar cambios</button>
+    </div>
+  </div>
 </div>
 
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
 <script>
-/* ─────────────────────────────────────────
-   Configuración Supabase
-───────────────────────────────────────── */
+/* ═══════════════════════════════════════════
+   CONFIGURACIÓN
+═══════════════════════════════════════════ */
 const SUPA_URL = 'https://vlplebjqhufbzfncrawf.supabase.co';
 const SUPA_KEY = 'sb_publishable_Qt604gEH_lfx89HkPElvcA_OGwbKeDO';
+const ESP_LABEL = { PSI:'Psicología', LOG:'Logopedia', TO:'Ter. Ocupacional', PDG:'Pedagogía' };
+const MESES_CORTO = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
 
-async function supaGet(endpoint, token) {
-  const res = await fetch(`${SUPA_URL}/rest/v1/${endpoint}`, {
-    headers: {
-      'apikey': SUPA_KEY,
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json'
-    }
-  });
-  if (!res.ok) throw new Error(`Supabase ${res.status}`);
-  return res.json();
-}
-
-/* ─────────────────────────────────────────
-   Navegación entre módulos
-───────────────────────────────────────── */
-const MODULOS_INFO = {
-  'agenda':        'Agenda',
-  'pacientes':     'Pacientes',
-  'bonos-becas':   'Bonos y becas',
-  'cobros':        'Cobros',
-  'finanzas':      'Finanzas',
-  'profesionales': 'Profesionales',
-  'config':        'Configuración'
+/* ═══════════════════════════════════════════
+   ESTADO GLOBAL
+═══════════════════════════════════════════ */
+let G = {
+  sesion:      null,
+  profesional: null,
+  esAdmin:     false,
+  pacientes:   [],
+  profesionales: [],
+  filtrados:   [],
+  pacActual:   null,    // paciente abierto en ficha 360
+  citasPac:    [],      // citas del paciente actual
+  cobrosPac:   [], 
+  bonosPac:    []       // bonos/becas del paciente actual
 };
 
-let moduloActivo = 'agenda';
-
-function navegarA(modulo) {
-  // Ocultar módulo anterior
-  document.getElementById(`mod-${moduloActivo}`)?.classList.remove('visible');
-  document.querySelector(`.nav-item[data-modulo="${moduloActivo}"]`)?.classList.remove('active');
-
-  // Mostrar nuevo módulo
-  moduloActivo = modulo;
-  document.getElementById(`mod-${modulo}`)?.classList.add('visible');
-  document.querySelector(`.nav-item[data-modulo="${modulo}"]`)?.classList.add('active');
-
-  // Actualizar breadcrumb
-  document.getElementById('topbar-modulo-nombre').textContent = MODULOS_INFO[modulo] || modulo;
-
-  // Scroll al inicio del main
-  document.querySelector('.main').scrollTop = 0;
+/* ═══════════════════════════════════════════
+   HELPERS SUPABASE
+═══════════════════════════════════════════ */
+async function sg(path) {
+  const r = await fetch(`${SUPA_URL}/rest/v1/${path}`, {
+    headers: { 'apikey': SUPA_KEY, 'Authorization': `Bearer ${G.sesion.access_token}` }
+  });
+  if (!r.ok) throw new Error(`GET ${path} → ${r.status}`);
+  return r.json();
+}
+async function sp(table, body) {
+  const r = await fetch(`${SUPA_URL}/rest/v1/${table}`, {
+    method: 'POST',
+    headers: { 'apikey': SUPA_KEY, 'Authorization': `Bearer ${G.sesion.access_token}`,
+               'Content-Type': 'application/json', 'Prefer': 'return=representation' },
+    body: JSON.stringify(body)
+  });
+  if (!r.ok) { const t = await r.text(); throw new Error(t); }
+  return r.json();
+}
+async function spatch(table, id, body) {
+  const r = await fetch(`${SUPA_URL}/rest/v1/${table}?id=eq.${encodeURIComponent(id)}`, {
+    method: 'PATCH',
+    headers: { 'apikey': SUPA_KEY, 'Authorization': `Bearer ${G.sesion.access_token}`,
+               'Content-Type': 'application/json', 'Prefer': 'return=representation' },
+    body: JSON.stringify(body)
+  });
+  if (!r.ok) { const t = await r.text(); throw new Error(t); }
+  return r.json();
 }
 
-// Activar primer módulo al cargar
-document.addEventListener('DOMContentLoaded', () => {
-  navegarA('agenda');
-});
-
-/* ─────────────────────────────────────────
-   Cerrar sesión
-───────────────────────────────────────── */
-async function cerrarSesion() {
-  try {
-    const raw = localStorage.getItem('ipse_sesion');
-    if (raw) {
-      const sesion = JSON.parse(raw);
-      await fetch(`${SUPA_URL}/auth/v1/logout`, {
-        method: 'POST',
-        headers: {
-          'apikey': SUPA_KEY,
-          'Authorization': `Bearer ${sesion.access_token}`
-        }
-      });
-    }
-  } catch { /* fallo silencioso */ }
+/* ═══════════════════════════════════════════
+   AUTENTICACIÓN
+═══════════════════════════════════════════ */
+function cerrarSesion() {
   localStorage.removeItem('ipse_sesion');
   window.location.href = '../index.html';
 }
 
-/* ─────────────────────────────────────────
-   Inicialización
-───────────────────────────────────────── */
 async function init() {
-  // Verificar sesión
-  let sesion;
   try {
     const raw = localStorage.getItem('ipse_sesion');
     if (!raw) throw new Error('sin sesión');
-    sesion = JSON.parse(raw);
-    if (!sesion.access_token || sesion.expires_at < Date.now() + 60_000) {
-      throw new Error('caducada');
-    }
+    G.sesion = JSON.parse(raw);
+    if (!G.sesion.access_token || G.sesion.expires_at < Date.now() + 60_000) throw new Error('caducada');
   } catch {
     window.location.href = '../index.html';
     return;
   }
 
-  // Cargar profesional y verificar es_admin
-  let profesional;
   try {
-    const datos = await supaGet(
-      `profesionales?auth_user_id=eq.${sesion.user_id}&select=nombre,apellidos,es_admin`,
-      sesion.access_token
-    );
-    if (!datos || datos.length === 0) throw new Error('no encontrado');
-    profesional = datos[0];
+    const data = await sg(`profesionales?auth_user_id=eq.${G.sesion.user_id}&select=id,nombre,apellidos,es_admin&limit=1`);
+    if (!data.length) throw new Error('no encontrado');
+    G.profesional = data[0];
+    G.esAdmin = G.profesional.es_admin === 'Si';
   } catch {
-    window.location.href = '../index.html';
+    toast('Error cargando perfil', true);
     return;
   }
 
-  // Solo admins
-  if (profesional.es_admin !== 'Si') {
-    window.location.href = '../hub.html';
-    return;
-  }
+  // Topbar
+  const ini = (G.profesional.nombre?.[0] || '') + (G.profesional.apellidos?.[0] || '');
+  document.getElementById('topbar-nombre').textContent = `${G.profesional.nombre} ${G.profesional.apellidos}`.trim();
+  document.getElementById('topbar-avatar').textContent = ini.toUpperCase();
 
-  // Rellenar topbar
-  const nombre = profesional.nombre || '';
-  const apellidos = profesional.apellidos || '';
-  document.getElementById('topbar-nombre').textContent = `${nombre} ${apellidos}`.trim();
-  document.getElementById('topbar-avatar').textContent =
-    (nombre[0] || '') + (apellidos[0] || '');
+  // Cargar profesionales para mostrar nombres
+  try {
+    G.profesionales = await sg(`profesionales?activa=eq.Si&select=id,nombre,apellidos&order=nombre.asc&limit=50`);
+  } catch { /* no crítico */ }
 
-  // Ocultar overlay
-  document.getElementById('loading-overlay').style.display = 'none';
+  await cargarPacientes();
 }
 
+/* ═══════════════════════════════════════════
+   NAVEGACIÓN
+═══════════════════════════════════════════ */
+function navTo(mod) {
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.querySelectorAll('.modulo').forEach(m => m.classList.remove('active'));
+  document.getElementById('nav-' + mod).classList.add('active');
+  document.getElementById('mod-' + mod).classList.add('active');
+}
+
+/* ═══════════════════════════════════════════
+   LISTA DE PACIENTES
+═══════════════════════════════════════════ */
+async function cargarPacientes() {
+  try {
+    G.pacientes = await sg('pacientes_v2?order=apellidos.asc,nombre.asc&limit=2000&select=*');
+  } catch (e) {
+    toast('Error cargando pacientes: ' + e.message, true);
+    return;
+  }
+  filtrarPacientes();
+}
+
+function calcEdad(fnac) {
+  if (!fnac) return null;
+  const hoy = new Date();
+  const n = new Date(fnac);
+  let edad = hoy.getFullYear() - n.getFullYear();
+  if (hoy.getMonth() < n.getMonth() || (hoy.getMonth() === n.getMonth() && hoy.getDate() < n.getDate())) edad--;
+  return edad;
+}
+
+function fichaIncompleta(p) {
+  // Consideramos incompleta si falta alguno de estos campos clave
+  return !p.fecha_nacimiento || !p.telefono || !p.tutor1 || !p.consentimiento || p.consentimiento === 'Pendiente';
+}
+
+function filtrarPacientes() {
+  const q    = document.getElementById('pac-search').value.trim().toLowerCase();
+  const est  = document.getElementById('pac-filtro-estado').value;
+  const inc  = document.getElementById('pac-filtro-incompleto').value;
+
+  G.filtrados = G.pacientes.filter(p => {
+    const nombre = `${p.nombre||''} ${p.apellidos||''}`.toLowerCase();
+    const id     = (p.id || '').toLowerCase();
+    if (q && !nombre.includes(q) && !id.includes(q)) return false;
+    if (est && p.activo !== est) return false;
+    if (inc === 'incompleto' && !fichaIncompleta(p)) return false;
+    return true;
+  });
+
+  renderTabla();
+}
+
+function fmtFecha(f) {
+  if (!f) return '—';
+  const [y, m, d] = f.split('-');
+  return `${d}/${m}/${y}`;
+}
+
+function renderTabla() {
+  const tbody = document.getElementById('pac-tbody');
+  document.getElementById('pac-count').textContent = `${G.filtrados.length} paciente${G.filtrados.length !== 1 ? 's' : ''}`;
+  document.getElementById('pac-footer').textContent = `${G.filtrados.length} de ${G.pacientes.length} pacientes`;
+
+  if (!G.filtrados.length) {
+    tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state">
+      <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+      Sin resultados
+    </div></td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = G.filtrados.map(p => {
+    const edad    = calcEdad(p.fecha_nacimiento);
+    const edadStr = edad !== null ? `${edad} años` : '—';
+    const activo  = p.activo !== 'No'
+      ? `<span class="badge badge-ok">Activo</span>`
+      : `<span class="badge badge-muted">Baja</span>`;
+    const incompleto = fichaIncompleta(p)
+      ? `<span class="badge badge-warn">Incompleta</span>`
+      : `<span class="badge badge-ok">Completa</span>`;
+    return `<tr onclick="abrirFicha('${p.id}')">
+      <td class="mono">${p.id}</td>
+      <td class="strong">${p.apellidos || ''}, ${p.nombre || ''}</td>
+      <td class="muted">${edadStr}</td>
+      <td>${activo}</td>
+      <td class="muted">—</td>
+      <td class="muted">—</td>
+      <td>${incompleto}</td>
+    </tr>`;
+  }).join('');
+}
+
+/* ═══════════════════════════════════════════
+   FICHA 360
+═══════════════════════════════════════════ */
+function volverLista() {
+  document.getElementById('pac-lista-view').style.display = '';
+  document.getElementById('pac-360-view').style.display = 'none';
+  G.pacActual = null;
+}
+
+async function abrirFicha(idPaciente) {
+  const p = G.pacientes.find(x => x.id === idPaciente);
+  if (!p) { toast('Paciente no encontrado', true); return; }
+  G.pacActual = p;
+
+  document.getElementById('pac-lista-view').style.display = 'none';
+  document.getElementById('pac-360-view').style.display = 'flex';
+
+  // Reset a pestaña Resumen
+  p360Tab('resumen', document.querySelector('.p360-tab'));
+
+  renderP360Header(p);
+  renderP360Datos(p);
+  renderP360Clinica(p);
+
+  // Añadir pestaña Económico si admin
+  const tabsEl = document.getElementById('p360-tabs');
+  const tabEco = document.getElementById('tab-economico');
+  if (G.esAdmin && !tabEco) {
+    const t = document.createElement('div');
+    t.className = 'p360-tab';
+    t.id = 'tab-economico';
+    t.textContent = 'Económico';
+    t.onclick = function() { p360Tab('economico', this); };
+    tabsEl.appendChild(t);
+    document.getElementById('p360-economico').style.display = '';
+  }
+  if (!G.esAdmin) {
+    // ocultar saldo en resumen
+    document.getElementById('p360-saldo-card').style.display = 'none';
+  } else {
+    document.getElementById('p360-saldo-card').style.display = '';
+  }
+
+  // Carga async de datos dinámicos
+  cargarDatosAsync(p.id);
+}
+
+function renderP360Header(p) {
+  const ini = ((p.nombre||'').charAt(0) + (p.apellidos||'').charAt(0)).toUpperCase() || '?';
+  document.getElementById('p360-avatar').textContent = ini;
+  document.getElementById('p360-nombre').textContent = `${p.nombre||''} ${p.apellidos||''}`.trim();
+  document.getElementById('p360-id').textContent = p.id;
+
+  const edad = calcEdad(p.fecha_nacimiento);
+  const edadStr = edad !== null ? `${edad} años` : '';
+  const meta = [edadStr, p.municipio].filter(Boolean).join(' · ');
+  document.getElementById('p360-meta').textContent = meta;
+
+  // Contacto en header (tutor tel + email)
+  const contactEl = document.getElementById('p360-contact');
+  const contactParts = [];
+  if (p.telefono) {
+    contactParts.push(`<div class="p360-hci">
+      <svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.99 13 19.79 19.79 0 0 1 1.93 4.36 2 2 0 0 1 3.9 2.18h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+      <a href="tel:${p.telefono}">${p.telefono}</a>${p.tutor1 ? `<span style="color:var(--ink-muted);font-size:11px">(${p.tutor1.split(' ')[0]})</span>` : ''}
+    </div>`);
+  }
+  if (p.tutor1_email || p.email) {
+    const mail = p.tutor1_email || p.email;
+    contactParts.push(`<div class="p360-hci">
+      <svg viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+      <a href="mailto:${mail}">${mail}</a>
+    </div>`);
+  }
+  contactEl.innerHTML = contactParts.join('');
+
+  // Badges
+  const badges = [];
+  if (p.activo !== 'No') badges.push(`<span class="badge badge-ok">Activo</span>`);
+  else badges.push(`<span class="badge badge-muted">Baja</span>`);
+  if (p.consentimiento === 'Firmado') badges.push(`<span class="badge badge-ok">Consentimiento firmado</span>`);
+  else badges.push(`<span class="badge badge-warn">Consentimiento pendiente</span>`);
+  if (fichaIncompleta(p)) badges.push(`<span class="badge badge-warn">Ficha incompleta</span>`);
+  document.getElementById('p360-badges').innerHTML = badges.join('');
+}
+
+function campo(label, value) {
+  const v = value || '';
+  return `<div><div class="fl">${label}</div><div class="fv${v ? '' : ' empty'}">${v || '—'}</div></div>`;
+}
+function campoA(label, value, href) {
+  if (!value) return campo(label, null);
+  return `<div><div class="fl">${label}</div><div class="fv"><a href="${href}">${value}</a></div></div>`;
+}
+
+function renderP360Datos(p) {
+  const edad = calcEdad(p.fecha_nacimiento);
+  const edadStr = edad !== null ? `(${edad} años)` : '';
+  const fnacFmt = p.fecha_nacimiento ? `${fmtFecha(p.fecha_nacimiento)} ${edadStr}` : '';
+
+  document.getElementById('p360-identidad').innerHTML = [
+    campo('Expediente', p.id),
+    campo('Nombre completo', `${p.nombre||''} ${p.apellidos||''}`.trim()),
+    campo('Alias (agenda)', p.alias),
+    campo('Fecha de nacimiento', fnacFmt),
+    campo('DNI / NIE', p.dni_paciente),
+    campo('Fecha de alta', fmtFecha(p.fecha_alta)),
+    campo('Dirección', [p.direccion, p.codigo_postal, p.municipio].filter(Boolean).join(', ')),
+    campo('Estado', p.activo !== 'No' ? 'Activo' : 'Baja'),
+  ].join('');
+
+  document.getElementById('p360-escolar').innerHTML = [
+    campo('Centro escolar', p.centro_escolar),
+    campo('Curso escolar', p.curso_escolar),
+  ].join('');
+
+  // Tutor 1
+  document.getElementById('p360-tutor1-label').textContent = p.tutor1 || '';
+  document.getElementById('p360-tutor1').innerHTML = [
+    campo('Nombre', p.tutor1),
+    campo('DNI / NIE', p.dni_tutor1),
+    campoA('Teléfono', p.telefono, `tel:${p.telefono}`),
+    campoA('Email', p.tutor1_email || p.email, `mailto:${p.tutor1_email || p.email}`),
+    campo('Dirección', p.tutor1_direccion || [p.direccion, p.codigo_postal, p.municipio].filter(Boolean).join(', ')),
+  ].join('');
+
+  // Tutor 2
+  const hayT2 = p.tutor2 || p.tutor2_dni || p.tutor2_telefono || p.tutor2_email;
+  const t2card = document.getElementById('p360-tutor2-card');
+  if (hayT2) {
+    t2card.style.display = '';
+    document.getElementById('p360-tutor2-label').textContent = p.tutor2 || '';
+    document.getElementById('p360-tutor2').innerHTML = [
+      campo('Nombre', p.tutor2),
+      campo('DNI / NIE', p.tutor2_dni),
+      campoA('Teléfono', p.tutor2_telefono || p.telefono2, `tel:${p.tutor2_telefono || p.telefono2}`),
+      campoA('Email', p.tutor2_email, `mailto:${p.tutor2_email}`),
+      campo('Dirección', p.tutor2_direccion),
+    ].join('');
+  } else {
+    t2card.style.display = 'none';
+  }
+
+  // Consentimiento
+  const firmado = p.consentimiento === 'Firmado';
+  document.getElementById('p360-consent').innerHTML = `
+    <div class="consent-row">
+      <div class="consent-dot" style="background:${firmado ? 'var(--verde-dark)' : 'var(--ink-muted)'}"></div>
+      <span style="font-size:13px;font-weight:600">${p.consentimiento || 'Pendiente'}</span>
+      ${p.fecha_alta ? `<span style="font-size:12px;color:var(--ink-muted)">— alta ${fmtFecha(p.fecha_alta)}</span>` : ''}
+    </div>`;
+}
+
+function renderP360Clinica(p) {
+  const ambitoLabel = { salud_mental:'Salud Mental', neurologia:'Neurología', otro:'Otro' }[p.ambito] || '';
+  const derivLabel = p.derivacion === 'Si' || p.derivacion === true ? 'Sí' : p.derivacion === 'No' || p.derivacion === false ? 'No' : '';
+
+  // Profesionales — se completan con datos del async si procede
+  document.getElementById('p360-pros').innerHTML = [
+    campo('Terapeuta principal', p.terapeuta_principal ? (nomPro(p.terapeuta_principal) || p.terapeuta_principal) : ''),
+    campo('Especialidad', p.especialidad_principal ? ESP_LABEL[p.especialidad_principal] || p.especialidad_principal : ''),
+    campo('Primera sesión', ''),
+    campo('Sesiones realizadas', ''),
+  ].join('');
+
+  document.getElementById('p360-clinica-body').innerHTML = `
+    <div class="fg2" style="margin-bottom:10px">${[
+      campo('Diagnóstico', p.diagnostico),
+      campo('Ámbito', ambitoLabel),
+      campo('Derivación', derivLabel),
+      campo('Alergias', p.alergias),
+    ].join('')}</div>
+    <div>${campo('Notas generales', p.notas)}</div>`;
+}
+
+function nomPro(id) {
+  const pro = G.profesionales.find(p => p.id === id);
+  return pro ? `${pro.nombre} ${pro.apellidos}`.trim() : id;
+}
+
+/* ── Carga async (citas, cobros, bonos) ── */
+async function cargarDatosAsync(idPaciente) {
+  try {
+    const hoy = new Date().toISOString().split('T')[0];
+    const [citas, bonos, cobros] = await Promise.all([
+      sg(`citas_v2?id_paciente=eq.${idPaciente}&order=fecha.desc&limit=500&select=*`),
+      sg(`bonos_becas?id_paciente=eq.${encodeURIComponent(idPaciente)}&order=fecha_creacion.desc&limit=50&select=*`),
+      G.esAdmin ? sg(`cobros_v2?id_paciente=eq.${encodeURIComponent(idPaciente)}&order=fecha.desc&limit=100&select=*`) : Promise.resolve([])
+    ]);
+    G.citasPac   = citas;
+    G.bonosPac   = bonos;
+    G.cobrosPac  = cobros;
+
+    renderResumen(hoy, citas, bonos, cobros);
+    renderHistorial(hoy, citas);
+    if (G.esAdmin) renderEconomico(citas, bonos, cobros);
+
+    // Actualizar primera sesión en clínica
+    const primera = [...citas].filter(s => s.estado === 'Hecha').sort((a, b) => a.fecha.localeCompare(b.fecha))[0];
+    const hechas  = citas.filter(s => s.estado === 'Hecha');
+    const cells   = document.querySelectorAll('#p360-pros .fv');
+    if (cells[2]) cells[2].textContent = primera ? fmtFecha(primera.fecha) : '—';
+    if (cells[3]) cells[3].textContent = hechas.length || '0';
+
+  } catch (e) {
+    toast('Error cargando datos: ' + e.message, true);
+  }
+}
+
+/* ── Resumen ── */
+function renderResumen(hoy, citas, bonos, cobros) {
+  const hechas   = citas.filter(s => s.estado === 'Hecha');
+  const noShows  = citas.filter(s => s.estado === 'Noshow');
+  const total    = hechas.length + noShows.length;
+  const asistPct = total > 0 ? Math.round(hechas.length / total * 100) : 0;
+  const ultSes   = [...hechas].sort((a, b) => b.fecha.localeCompare(a.fecha))[0];
+
+  document.getElementById('kpi-ses').textContent    = hechas.length;
+  document.getElementById('kpi-asist').textContent  = total > 0 ? `${asistPct}%` : '—';
+  document.getElementById('kpi-asist-s').textContent = total > 0 ? `${hechas.length} de ${total}` : '';
+  document.getElementById('kpi-noshow').textContent = noShows.length;
+  if (ultSes) {
+    const [, m, d] = ultSes.fecha.split('-');
+    document.getElementById('kpi-ultima').textContent  = `${d} ${MESES_CORTO[parseInt(m)-1]}`;
+    const dias = Math.round((new Date(hoy) - new Date(ultSes.fecha)) / 86400000);
+    document.getElementById('kpi-ultima-s').textContent = `hace ${dias} día${dias !== 1 ? 's' : ''}`;
+  } else {
+    document.getElementById('kpi-ultima').textContent  = '—';
+    document.getElementById('kpi-ultima-s').textContent = '';
+  }
+
+  // Bono/beca activo (para todos: solo sesiones, sin importes)
+  const bonosActivos = bonos.filter(b => b.fecha_vencimiento >= hoy);
+  const bonoEl = document.getElementById('p360-bonobeca-body');
+  const titleEl = document.getElementById('p360-bonobeca-title');
+  if (bonosActivos.length) {
+    const b = bonosActivos[0];
+    const cons = b.sesiones_consumidas || 0;
+    const total = b.sesiones_total || 0;
+    const pend = total - cons;
+    const pct  = total > 0 ? Math.round(cons / total * 100) : 0;
+    const fillClass = pct >= 75 ? 'danger' : pct >= 50 ? 'warn' : 'ok';
+    titleEl.textContent = b.tipo === 'BECA' ? 'Beca activa' : 'Bono activo';
+    bonoEl.innerHTML = `<div class="bono-row" style="padding:0">
+      <div class="bono-info">
+        <div class="bono-name">${b.tipo === 'BECA' ? 'Beca' : 'Bono'} ${b.anio_escolar || ''}</div>
+        <div class="bono-det">${b.id} · vence ${fmtFecha(b.fecha_vencimiento)}</div>
+        <div style="margin-top:5px;font-size:12px;color:var(--ink-muted)">${pend} sesión${pend !== 1 ? 'es' : ''} restante${pend !== 1 ? 's' : ''}</div>
+      </div>
+      <div class="bono-bar-wrap">
+        <div class="bono-frac">${cons} / ${total}</div>
+        <div class="bono-bar"><div class="bono-fill ${fillClass}" style="width:${pct}%"></div></div>
+      </div>
+    </div>`;
+  } else {
+    titleEl.textContent = 'Bono / Beca';
+    bonoEl.innerHTML = `<div style="font-size:12px;color:var(--ink-muted);padding:4px 0">Sin bono ni beca activa</div>`;
+  }
+
+  // Saldo (solo admin)
+  if (G.esAdmin) {
+    const devengo   = hechas.reduce((s, x) => s + (parseFloat(x.precio) || 0), 0);
+    const cobrado   = cobros.filter(c => c.conciliado === 'Si').reduce((s, x) => s + (parseFloat(x.importe) || 0), 0);
+    const pendiente = Math.max(0, devengo - cobrado);
+    document.getElementById('p360-saldo-body').innerHTML = `
+      <div class="fin-row"><span class="fin-lbl">Total devengado</span><span class="fin-val">${fmtEur(devengo)}</span></div>
+      <div class="fin-row"><span class="fin-lbl">Cobrado</span><span class="fin-val ok">${fmtEur(cobrado)}</span></div>
+      <div class="fin-row"><span class="fin-lbl">Pendiente</span><span class="fin-val ${pendiente > 0 ? 'warn' : 'ok'}">${fmtEur(pendiente)}</span></div>`;
+  }
+
+  // Próximas citas
+  const proximas = citas.filter(s => s.estado === 'Programada' && s.fecha >= hoy).sort((a, b) => a.fecha.localeCompare(b.fecha)).slice(0, 4);
+  const proxEl = document.getElementById('p360-proximas');
+  if (proximas.length) {
+    proxEl.innerHTML = proximas.map(s => {
+      const [, m, d] = s.fecha.split('-');
+      const hora = s.hora ? s.hora.slice(0, 5) : '';
+      const ter = G.profesionales.find(p => p.id === s.id_profesional);
+      const terNom = ter ? `${ter.nombre} ${ter.apellidos}`.trim() : s.id_profesional;
+      return `<div class="prox-row">
+        <div class="prox-date"><div class="prox-d">${d}</div><div class="prox-m">${MESES_CORTO[parseInt(m)-1]}</div></div>
+        <div class="prox-info"><div class="prox-ter">${terNom}</div><div class="prox-esp">${ESP_LABEL[s.especialidad] || s.especialidad}</div></div>
+        <div class="prox-hora">${hora}</div>
+      </div>`;
+    }).join('');
+  } else {
+    proxEl.innerHTML = `<div style="font-size:12px;color:var(--ink-muted);padding:4px 0">Sin citas próximas</div>`;
+  }
+}
+
+/* ── Historial ── */
+function renderHistorial(hoy, citas) {
+  const historico = citas.filter(s => s.estado !== 'Programada' || s.fecha < hoy).sort((a, b) => b.fecha.localeCompare(a.fecha));
+  const el = document.getElementById('p360-sesiones');
+  if (!historico.length) {
+    el.innerHTML = `<div style="font-size:12px;color:var(--ink-muted);padding:4px 0">Sin historial de sesiones</div>`;
+    return;
+  }
+  const estadoClass = { Hecha: 'hecha', Noshow: 'noshow', Programada: 'prog', Cancelada: 'cancelada', Reprogramada: 'prog' };
+  const estadoLabel = { Hecha: 'es-hecha', Noshow: 'es-noshow', Programada: 'es-prog', Cancelada: 'es-cancelada', Reprogramada: 'es-prog' };
+  el.innerHTML = historico.map(s => {
+    const ter = G.profesionales.find(p => p.id === s.id_profesional);
+    const terNom = ter ? `${ter.nombre.split(' ')[0]} ${ter.apellidos}`.trim() : '';
+    const dotC = estadoClass[s.estado] || 'prog';
+    const labelC = estadoLabel[s.estado] || 'es-prog';
+    const hora = s.hora ? ` ${s.hora.slice(0,5)}` : '';
+    return `<div class="ses-row">
+      <div class="ses-dot ${dotC}"></div>
+      <div class="ses-body">
+        <div class="ses-top">
+          <span class="ses-fecha">${fmtFecha(s.fecha)}${hora}</span>
+          ${terNom ? `<span class="ses-ter">${terNom}</span>` : ''}
+          <span class="ses-esp">${ESP_LABEL[s.especialidad] || s.especialidad || ''}</span>
+          <span class="ses-estado ${labelC}">${s.estado}</span>
+        </div>
+        ${s.notas ? `<div class="ses-nota">${s.notas}</div>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+/* ── Económico (solo admin) ── */
+function renderEconomico(citas, bonos, cobros) {
+  const hechas    = citas.filter(s => s.estado === 'Hecha');
+  const devengo   = hechas.reduce((s, x) => s + (parseFloat(x.precio) || 0), 0);
+  const cobrado   = cobros.filter(c => c.conciliado === 'Si').reduce((s, x) => s + (parseFloat(x.importe) || 0), 0);
+  const pendiente = Math.max(0, devengo - cobrado);
+
+  document.getElementById('ekpi-dev').textContent  = fmtEur(devengo);
+  document.getElementById('ekpi-cob').textContent  = fmtEur(cobrado);
+  document.getElementById('ekpi-pend').textContent = fmtEur(pendiente);
+
+  // Todos los bonos/becas
+  const bonosEl = document.getElementById('p360-eco-bonos');
+  if (bonos.length) {
+    bonosEl.innerHTML = bonos.map(b => {
+      const cons = b.sesiones_consumidas || 0;
+      const tot  = b.sesiones_total || 0;
+      const pend = tot - cons;
+      const pct  = tot > 0 ? Math.round(cons / tot * 100) : 0;
+      const fillC = pct >= 75 ? 'danger' : pct >= 50 ? 'warn' : 'ok';
+      const venc = b.fecha_vencimiento;
+      const hoy  = new Date().toISOString().split('T')[0];
+      const caducado = venc < hoy;
+      return `<div class="bono-row">
+        <div class="bono-info">
+          <div class="bono-name">${b.tipo} ${b.anio_escolar || ''} <span class="badge ${caducado ? 'badge-err' : 'badge-ok'}" style="font-size:10px">${caducado ? 'Caducado' : 'Activo'}</span></div>
+          <div class="bono-det">${b.id} · ${fmtEur(b.importe_total || 0)} · vence ${fmtFecha(b.fecha_vencimiento)}</div>
+        </div>
+        <div class="bono-bar-wrap">
+          <div class="bono-frac">${cons} / ${tot} · ${pend} pend.</div>
+          <div class="bono-bar"><div class="bono-fill ${fillC}" style="width:${pct}%"></div></div>
+        </div>
+      </div>`;
+    }).join('');
+  } else {
+    bonosEl.innerHTML = `<div style="font-size:12px;color:var(--ink-muted);padding:4px 0">Sin bonos ni becas</div>`;
+  }
+
+  // Cobros
+  const cobrosEl = document.getElementById('p360-eco-cobros');
+  if (cobros.length) {
+    cobrosEl.innerHTML = cobros.map(c => `
+      <div class="cobro-r">
+        <div>
+          <div class="cobro-lbl">${c.concepto || 'Cobro'}</div>
+          <div class="cobro-meta">${fmtFecha(c.fecha)} · ${c.metodo || ''} · ${c.conciliado === 'Si' ? 'Conciliado' : 'Pendiente conciliación'}</div>
+        </div>
+        <div class="cobro-imp">+${fmtEur(parseFloat(c.importe) || 0)}</div>
+      </div>`).join('');
+  } else {
+    cobrosEl.innerHTML = `<div style="font-size:12px;color:var(--ink-muted);padding:4px 0">Sin cobros registrados</div>`;
+  }
+}
+
+function fmtEur(n) {
+  return new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR', minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(n);
+}
+
+/* ── Pestañas ── */
+function p360Tab(name, el) {
+  document.querySelectorAll('.p360-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.p360-panel').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+  const panel = document.getElementById('p360-' + name);
+  if (panel) { panel.style.display = ''; panel.classList.add('active'); }
+}
+
+/* ── PDF diario ── */
+function descargarDiarioPDF() {
+  toast('Función de exportación PDF pendiente de implementar');
+}
+
+/* ═══════════════════════════════════════════
+   MODAL EDICIÓN
+═══════════════════════════════════════════ */
+function abrirEdicion() {
+  const p = G.pacActual;
+  if (!p) return;
+
+  document.getElementById('ed-nombre').value      = p.nombre || '';
+  document.getElementById('ed-apellidos').value   = p.apellidos || '';
+  document.getElementById('ed-alias').value       = p.alias || '';
+  document.getElementById('ed-fnac').value        = p.fecha_nacimiento || '';
+  document.getElementById('ed-dni').value         = p.dni_paciente || '';
+  document.getElementById('ed-activo').value      = p.activo || 'Si';
+  document.getElementById('ed-direccion').value   = p.direccion || '';
+  document.getElementById('ed-municipio').value   = p.municipio || '';
+  document.getElementById('ed-cp').value          = p.codigo_postal || '';
+  document.getElementById('ed-centro').value      = p.centro_escolar || '';
+  document.getElementById('ed-curso').value       = p.curso_escolar || '';
+  document.getElementById('ed-t1-nombre').value   = p.tutor1 || '';
+  document.getElementById('ed-t1-dni').value      = p.dni_tutor1 || '';
+  document.getElementById('ed-t1-tel').value      = p.telefono || '';
+  document.getElementById('ed-t1-email').value    = p.tutor1_email || p.email || '';
+  document.getElementById('ed-t1-dir').value      = p.tutor1_direccion || '';
+  document.getElementById('ed-t2-nombre').value   = p.tutor2 || '';
+  document.getElementById('ed-t2-dni').value      = p.tutor2_dni || '';
+  document.getElementById('ed-t2-tel').value      = p.tutor2_telefono || '';
+  document.getElementById('ed-t2-email').value    = p.tutor2_email || '';
+  document.getElementById('ed-diagnostico').value = p.diagnostico || '';
+  document.getElementById('ed-ambito').value      = p.ambito || '';
+  document.getElementById('ed-derivacion').value  = p.derivacion === true || p.derivacion === 'Si' ? 'Si' : p.derivacion === false || p.derivacion === 'No' ? 'No' : '';
+  document.getElementById('ed-consentimiento').value = p.consentimiento || 'Pendiente';
+  document.getElementById('ed-alergias').value    = p.alergias || '';
+  document.getElementById('ed-notas').value       = p.notas || '';
+
+  document.getElementById('modal-edicion-title').textContent = `Editar — ${p.id}`;
+  document.getElementById('overlay-edicion').classList.add('open');
+}
+
+function cerrarEdicion() {
+  document.getElementById('overlay-edicion').classList.remove('open');
+}
+
+function clickOverlayEdicion(e) {
+  if (e.target === document.getElementById('overlay-edicion')) cerrarEdicion();
+}
+
+async function guardarEdicion() {
+  const p = G.pacActual;
+  if (!p) return;
+
+  const btn = document.getElementById('btn-guardar-edicion');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Guardando…';
+
+  const body = {
+    nombre:            document.getElementById('ed-nombre').value.trim(),
+    apellidos:         document.getElementById('ed-apellidos').value.trim(),
+    alias:             document.getElementById('ed-alias').value.trim() || null,
+    fecha_nacimiento:  document.getElementById('ed-fnac').value || null,
+    dni_paciente:      document.getElementById('ed-dni').value.trim() || null,
+    activo:            document.getElementById('ed-activo').value,
+    direccion:         document.getElementById('ed-direccion').value.trim() || null,
+    municipio:         document.getElementById('ed-municipio').value.trim() || null,
+    codigo_postal:     document.getElementById('ed-cp').value.trim() || null,
+    centro_escolar:    document.getElementById('ed-centro').value.trim() || null,
+    curso_escolar:     document.getElementById('ed-curso').value.trim() || null,
+    tutor1:            document.getElementById('ed-t1-nombre').value.trim() || null,
+    dni_tutor1:        document.getElementById('ed-t1-dni').value.trim() || null,
+    telefono:          document.getElementById('ed-t1-tel').value.trim() || null,
+    tutor1_email:      document.getElementById('ed-t1-email').value.trim() || null,
+    tutor1_direccion:  document.getElementById('ed-t1-dir').value.trim() || null,
+    tutor2:            document.getElementById('ed-t2-nombre').value.trim() || null,
+    tutor2_dni:        document.getElementById('ed-t2-dni').value.trim() || null,
+    tutor2_telefono:   document.getElementById('ed-t2-tel').value.trim() || null,
+    tutor2_email:      document.getElementById('ed-t2-email').value.trim() || null,
+    diagnostico:       document.getElementById('ed-diagnostico').value.trim() || null,
+    ambito:            document.getElementById('ed-ambito').value || null,
+    derivacion:        document.getElementById('ed-derivacion').value || null,
+    consentimiento:    document.getElementById('ed-consentimiento').value,
+    alergias:          document.getElementById('ed-alergias').value.trim() || null,
+    notas:             document.getElementById('ed-notas').value.trim() || null,
+  };
+
+  if (!body.nombre) { toast('El nombre es obligatorio', true); btn.disabled = false; btn.textContent = 'Guardar cambios'; return; }
+
+  try {
+    await spatch('pacientes_v2', p.id, body);
+    // Actualizar caché local
+    Object.assign(G.pacActual, body);
+    const idx = G.pacientes.findIndex(x => x.id === p.id);
+    if (idx >= 0) Object.assign(G.pacientes[idx], body);
+
+    cerrarEdicion();
+    renderP360Header(G.pacActual);
+    renderP360Datos(G.pacActual);
+    renderP360Clinica(G.pacActual);
+    filtrarPacientes();
+    toast('Cambios guardados', false, true);
+  } catch (e) {
+    toast('Error al guardar: ' + e.message, true);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Guardar cambios';
+  }
+}
+
+/* ═══════════════════════════════════════════
+   TOAST
+═══════════════════════════════════════════ */
+let toastTimer;
+function toast(msg, isErr = false, isOk = false) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'toast show' + (isErr ? ' err' : isOk ? ' ok' : '');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 3000);
+}
+
+/* ═══════════════════════════════════════════
+   ARRANQUE
+═══════════════════════════════════════════ */
 init();
 </script>
 </body>
