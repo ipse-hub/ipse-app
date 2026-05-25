@@ -134,33 +134,33 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);fon
 /* ── OVERLAY / MODAL ── */
 .overlay{display:none;position:fixed;inset:0;background:rgba(16,6,80,.55);z-index:200;align-items:center;justify-content:center;backdrop-filter:blur(3px)}
 .overlay.visible{display:flex}
-.modal{background:var(--surface);border-radius:16px;width:90vw;max-width:1160px;max-height:95vh;display:flex;flex-direction:column;box-shadow:0 24px 80px rgba(0,0,0,.28);animation:modalIn .2s ease;overflow:hidden}
+.modal{background:var(--surface);border-radius:16px;width:min(780px,94vw);max-height:95vh;display:flex;flex-direction:column;box-shadow:0 24px 80px rgba(0,0,0,.28);animation:modalIn .2s ease;overflow:hidden}
 @keyframes modalIn{from{opacity:0;transform:scale(.97) translateY(8px)}to{opacity:1;transform:scale(1) translateY(0)}}
-.modal-header{display:flex;align-items:center;justify-content:space-between;padding:18px 28px 16px;border-bottom:1px solid var(--border);flex-shrink:0}
-.modal-title{font-size:17px;font-weight:700;color:var(--azul);display:flex;align-items:center;gap:9px}
-.modal-title svg{width:19px;height:19px;stroke:var(--cyan)}
+.modal-header{display:flex;align-items:center;justify-content:space-between;padding:14px 24px 12px;border-bottom:1px solid var(--border);flex-shrink:0}
+.modal-title{font-size:16px;font-weight:700;color:var(--azul);display:flex;align-items:center;gap:9px}
+.modal-title svg{width:18px;height:18px;stroke:var(--cyan)}
 .modal-header-right{display:flex;align-items:center;gap:10px}
 .date-chip{font-size:12px;font-family:'DM Mono',monospace;background:var(--bg);border:1px solid var(--border);border-radius:20px;padding:3px 12px;color:var(--muted)}
 .modal-close{background:none;border:none;cursor:pointer;color:var(--muted);font-size:20px;line-height:1;padding:4px 7px;border-radius:6px;transition:all .15s}
 .modal-close:hover{background:var(--bg);color:var(--text)}
-.modal-body{display:grid;grid-template-columns:1fr 1px 1fr;flex:1;min-height:0;overflow:hidden}
-.modal-col{padding:18px 24px;overflow-y:auto;max-height:calc(95vh - 120px);min-height:0}
-.modal-col::-webkit-scrollbar{width:4px}
-.modal-col::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
-.col-divider{background:var(--border)}
-.modal-footer{display:flex;align-items:center;gap:8px;padding:14px 28px;border-top:1px solid var(--border);flex-shrink:0}
+.modal-body{display:grid;grid-template-columns:1fr 1fr;flex:1;min-height:0;overflow:hidden;gap:0}
+.modal-col-left{padding:14px 16px 14px 24px;overflow-y:auto;max-height:calc(95vh - 112px);min-height:0;border-right:1px solid var(--border)}
+.modal-col-right{padding:14px 24px 14px 16px;overflow-y:auto;max-height:calc(95vh - 112px);min-height:0}
+.modal-col-left::-webkit-scrollbar,.modal-col-right::-webkit-scrollbar{width:4px}
+.modal-col-left::-webkit-scrollbar-thumb,.modal-col-right::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+.modal-footer{display:flex;align-items:center;gap:8px;padding:12px 24px;border-top:1px solid var(--border);flex-shrink:0}
 .footer-spacer{flex:1}
 
 /* secciones */
-.section{margin-bottom:16px}
+.section{margin-bottom:12px}
 .section:last-child{margin-bottom:0}
-.sec-label{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;display:flex;align-items:center;gap:8px}
+.sec-label{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:6px;display:flex;align-items:center;gap:8px}
 .sec-label::after{content:'';flex:1;height:1px;background:var(--border)}
 
 /* form */
-.fg{margin-bottom:8px}
+.fg{margin-bottom:6px}
 .fg:last-child{margin-bottom:0}
-.fl{display:block;font-size:11px;font-weight:600;color:var(--muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:.04em}
+.fl{display:block;font-size:11px;font-weight:600;color:var(--muted);margin-bottom:3px;text-transform:uppercase;letter-spacing:.04em}
 .fc{width:100%;border:1.5px solid var(--border);border-radius:8px;padding:8px 12px;font-family:inherit;font-size:14px;color:var(--text);background:var(--bg);transition:border-color .15s;outline:none;appearance:none;-webkit-appearance:none}
 .fc:focus{border-color:var(--azul);background:#fff;box-shadow:0 0 0 3px rgba(16,6,159,.08)}
 select.fc{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24'%3E%3Cpath fill='%236B7280' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;padding-right:28px}
@@ -394,8 +394,8 @@ select.fc{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.o
 
   <div class="modal-body">
 
-    <!-- ══ COL IZQUIERDA ══ -->
-    <div class="modal-col">
+    <!-- ══ COL IZQUIERDA: Paciente + Tipo de sesión + Sesión ══ -->
+    <div class="modal-col-left">
 
       <!-- PACIENTE -->
       <div class="section">
@@ -416,7 +416,6 @@ select.fc{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.o
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
             + Nuevo paciente
           </button>
-
         </div>
 
         <!-- PANEL NUEVO PACIENTE -->
@@ -432,7 +431,7 @@ select.fc{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.o
               <input type="text" class="fc" id="np-apellidos" placeholder="Apellidos" oninput="actualizarIdPreview()" autocomplete="off">
             </div>
           </div>
-          <div class="fg" style="margin-top:8px">
+          <div class="fg" style="margin-top:6px">
             <label class="fl">N.º expediente físico * <span style="font-weight:400;color:var(--muted)">(4 dígitos)</span></label>
             <input type="text" class="fc" id="np-expediente" placeholder="0467" maxlength="4"
               inputmode="numeric" pattern="[0-9]*"
@@ -443,60 +442,100 @@ select.fc{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.o
             <span class="np-id-aviso" id="np-id-aviso" style="display:none">⚠️ Este ID ya existe</span>
           </div>
           <div class="np-footer">
-            <button class="btn btn-secondary" style="font-size:12px;padding:7px 14px" onclick="cerrarNuevoPaciente()">Cancelar</button>
-            <button class="btn btn-primary" style="font-size:12px;padding:7px 14px" id="btn-crear-pac" onclick="crearNuevoPaciente()">
+            <button class="btn btn-secondary" style="font-size:12px;padding:6px 12px" onclick="cerrarNuevoPaciente()">Cancelar</button>
+            <button class="btn btn-primary" style="font-size:12px;padding:6px 12px" id="btn-crear-pac" onclick="crearNuevoPaciente()">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
               Crear paciente
             </button>
           </div>
         </div>
-
       </div>
 
-      <!-- ALTA RÁPIDA BONO/BECA (se muestra desde col derecha al clicar pill sin activo) -->
-      <div id="bb-alta-wrap" style="display:none;margin-bottom:16px">
-        <!-- PANEL NUEVO BONO -->
-        <div class="nuevo-bono-panel" id="nuevo-bono-panel" style="display:none">
-          <div class="nuevo-bona-titulo">Alta de bono · 4 sesiones / 180 €</div>
-          <div class="form-row">
-            <div class="fg">
-              <label class="fl">Fecha de inicio *</label>
-              <input type="date" class="fc" id="bono-fecha-inicio" oninput="actualizarResumenBono()">
-            </div>
-            <div class="fg">
-              <label class="fl">Fecha de fin *</label>
-              <input type="date" class="fc" id="bono-fecha-fin" oninput="actualizarResumenBono()">
-            </div>
+      <!-- TIPO DE SESIÓN -->
+      <div class="section">
+        <div class="sec-label">Tipo de sesión</div>
+        <div class="pill-row" id="pill-row">
+          <span class="pill" onclick="selPill(this,'BECA',45)"       data-mod="BECA">Beca</span>
+          <span class="pill" onclick="selPill(this,'BONO',45)"       data-mod="BONO">Bono</span>
+          <span class="pill" onclick="selPill(this,'PRIVADO_SU',50)" data-mod="PRIVADO_SU">Privado S/U</span>
+          <span class="pill" onclick="selPill(this,'ADECCO',50)"     data-mod="ADECCO">Adecco</span>
+          <span class="pill" onclick="selPill(this,'OTROS',null)"    data-mod="OTROS">Otros</span>
+        </div>
+        <div class="fg">
+          <div class="precio-box" id="precio-box">
+            <span class="precio-num" id="precio-num">–</span>
+            <span class="precio-suffix">€ / sesión</span>
           </div>
-          <div class="bb-resumen" id="bono-resumen" style="display:none"></div>
-          <div class="np-footer">
-            <button class="btn btn-secondary" style="font-size:12px;padding:7px 14px" onclick="cerrarNuevoBono()">Cancelar</button>
-            <button class="btn btn-primary" style="font-size:12px;padding:7px 14px;background:#0369a1" id="btn-crear-bono" onclick="crearNuevoBono()">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
-              Crear bono
+          <select class="fc otros-select" id="otros-select" style="display:none" onchange="document.getElementById('precio-num').textContent=this.value">
+            <option value="45">45 € / sesión</option>
+            <option value="40">40 € / sesión</option>
+            <option value="35">35 € / sesión</option>
+            <option value="30">30 € / sesión</option>
+          </select>
+        </div>
+
+        <!-- AVISO sin bono/beca activo -->
+        <div id="bb-aviso-wrap" style="display:none;margin-top:8px">
+          <div class="alert alert-amber" style="margin-bottom:8px">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;width:14px;height:14px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            <span id="bb-aviso-texto">Sin bono activo. ¿Deseas crear uno?</span>
+          </div>
+          <div style="display:flex;gap:8px">
+            <button class="btn-alta bono" id="bb-btn-nuevo-bono" onclick="mostrarPanelBono()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+              Nuevo bono
+            </button>
+            <button class="btn-alta beca" id="bb-btn-nueva-beca" onclick="mostrarPanelBeca()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+              Nueva beca
             </button>
           </div>
         </div>
-        <!-- PANEL NUEVA BECA -->
-        <div class="nuevo-beca-panel" id="nuevo-beca-panel" style="display:none">
-          <div class="nuevo-beca-titulo">Alta de beca · 20 sesiones / 913 €</div>
-          <div class="form-row">
-            <div class="fg">
-              <label class="fl">Fecha de inicio *</label>
-              <input type="date" class="fc" id="beca-fecha-inicio" oninput="actualizarResumenBeca()">
+
+        <!-- PANEL NUEVO BONO inline -->
+        <div id="bb-alta-wrap" style="display:none;margin-top:8px">
+          <div class="nuevo-bono-panel" id="nuevo-bono-panel" style="display:none">
+            <div class="nuevo-bona-titulo">Alta de bono · 4 sesiones / 180 €</div>
+            <div class="form-row">
+              <div class="fg">
+                <label class="fl">Fecha de inicio *</label>
+                <input type="date" class="fc" id="bono-fecha-inicio" oninput="actualizarResumenBono()">
+              </div>
+              <div class="fg">
+                <label class="fl">Fecha de fin *</label>
+                <input type="date" class="fc" id="bono-fecha-fin" oninput="actualizarResumenBono()">
+              </div>
             </div>
-            <div class="fg">
-              <label class="fl">Fecha de fin *</label>
-              <input type="date" class="fc" id="beca-fecha-fin" oninput="actualizarResumenBeca()">
+            <div class="bb-resumen" id="bono-resumen" style="display:none"></div>
+            <div class="np-footer">
+              <button class="btn btn-secondary" style="font-size:12px;padding:6px 12px" onclick="cerrarNuevoBono()">Cancelar</button>
+              <button class="btn btn-primary" style="font-size:12px;padding:6px 12px;background:#0369a1" id="btn-crear-bono" onclick="crearNuevoBono()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+                Crear bono
+              </button>
             </div>
           </div>
-          <div class="bb-resumen" id="beca-resumen" style="display:none"></div>
-          <div class="np-footer">
-            <button class="btn btn-secondary" style="font-size:12px;padding:7px 14px" onclick="cerrarNuevaBeca()">Cancelar</button>
-            <button class="btn btn-primary" style="font-size:12px;padding:7px 14px;background:#2d6a00" id="btn-crear-beca" onclick="crearNuevaBeca()">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
-              Crear beca
-            </button>
+          <!-- PANEL NUEVA BECA inline -->
+          <div class="nuevo-beca-panel" id="nuevo-beca-panel" style="display:none">
+            <div class="nuevo-beca-titulo">Alta de beca · 20 sesiones / 913 €</div>
+            <div class="form-row">
+              <div class="fg">
+                <label class="fl">Fecha de inicio *</label>
+                <input type="date" class="fc" id="beca-fecha-inicio" oninput="actualizarResumenBeca()">
+              </div>
+              <div class="fg">
+                <label class="fl">Fecha de fin *</label>
+                <input type="date" class="fc" id="beca-fecha-fin" oninput="actualizarResumenBeca()">
+              </div>
+            </div>
+            <div class="bb-resumen" id="beca-resumen" style="display:none"></div>
+            <div class="np-footer">
+              <button class="btn btn-secondary" style="font-size:12px;padding:6px 12px" onclick="cerrarNuevaBeca()">Cancelar</button>
+              <button class="btn btn-primary" style="font-size:12px;padding:6px 12px;background:#2d6a00" id="btn-crear-beca" onclick="crearNuevaBeca()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+                Crear beca
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -530,83 +569,8 @@ select.fc{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.o
 
     </div><!-- /col izq -->
 
-    <div class="col-divider"></div>
-
-    <!-- ══ COL DERECHA ══ -->
-    <div class="modal-col">
-
-      <!-- MODALIDAD PAGO -->
-      <div class="section">
-        <div class="sec-label">Modalidad de pago</div>
-        <div class="pill-row" id="pill-row">
-          <span class="pill" onclick="selPill(this,'BECA',45)"       data-mod="BECA">Beca</span>
-          <span class="pill" onclick="selPill(this,'BONO',45)"       data-mod="BONO">Bono</span>
-          <span class="pill" onclick="selPill(this,'PRIVADO_SU',50)" data-mod="PRIVADO_SU">Privado S/U</span>
-          <span class="pill" onclick="selPill(this,'ADECCO',50)"     data-mod="ADECCO">Adecco</span>
-          <span class="pill" onclick="selPill(this,'OTROS',null)"    data-mod="OTROS">Otros</span>
-        </div>
-        <div class="fg">
-          <div class="precio-box" id="precio-box">
-            <span class="precio-num" id="precio-num">–</span>
-            <span class="precio-suffix">€ / sesión</span>
-          </div>
-          <select class="fc otros-select" id="otros-select" style="display:none" onchange="document.getElementById('precio-num').textContent=this.value">
-            <option value="45">45 € / sesión</option>
-            <option value="40">40 € / sesión</option>
-            <option value="35">35 € / sesión</option>
-            <option value="30">30 € / sesión</option>
-          </select>
-        </div>
-        <!-- AVISO sin bono/beca activo — aparece al clicar Bono/Beca sin tenerlo -->
-        <div id="bb-aviso-wrap" style="display:none;margin-top:10px">
-          <div class="alert alert-amber" style="margin-bottom:8px">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;width:14px;height:14px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-            <span id="bb-aviso-texto">Sin bono activo. ¿Deseas crear uno?</span>
-          </div>
-          <div style="display:flex;gap:8px">
-            <button class="btn-alta bono" id="bb-btn-nuevo-bono" onclick="mostrarPanelBono()">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
-              Nuevo bono
-            </button>
-            <button class="btn-alta beca" id="bb-btn-nueva-beca" onclick="mostrarPanelBeca()">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
-              Nueva beca
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <!-- REPETIR -->
-      <div class="section" id="sec-repetir">
-        <div class="sec-label">Repetir cita</div>
-        <label class="toggle-fila">
-          <div class="toggle">
-            <input type="checkbox" id="chk-recur" onchange="toggleRecur(this)">
-            <span class="slider"></span>
-          </div>
-          <span class="toggle-lbl">Crear citas automáticamente</span>
-        </label>
-        <div class="recur-box" id="recur-box">
-          <div class="form-row">
-            <div class="fg">
-              <label class="fl">Frecuencia</label>
-              <select class="fc" id="recur-frec" onchange="calcRecur()">
-                <option value="7">Semanal</option>
-                <option value="14">Quincenal</option>
-              </select>
-            </div>
-            <div class="fg">
-              <label class="fl">Durante</label>
-              <select class="fc" id="recur-dur" onchange="calcRecur()">
-                <option value="4">1 mes (~4 citas)</option>
-                <option value="8">2 meses (~8 citas)</option>
-                <option value="13" selected>3 meses (~13 citas)</option>
-              </select>
-            </div>
-          </div>
-          <div class="recur-info" id="recur-info"></div>
-        </div>
-      </div>
+    <!-- ══ COL DERECHA: Estado + Cobro + Repetir + Notas + Recordatorio ══ -->
+    <div class="modal-col-right">
 
       <!-- ESTADO -->
       <div class="section">
@@ -646,10 +610,42 @@ select.fc{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.o
         </div>
       </div>
 
+      <!-- REPETIR -->
+      <div class="section" id="sec-repetir">
+        <div class="sec-label">Repetir cita</div>
+        <label class="toggle-fila">
+          <div class="toggle">
+            <input type="checkbox" id="chk-recur" onchange="toggleRecur(this)">
+            <span class="slider"></span>
+          </div>
+          <span class="toggle-lbl">Crear citas automáticamente</span>
+        </label>
+        <div class="recur-box" id="recur-box">
+          <div class="form-row">
+            <div class="fg">
+              <label class="fl">Frecuencia</label>
+              <select class="fc" id="recur-frec" onchange="calcRecur()">
+                <option value="7">Semanal</option>
+                <option value="14">Quincenal</option>
+              </select>
+            </div>
+            <div class="fg">
+              <label class="fl">Durante</label>
+              <select class="fc" id="recur-dur" onchange="calcRecur()">
+                <option value="4">1 mes (~4 citas)</option>
+                <option value="8">2 meses (~8 citas)</option>
+                <option value="13" selected>3 meses (~13 citas)</option>
+              </select>
+            </div>
+          </div>
+          <div class="recur-info" id="recur-info"></div>
+        </div>
+      </div>
+
       <!-- NOTAS -->
       <div class="section">
         <div class="sec-label">Notas de sesión</div>
-        <textarea class="fc notas-ta" id="inp-notas" rows="3" placeholder="Observaciones, motivo de cancelación…"></textarea>
+        <textarea class="fc notas-ta" id="inp-notas" rows="4" placeholder="Observaciones, motivo de cancelación…"></textarea>
       </div>
 
       <!-- RECORDATORIO -->
@@ -1773,7 +1769,7 @@ function calcRecur() {
 ═══════════════════════════════════════════ */
 async function guardarCita() {
   if (!G.modalPacId) { toast('Selecciona un paciente', true); return; }
-  if (!G.modalMod)   { toast('Selecciona una modalidad de pago', true); return; }
+  if (!G.modalMod)   { toast('Selecciona el tipo de sesión', true); return; }
 
   const fecha = document.getElementById('inp-fecha').value;
   const hora  = document.getElementById('inp-hora').value;
