@@ -317,42 +317,64 @@ td.muted{color:var(--ink-muted);font-size:12px}
 
       <!-- LISTA -->
       <div class="lista-wrap" id="pac-lista-view">
-        <div class="lista-toolbar">
-          <div class="search-wrap">
-            <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-            <input class="search-input" id="pac-search" type="text" placeholder="Nombre, apellidos o INI-NNNN…" oninput="filtrarPacientes()" autocomplete="off">
+
+        <!-- Buscador central -->
+        <div id="pac-buscador-central" style="max-width:620px;margin:32px auto 0">
+          <div style="background:var(--white);border:1px solid var(--border);border-radius:16px;padding:28px 32px;box-shadow:var(--shadow-lg)">
+            <div style="text-align:center;margin-bottom:22px">
+              <div style="width:48px;height:48px;background:var(--azul-pale);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 12px">
+                <svg viewBox="0 0 24 24" fill="none" stroke="var(--azul)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="22" height="22"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+              </div>
+              <div style="font-size:16px;font-weight:700;color:var(--ink)">Buscar paciente</div>
+              <div style="font-size:12px;color:var(--ink-muted);margin-top:4px" id="pac-total-label">Cargando…</div>
+            </div>
+            <div style="position:relative;margin-bottom:12px">
+              <svg viewBox="0 0 24 24" fill="none" stroke="var(--ink-muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);width:16px;height:16px;pointer-events:none"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <input id="pac-search" type="text" autocomplete="off"
+                placeholder="Nombre, apellidos o expediente…"
+                oninput="filtrarPacientes()"
+                style="width:100%;padding:11px 12px 11px 38px;border:1px solid var(--border);border-radius:10px;font-family:inherit;font-size:14px;color:var(--ink);outline:none;transition:border-color .2s"
+                onfocus="this.style.borderColor='var(--azul)'" onblur="this.style.borderColor='var(--border)'">
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+              <select class="filter-select" id="pac-filtro-estado" onchange="filtrarPacientes()" style="width:100%;padding:9px 10px;font-size:13px">
+                <option value="">Todos los estados</option>
+                <option value="Si">Activos</option>
+                <option value="No">Baja</option>
+              </select>
+              <select class="filter-select" id="pac-filtro-incompleto" onchange="filtrarPacientes()" style="width:100%;padding:9px 10px;font-size:13px">
+                <option value="">Completos e incompletos</option>
+                <option value="incompleto">Ficha incompleta</option>
+              </select>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-top:12px">
+              <span id="pac-count" style="font-size:12px;color:var(--ink-muted)"></span>
+              <button onclick="limpiarBuscador()" style="background:none;border:none;font-size:12px;color:var(--ink-muted);cursor:pointer;font-family:inherit;padding:2px 6px;border-radius:4px" onmouseover="this.style.color='var(--ink)'" onmouseout="this.style.color='var(--ink-muted)'">✕ Limpiar</button>
+            </div>
           </div>
-          <select class="filter-select" id="pac-filtro-estado" onchange="filtrarPacientes()">
-            <option value="">Todos</option>
-            <option value="Si">Activos</option>
-            <option value="No">Baja</option>
-          </select>
-          <select class="filter-select" id="pac-filtro-incompleto" onchange="filtrarPacientes()">
-            <option value="">Completos e incompletos</option>
-            <option value="incompleto">Ficha incompleta</option>
-          </select>
-          <span class="lista-count" id="pac-count"></span>
         </div>
 
-        <div class="table-wrap">
-          <div class="table-scroll">
-            <table class="data-table">
-              <thead>
-                <tr>
-                  <th>Expediente</th>
-                  <th>Nombre</th>
-                  <th>Edad</th>
-                  <th>Estado</th>
-                  <th>Bono / beca</th>
-                  <th>Próx. cita</th>
-                  <th>Ficha</th>
-                </tr>
-              </thead>
-              <tbody id="pac-tbody"></tbody>
-            </table>
+        <!-- Resultados (ocultos hasta que haya búsqueda) -->
+        <div id="pac-resultados" style="display:none;margin-top:16px">
+          <div class="table-wrap">
+            <div class="table-scroll">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Expediente</th>
+                    <th>Nombre</th>
+                    <th>Edad</th>
+                    <th>Estado</th>
+                    <th>Ficha</th>
+                  </tr>
+                </thead>
+                <tbody id="pac-tbody"></tbody>
+              </table>
+            </div>
+            <div class="table-footer" id="pac-footer"></div>
           </div>
-          <div class="table-footer" id="pac-footer"></div>
         </div>
+
       </div>
 
       <!-- FICHA 360 -->
@@ -715,7 +737,8 @@ async function cargarPacientes() {
     toast('Error cargando pacientes: ' + e.message, true);
     return;
   }
-  filtrarPacientes();
+  const n = G.pacientes.length;
+  document.getElementById('pac-total-label').textContent = `${n} paciente${n !== 1 ? 's' : ''} en el sistema`;
 }
 
 function calcEdad(fnac) {
@@ -732,15 +755,29 @@ function fichaIncompleta(p) {
   return !p.fecha_nacimiento || !p.telefono || !p.tutor1 || !p.consentimiento || p.consentimiento === 'Pendiente';
 }
 
+function limpiarBuscador() {
+  document.getElementById('pac-search').value = '';
+  document.getElementById('pac-filtro-estado').value = '';
+  document.getElementById('pac-filtro-incompleto').value = '';
+  document.getElementById('pac-resultados').style.display = 'none';
+  document.getElementById('pac-count').textContent = '';
+}
+
 function filtrarPacientes() {
-  const q    = document.getElementById('pac-search').value.trim().toLowerCase();
-  const est  = document.getElementById('pac-filtro-estado').value;
-  const inc  = document.getElementById('pac-filtro-incompleto').value;
+  const q   = document.getElementById('pac-search').value.trim().toLowerCase();
+  const est = document.getElementById('pac-filtro-estado').value;
+  const inc = document.getElementById('pac-filtro-incompleto').value;
+
+  const hayFiltro = q || est || inc;
+  if (!hayFiltro) {
+    document.getElementById('pac-resultados').style.display = 'none';
+    document.getElementById('pac-count').textContent = '';
+    return;
+  }
 
   G.filtrados = G.pacientes.filter(p => {
-    const nombre = `${p.nombre||''} ${p.apellidos||''}`.toLowerCase();
-    const id     = (p.id || '').toLowerCase();
-    if (q && !nombre.includes(q) && !id.includes(q)) return false;
+    const texto = `${p.nombre||''} ${p.apellidos||''} ${p.alias||''} ${p.id||''}`.toLowerCase();
+    if (q && !texto.includes(q)) return false;
     if (est && p.activo !== est) return false;
     if (inc === 'incompleto' && !fichaIncompleta(p)) return false;
     return true;
@@ -756,19 +793,22 @@ function fmtFecha(f) {
 }
 
 function renderTabla() {
-  const tbody = document.getElementById('pac-tbody');
-  document.getElementById('pac-count').textContent = `${G.filtrados.length} paciente${G.filtrados.length !== 1 ? 's' : ''}`;
-  document.getElementById('pac-footer').textContent = `${G.filtrados.length} de ${G.pacientes.length} pacientes`;
+  const tbody   = document.getElementById('pac-tbody');
+  const resEl   = document.getElementById('pac-resultados');
+  const n       = G.filtrados.length;
 
-  if (!G.filtrados.length) {
-    tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state">
-      <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
-      Sin resultados
-    </div></td></tr>`;
+  document.getElementById('pac-count').textContent  = n ? `${n} resultado${n !== 1 ? 's' : ''}` : 'Sin resultados';
+  document.getElementById('pac-footer').textContent = `${n} de ${G.pacientes.length} pacientes`;
+
+  if (!n) {
+    resEl.style.display = 'block';
+    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:32px;color:var(--ink-muted);font-size:13px">Sin resultados para esta búsqueda</td></tr>`;
     return;
   }
 
+  resEl.style.display = 'block';
   tbody.innerHTML = G.filtrados.map(p => {
+    const ini     = ((p.nombre||'').charAt(0) + (p.apellidos||'').charAt(0)).toUpperCase() || '?';
     const edad    = calcEdad(p.fecha_nacimiento);
     const edadStr = edad !== null ? `${edad} años` : '—';
     const activo  = p.activo !== 'No'
@@ -777,13 +817,19 @@ function renderTabla() {
     const incompleto = fichaIncompleta(p)
       ? `<span class="badge badge-warn">Incompleta</span>`
       : `<span class="badge badge-ok">Completa</span>`;
+    const nombreDisplay = `
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="width:30px;height:30px;background:var(--azul-pale);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--azul);flex-shrink:0;font-family:'DM Mono',monospace">${ini}</div>
+        <div>
+          <div style="font-weight:600;color:var(--ink)">${(p.apellidos||'') + (p.apellidos && p.nombre ? ', ' : '') + (p.nombre||'')}</div>
+          ${p.alias ? `<div style="font-size:11px;color:var(--ink-muted)">${p.alias}</div>` : ''}
+        </div>
+      </div>`;
     return `<tr onclick="abrirFicha('${p.id}')">
       <td class="mono">${p.id}</td>
-      <td class="strong">${p.apellidos || ''}, ${p.nombre || ''}</td>
+      <td>${nombreDisplay}</td>
       <td class="muted">${edadStr}</td>
       <td>${activo}</td>
-      <td class="muted">—</td>
-      <td class="muted">—</td>
       <td>${incompleto}</td>
     </tr>`;
   }).join('');
