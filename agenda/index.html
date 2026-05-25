@@ -1476,7 +1476,7 @@ async function cargarBonoBeca(idPaciente) {
   try {
     const hoy = fmtISO(new Date());
     const bb  = await supaGet(
-      `bonos_becas?id_paciente=eq.${idPaciente}&fecha_fin=gte.${hoy}&select=id,tipo,sesiones_totales,sesiones_consumidas,fecha_inicio,fecha_fin,importe_total&order=fecha_fin.asc&limit=20`
+      `bonos_becas?id_paciente=eq.${idPaciente}&fecha_vencimiento=gte.${hoy}&select=id,tipo,especialidad,sesiones_total,sesiones_consumidas,fecha_inicio,fecha_vencimiento,importe_total&order=fecha_vencimiento.asc&limit=20`
     );
     G.bonosBecas = bb;
   } catch (e) { console.error('cargarBonoBeca:', e); }
@@ -1576,11 +1576,13 @@ async function crearNuevoBono() {
   btn.innerHTML = `<div class="btn-spinner"></div> Creando…`;
 
   try {
+    const espBono = document.getElementById('sel-especialidad').value || 'PSI';
     await supaPost('bonos_becas', {
       id: nuevoId, id_paciente: G.modalPacId, tipo: 'BONO',
-      sesiones_totales: 4, sesiones_consumidas: 0,
-      fecha_inicio: fi, fecha_fin: ff,
-      anticipo_recibido: 'No', cobrado: 'No', importe_total: 180
+      especialidad: espBono,
+      sesiones_total: 4, sesiones_consumidas: 0,
+      fecha_inicio: fi, fecha_vencimiento: ff,
+      anticipo_recibido: 'No', importe_total: 180
     });
     toast(`Bono ${nuevoId} creado`, false, true);
     cerrarNuevoBono();
@@ -1652,11 +1654,13 @@ async function crearNuevaBeca() {
   btn.innerHTML = `<div class="btn-spinner"></div> Creando…`;
 
   try {
+    const espBeca = document.getElementById('sel-especialidad').value || 'PSI';
     await supaPost('bonos_becas', {
       id: nuevoId, id_paciente: G.modalPacId, tipo: 'BECA',
-      sesiones_totales: 20, sesiones_consumidas: 0,
-      fecha_inicio: fi, fecha_fin: ff,
-      anticipo_recibido: 'No', cobrado: 'No', importe_total: 913
+      especialidad: espBeca,
+      sesiones_total: 20, sesiones_consumidas: 0,
+      fecha_inicio: fi, fecha_vencimiento: ff,
+      anticipo_recibido: 'No', importe_total: 913
     });
     toast(`Beca ${nuevoId} creada`, false, true);
     cerrarNuevaBeca();
