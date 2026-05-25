@@ -134,7 +134,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);fon
 /* ── OVERLAY / MODAL ── */
 .overlay{display:none;position:fixed;inset:0;background:rgba(16,6,80,.55);z-index:200;align-items:center;justify-content:center;backdrop-filter:blur(3px)}
 .overlay.visible{display:flex}
-.modal{background:var(--surface);border-radius:16px;width:min(780px,94vw);max-height:95vh;display:flex;flex-direction:column;box-shadow:0 24px 80px rgba(0,0,0,.28);animation:modalIn .2s ease;overflow:hidden}
+.modal{background:var(--surface);border-radius:16px;width:min(1060px,94vw);max-height:95vh;display:flex;flex-direction:column;box-shadow:0 24px 80px rgba(0,0,0,.28);animation:modalIn .2s ease;overflow:hidden}
 @keyframes modalIn{from{opacity:0;transform:scale(.97) translateY(8px)}to{opacity:1;transform:scale(1) translateY(0)}}
 .modal-header{display:flex;align-items:center;justify-content:space-between;padding:14px 24px 12px;border-bottom:1px solid var(--border);flex-shrink:0}
 .modal-title{font-size:16px;font-weight:700;color:var(--azul);display:flex;align-items:center;gap:9px}
@@ -144,8 +144,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);fon
 .modal-close{background:none;border:none;cursor:pointer;color:var(--muted);font-size:20px;line-height:1;padding:4px 7px;border-radius:6px;transition:all .15s}
 .modal-close:hover{background:var(--bg);color:var(--text)}
 .modal-body{display:grid;grid-template-columns:1fr 1fr;flex:1;min-height:0;overflow:hidden;gap:0}
-.modal-col-left{padding:14px 16px 14px 24px;overflow-y:auto;max-height:calc(95vh - 112px);min-height:0;border-right:1px solid var(--border)}
-.modal-col-right{padding:14px 24px 14px 16px;overflow-y:auto;max-height:calc(95vh - 112px);min-height:0}
+.modal-col-left{padding:12px 14px 12px 20px;overflow-y:auto;max-height:calc(95vh - 112px);min-height:0;border-right:1px solid var(--border)}
+.modal-col-right{padding:12px 20px 12px 14px;overflow-y:auto;max-height:calc(95vh - 112px);min-height:0}
 .modal-col-left::-webkit-scrollbar,.modal-col-right::-webkit-scrollbar{width:4px}
 .modal-col-left::-webkit-scrollbar-thumb,.modal-col-right::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
 .modal-footer{display:flex;align-items:center;gap:8px;padding:12px 24px;border-top:1px solid var(--border);flex-shrink:0}
