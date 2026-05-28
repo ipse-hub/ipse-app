@@ -255,18 +255,25 @@ const TABLAS = {
           { id:'apellidos',     label:'Apellidos',        type:'text', span2:true },
           { id:'alias',         label:'Alias (3 letras)', type:'text' },
           { id:'fecha_nacimiento', label:'F. Nacimiento', type:'date' },
+          { id:'fecha_alta',    label:'F. Alta',          type:'date' },
+          { id:'fecha_baja',    label:'F. Baja',          type:'date' },
           { id:'activo',        label:'Activo',           type:'select', options:['Si','No'] },
           { id:'tiene_tutor',   label:'Tiene tutor',      type:'select', options:['No','Si'] },
+          { id:'consentimiento',label:'Consentimiento',   type:'select', options:['','Pendiente','Firmado','Digital'] },
+          { id:'id_profesional',label:'Profesional asignado', type:'select', options:['','PRO-001','PRO-002','PRO-003','PRO-004','PRO-005'] },
+          { id:'modalidad_principal', label:'Modalidad principal', type:'select', options:['','BECA','BONO','PRIVADO_SU','ADECCO','OTROS'] },
         ]
       },
       {
         title: 'Contacto paciente',
         fields: [
-          { id:'telefono_paciente', label:'Teléfono',    type:'text' },
-          { id:'email_paciente',    label:'Email',       type:'email' },
-          { id:'dni_paciente',      label:'DNI',         type:'text' },
-          { id:'codigo_postal',     label:'C. Postal',   type:'text' },
-          { id:'municipio',         label:'Municipio',   type:'text' },
+          { id:'telefono',      label:'Teléfono',    type:'text' },
+          { id:'email',         label:'Email',       type:'email' },
+          { id:'dni_paciente',  label:'DNI',         type:'text' },
+          { id:'profesion',     label:'Profesión',   type:'text' },
+          { id:'direccion',     label:'Dirección',   type:'text', span2:true },
+          { id:'codigo_postal', label:'C. Postal',   type:'text' },
+          { id:'municipio',     label:'Municipio',   type:'text' },
         ]
       },
       {
