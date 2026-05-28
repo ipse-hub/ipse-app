@@ -370,7 +370,48 @@ td.muted{color:var(--ink-muted);font-size:12px}
 .btn-guardar-130{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;background:var(--azul);color:#fff;border:none;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:background .15s;margin-top:14px}
 .btn-guardar-130:hover{background:var(--azul-light)}
 .btn-guardar-130:disabled{opacity:.5;cursor:not-allowed}
+
+/* ── MÓDULO FACTURAS ── */
+.fact-wrap{flex:1;min-height:0;overflow-y:auto;padding:16px 20px}
+.fact-toolbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.btn-nueva-factura{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:8px;background:var(--azul);color:#fff;border:none;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:background .15s;margin-left:auto}
+.btn-nueva-factura:hover{background:var(--azul-light)}
+.btn-nueva-factura svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
+.fact-estado-pill{display:inline-flex;align-items:center;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;cursor:pointer;border:none;font-family:inherit}
+.fact-estado-pill.emitida{background:var(--azul-pale);color:var(--azul)}
+.fact-estado-pill.pagada{background:var(--verde-pale);color:var(--verde-dark)}
+.fact-estado-pill.anulada{background:var(--cream);color:var(--ink-muted);text-decoration:line-through}
+
+/* Modal factura */
+.fact-modal{background:var(--white);border-radius:16px;box-shadow:var(--shadow-lg);width:820px;max-width:96vw;max-height:94vh;overflow-y:auto;animation:modalIn .2s ease;display:flex;flex-direction:column}
+.fact-modal-body{padding:20px 24px;flex:1}
+.fact-cols{display:grid;grid-template-columns:1fr 1fr;gap:0 20px}
+.fact-section{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--azul);padding:10px 0 6px;border-bottom:1px solid var(--border);margin-bottom:12px;margin-top:16px}
+.fact-section:first-child{margin-top:0}
+
+/* Líneas */
+.fact-lineas-hdr{display:grid;grid-template-columns:1fr 80px 90px 90px 28px;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-muted);margin-bottom:6px}
+.fact-linea{display:grid;grid-template-columns:1fr 80px 90px 90px 28px;gap:8px;align-items:center;margin-bottom:6px}
+.fact-linea input{padding:6px 8px;border:1px solid var(--border);border-radius:6px;font-family:inherit;font-size:13px;color:var(--ink);outline:none;width:100%;background:var(--white)}
+.fact-linea input:focus{border-color:var(--azul)}
+.fact-linea input[type=number]{text-align:right}
+.fact-linea-del{background:none;border:none;color:var(--ink-muted);cursor:pointer;font-size:16px;padding:0;line-height:1;transition:color .15s;text-align:center}
+.fact-linea-del:hover{color:var(--rojo)}
+.btn-add-linea{background:none;border:1px dashed var(--border);border-radius:6px;color:var(--ink-muted);font-size:12px;font-family:inherit;cursor:pointer;padding:6px 12px;width:100%;transition:all .15s;margin-top:4px}
+.btn-add-linea:hover{border-color:var(--azul);color:var(--azul)}
+
+/* Totales */
+.fact-totales{background:var(--cream);border-radius:10px;padding:12px 16px;margin-top:12px}
+.fact-tot-row{display:flex;justify-content:space-between;padding:4px 0;font-size:13px}
+.fact-tot-row.total{font-weight:700;font-size:15px;border-top:1px solid var(--border);margin-top:6px;padding-top:8px}
+.fact-tot-val{font-family:'DM Mono',monospace;font-weight:600}
+
+/* Preview PDF inline */
+.fact-preview-btn{display:inline-flex;align-items:center;gap:6px;padding:7px 13px;border-radius:8px;border:1px solid var(--border);background:var(--white);color:var(--ink-light);font-size:12px;font-weight:500;cursor:pointer;font-family:inherit;transition:all .15s}
+.fact-preview-btn:hover{background:var(--cream);border-color:var(--azul);color:var(--azul)}
+.fact-preview-btn svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body>
 
@@ -436,6 +477,10 @@ td.muted{color:var(--ink-muted);font-size:12px}
         Cobros
         <span class="nav-soon">pronto</span>
       </div>
+      <div class="nav-item" id="nav-facturas" onclick="navTo('facturas')">
+        <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+        Facturas
+      </div>
       <div class="nav-item" id="nav-fiscalidad" onclick="navTo('fiscalidad')">
         <svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
         Fiscalidad
@@ -456,7 +501,7 @@ td.muted{color:var(--ink-muted);font-size:12px}
       </div>
     </div>
     <div class="sidebar-footer">
-      <div style="font-size:10px;color:var(--ink-muted)">IPSE · Gestión v0.2</div>
+      <div style="font-size:10px;color:var(--ink-muted)">IPSE · Gestión v0.3</div>
     </div>
   </div>
 
@@ -809,6 +854,195 @@ td.muted{color:var(--ink-muted);font-size:12px}
   </div>
 </div>
 
+<!-- ── MÓDULO FACTURAS ── -->
+<div class="modulo" id="mod-facturas">
+  <div class="fact-wrap">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+      <div>
+        <div style="font-size:18px;font-weight:700;color:var(--ink)">Facturas</div>
+        <div style="font-size:12px;color:var(--ink-muted);margin-top:2px" id="fact-count-label">Cargando…</div>
+      </div>
+      <button class="btn-nueva-factura" onclick="factNuevaFactura()">
+        <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Nueva factura
+      </button>
+    </div>
+
+    <!-- Filtros -->
+    <div class="fact-toolbar">
+      <div class="search-wrap">
+        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input class="search-input" id="fact-search" type="text" placeholder="Nº factura, receptor…" oninput="factFiltrar()" style="width:220px">
+      </div>
+      <select class="filter-select" id="fact-filtro-estado" onchange="factFiltrar()">
+        <option value="">Todos los estados</option>
+        <option value="Emitida">Emitida</option>
+        <option value="Pagada">Pagada</option>
+        <option value="Anulada">Anulada</option>
+      </select>
+      <select class="filter-select" id="fact-filtro-anio" onchange="factFiltrar()">
+        <option value="2026">2026</option>
+        <option value="2025">2025</option>
+      </select>
+    </div>
+
+    <!-- Tabla -->
+    <div class="table-wrap">
+      <div class="table-scroll">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Nº Factura</th>
+              <th>Fecha</th>
+              <th>Receptor</th>
+              <th>Paciente</th>
+              <th>Concepto</th>
+              <th style="text-align:right">Base imp.</th>
+              <th style="text-align:right">Total</th>
+              <th>Estado</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="fact-tbody"></tbody>
+        </table>
+      </div>
+      <div class="table-footer" id="fact-footer">—</div>
+    </div>
+  </div>
+</div>
+
+<!-- ── MODAL FACTURA ── -->
+<div class="overlay" id="overlay-factura" onclick="if(event.target===this)factCerrarModal()">
+  <div class="fact-modal">
+    <div class="modal-hdr">
+      <div class="modal-title" id="fact-modal-title">Nueva factura</div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <button class="fact-preview-btn" onclick="factPrevisualizar()" id="btn-fact-preview">
+          <svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          Vista previa
+        </button>
+        <button class="modal-close" onclick="factCerrarModal()">✕</button>
+      </div>
+    </div>
+    <div class="fact-modal-body">
+      <div class="fact-cols">
+
+        <!-- Col izquierda: receptor -->
+        <div>
+          <div class="fact-section">Receptor</div>
+          <div class="form-group">
+            <label>Paciente vinculado</label>
+            <div style="position:relative">
+              <input class="form-input" id="fact-pac-search" type="text" autocomplete="off"
+                placeholder="Buscar por nombre o expediente…"
+                oninput="factBuscarPaciente()" onfocus="factBuscarPaciente()">
+              <div id="fact-pac-drop" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--white);border:1px solid var(--border);border-radius:8px;box-shadow:var(--shadow-lg);z-index:200;max-height:180px;overflow-y:auto"></div>
+            </div>
+            <input type="hidden" id="fact-pac-id">
+          </div>
+          <div class="form-group">
+            <label>Nombre receptor *</label>
+            <input class="form-input" id="fact-rec-nombre" type="text" placeholder="Nombre completo del receptor">
+          </div>
+          <div class="form-group">
+            <label>DNI / NIF receptor</label>
+            <input class="form-input" id="fact-rec-dni" type="text" placeholder="00.000.000-X">
+          </div>
+          <div class="form-group">
+            <label>Dirección</label>
+            <input class="form-input" id="fact-rec-dir" type="text" placeholder="Calle, número">
+          </div>
+          <div style="display:grid;grid-template-columns:100px 1fr;gap:8px">
+            <div class="form-group">
+              <label>C.P.</label>
+              <input class="form-input" id="fact-rec-cp" type="text" placeholder="18110">
+            </div>
+            <div class="form-group">
+              <label>Municipio</label>
+              <input class="form-input" id="fact-rec-municipio" type="text" placeholder="Ciudad">
+            </div>
+          </div>
+        </div>
+
+        <!-- Col derecha: datos factura -->
+        <div>
+          <div class="fact-section">Datos de la factura</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+            <div class="form-group">
+              <label>Nº Factura *</label>
+              <input class="form-input" id="fact-numero" type="text" placeholder="001/2026">
+            </div>
+            <div class="form-group">
+              <label>Fecha *</label>
+              <input class="form-input" id="fact-fecha" type="date">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Estado</label>
+            <select class="form-select" id="fact-estado">
+              <option value="Emitida">Emitida</option>
+              <option value="Pagada">Pagada</option>
+              <option value="Anulada">Anulada</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>IRPF %</label>
+            <select class="form-select" id="fact-irpf-pct" onchange="factRecalcular()">
+              <option value="0">0% — Sin retención</option>
+              <option value="15">15% — Retención IRPF</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Notas al pie</label>
+            <textarea class="form-input" id="fact-notas" rows="2" style="resize:vertical"
+              placeholder="Factura exenta de IVA según Artículo 20.1.3…"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- Líneas -->
+      <div class="fact-section" style="margin-top:20px">Líneas de concepto</div>
+      <div class="fact-lineas-hdr">
+        <span>Concepto</span>
+        <span style="text-align:center">Horas/Ud.</span>
+        <span style="text-align:right">Precio/h</span>
+        <span style="text-align:right">Total</span>
+        <span></span>
+      </div>
+      <div id="fact-lineas-wrap"></div>
+      <button class="btn-add-linea" onclick="factAddLinea()">+ Añadir línea</button>
+
+      <!-- Totales -->
+      <div class="fact-totales">
+        <div class="fact-tot-row">
+          <span>Base imponible</span>
+          <span class="fact-tot-val" id="fact-tot-base">0'00 €</span>
+        </div>
+        <div class="fact-tot-row">
+          <span>I.V.A.</span>
+          <span class="fact-tot-val">0'00 €</span>
+        </div>
+        <div class="fact-tot-row">
+          <span>Retención I.R.P.F (<span id="fact-tot-irpf-pct">0</span>%)</span>
+          <span class="fact-tot-val" id="fact-tot-irpf">0'00 €</span>
+        </div>
+        <div class="fact-tot-row total">
+          <span>TOTAL FACTURA</span>
+          <span class="fact-tot-val" id="fact-tot-total">0'00 €</span>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-sec" onclick="factCerrarModal()">Cancelar</button>
+      <button class="btn btn-pri" onclick="factGuardar()" id="btn-fact-guardar">Guardar factura</button>
+      <button class="btn btn-pri" onclick="factGuardarYDescargar()" id="btn-fact-pdf" style="background:var(--verde-dark);border-color:var(--verde-dark)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Guardar y descargar PDF
+      </button>
+    </div>
+  </div>
+</div>
+
 <!-- ── MÓDULO FISCALIDAD ── -->
 <div class="modulo" id="mod-fiscalidad">
   <div class="fisc-wrap">
@@ -1094,6 +1328,7 @@ function navTo(mod) {
   if (navEl) navEl.classList.add('active');
   if (modEl) modEl.classList.add('active');
   if (mod === 'fiscalidad') fiscCargarResumen();
+  if (mod === 'facturas')   factCargar();
 }
 
 /* ═══════════════════════════════════════════
@@ -1849,6 +2084,554 @@ function toast(msg, isErr = false, isOk = false) {
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => el.classList.remove('show'), 3000);
 }
+
+/* ═══════════════════════════════════════════
+   FACTURAS — ESTADO
+═══════════════════════════════════════════ */
+const FACT = {
+  facturas:    [],
+  filtradas:   [],
+  editandoId:  null,
+  lineas:      [],
+  emisor:      null
+};
+
+const LOGO_B64 = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMjAgNDAiPjx0ZXh0IHk9IjMwIiBmb250LXNpemU9IjI4IiBmb250LXdlaWdodD0iYm9sZCIgZmlsbD0iIzEwMDY5RiI+SVBTRTwvdGV4dD48L3N2Zz4=';
+
+function fmtEurFact(v) {
+  const n = parseFloat(v) || 0;
+  const [e, d] = n.toFixed(2).split('.');
+  return e + "'" + d + ' €';
+}
+
+/* ── Carga inicial ── */
+async function factCargar() {
+  const anio = document.getElementById('fact-filtro-anio')?.value || '2026';
+  try {
+    FACT.facturas = await sg(`facturas?fecha=gte.${anio}-01-01&fecha=lte.${anio}-12-31&order=fecha.desc,numero_factura.desc&limit=500&select=*`);
+    factFiltrar();
+    const n = FACT.facturas.length;
+    document.getElementById('fact-count-label').textContent = `${n} factura${n!==1?'s':''} en ${anio}`;
+  } catch(e) {
+    document.getElementById('fact-tbody').innerHTML =
+      `<tr><td colspan="9" style="color:var(--rojo);padding:14px">Error: ${e.message}</td></tr>`;
+  }
+}
+
+async function factCargarEmisor() {
+  if (FACT.emisor) return FACT.emisor;
+  try {
+    const data = await sg('configuracion_emisor?id=eq.IPSE&limit=1');
+    FACT.emisor = data[0] || {};
+  } catch { FACT.emisor = {}; }
+  return FACT.emisor;
+}
+
+/* ── Filtro y render tabla ── */
+function factFiltrar() {
+  const q   = (document.getElementById('fact-search')?.value || '').toLowerCase();
+  const est = document.getElementById('fact-filtro-estado')?.value || '';
+  FACT.filtradas = FACT.facturas.filter(f => {
+    if (est && f.estado !== est) return false;
+    if (q) {
+      const txt = `${f.numero_factura||''} ${f.receptor_nombre||''} ${f.id_paciente_v2||''}`.toLowerCase();
+      if (!txt.includes(q)) return false;
+    }
+    return true;
+  });
+  factRenderTabla();
+}
+
+function factRenderTabla() {
+  const tbody = document.getElementById('fact-tbody');
+  const n = FACT.filtradas.length;
+  document.getElementById('fact-footer').textContent =
+    `${n} factura${n!==1?'s':''} · Total: ${fmtEur(FACT.filtradas.reduce((s,f)=>s+(parseFloat(f.total)||0),0))}`;
+
+  if (!n) {
+    tbody.innerHTML = `<tr><td colspan="9" class="empty-state" style="text-align:center;padding:36px;color:var(--ink-muted)">Sin facturas</td></tr>`;
+    return;
+  }
+
+  const estadoBadge = e => {
+    if (e === 'Pagada')  return `<span class="fact-estado-pill pagada">Pagada</span>`;
+    if (e === 'Anulada') return `<span class="fact-estado-pill anulada">Anulada</span>`;
+    return `<span class="fact-estado-pill emitida">Emitida</span>`;
+  };
+
+  tbody.innerHTML = FACT.filtradas.map(f => {
+    const pac = G.pacientes.find(p => p.id === f.id_paciente_v2);
+    const pacNom = pac ? `${pac.nombre} ${pac.apellidos||''}`.trim() : (f.id_paciente_v2 || '—');
+    const lineas = Array.isArray(f.lineas) ? f.lineas : (typeof f.lineas === 'string' ? JSON.parse(f.lineas) : []);
+    const concepto = lineas[0]?.concepto || '—';
+    return `<tr onclick="factEditarFactura('${f.id_factura}')">
+      <td class="mono" style="font-weight:600;color:var(--azul)">${f.numero_factura || '—'}</td>
+      <td class="muted">${fmtFecha(f.fecha)}</td>
+      <td class="strong">${f.receptor_nombre || '—'}</td>
+      <td class="muted">${pacNom}</td>
+      <td class="muted" style="max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${concepto}</td>
+      <td style="text-align:right;font-family:'DM Mono',monospace;font-size:12px">${fmtEur(f.base_imponible)}</td>
+      <td style="text-align:right;font-family:'DM Mono',monospace;font-weight:600;color:var(--verde-dark)">${fmtEur(f.total)}</td>
+      <td>${estadoBadge(f.estado)}</td>
+      <td style="text-align:right">
+        <button onclick="event.stopPropagation();factDescargarPDF('${f.id_factura}')"
+          style="background:none;border:1px solid var(--border);border-radius:5px;padding:3px 8px;font-size:11px;color:var(--ink-muted);cursor:pointer;font-family:inherit"
+          onmouseover="this.style.color='var(--azul)'" onmouseout="this.style.color='var(--ink-muted)'">PDF</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+/* ── Modal nueva factura ── */
+async function factNuevaFactura() {
+  FACT.editandoId = null;
+  FACT.lineas = [{ concepto: '', horas: 1, precio: 45, total: 45 }];
+  document.getElementById('fact-modal-title').textContent = 'Nueva factura';
+
+  // Generar número siguiente
+  try {
+    const last = await sg('facturas?order=numero_factura.desc&limit=5&select=numero_factura');
+    const anio = new Date().getFullYear();
+    let nextNum = 1;
+    const thisYear = last.filter(f => (f.numero_factura||'').includes(String(anio)));
+    if (thisYear.length) {
+      const nums = thisYear.map(f => parseInt((f.numero_factura||'').split('/')[0])).filter(n => !isNaN(n));
+      if (nums.length) nextNum = Math.max(...nums) + 1;
+    }
+    document.getElementById('fact-numero').value = `${String(nextNum).padStart(3,'0')}/${anio}`;
+  } catch { document.getElementById('fact-numero').value = ''; }
+
+  document.getElementById('fact-fecha').value = new Date().toISOString().split('T')[0];
+  document.getElementById('fact-estado').value = 'Emitida';
+  document.getElementById('fact-irpf-pct').value = '0';
+  document.getElementById('fact-pac-search').value = '';
+  document.getElementById('fact-pac-id').value = '';
+  document.getElementById('fact-rec-nombre').value = '';
+  document.getElementById('fact-rec-dni').value = '';
+  document.getElementById('fact-rec-dir').value = '';
+  document.getElementById('fact-rec-cp').value = '';
+  document.getElementById('fact-rec-municipio').value = '';
+
+  // Nota por defecto del emisor
+  await factCargarEmisor();
+  document.getElementById('fact-notas').value = FACT.emisor?.texto_exencion || '';
+
+  factRenderLineas();
+  factRecalcular();
+  document.getElementById('overlay-factura').classList.add('open');
+}
+
+async function factEditarFactura(id) {
+  const f = FACT.facturas.find(x => x.id_factura === id);
+  if (!f) return;
+  FACT.editandoId = id;
+  FACT.lineas = Array.isArray(f.lineas) ? [...f.lineas] : (typeof f.lineas === 'string' ? JSON.parse(f.lineas) : []);
+
+  document.getElementById('fact-modal-title').textContent = `Factura ${f.numero_factura || id}`;
+  document.getElementById('fact-numero').value  = f.numero_factura || '';
+  document.getElementById('fact-fecha').value   = f.fecha || '';
+  document.getElementById('fact-estado').value  = f.estado || 'Emitida';
+  document.getElementById('fact-irpf-pct').value = String(f.irpf_pct || 0);
+  document.getElementById('fact-rec-nombre').value   = f.receptor_nombre || '';
+  document.getElementById('fact-rec-dni').value      = f.receptor_dni || '';
+  document.getElementById('fact-rec-dir').value      = f.receptor_direccion || '';
+  document.getElementById('fact-rec-cp').value       = f.receptor_cp || '';
+  document.getElementById('fact-rec-municipio').value = f.receptor_municipio || '';
+  document.getElementById('fact-notas').value        = f.notas || '';
+  document.getElementById('fact-pac-id').value       = f.id_paciente_v2 || '';
+
+  const pac = G.pacientes.find(p => p.id === f.id_paciente_v2);
+  document.getElementById('fact-pac-search').value = pac
+    ? `${pac.nombre} ${pac.apellidos||''}`.trim() + ` (${pac.id})`
+    : (f.id_paciente_v2 || '');
+
+  factRenderLineas();
+  factRecalcular();
+  document.getElementById('overlay-factura').classList.add('open');
+}
+
+function factCerrarModal() {
+  document.getElementById('overlay-factura').classList.remove('open');
+  document.getElementById('fact-pac-drop').style.display = 'none';
+}
+
+/* ── Búsqueda paciente en modal ── */
+function factBuscarPaciente() {
+  const q = document.getElementById('fact-pac-search').value.trim().toLowerCase();
+  const drop = document.getElementById('fact-pac-drop');
+  if (!q) { drop.style.display = 'none'; return; }
+  const res = G.pacientes.filter(p => {
+    const txt = `${p.nombre||''} ${p.apellidos||''} ${p.id||''}`.toLowerCase();
+    return txt.includes(q);
+  }).slice(0, 8);
+  if (!res.length) { drop.style.display = 'none'; return; }
+  drop.innerHTML = res.map(p => `
+    <div onclick="factSelPaciente('${p.id}')"
+      style="padding:8px 12px;cursor:pointer;font-size:13px;border-bottom:1px solid var(--border)"
+      onmouseover="this.style.background='var(--cream)'" onmouseout="this.style.background=''">
+      <span style="font-weight:600">${p.nombre} ${p.apellidos||''}</span>
+      <span style="font-family:'DM Mono',monospace;font-size:11px;color:var(--azul);margin-left:6px">${p.id}</span>
+    </div>`).join('');
+  drop.style.display = 'block';
+}
+
+function factSelPaciente(id) {
+  const p = G.pacientes.find(x => x.id === id);
+  if (!p) return;
+  document.getElementById('fact-pac-id').value = id;
+  document.getElementById('fact-pac-search').value = `${p.nombre} ${p.apellidos||''}`.trim() + ` (${id})`;
+  document.getElementById('fact-pac-drop').style.display = 'none';
+
+  // Autorellenar receptor con datos del tutor si existen
+  if (!document.getElementById('fact-rec-nombre').value) {
+    const nombre = p.tutor1 || `${p.nombre} ${p.apellidos||''}`.trim();
+    document.getElementById('fact-rec-nombre').value = nombre;
+    if (p.dni_tutor1) document.getElementById('fact-rec-dni').value = p.dni_tutor1;
+    if (p.tutor1_direccion) document.getElementById('fact-rec-dir').value = p.tutor1_direccion;
+    if (p.codigo_postal)    document.getElementById('fact-rec-cp').value = p.codigo_postal;
+    if (p.municipio)        document.getElementById('fact-rec-municipio').value = p.municipio;
+  }
+}
+
+/* ── Líneas ── */
+function factRenderLineas() {
+  const wrap = document.getElementById('fact-lineas-wrap');
+  wrap.innerHTML = FACT.lineas.map((l, i) => `
+    <div class="fact-linea" id="fact-linea-${i}">
+      <input type="text" value="${escHtml(l.concepto||'')}" placeholder="Descripción del servicio"
+        oninput="FACT.lineas[${i}].concepto=this.value">
+      <input type="number" value="${l.horas||1}" min="0" step="0.5"
+        oninput="FACT.lineas[${i}].horas=parseFloat(this.value)||0;factRecalcularLinea(${i})">
+      <input type="number" value="${l.precio||45}" min="0" step="0.01"
+        oninput="FACT.lineas[${i}].precio=parseFloat(this.value)||0;factRecalcularLinea(${i})">
+      <input type="number" value="${l.total||0}" min="0" step="0.01" readonly
+        style="background:var(--cream);color:var(--azul);font-weight:600">
+      <button class="fact-linea-del" onclick="factDelLinea(${i})">×</button>
+    </div>`).join('');
+}
+
+function factRecalcularLinea(i) {
+  FACT.lineas[i].total = Math.round(FACT.lineas[i].horas * FACT.lineas[i].precio * 100) / 100;
+  factRenderLineas();
+  factRecalcular();
+}
+
+function factAddLinea() {
+  FACT.lineas.push({ concepto: '', horas: 1, precio: 45, total: 45 });
+  factRenderLineas();
+  factRecalcular();
+}
+
+function factDelLinea(i) {
+  if (FACT.lineas.length === 1) { toast('Debe haber al menos una línea', true); return; }
+  FACT.lineas.splice(i, 1);
+  factRenderLineas();
+  factRecalcular();
+}
+
+function factRecalcular() {
+  const base  = FACT.lineas.reduce((s, l) => s + (parseFloat(l.total)||0), 0);
+  const irpfPct = parseFloat(document.getElementById('fact-irpf-pct')?.value || 0);
+  const irpf  = Math.round(base * irpfPct / 100 * 100) / 100;
+  const total = Math.round((base - irpf) * 100) / 100;
+  document.getElementById('fact-tot-base').textContent    = fmtEurFact(base);
+  document.getElementById('fact-tot-irpf-pct').textContent = irpfPct;
+  document.getElementById('fact-tot-irpf').textContent    = fmtEurFact(irpf);
+  document.getElementById('fact-tot-total').textContent   = fmtEurFact(total);
+}
+
+function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+/* ── Guardar ── */
+function factRecogerDatos() {
+  const base     = FACT.lineas.reduce((s, l) => s + (parseFloat(l.total)||0), 0);
+  const irpfPct  = parseFloat(document.getElementById('fact-irpf-pct').value) || 0;
+  const irpfImp  = Math.round(base * irpfPct / 100 * 100) / 100;
+  const total    = Math.round((base - irpfImp) * 100) / 100;
+  return {
+    numero_factura:     document.getElementById('fact-numero').value.trim(),
+    fecha:              document.getElementById('fact-fecha').value,
+    estado:             document.getElementById('fact-estado').value,
+    id_paciente_v2:     document.getElementById('fact-pac-id').value || null,
+    receptor_nombre:    document.getElementById('fact-rec-nombre').value.trim() || null,
+    receptor_dni:       document.getElementById('fact-rec-dni').value.trim() || null,
+    receptor_direccion: document.getElementById('fact-rec-dir').value.trim() || null,
+    receptor_cp:        document.getElementById('fact-rec-cp').value.trim() || null,
+    receptor_municipio: document.getElementById('fact-rec-municipio').value.trim() || null,
+    lineas:             FACT.lineas,
+    base_imponible:     base,
+    iva_pct:            0,
+    iva_importe:        0,
+    irpf_pct:           irpfPct,
+    irpf_importe:       irpfImp,
+    total,
+    notas:              document.getElementById('fact-notas').value.trim() || null,
+  };
+}
+
+async function factGuardar(yDescargar = false) {
+  const datos = factRecogerDatos();
+  if (!datos.numero_factura) { toast('El número de factura es obligatorio', true); return; }
+  if (!datos.fecha)          { toast('La fecha es obligatoria', true); return; }
+  if (!datos.receptor_nombre){ toast('El receptor es obligatorio', true); return; }
+
+  const btnG = document.getElementById('btn-fact-guardar');
+  const btnP = document.getElementById('btn-fact-pdf');
+  btnG.disabled = btnP.disabled = true;
+  btnG.innerHTML = '<span class="spinner"></span> Guardando…';
+
+  try {
+    let factura;
+    if (FACT.editandoId) {
+      const res = await spatch('facturas', FACT.editandoId, datos);
+      factura = Array.isArray(res) ? res[0] : res;
+      const idx = FACT.facturas.findIndex(f => f.id_factura === FACT.editandoId);
+      if (idx >= 0) FACT.facturas[idx] = { ...FACT.facturas[idx], ...datos };
+    } else {
+      // Generar ID
+      let nextNum = 1;
+      try {
+        const last = await sg('facturas?order=id_factura.desc&limit=1&select=id_factura');
+        if (last.length) nextNum = parseInt(last[0].id_factura.replace(/\D/g,'')) + 1;
+      } catch { /* primera */ }
+      datos.id_factura = 'FAC-' + String(nextNum).padStart(4,'0');
+      const res = await sp('facturas', datos);
+      factura = Array.isArray(res) ? res[0] : res;
+      FACT.facturas.unshift({ ...datos });
+    }
+    factFiltrar();
+    toast(FACT.editandoId ? 'Factura actualizada' : 'Factura guardada', false, true);
+    if (yDescargar && factura) {
+      await factCargarEmisor();
+      factGenerarPDF({ ...datos, id_factura: datos.id_factura || FACT.editandoId }, true);
+    } else {
+      factCerrarModal();
+    }
+  } catch(e) {
+    toast('Error al guardar: ' + e.message, true);
+  } finally {
+    btnG.disabled = btnP.disabled = false;
+    btnG.textContent = 'Guardar factura';
+    btnP.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Guardar y descargar PDF`;
+  }
+}
+
+async function factGuardarYDescargar() { await factGuardar(true); }
+
+async function factDescargarPDF(id) {
+  const f = FACT.facturas.find(x => x.id_factura === id);
+  if (!f) return;
+  await factCargarEmisor();
+  factGenerarPDF(f, true);
+}
+
+async function factPrevisualizar() {
+  await factCargarEmisor();
+  const datos = factRecogerDatos();
+  datos.id_factura = FACT.editandoId || 'BORRADOR';
+  factGenerarPDF(datos, false);
+}
+
+/* ── Generador PDF ── */
+function factGenerarPDF(f, descargar = true) {
+  if (typeof window.jspdf === 'undefined') {
+    toast('jsPDF no está cargado', true); return;
+  }
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+  const em = FACT.emisor || {};
+
+  const W = 210, M = 18;
+  const AZUL   = [16, 6, 159];
+  const DARK   = [26, 31, 53];
+  const MUTED  = [107, 116, 144];
+  const BORDER = [228, 232, 240];
+  const CREAM  = [242, 244, 248];
+  const AMBER  = [245, 158, 11];
+  const WHITE  = [255, 255, 255];
+
+  const lineas = Array.isArray(f.lineas) ? f.lineas :
+    (typeof f.lineas === 'string' ? JSON.parse(f.lineas||'[]') : []);
+
+  const MESES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+  const fechaStr = (() => {
+    if (!f.fecha) return '—';
+    const d = new Date(f.fecha + 'T12:00:00');
+    return `${em.municipio||'Granada'}, ${d.getDate()} de ${MESES[d.getMonth()]} de ${d.getFullYear()}`;
+  })();
+
+  let y = M;
+
+  // ── Logo / cabecera emisor ───────────────────────────────
+  // Bloque azul izquierda (logo placeholder)
+  doc.setFillColor(...AZUL);
+  doc.roundedRect(M, y, 48, 22, 3, 3, 'F');
+  doc.setFont('helvetica','bold'); doc.setFontSize(18); doc.setTextColor(...WHITE);
+  doc.text('IPSE', M + 24, y + 10, { align: 'center' });
+  doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor(...WHITE);
+  doc.text('Instituto Psicoeducativo', M + 24, y + 16, { align: 'center' });
+
+  // Datos emisor derecha
+  const exDer = W - M;
+  doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor(...DARK);
+  doc.text(em.nombre_clinica || 'IPSE. Instituto Psicoeducativo.', exDer, y + 3, { align: 'right' });
+  doc.setFont('helvetica','normal'); doc.setFontSize(7.5); doc.setTextColor(...MUTED);
+  const linEmisor = [
+    em.profesional,
+    em.nica ? `N.I.C.A.: ${em.nica}` : null,
+    em.nif ? `N.I.F.- ${em.nif}` : null,
+    em.num_colegiado ? `Nº Col. ${em.num_colegiado}` : null,
+    em.direccion,
+    [em.cp, em.municipio].filter(Boolean).join(' · '),
+    em.telefono,
+    em.email,
+  ].filter(Boolean);
+  linEmisor.forEach((l, i) => doc.text(l, exDer, y + 8 + i * 4, { align: 'right' }));
+
+  y += 28;
+  doc.setDrawColor(...BORDER); doc.setLineWidth(0.3);
+  doc.line(M, y, W - M, y);
+  y += 7;
+
+  // ── Fecha + Nº Factura ──────────────────────────────────
+  doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(...DARK);
+  doc.text('FECHA:', W - M - 80, y);
+  doc.setFont('helvetica','normal');
+  doc.text(fechaStr, W - M - 80 + 16, y);
+  y += 6;
+  doc.setFont('helvetica','bold');
+  doc.text('Nº FACTURA:', W - M - 80, y);
+  doc.setFont('helvetica','normal'); doc.setTextColor(...AZUL);
+  doc.text(f.numero_factura || '—', W - M - 80 + 24, y);
+  doc.setTextColor(...DARK);
+
+  // Badge PAGADO si procede
+  if (f.estado === 'Pagada') {
+    doc.setFont('helvetica','bold'); doc.setFontSize(16); doc.setTextColor(...AMBER);
+    doc.text('PAGADO', M, y - 3);
+    doc.setDrawColor(...AMBER); doc.setLineWidth(0.8);
+    doc.line(M, y + 1, M + 28, y + 1);
+  }
+
+  y += 10;
+
+  // ── Bloque CLIENTE ──────────────────────────────────────
+  doc.setFillColor(...AZUL);
+  doc.rect(M, y, W - M * 2, 7, 'F');
+  doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(...WHITE);
+  doc.text('CLIENTE', M + 4, y + 5);
+  y += 7;
+
+  doc.setFillColor(...CREAM);
+  const clienteLines = [
+    f.receptor_nombre,
+    f.receptor_dni ? `D.N.I.: ${f.receptor_dni}` : null,
+    f.receptor_direccion,
+    [f.receptor_cp, f.receptor_municipio].filter(Boolean).join(' · '),
+  ].filter(Boolean);
+  const clienteH = Math.max(18, clienteLines.length * 5 + 6);
+  doc.rect(M, y, W - M * 2, clienteH, 'F');
+  doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.setTextColor(...DARK);
+  clienteLines.forEach((l, i) => doc.text(l, M + 4, y + 6 + i * 5));
+  y += clienteH + 8;
+
+  // ── Tabla de conceptos ──────────────────────────────────
+  const colW = [W - M * 2 - 50 - 40 - 40, 50, 40, 40];
+  const headers = ['CONCEPTO', 'Nº DE HORAS\nTOTALES', 'PRECIO HORA', 'PRECIO TOTAL'];
+
+  // Cabecera tabla
+  doc.setFillColor(...AZUL);
+  doc.rect(M, y, W - M * 2, 8, 'F');
+  doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor(...WHITE);
+  let cx = M + 3;
+  headers.forEach((h, i) => {
+    const align = i === 0 ? 'left' : 'center';
+    const tx = i === 0 ? cx : cx + colW[i] / 2;
+    doc.text(h.split('\n')[0], tx, y + 3.5, { align, lineHeightFactor: 1.2 });
+    if (h.includes('\n')) doc.text(h.split('\n')[1], tx, y + 6.5, { align });
+    cx += colW[i];
+  });
+  y += 8;
+
+  // Filas
+  lineas.forEach((l, idx) => {
+    const bg = idx % 2 === 0 ? WHITE : CREAM;
+    const rowH = 14;
+    doc.setFillColor(...bg); doc.rect(M, y, W - M * 2, rowH, 'F');
+    doc.setDrawColor(...BORDER); doc.setLineWidth(0.2);
+    doc.line(M, y + rowH, W - M, y + rowH);
+
+    doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(...DARK);
+    const concLines = doc.splitTextToSize(l.concepto || '', colW[0] - 6);
+    doc.text(concLines, M + 3, y + 5);
+
+    doc.setTextColor(...MUTED);
+    cx = M + colW[0];
+    doc.text(String(l.horas || 1) + ' h', cx + colW[1] / 2, y + 7.5, { align: 'center' });
+    cx += colW[1];
+    doc.text(fmtEurFact(l.precio || 0), cx + colW[2] / 2, y + 7.5, { align: 'center' });
+    cx += colW[2];
+    doc.setTextColor(...DARK); doc.setFont('helvetica','bold');
+    doc.text(fmtEurFact(l.total || 0), cx + colW[3] / 2, y + 7.5, { align: 'center' });
+    y += rowH;
+  });
+
+  // Fila TOTAL
+  doc.setFillColor(...CREAM); doc.rect(M, y, W - M * 2, 8, 'F');
+  doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(...DARK);
+  doc.text('TOTAL', W - M - colW[3] - 4, y + 5.5, { align: 'right' });
+  doc.setTextColor(...AZUL);
+  doc.text(fmtEurFact(f.base_imponible || 0), W - M - 3, y + 5.5, { align: 'right' });
+  y += 14;
+
+  // ── Bloque IMPORTE ──────────────────────────────────────
+  doc.setFillColor(...AZUL);
+  doc.rect(M, y, W - M * 2, 7, 'F');
+  doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(...WHITE);
+  doc.text('IMPORTE', M + 4, y + 5);
+  y += 7;
+
+  const importeRows = [
+    ['Base imponible', fmtEurFact(f.base_imponible || 0)],
+    ['I.V.A.', '0\'00 €'],
+    [`Retención Aplicable I.R.P.F${f.irpf_pct > 0 ? ' ('+f.irpf_pct+'%)' : ''}`, fmtEurFact(f.irpf_importe || 0)],
+  ];
+  importeRows.forEach(([lbl, val], i) => {
+    const bg = i % 2 === 0 ? WHITE : CREAM;
+    doc.setFillColor(...bg); doc.rect(M, y, W - M * 2, 7, 'F');
+    doc.setFont('helvetica', i === 2 ? 'bolditalic' : (i === 0 ? 'normal' : 'italic'));
+    doc.setFontSize(8.5); doc.setTextColor(...DARK);
+    doc.text(lbl, M + 4, y + 5);
+    doc.setFont('helvetica','normal'); doc.setTextColor(...MUTED);
+    doc.text(val, W - M - 3, y + 5, { align: 'right' });
+    y += 7;
+  });
+
+  // Total factura
+  doc.setFillColor(...AZUL); doc.rect(M, y, W - M * 2, 9, 'F');
+  doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(...WHITE);
+  doc.text('TOTAL FACTURA', M + 4, y + 6.5);
+  doc.text(fmtEurFact(f.total || 0), W - M - 3, y + 6.5, { align: 'right' });
+  y += 15;
+
+  // ── Pie: IBAN + nota exención ────────────────────────────
+  doc.setFillColor(...CREAM); doc.rect(M, y, W - M * 2, 14, 'F');
+  doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(...DARK);
+  if (em.iban) doc.text(`Nº Cuenta: ${em.iban}`, W / 2, y + 5, { align: 'center' });
+  const notaPie = f.notas || em.texto_exencion || '';
+  if (notaPie) {
+    doc.setFontSize(7.5); doc.setTextColor(...MUTED);
+    const notaLines = doc.splitTextToSize('* ' + notaPie, W - M * 2 - 8);
+    doc.text(notaLines, W / 2, y + 10, { align: 'center' });
+  }
+
+  // ── Guardar ─────────────────────────────────────────────
+  const filename = `IPSE_Factura_${(f.numero_factura || f.id_factura || 'nueva').replace(/\//g,'-')}.pdf`;
+  if (descargar) { doc.save(filename); toast('PDF descargado', false, true); factCerrarModal(); }
+  else { window.open(URL.createObjectURL(doc.output('blob')), '_blank'); }
+}
+
+/* ── navTo extension para facturas ── */
 
 /* ═══════════════════════════════════════════
    FISCALIDAD — ESTADO
