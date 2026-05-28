@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IPSE — Editor Universal v2</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --blue:#10069F; --blue-light:#3428C0; --blue-pale:#E8E6F8;
+  --cyan:#00B5E2; --cyan-pale:#E0F5FB;
+  --red:#DA291C; --red-pale:#FCE8E6;
+  --green:#97D700; --green-dark:#5A8000; --green-pale:#EDF7CC;
+  --amber:#F0C040; --amber-pale:#FFF8E1;
+  --cream:#F2F4F8; --white:#FFFFFF;
+  --ink:#1A1F35; --ink-light:#3A4060; --ink-muted:#6B7490;
+  --border:#E4E8F0;
+  --shadow:0 2px 12px rgba(16,6,159,.06);
+  --shadow-lg:0 8px 32px rgba(16,6,159,.12);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--ink);min-height:100vh;}
+
+/* AUTH */
+#auth-gate{position:fixed;inset:0;background:var(--blue);display:flex;align-items:center;justify-content:center;z-index:9999;}
+.auth-box{background:var(--white);border-radius:16px;padding:40px;width:360px;text-align:center;box-shadow:var(--shadow-lg);}
+.auth-logo{font-size:24px;font-weight:700;color:var(--blue);letter-spacing:2px;margin-bottom:6px;}
+.auth-sub{font-size:13px;color:var(--ink-muted);margin-bottom:28px;}
+.auth-input{width:100%;padding:12px 16px;border:1.5px solid var(--border);border-radius:10px;font-family:inherit;font-size:14px;color:var(--ink);margin-bottom:14px;outline:none;}
+.auth-input:focus{border-color:var(--blue);}
+.auth-btn{width:100%;padding:12px;background:var(--blue);color:#fff;border:none;border-radius:10px;font-family:inherit;font-size:15px;font-weight:600;cursor:pointer;}
+.auth-btn:hover{background:var(--blue-light);}
+.auth-err{color:var(--red);font-size:13px;margin-top:10px;display:none;}
+
+/* TOPBAR */
+.topbar{background:var(--blue);height:58px;display:flex;align-items:center;justify-content:space-between;padding:0 28px;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(16,6,159,.25);}
+.topbar-left{display:flex;align-items:center;gap:14px;}
+.topbar-logo{font-size:18px;font-weight:700;color:var(--cyan);letter-spacing:2px;}
+.topbar-sub{font-size:11px;color:rgba(255,255,255,.55);letter-spacing:1px;text-transform:uppercase;}
+.topbar-right{display:flex;align-items:center;gap:10px;}
+.conn-badge{padding:4px 10px;border-radius:20px;font-size:11px;font-weight:600;}
+.conn-badge.ok{background:var(--green-pale);color:var(--green-dark);}
+.conn-badge.err{background:var(--red-pale);color:var(--red);}
+.conn-badge.loading{background:var(--amber-pale);color:#7a5c00;}
+.user-badge{font-size:12px;color:rgba(255,255,255,.7);font-family:'DM Mono',monospace;}
+
+/* TABS */
+.page{max-width:1300px;margin:0 auto;padding:24px;}
+.tab-bar{display:flex;gap:6px;margin-bottom:20px;flex-wrap:wrap;}
+.tab-btn{padding:8px 18px;border-radius:8px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;border:1.5px solid var(--border);background:var(--white);color:var(--ink-muted);transition:all .15s;}
+.tab-btn.active{background:var(--blue);color:#fff;border-color:var(--blue);}
+.tab-btn:hover:not(.active){border-color:var(--blue);color:var(--blue);}
+
+/* TOOLBAR */
+.toolbar{background:var(--white);border:1.5px solid var(--border);border-radius:12px;padding:14px 18px;display:flex;align-items:center;gap:12px;margin-bottom:16px;box-shadow:var(--shadow);flex-wrap:wrap;}
+.toolbar input{flex:1;min-width:200px;border:none;outline:none;font-family:inherit;font-size:14px;color:var(--ink);background:transparent;}
+.toolbar input::placeholder{color:var(--ink-muted);}
+.search-count{font-size:12px;color:var(--ink-muted);white-space:nowrap;}
+
+/* WARNING BANNER */
+.warn-banner{background:var(--amber-pale);border:1.5px solid var(--amber);border-radius:10px;padding:10px 16px;font-size:13px;color:#5a3e00;margin-bottom:16px;display:flex;align-items:center;gap:8px;}
+
+/* TABLE */
+.table-wrap{background:var(--white);border:1.5px solid var(--border);border-radius:14px;overflow:auto;box-shadow:var(--shadow);}
+table{width:100%;border-collapse:collapse;font-size:13px;}
+thead tr{background:var(--blue-pale);}
+th{padding:10px 12px;text-align:left;font-size:11px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--blue);border-bottom:1.5px solid var(--border);white-space:nowrap;cursor:pointer;user-select:none;}
+th:hover{background:#dddaf5;}
+td{padding:9px 12px;border-bottom:1px solid var(--border);vertical-align:middle;}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:#f8f9fe;}
+.id-badge{font-family:'DM Mono',monospace;font-size:11px;background:var(--blue-pale);color:var(--blue);padding:2px 7px;border-radius:4px;font-weight:600;}
+.btn-edit{padding:4px 12px;background:var(--blue);color:#fff;border:none;border-radius:6px;font-family:inherit;font-size:12px;font-weight:600;cursor:pointer;}
+.btn-edit:hover{background:var(--blue-light);}
+.btn-del{padding:4px 10px;background:var(--red-pale);color:var(--red);border:1px solid var(--red);border-radius:6px;font-family:inherit;font-size:12px;font-weight:600;cursor:pointer;margin-left:4px;}
+.btn-del:hover{background:var(--red);color:#fff;}
+.empty-row td{text-align:center;padding:40px;color:var(--ink-muted);}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(16,6,159,.35);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;z-index:500;padding:20px;}
+.modal-overlay.active{display:flex;}
+.modal{background:var(--white);border-radius:16px;width:100%;max-width:860px;max-height:92vh;display:flex;flex-direction:column;box-shadow:var(--shadow-lg);}
+.modal-header{padding:18px 24px 14px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;}
+.modal-title{font-size:16px;font-weight:700;color:var(--ink);}
+.modal-subtitle{font-size:12px;color:var(--ink-muted);margin-top:2px;}
+.btn-close{background:none;border:none;font-size:20px;cursor:pointer;color:var(--ink-muted);padding:4px 8px;border-radius:6px;}
+.btn-close:hover{background:var(--cream);}
+.modal-body{padding:20px 24px;overflow-y:auto;flex:1;}
+.modal-footer{padding:14px 24px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;gap:10px;}
+
+/* FORM */
+.form-section{margin-bottom:20px;}
+.form-section-title{font-size:11px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--blue);margin-bottom:10px;padding-bottom:6px;border-bottom:1.5px solid var(--blue-pale);}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.form-group{display:flex;flex-direction:column;gap:5px;}
+.form-group.span2{grid-column:span 2;}
+.form-label{font-size:11px;font-weight:600;color:var(--ink-muted);text-transform:uppercase;letter-spacing:.5px;}
+.form-control{padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-family:inherit;font-size:13px;color:var(--ink);outline:none;background:var(--white);width:100%;}
+.form-control:focus{border-color:var(--blue);}
+textarea.form-control{resize:vertical;}
+.field-id{font-family:'DM Mono',monospace;background:var(--blue-pale);}
+.warn-box{background:var(--amber-pale);border:1.5px solid var(--amber);border-radius:8px;padding:10px 14px;font-size:13px;color:#5a3e00;margin-bottom:14px;display:none;}
+.warn-box.show{display:block;}
+
+/* CASCADE MODAL */
+.cascade-overlay{position:fixed;inset:0;background:rgba(16,6,159,.5);display:none;align-items:center;justify-content:center;z-index:600;padding:20px;}
+.cascade-overlay.active{display:flex;}
+.cascade-box{background:var(--white);border-radius:14px;padding:28px;width:100%;max-width:580px;box-shadow:var(--shadow-lg);}
+.cascade-box h3{font-size:16px;color:var(--ink);margin-bottom:8px;}
+.cascade-label{font-size:14px;font-weight:700;color:var(--blue);margin:12px 0;}
+.cascade-steps{margin:14px 0;padding-left:20px;}
+.cascade-steps li{font-size:13px;color:var(--ink-muted);margin-bottom:6px;padding:4px 0;}
+.cascade-steps li.done{color:var(--green-dark);}
+.cascade-steps li.err{color:var(--red);}
+.cascade-steps li.active{color:var(--blue);font-weight:600;}
+.cascade-sql{background:var(--cream);border:1px solid var(--border);border-radius:8px;padding:12px;font-family:'DM Mono',monospace;font-size:11px;white-space:pre-wrap;max-height:180px;overflow-y:auto;margin:10px 0;}
+
+/* BUTTONS */
+.btn{padding:9px 20px;border-radius:8px;font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;border:none;transition:all .15s;}
+.btn-primary{background:var(--blue);color:#fff;}
+.btn-primary:hover{background:var(--blue-light);}
+.btn-secondary{background:var(--cream);color:var(--ink);border:1.5px solid var(--border);}
+.btn-secondary:hover{border-color:var(--ink-muted);}
+.btn-danger{background:var(--red);color:#fff;}
+.btn-danger:hover{opacity:.85;}
+.btn:disabled{opacity:.5;cursor:not-allowed;}
+
+/* TOAST */
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:9000;display:flex;flex-direction:column;gap:8px;align-items:center;}
+.toast-msg{padding:10px 20px;border-radius:10px;font-size:13px;font-weight:600;box-shadow:var(--shadow-lg);animation:toastIn .2s ease;white-space:nowrap;}
+.toast-msg.ok{background:#1a4d00;color:#fff;}
+.toast-msg.err{background:var(--red);color:#fff;}
+.toast-msg.warn{background:#7a5c00;color:#fff;}
+@keyframes toastIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+</style>
+</head>
+<body>
+
+<!-- AUTH GATE -->
+<div id="auth-gate">
+  <div class="auth-box">
+    <div class="auth-logo">IPSE</div>
+    <div class="auth-sub">Editor Universal · Solo administradores</div>
+    <input type="email" class="auth-input" id="auth-email" placeholder="Email" autocomplete="email">
+    <input type="password" class="auth-input" id="auth-pass" placeholder="Contraseña" autocomplete="current-password">
+    <button class="auth-btn" onclick="login()">Acceder</button>
+    <div class="auth-err" id="auth-err"></div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app" style="display:none">
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="topbar-logo">IPSE</div>
+      <div class="topbar-sub">Editor Universal · Sistema nuevo</div>
+    </div>
+    <div class="topbar-right">
+      <span id="user-badge" class="user-badge"></span>
+      <span id="conn-badge" class="conn-badge loading">⏳ Cargando…</span>
+    </div>
+  </div>
+
+  <div class="page">
+    <div class="warn-banner">
+      ⚠️ <strong>Herramienta de administración.</strong> Los cambios son inmediatos e irreversibles. Cambiar un ID de paciente actualiza todas las tablas relacionadas en cascada.
+    </div>
+    <div class="tab-bar" id="tab-bar"></div>
+    <div class="toolbar">
+      <span style="font-size:16px">🔍</span>
+      <input type="text" id="search-input" placeholder="Buscar en cualquier campo…" oninput="renderTabla()">
+      <span class="search-count" id="search-count"></span>
+      <button class="btn btn-primary" style="font-size:12px;padding:6px 14px" onclick="abrirNuevo()">+ Nuevo</button>
+    </div>
+    <div class="table-wrap">
+      <div id="tabla-container" style="padding:40px;text-align:center;color:var(--ink-muted)">Selecciona una tabla</div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL EDITAR/CREAR -->
+<div class="modal-overlay" id="modal-editar">
+  <div class="modal">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title" id="modal-title">Editar registro</div>
+        <div class="modal-subtitle" id="modal-subtitle"></div>
+      </div>
+      <button class="btn-close" onclick="cerrarModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="warn-box" id="id-warning">⚠️ Este ID ya existe. Cámbialo antes de guardar.</div>
+      <div id="form-fields"></div>
+    </div>
+    <div class="modal-footer">
+      <span id="id-original" style="font-size:11px;color:var(--ink-muted);font-family:monospace"></span>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-secondary" onclick="cerrarModal()">Cancelar</button>
+        <button class="btn btn-primary" id="btn-guardar" onclick="guardar()">💾 Guardar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CASCADE -->
+<div class="cascade-overlay" id="cascade-overlay">
+  <div class="cascade-box">
+    <h3>🔄 Cambio de ID en cascada</h3>
+    <p style="font-size:13px;color:var(--ink-muted);margin-bottom:8px">Actualiza el ID en <strong>todas las tablas relacionadas</strong>. No se puede deshacer.</p>
+    <div class="cascade-label" id="cascade-label"></div>
+    <ol class="cascade-steps" id="cascade-steps"></ol>
+    <div id="cascade-sql-section" style="display:none">
+      <div style="font-size:12px;color:var(--ink-muted);margin-bottom:6px">Si falla, ejecuta este SQL manualmente en Supabase:</div>
+      <div class="cascade-sql" id="cascade-sql-text"></div>
+      <button class="btn btn-secondary" style="font-size:12px;padding:5px 12px" onclick="copiarSqlCascade()">📋 Copiar SQL</button>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:20px;justify-content:flex-end" id="cascade-btns">
+      <button class="btn btn-secondary" onclick="cerrarCascade()">Cancelar</button>
+      <button class="btn btn-danger" id="btn-exec-cascade" onclick="ejecutarCascade()">🔄 Confirmar y actualizar todo</button>
+    </div>
+    <div id="cascade-done-msg" style="display:none;margin-top:14px;text-align:center;font-size:14px;font-weight:600;color:var(--green-dark)"></div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+const SUPA_URL = 'https://vlplebjqhufbzfncrawf.supabase.co';
+const SUPA_KEY = 'sb_publishable_Qt604gEH_lfx89HkPElvcA_OGwbKeDO';
+const ADMIN_EMAIL = 'a.garciablanco@icloud.com';
+
+// ── CONFIG DE TABLAS ──────────────────────────────────────────────────────────
+const TABLAS = {
+
+  pacientes_v2: {
+    label: '👤 Pacientes',
+    tabla: 'pacientes_v2',
+    idField: 'id',
+    orderBy: 'apellidos.asc,nombre.asc',
+    cascade: [
+      { tabla: 'citas_v2',    col: 'id_paciente' },
+      { tabla: 'bonos_becas', col: 'id_paciente' },
+      { tabla: 'cobros_v2',   col: 'id_paciente' },
+      { tabla: 'series_citas',col: 'id_paciente' },
+      { tabla: 'facturas',    col: 'id_paciente_v2' },
+    ],
+    cols: ['id','nombre','apellidos','alias','fecha_nacimiento','activo','tiene_tutor'],
+    colLabels: ['ID','Nombre','Apellidos','Alias','F. Nacimiento','Activo','Tutor'],
+    sections: [
+      {
+        title: 'Identificación',
+        fields: [
+          { id:'id',            label:'ID (INI-NNNN)',    type:'text', cls:'field-id' },
+          { id:'nombre',        label:'Nombre',           type:'text' },
+          { id:'apellidos',     label:'Apellidos',        type:'text', span2:true },
+          { id:'alias',         label:'Alias (3 letras)', type:'text' },
+          { id:'fecha_nacimiento', label:'F. Nacimiento', type:'date' },
+          { id:'activo',        label:'Activo',           type:'select', options:['Si','No'] },
+          { id:'tiene_tutor',   label:'Tiene tutor',      type:'select', options:['No','Si'] },
+        ]
+      },
+      {
+        title: 'Contacto paciente',
+        fields: [
+          { id:'telefono_paciente', label:'Teléfono',    type:'text' },
+          { id:'email_paciente',    label:'Email',       type:'email' },
+          { id:'dni_paciente',      label:'DNI',         type:'text' },
+          { id:'codigo_postal',     label:'C. Postal',   type:'text' },
+          { id:'municipio',         label:'Municipio',   type:'text' },
+        ]
+      },
+      {
+        title: 'Tutor 1',
+        fields: [
+          { id:'nombre_tutor1',    label:'Nombre tutor 1',   type:'text', span2:true },
+          { id:'telefono_tutor1',  label:'Teléfono',         type:'text' },
+          { id:'email_tutor1',     label:'Email',            type:'email' },
+          { id:'dni_tutor1',       label:'DNI',              type:'text' },
+          { id:'direccion_tutor1', label:'Dirección',        type:'text', span2:true },
+        ]
+      },
+      {
+        title: 'Tutor 2',
+        fields: [
+          { id:'nombre_tutor2',    label:'Nombre tutor 2',   type:'text', span2:true },
+          { id:'telefono_tutor2',  label:'Teléfono',         type:'text' },
+          { id:'email_tutor2',     label:'Email',            type:'email' },
+          { id:'dni_tutor2',       label:'DNI',              type:'text' },
+          { id:'facturacion_tutor',label:'Facturación a',    type:'select', options:['','tutor1','tutor2','ambos'] },
+        ]
+      },
+      {
+        title: 'Clínico / escolar',
+        fields: [
+          { id:'diagnostico',    label:'Diagnóstico',    type:'text', span2:true },
+          { id:'ambito',         label:'Ámbito',         type:'select', options:['','salud_mental','educativo','otro'] },
+          { id:'derivacion',     label:'Derivación',     type:'text' },
+          { id:'alergias',       label:'Alergias',       type:'text' },
+          { id:'centro_escolar', label:'Centro escolar', type:'text', span2:true },
+          { id:'curso_escolar',  label:'Curso',          type:'text' },
+          { id:'notas',          label:'Notas',          type:'textarea', span2:true },
+        ]
+      },
+    ]
+  },
+
+  bonos_becas: {
+    label: '🎟 Bonos/Becas',
+    tabla: 'bonos_becas',
+    idField: 'id',
+    orderBy: 'id.asc',
+    cascade: [],
+    cols: ['id','id_paciente','tipo','especialidad','sesiones_total','sesiones_consumidas','importe_total','activo','fecha_vencimiento'],
+    colLabels: ['ID','Paciente','Tipo','Esp.','Total','Cons.','Importe','Activo','Vencimiento'],
+    sections: [
+      {
+        title: 'Bono / Beca',
+        fields: [
+          { id:'id',                  label:'ID (BB-NNN)',        type:'text', cls:'field-id' },
+          { id:'id_paciente',         label:'ID Paciente',        type:'text' },
+          { id:'tipo',                label:'Tipo',               type:'select', options:['BONO','BECA'] },
+          { id:'especialidad',        label:'Especialidad',       type:'select', options:['PSI','LOG','TO','PDG'] },
+          { id:'sesiones_total',      label:'Sesiones total',     type:'number' },
+          { id:'sesiones_consumidas', label:'Sesiones consumidas',type:'number' },
+          { id:'importe_total',       label:'Importe total (€)',  type:'number' },
+          { id:'anticipo_recibido',   label:'Anticipo recibido',  type:'select', options:['No','Si'] },
+          { id:'financiador',         label:'Financiador',        type:'text' },
+          { id:'fecha_inicio',        label:'Fecha inicio',       type:'date' },
+          { id:'fecha_vencimiento',   label:'Fecha vencimiento',  type:'date' },
+          { id:'anio_escolar',        label:'Año escolar',        type:'text' },
+          { id:'activo',              label:'Activo',             type:'select', options:['Si','No'] },
+          { id:'notas',               label:'Notas',              type:'textarea', span2:true },
+        ]
+      }
+    ]
+  },
+
+  citas_v2: {
+    label: '📅 Citas',
+    tabla: 'citas_v2',
+    idField: 'id',
+    orderBy: 'fecha.desc,hora.desc',
+    cascade: [],
+    cols: ['id','fecha','hora','id_paciente','id_profesional','especialidad','modalidad_pago','precio','estado','cobrado'],
+    colLabels: ['ID','Fecha','Hora','Paciente','Profesional','Esp.','Modalidad','€','Estado','Cobrado'],
+    sections: [
+      {
+        title: 'Cita',
+        fields: [
+          { id:'id',             label:'ID (CIT-NNN)',      type:'text', cls:'field-id' },
+          { id:'id_paciente',    label:'ID Paciente',       type:'text' },
+          { id:'id_profesional', label:'ID Profesional',    type:'select', options:['PRO-001','PRO-002','PRO-003','PRO-004','PRO-005','PRO-ADM'] },
+          { id:'id_bono_beca',   label:'ID Bono/Beca',      type:'text' },
+          { id:'especialidad',   label:'Especialidad',      type:'select', options:['PSI','LOG','TO','PDG'] },
+          { id:'fecha',          label:'Fecha',             type:'date' },
+          { id:'hora',           label:'Hora',              type:'time' },
+          { id:'duracion_min',   label:'Duración (min)',    type:'number' },
+          { id:'modalidad_pago', label:'Modalidad',         type:'select', options:['BECA','BONO','PRIVADO_SU','ADECCO','OTROS'] },
+          { id:'precio',         label:'Precio (€)',        type:'number' },
+          { id:'estado',         label:'Estado',            type:'select', options:['Programada','Hecha','Noshow','Reprogramada','Cancelada'] },
+          { id:'forma_cobro',    label:'Forma cobro',       type:'select', options:['','Efectivo','Bizum','Transferencia'] },
+          { id:'cobrado',        label:'Cobrado',           type:'select', options:['No','Si'] },
+          { id:'notas',          label:'Notas',             type:'textarea', span2:true },
+        ]
+      }
+    ]
+  },
+
+  cobros_v2: {
+    label: '💶 Cobros',
+    tabla: 'cobros_v2',
+    idField: 'id',
+    orderBy: 'fecha.desc',
+    cascade: [],
+    cols: ['id','fecha','id_paciente','id_cita','importe','metodo','conciliado'],
+    colLabels: ['ID','Fecha','Paciente','Cita','Importe','Método','Conciliado'],
+    sections: [
+      {
+        title: 'Cobro',
+        fields: [
+          { id:'id',          label:'ID (COB-NNN)',   type:'text', cls:'field-id' },
+          { id:'id_cita',     label:'ID Cita',        type:'text' },
+          { id:'id_paciente', label:'ID Paciente',    type:'text' },
+          { id:'id_bono_beca',label:'ID Bono/Beca',   type:'text' },
+          { id:'fecha',       label:'Fecha',          type:'date' },
+          { id:'importe',     label:'Importe (€)',    type:'number' },
+          { id:'metodo',      label:'Método',         type:'select', options:['Efectivo','Bizum','Transferencia'] },
+          { id:'concepto',    label:'Concepto',       type:'text', span2:true },
+          { id:'conciliado',  label:'Conciliado',     type:'select', options:['No','Si'] },
+          { id:'notas',       label:'Notas',          type:'textarea', span2:true },
+        ]
+      }
+    ]
+  },
+
+  profesionales: {
+    label: '🧑‍⚕️ Profesionales',
+    tabla: 'profesionales',
+    idField: 'id',
+    orderBy: 'id.asc',
+    cascade: [
+      { tabla: 'citas_v2',    col: 'id_profesional' },
+      { tabla: 'series_citas',col: 'id_profesional' },
+    ],
+    cols: ['id','nombre','apellidos','email','es_admin','activa'],
+    colLabels: ['ID','Nombre','Apellidos','Email','Admin','Activa'],
+    sections: [
+      {
+        title: 'Profesional',
+        fields: [
+          { id:'id',           label:'ID (PRO-NNN)',  type:'text', cls:'field-id' },
+          { id:'nombre',       label:'Nombre',        type:'text' },
+          { id:'apellidos',    label:'Apellidos',     type:'text' },
+          { id:'email',        label:'Email',         type:'email' },
+          { id:'telefono',     label:'Teléfono',      type:'text' },
+          { id:'color_agenda', label:'Color agenda',  type:'text' },
+          { id:'es_admin',     label:'Es admin',      type:'select', options:['No','Si'] },
+          { id:'activa',       label:'Activa',        type:'select', options:['Si','No'] },
+          { id:'fecha_alta',   label:'F. Alta',       type:'date' },
+        ]
+      }
+    ]
+  },
+
+};
+
+// ── ESTADO GLOBAL ─────────────────────────────────────────────────────────────
+let G = {
+  tabla: null,
+  datos: [],
+  editando: null,
+  esNuevo: false,
+  sortField: null,
+  sortDir: 1,
+  cascade: null,
+  pacMap: {},
+  proMap: {},
+  sesion: null,
+};
+
+// ── AUTH ──────────────────────────────────────────────────────────────────────
+async function login() {
+  const email = document.getElementById('auth-email').value.trim().toLowerCase();
+  const pass  = document.getElementById('auth-pass').value;
+  const errEl = document.getElementById('auth-err');
+  errEl.style.display = 'none';
+
+  if (email !== ADMIN_EMAIL.toLowerCase()) {
+    errEl.textContent = 'Solo el administrador puede acceder a este editor.';
+    errEl.style.display = 'block';
+    return;
+  }
+  try {
+    const r = await fetch(`${SUPA_URL}/auth/v1/token?grant_type=password`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', apikey: SUPA_KEY },
+      body: JSON.stringify({ email, password: pass })
+    });
+    const data = await r.json();
+    if (!r.ok || data.error) throw new Error(data.error_description || data.error || 'Error');
+    G.sesion = data;
+    document.getElementById('auth-gate').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    document.getElementById('user-badge').textContent = email;
+    initApp();
+  } catch(e) {
+    errEl.textContent = 'Contraseña incorrecta o error de conexión.';
+    errEl.style.display = 'block';
+  }
+}
+document.getElementById('auth-pass').addEventListener('keydown', e => { if (e.key==='Enter') login(); });
+
+// ── API ───────────────────────────────────────────────────────────────────────
+function headers(extra={}) {
+  const token = G.sesion?.access_token || SUPA_KEY;
+  return { apikey: SUPA_KEY, Authorization: 'Bearer ' + token, 'Content-Type': 'application/json', ...extra };
+}
+async function supaGet(tabla, qs='') {
+  const r = await fetch(`${SUPA_URL}/rest/v1/${tabla}?${qs}`, { headers: headers() });
+  if (!r.ok) throw new Error(await r.text());
+  return r.json();
+}
+async function supaPatch(tabla, filter, data) {
+  const r = await fetch(`${SUPA_URL}/rest/v1/${tabla}?${filter}`, {
+    method:'PATCH', headers: headers({ Prefer:'return=representation' }), body: JSON.stringify(data)
+  });
+  if (!r.ok) throw new Error(await r.text());
+  return r.json();
+}
+async function supaInsert(tabla, data) {
+  const r = await fetch(`${SUPA_URL}/rest/v1/${tabla}`, {
+    method:'POST', headers: headers({ Prefer:'return=representation' }), body: JSON.stringify(data)
+  });
+  if (!r.ok) throw new Error(await r.text());
+  return r.json();
+}
+async function supaDelete(tabla, filter) {
+  const r = await fetch(`${SUPA_URL}/rest/v1/${tabla}?${filter}`, {
+    method:'DELETE', headers: headers()
+  });
+  if (!r.ok) throw new Error(await r.text());
+}
+async function supaRename(tabla, col, idViejo, idNuevo) {
+  const r = await fetch(`${SUPA_URL}/rest/v1/${tabla}?${col}=eq.${encodeURIComponent(idViejo)}`, {
+    method:'PATCH', headers: headers({ Prefer:'return=minimal' }),
+    body: JSON.stringify({ [col]: idNuevo })
+  });
+  if (!r.ok) throw new Error(await r.text());
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+async function initApp() {
+  const tabBar = document.getElementById('tab-bar');
+  tabBar.innerHTML = Object.entries(TABLAS).map(([key, cfg]) =>
+    `<button class="tab-btn" onclick="cambiarTabla('${key}')">${cfg.label}</button>`
+  ).join('');
+  try {
+    const [pacs, pros] = await Promise.all([
+      supaGet('pacientes_v2', 'select=id,nombre,apellidos&limit=2000&order=apellidos.asc'),
+      supaGet('profesionales', 'select=id,nombre,apellidos&limit=100')
+    ]);
+    pacs.forEach(p => { G.pacMap[p.id] = ((p.nombre||'') + ' ' + (p.apellidos||'')).trim(); });
+    pros.forEach(p => { G.proMap[p.id] = ((p.nombre||'') + ' ' + (p.apellidos||'')).trim(); });
+  } catch(e) { /* fallback a ID */ }
+  cambiarTabla('pacientes_v2');
+}
+
+async function cambiarTabla(key) {
+  G.tabla = key;
+  G.datos = [];
+  document.querySelectorAll('.tab-btn').forEach((b,i) => {
+    b.classList.toggle('active', Object.keys(TABLAS)[i] === key);
+  });
+  document.getElementById('search-input').value = '';
+  const badge = document.getElementById('conn-badge');
+  badge.className = 'conn-badge loading';
+  badge.textContent = '⏳ Cargando…';
+  document.getElementById('tabla-container').innerHTML = '<div style="padding:40px;text-align:center;color:var(--ink-muted)">Cargando…</div>';
+  try {
+    const cfg = TABLAS[key];
+    G.datos = await supaGet(cfg.tabla, `limit=2000&order=${cfg.orderBy}`);
+    badge.className = 'conn-badge ok';
+    badge.textContent = `✓ ${G.datos.length} registros`;
+    renderTabla();
+  } catch(e) {
+    badge.className = 'conn-badge err';
+    badge.textContent = '✗ Error';
+    toast('Error cargando ' + key + ': ' + e.message, 'err');
+  }
+}
+
+// ── RENDER ────────────────────────────────────────────────────────────────────
+function filtrados() {
+  const q = document.getElementById('search-input').value.toLowerCase().trim();
+  if (!q) return G.datos;
+  return G.datos.filter(r => {
+    const partes = Object.entries(r).map(([k, v]) => {
+      if (k === 'id_paciente' && v && G.pacMap[v]) return v + ' ' + G.pacMap[v];
+      if (k === 'id_profesional' && v && G.proMap[v]) return v + ' ' + G.proMap[v];
+      if (typeof v === 'string' && v.length > 10 && v.includes('T')) return v.substring(0,10) + ' ' + v;
+      return v;
+    });
+    return partes.join(' ').toLowerCase().includes(q);
+  });
+}
+
+function renderTabla() {
+  const cfg = TABLAS[G.tabla];
+  const rows = filtrados();
+  document.getElementById('search-count').textContent = `${rows.length} / ${G.datos.length}`;
+
+  const thead = `<thead><tr>${cfg.cols.map((c,i) =>
+    `<th onclick="sortBy('${c}')">${cfg.colLabels[i]} ↕</th>`
+  ).join('')}<th>Acciones</th></tr></thead>`;
+
+  const tbody = rows.length === 0
+    ? `<tbody><tr class="empty-row"><td colspan="${cfg.cols.length+1}">Sin resultados</td></tr></tbody>`
+    : `<tbody>${rows.map(r => {
+        return `<tr>
+          ${cfg.cols.map(c => {
+            let celda;
+            if (c === cfg.idField) {
+              celda = `<span class="id-badge">${r[c]||'—'}</span>`;
+            } else if (c === 'id_paciente' && G.tabla !== 'pacientes_v2') {
+              celda = `<span title="${r[c]||''}">${r[c] ? (G.pacMap[r[c]] || r[c]) : '—'}</span>`;
+            } else if (c === 'id_profesional') {
+              celda = `<span title="${r[c]||''}">${r[c] ? (G.proMap[r[c]] || r[c]) : '—'}</span>`;
+            } else if (c === 'fecha' && r[c]) {
+              celda = String(r[c]).substring(0,10);
+            } else if (c === 'hora' && r[c]) {
+              celda = String(r[c]).slice(0,5);
+            } else {
+              celda = r[c]!==null && r[c]!==undefined ? r[c] : '—';
+            }
+            return `<td>${celda}</td>`;
+          }).join('')}
+          <td style="white-space:nowrap">
+            <button class="btn-edit" onclick='abrirEditar(${JSON.stringify(r[cfg.idField])})'>✏️</button>
+            <button class="btn-del" onclick='confirmarEliminar(${JSON.stringify(r[cfg.idField])})'>🗑</button>
+          </td>
+        </tr>`;
+      }).join('')}</tbody>`;
+
+  document.getElementById('tabla-container').innerHTML = `<table>${thead}${tbody}</table>`;
+}
+
+function sortBy(field) {
+  if (G.sortField === field) G.sortDir *= -1;
+  else { G.sortField = field; G.sortDir = 1; }
+  G.datos.sort((a,b) => String(a[field]||'').localeCompare(String(b[field]||'')) * G.sortDir);
+  renderTabla();
+}
+
+// ── MODAL ─────────────────────────────────────────────────────────────────────
+function buildForm(registro) {
+  const cfg = TABLAS[G.tabla];
+  return cfg.sections.map(sec => {
+    const fields = sec.fields.map(f => {
+      const val = registro ? (registro[f.id] !== null && registro[f.id] !== undefined ? registro[f.id] : '') : '';
+      const spanCls = f.span2 ? ' span2' : '';
+      let input;
+      if (f.type === 'select') {
+        const opts = f.options.map(o => `<option value="${o}"${String(o)===String(val)?' selected':''}>${o||'—'}</option>`).join('');
+        input = `<select class="form-control ${f.cls||''}" id="field-${f.id}">${opts}</select>`;
+      } else if (f.type === 'textarea') {
+        input = `<textarea class="form-control" id="field-${f.id}" rows="3">${val}</textarea>`;
+      } else {
+        input = `<input type="${f.type}" class="form-control ${f.cls||''}" id="field-${f.id}" value="${String(val).replace(/"/g,'&quot;')}">`;
+      }
+      return `<div class="form-group${spanCls}"><label class="form-label">${f.label}</label>${input}</div>`;
+    }).join('');
+    return `<div class="form-section"><div class="form-section-title">${sec.title}</div><div class="form-grid">${fields}</div></div>`;
+  }).join('');
+}
+
+function abrirEditar(id) {
+  const cfg = TABLAS[G.tabla];
+  const r = G.datos.find(x => x[cfg.idField] === id);
+  if (!r) return;
+  G.editando = r;
+  G.esNuevo = false;
+  document.getElementById('modal-title').textContent = `Editar · ${cfg.label}`;
+  document.getElementById('modal-subtitle').textContent = `${cfg.idField}: ${id}`;
+  document.getElementById('id-original').textContent = `ID original: ${id}`;
+  document.getElementById('form-fields').innerHTML = buildForm(r);
+  document.getElementById('id-warning').classList.remove('show');
+  document.getElementById('modal-editar').classList.add('active');
+  document.getElementById('field-' + cfg.idField).addEventListener('input', validarId);
+}
+
+function abrirNuevo() {
+  const cfg = TABLAS[G.tabla];
+  G.editando = null;
+  G.esNuevo = true;
+  document.getElementById('modal-title').textContent = `Nuevo · ${cfg.label}`;
+  document.getElementById('modal-subtitle').textContent = '';
+  document.getElementById('id-original').textContent = '';
+  document.getElementById('form-fields').innerHTML = buildForm(null);
+  document.getElementById('id-warning').classList.remove('show');
+  document.getElementById('modal-editar').classList.add('active');
+}
+
+function cerrarModal() {
+  document.getElementById('modal-editar').classList.remove('active');
+}
+
+function validarId() {
+  const cfg = TABLAS[G.tabla];
+  const nuevoId = document.getElementById('field-' + cfg.idField).value.trim();
+  const idOriginal = G.editando ? G.editando[cfg.idField] : null;
+  const existe = G.datos.some(r => r[cfg.idField] === nuevoId && r[cfg.idField] !== idOriginal);
+  document.getElementById('id-warning').classList.toggle('show', existe);
+}
+
+function leerFormulario() {
+  const cfg = TABLAS[G.tabla];
+  const datos = {};
+  cfg.sections.forEach(sec => {
+    sec.fields.forEach(f => {
+      const el = document.getElementById('field-' + f.id);
+      if (!el) return;
+      const val = el.value.trim();
+      datos[f.id] = val === '' ? null : (f.type === 'number' ? parseFloat(val) || null : val);
+    });
+  });
+  return datos;
+}
+
+async function guardar() {
+  const cfg = TABLAS[G.tabla];
+  const datos = leerFormulario();
+  const nuevoId = datos[cfg.idField];
+  if (!nuevoId) { toast('El ID es obligatorio', 'err'); return; }
+
+  const btn = document.getElementById('btn-guardar');
+  btn.disabled = true; btn.textContent = '⏳ Guardando…';
+
+  try {
+    if (G.esNuevo) {
+      await supaInsert(cfg.tabla, datos);
+      G.datos.unshift(datos);
+      toast('✅ Creado: ' + nuevoId, 'ok');
+      cerrarModal();
+      renderTabla();
+    } else {
+      const idOriginal = G.editando[cfg.idField];
+      if (nuevoId !== idOriginal && cfg.cascade.length > 0) {
+        cerrarModal();
+        abrirCascade(idOriginal, nuevoId, datos);
+        return;
+      }
+      await supaPatch(cfg.tabla, `${cfg.idField}=eq.${encodeURIComponent(idOriginal)}`, datos);
+      const idx = G.datos.findIndex(r => r[cfg.idField] === idOriginal);
+      if (idx >= 0) G.datos[idx] = { ...G.datos[idx], ...datos };
+      toast('✅ Guardado: ' + nuevoId, 'ok');
+      cerrarModal();
+      renderTabla();
+    }
+  } catch(e) {
+    toast('Error: ' + e.message, 'err');
+  } finally {
+    btn.disabled = false; btn.textContent = '💾 Guardar';
+  }
+}
+
+// ── DELETE ────────────────────────────────────────────────────────────────────
+function confirmarEliminar(id) {
+  if (!confirm(`¿Eliminar "${id}"?\n\nEsta acción es irreversible y puede fallar si el registro tiene datos relacionados.`)) return;
+  eliminar(id);
+}
+async function eliminar(id) {
+  const cfg = TABLAS[G.tabla];
+  try {
+    await supaDelete(cfg.tabla, `${cfg.idField}=eq.${encodeURIComponent(id)}`);
+    G.datos = G.datos.filter(r => r[cfg.idField] !== id);
+    renderTabla();
+    toast('🗑 Eliminado: ' + id, 'warn');
+  } catch(e) {
+    toast('Error al eliminar: ' + e.message, 'err');
+  }
+}
+
+// ── CASCADE ───────────────────────────────────────────────────────────────────
+function abrirCascade(idViejo, idNuevo, datos) {
+  const cfg = TABLAS[G.tabla];
+  G.cascade = { idViejo, idNuevo, datos };
+  document.getElementById('cascade-label').textContent = `${idViejo}  →  ${idNuevo}`;
+
+  const tablas = [...cfg.cascade, { tabla: cfg.tabla, col: cfg.idField }];
+  document.getElementById('cascade-steps').innerHTML = tablas.map((t,i) =>
+    `<li id="cs-${i}">${t.tabla} · ${t.col}</li>`
+  ).join('');
+
+  const sql = tablas.map(t =>
+    `UPDATE ${t.tabla} SET ${t.col} = '${idNuevo}' WHERE ${t.col} = '${idViejo}';`
+  ).join('\n');
+  document.getElementById('cascade-sql-text').textContent = sql;
+  document.getElementById('cascade-sql-section').style.display = 'block';
+  document.getElementById('cascade-done-msg').style.display = 'none';
+
+  const btns = document.getElementById('cascade-btns');
+  if (btns) { btns.style.display = 'flex'; }
+  document.getElementById('btn-exec-cascade').disabled = false;
+  document.getElementById('btn-exec-cascade').textContent = '🔄 Confirmar y actualizar todo';
+  document.getElementById('cascade-overlay').classList.add('active');
+}
+
+function cerrarCascade() {
+  document.getElementById('cascade-overlay').classList.remove('active');
+  G.cascade = null;
+}
+
+function copiarSqlCascade() {
+  navigator.clipboard.writeText(document.getElementById('cascade-sql-text').textContent)
+    .then(() => toast('SQL copiado al portapapeles', 'ok'));
+}
+
+async function ejecutarCascade() {
+  if (!G.cascade) return;
+  const { idViejo, idNuevo, datos } = G.cascade;
+  const cfg = TABLAS[G.tabla];
+  const tablas = [...cfg.cascade, { tabla: cfg.tabla, col: cfg.idField }];
+
+  const btn = document.getElementById('btn-exec-cascade');
+  btn.disabled = true; btn.textContent = '⏳ Actualizando…';
+
+  let ok = true;
+  for (let i = 0; i < tablas.length; i++) {
+    const li = document.getElementById('cs-' + i);
+    li.className = 'active';
+    try {
+      if (i === tablas.length - 1) {
+        await supaPatch(cfg.tabla, `${cfg.idField}=eq.${encodeURIComponent(idViejo)}`, datos);
+      } else {
+        await supaRename(tablas[i].tabla, tablas[i].col, idViejo, idNuevo);
+      }
+      li.className = 'done';
+      li.textContent = '✓ ' + tablas[i].tabla + ' · ' + tablas[i].col;
+    } catch(e) {
+      li.className = 'err';
+      li.textContent = '✗ ' + tablas[i].tabla + ': ' + e.message;
+      ok = false;
+      break;
+    }
+  }
+
+  if (ok) {
+    const idx = G.datos.findIndex(r => r[cfg.idField] === idViejo);
+    if (idx >= 0) G.datos[idx] = { ...G.datos[idx], ...datos };
+    renderTabla();
+    document.getElementById('cascade-done-msg').style.display = 'block';
+    document.getElementById('cascade-done-msg').textContent = `✅ Completado en ${tablas.length} tabla${tablas.length>1?'s':''}`;
+    document.getElementById('cascade-btns').style.display = 'none';
+    toast('✅ Cascade completado: ' + idViejo + ' → ' + idNuevo, 'ok');
+    setTimeout(cerrarCascade, 3000);
+  } else {
+    btn.disabled = false; btn.textContent = '🔄 Reintentar';
+    toast('Error en cascade — revisa los pasos y usa el SQL manual si es necesario', 'err');
+  }
+}
+
+// ── TOAST ─────────────────────────────────────────────────────────────────────
+function toast(msg, tipo='ok', dur=4000) {
+  const t = document.getElementById('toast');
+  const el = document.createElement('div');
+  el.className = 'toast-msg ' + tipo;
+  el.textContent = msg;
+  t.appendChild(el);
+  setTimeout(() => el.remove(), dur);
+}
+</script>
+</body>
+</html>
