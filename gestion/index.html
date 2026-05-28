@@ -374,7 +374,7 @@ td.muted{color:var(--ink-muted);font-size:12px}
 /* ── MÓDULO FACTURAS ── */
 .fact-wrap{flex:1;min-height:0;overflow-y:auto;padding:16px 20px}
 .fact-toolbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
-.btn-nueva-factura{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:8px;background:var(--azul);color:#fff;border:none;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:background .15s;margin-left:auto}
+.btn-nueva-factura{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:8px;background:var(--azul);color:#fff;border:none;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:background .15s;flex-shrink:0}
 .btn-nueva-factura:hover{background:var(--azul-light)}
 .btn-nueva-factura svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
 .fact-estado-pill{display:inline-flex;align-items:center;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;cursor:pointer;border:none;font-family:inherit}
@@ -757,102 +757,6 @@ td.muted{color:var(--ink-muted);font-size:12px}
       </div>
     </div>
 
-  </div><!-- /main -->
-</div><!-- /app-body -->
-
-<!-- ── MODAL EDICIÓN PACIENTE ── -->
-<div class="overlay" id="overlay-edicion" onclick="clickOverlayEdicion(event)">
-  <div class="modal">
-    <div class="modal-hdr">
-      <div class="modal-title" id="modal-edicion-title">Editar paciente</div>
-      <button class="modal-close" onclick="cerrarEdicion()">✕</button>
-    </div>
-    <div class="modal-body">
-      <div class="form-section">Identidad</div>
-      <div class="form-grid2">
-        <div class="form-group"><label>Nombre</label><input class="form-input" id="ed-nombre" type="text"></div>
-        <div class="form-group"><label>Apellidos</label><input class="form-input" id="ed-apellidos" type="text"></div>
-      </div>
-      <div class="form-grid2">
-        <div class="form-group"><label>Alias (agenda)</label><input class="form-input" id="ed-alias" type="text" placeholder="Nombre corto para la agenda"></div>
-        <div class="form-group"><label>Fecha de nacimiento</label><input class="form-input" id="ed-fnac" type="date"></div>
-      </div>
-      <div class="form-grid2">
-        <div class="form-group"><label>DNI / NIE del paciente</label><input class="form-input" id="ed-dni" type="text"></div>
-        <div class="form-group"><label>Estado</label>
-          <select class="form-select" id="ed-activo">
-            <option value="Si">Activo</option>
-            <option value="No">Baja</option>
-          </select>
-        </div>
-      </div>
-      <div class="form-grid2">
-        <div class="form-group"><label>Dirección</label><input class="form-input" id="ed-direccion" type="text"></div>
-        <div class="form-group"><label>Municipio</label><input class="form-input" id="ed-municipio" type="text"></div>
-      </div>
-      <div class="form-grid2">
-        <div class="form-group"><label>Código postal</label><input class="form-input" id="ed-cp" type="text" style="width:120px"></div>
-        <div class="form-group"><label>Centro escolar</label><input class="form-input" id="ed-centro" type="text"></div>
-      </div>
-      <div class="form-group"><label>Curso escolar</label><input class="form-input" id="ed-curso" type="text" placeholder="3.º Primaria" style="width:200px"></div>
-
-      <div class="form-section">Tutor 1 / Contacto principal</div>
-      <div class="form-grid2">
-        <div class="form-group"><label>Nombre del tutor</label><input class="form-input" id="ed-t1-nombre" type="text"></div>
-        <div class="form-group"><label>DNI / NIE tutor 1</label><input class="form-input" id="ed-t1-dni" type="text"></div>
-      </div>
-      <div class="form-grid2">
-        <div class="form-group"><label>Teléfono</label><input class="form-input" id="ed-t1-tel" type="tel"></div>
-        <div class="form-group"><label>Email</label><input class="form-input" id="ed-t1-email" type="email"></div>
-      </div>
-      <div class="form-group"><label>Dirección tutor 1</label><input class="form-input" id="ed-t1-dir" type="text"></div>
-
-      <div class="form-section">Tutor 2 (opcional)</div>
-      <div class="form-grid2">
-        <div class="form-group"><label>Nombre del tutor</label><input class="form-input" id="ed-t2-nombre" type="text"></div>
-        <div class="form-group"><label>DNI / NIE tutor 2</label><input class="form-input" id="ed-t2-dni" type="text"></div>
-      </div>
-      <div class="form-grid2">
-        <div class="form-group"><label>Teléfono</label><input class="form-input" id="ed-t2-tel" type="tel"></div>
-        <div class="form-group"><label>Email</label><input class="form-input" id="ed-t2-email" type="email"></div>
-      </div>
-
-      <div class="form-section">Clínica</div>
-      <div class="form-grid2">
-        <div class="form-group"><label>Diagnóstico</label><input class="form-input" id="ed-diagnostico" type="text"></div>
-        <div class="form-group"><label>Ámbito</label>
-          <select class="form-select" id="ed-ambito">
-            <option value="">—</option>
-            <option value="salud_mental">Salud Mental</option>
-            <option value="neurologia">Neurología</option>
-            <option value="otro">Otro</option>
-          </select>
-        </div>
-      </div>
-      <div class="form-grid2">
-        <div class="form-group"><label>Derivación</label>
-          <select class="form-select" id="ed-derivacion">
-            <option value="">—</option>
-            <option value="Si">Sí</option>
-            <option value="No">No</option>
-          </select>
-        </div>
-        <div class="form-group"><label>Consentimiento</label>
-          <select class="form-select" id="ed-consentimiento">
-            <option value="Pendiente">Pendiente</option>
-            <option value="Firmado">Firmado</option>
-          </select>
-        </div>
-      </div>
-      <div class="form-group"><label>Alergias</label><input class="form-input" id="ed-alergias" type="text"></div>
-      <div class="form-group"><label>Notas generales</label><textarea class="form-input" id="ed-notas" rows="3" style="resize:vertical"></textarea></div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-sec" onclick="cerrarEdicion()">Cancelar</button>
-      <button class="btn btn-pri" onclick="guardarEdicion()" id="btn-guardar-edicion">Guardar cambios</button>
-    </div>
-  </div>
-</div>
 
 <!-- ── MÓDULO FACTURAS ── -->
 <div class="modulo" id="mod-facturas">
@@ -1072,10 +976,10 @@ td.muted{color:var(--ink-muted);font-size:12px}
     <!-- PANEL: RESUMEN ANUAL -->
     <div class="fisc-panel active" id="fisc-panel-resumen">
       <div id="fisc-resumen-kpis" style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px">
-        <div class="dash-kpi blue"><div class="dash-kpi-label">Ingresos</div><div class="dash-kpi-val" id="fisc-kpi-ing" style="font-size:18px;font-weight:600;padding-top:4px"><span class="spinner"></span></div><div class="dash-kpi-sub">acumulado año</div></div>
-        <div class="dash-kpi red"><div class="dash-kpi-label">Gastos</div><div class="dash-kpi-val" id="fisc-kpi-gas" style="font-size:18px;font-weight:600;padding-top:4px">—</div><div class="dash-kpi-sub">acumulado año</div></div>
-        <div class="dash-kpi green"><div class="dash-kpi-label">Rdto. neto</div><div class="dash-kpi-val" id="fisc-kpi-rdto" style="font-size:18px;font-weight:600;padding-top:4px">—</div><div class="dash-kpi-sub">ingresos − gastos</div></div>
-        <div class="dash-kpi amber"><div class="dash-kpi-label">IRPF estimado</div><div class="dash-kpi-val" id="fisc-kpi-irpf" style="font-size:18px;font-weight:600;padding-top:4px">—</div><div class="dash-kpi-sub">20% rdto. neto</div></div>
+        <div class="dash-kpi blue"><div class="dash-kpi-label">Ingresos</div><div class="dash-kpi-val" id="fisc-kpi-ing" style="font-size:15px;font-weight:600;padding-top:4px"><span class="spinner"></span></div><div class="dash-kpi-sub">acumulado año</div></div>
+        <div class="dash-kpi red"><div class="dash-kpi-label">Gastos</div><div class="dash-kpi-val" id="fisc-kpi-gas" style="font-size:15px;font-weight:600;padding-top:4px">—</div><div class="dash-kpi-sub">acumulado año</div></div>
+        <div class="dash-kpi green"><div class="dash-kpi-label">Rdto. neto</div><div class="dash-kpi-val" id="fisc-kpi-rdto" style="font-size:15px;font-weight:600;padding-top:4px">—</div><div class="dash-kpi-sub">ingresos − gastos</div></div>
+        <div class="dash-kpi amber"><div class="dash-kpi-label">IRPF estimado</div><div class="dash-kpi-val" id="fisc-kpi-irpf" style="font-size:15px;font-weight:600;padding-top:4px">—</div><div class="dash-kpi-sub">20% rdto. neto</div></div>
       </div>
 
       <!-- Cards por trimestre -->
@@ -1175,6 +1079,10 @@ td.muted{color:var(--ink-muted);font-size:12px}
 
   </div>
 </div>
+
+
+  </div><!-- /main -->
+</div><!-- /app-body -->
 
 <!-- ── MODAL NUEVO GASTO ── -->
 <div class="overlay" id="overlay-nuevo-gasto" onclick="if(event.target===this)fiscCerrarNuevoGasto()">
