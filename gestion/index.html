@@ -587,7 +587,13 @@ td.muted{color:var(--ink-muted);font-size:12px}
             </div>
             <div style="display:flex;align-items:center;justify-content:space-between;margin-top:12px">
               <span id="pac-count" style="font-size:12px;color:var(--ink-muted)"></span>
-              <button onclick="limpiarBuscador()" style="background:none;border:none;font-size:12px;color:var(--ink-muted);cursor:pointer;font-family:inherit;padding:2px 6px;border-radius:4px" onmouseover="this.style.color='var(--ink)'" onmouseout="this.style.color='var(--ink-muted)'">✕ Limpiar</button>
+              <div style="display:flex;align-items:center;gap:8px">
+                <button onclick="limpiarBuscador()" style="background:none;border:none;font-size:12px;color:var(--ink-muted);cursor:pointer;font-family:inherit;padding:2px 6px;border-radius:4px" onmouseover="this.style.color='var(--ink)'" onmouseout="this.style.color='var(--ink-muted)'">✕ Limpiar</button>
+                <button onclick="abrirNuevoPaciente()" class="btn btn-pri" style="font-size:12px;padding:5px 12px;border-radius:8px">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" width="13" height="13" style="vertical-align:-2px;margin-right:4px"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                  Nuevo paciente
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -1083,6 +1089,245 @@ td.muted{color:var(--ink-muted);font-size:12px}
 
   </div><!-- /main -->
 </div><!-- /app-body -->
+
+<!-- ── MODAL PACIENTE (alta + edición) ── -->
+<style>
+  .pac-sec-hdr {
+    display: flex; align-items: center; gap: 8px;
+    background: var(--azul-pale); border-radius: 8px;
+    padding: 8px 14px; margin: 20px 0 14px;
+    font-size: 12px; font-weight: 700; color: var(--azul);
+    text-transform: uppercase; letter-spacing: .06em;
+  }
+  .pac-sec-hdr:first-child { margin-top: 0; }
+  .pac-sec-hdr svg { flex-shrink: 0; }
+  .pac-form-grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; margin-bottom: 12px; }
+  .pac-form-grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 12px; }
+  .pac-form-grid2-wide { display: grid; grid-template-columns: 2fr 1fr; gap: 14px; margin-bottom: 12px; }
+  .pac-form-full { margin-bottom: 12px; }
+  .pac-form-full:last-child, .pac-form-grid2:last-child, .pac-form-grid3:last-child { margin-bottom: 0; }
+</style>
+<div class="overlay" id="overlay-edicion" onclick="clickOverlayEdicion(event)">
+  <div class="modal" style="width:min(900px,96vw);max-height:92vh;display:flex;flex-direction:column">
+    <div class="modal-hdr">
+      <div class="modal-title" id="modal-edicion-title">Nuevo paciente</div>
+      <button class="modal-close" onclick="cerrarEdicion()">✕</button>
+    </div>
+    <div class="modal-body" style="overflow-y:auto;flex:1;padding:20px 28px">
+
+      <!-- SECCIÓN: Paciente -->
+      <div class="pac-sec-hdr">
+        <svg viewBox="0 0 24 24" fill="none" stroke="var(--azul)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        Paciente
+      </div>
+      <div class="pac-form-grid3">
+        <div class="form-group" style="margin:0">
+          <label>Nombre *</label>
+          <input class="form-input" id="ed-nombre" type="text" placeholder="Nombre">
+        </div>
+        <div class="form-group" style="margin:0">
+          <label>Apellidos</label>
+          <input class="form-input" id="ed-apellidos" type="text" placeholder="Apellidos">
+        </div>
+        <div class="form-group" style="margin:0">
+          <label>Alias (agenda)</label>
+          <input class="form-input" id="ed-alias" type="text" placeholder="Como se le conoce" maxlength="3" style="font-family:'DM Mono',monospace;text-transform:uppercase" oninput="this.value=this.value.toUpperCase()">
+        </div>
+      </div>
+      <div class="pac-form-grid3">
+        <div class="form-group" style="margin:0">
+          <label>Fecha de nacimiento</label>
+          <input class="form-input" id="ed-fnac" type="date">
+        </div>
+        <div class="form-group" style="margin:0">
+          <label>DNI / NIE</label>
+          <input class="form-input" id="ed-dni" type="text" placeholder="00000000A">
+        </div>
+        <div class="form-group" style="margin:0">
+          <label>Profesión</label>
+          <input class="form-input" id="ed-profesion" type="text" placeholder="Ocupación">
+        </div>
+      </div>
+      <div class="pac-form-grid3">
+        <div class="form-group" style="margin:0">
+          <label>Expediente <span id="ed-id-label" style="font-size:11px;color:var(--ink-muted);font-weight:400"></span></label>
+          <input class="form-input" id="ed-id" type="text" placeholder="INI-NNNN" style="font-family:'DM Mono',monospace">
+        </div>
+        <div class="form-group" style="margin:0">
+          <label>Estado</label>
+          <select class="form-input" id="ed-activo">
+            <option value="Si">Activo</option>
+            <option value="No">Baja</option>
+          </select>
+        </div>
+        <div class="form-group" style="margin:0">
+          <label>Consentimiento</label>
+          <select class="form-input" id="ed-consentimiento">
+            <option value="Pendiente">Pendiente</option>
+            <option value="Firmado">Firmado</option>
+            <option value="Digital">Digital</option>
+          </select>
+        </div>
+      </div>
+      <div class="pac-form-full">
+        <div class="form-group" style="margin:0">
+          <label>Dirección (calle, nº, CP, municipio, provincia)</label>
+          <input class="form-input" id="ed-direccion" type="text" placeholder="Calle Mayor 1, 2ª — 18001 Granada (España)">
+        </div>
+      </div>
+      <div class="pac-form-grid3">
+        <div class="form-group" style="margin:0">
+          <label>Teléfono *</label>
+          <input class="form-input" id="ed-telefono" type="tel" placeholder="600 000 000">
+        </div>
+        <div class="form-group" style="margin:0">
+          <label>Email</label>
+          <input class="form-input" id="ed-email" type="email" placeholder="correo@ejemplo.com">
+        </div>
+        <div class="form-group" style="margin:0">
+          <label>Código postal</label>
+          <input class="form-input" id="ed-cp" type="text" placeholder="00000">
+        </div>
+      </div>
+      <div class="pac-form-full" style="margin-bottom:0">
+        <div class="form-group" style="margin:0">
+          <label>Municipio</label>
+          <input class="form-input" id="ed-municipio" type="text" placeholder="Municipio">
+        </div>
+      </div>
+
+      <!-- SECCIÓN: Tutor 1 -->
+      <div class="pac-sec-hdr">
+        <svg viewBox="0 0 24 24" fill="none" stroke="var(--azul)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9h6M9 12h6M9 15h4"/></svg>
+        Tutor 1 <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:11px;color:var(--ink-muted)">(si es menor de edad)</span>
+      </div>
+      <div style="margin-bottom:12px">
+        <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink-muted);cursor:pointer">
+          <input type="checkbox" id="ed-tiene-tutor" onchange="toggleTutor1()" style="accent-color:var(--azul);width:15px;height:15px">
+          Este paciente tiene tutor legal
+        </label>
+      </div>
+      <div id="ed-tutor1-fields" style="display:none">
+        <div class="pac-form-grid2">
+          <div class="form-group" style="margin:0">
+            <label>Nombre y apellidos</label>
+            <input class="form-input" id="ed-t1-nombre" type="text" placeholder="Nombre completo">
+          </div>
+          <div class="form-group" style="margin:0">
+            <label>DNI Tutor 1</label>
+            <input class="form-input" id="ed-t1-dni" type="text" placeholder="00000000X">
+          </div>
+        </div>
+        <div class="pac-form-full">
+          <div class="form-group" style="margin:0">
+            <label>Dirección Tutor 1</label>
+            <input class="form-input" id="ed-t1-dir" type="text" placeholder="Calle Mayor 1, 2ª — 18001 Granada (España)">
+          </div>
+        </div>
+        <div class="pac-form-grid2" style="margin-bottom:0">
+          <div class="form-group" style="margin:0">
+            <label>Email Tutor 1</label>
+            <input class="form-input" id="ed-t1-email" type="email" placeholder="correo@ejemplo.com">
+          </div>
+          <div class="form-group" style="margin:0">
+            <label>Teléfono Tutor 1</label>
+            <input class="form-input" id="ed-t1-tel" type="tel" placeholder="600 000 000">
+          </div>
+        </div>
+      </div>
+
+      <!-- SECCIÓN: Tutor 2 -->
+      <div class="pac-sec-hdr">
+        <svg viewBox="0 0 24 24" fill="none" stroke="var(--azul)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9h6M9 12h6M9 15h4"/></svg>
+        Tutor 2
+      </div>
+      <div style="margin-bottom:12px">
+        <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink-muted);cursor:pointer">
+          <input type="checkbox" id="ed-tiene-tutor2" onchange="toggleTutor2()" style="accent-color:var(--azul);width:15px;height:15px">
+          Añadir segundo tutor
+        </label>
+      </div>
+      <div id="ed-tutor2-fields" style="display:none">
+        <div class="pac-form-grid2">
+          <div class="form-group" style="margin:0">
+            <label>Nombre y apellidos</label>
+            <input class="form-input" id="ed-t2-nombre" type="text" placeholder="Nombre completo">
+          </div>
+          <div class="form-group" style="margin:0">
+            <label>DNI Tutor 2</label>
+            <input class="form-input" id="ed-t2-dni" type="text" placeholder="00000000X">
+          </div>
+        </div>
+        <div class="pac-form-grid2" style="margin-bottom:0">
+          <div class="form-group" style="margin:0">
+            <label>Teléfono Tutor 2</label>
+            <input class="form-input" id="ed-t2-tel" type="tel" placeholder="600 000 000">
+          </div>
+          <div class="form-group" style="margin:0">
+            <label>Email Tutor 2</label>
+            <input class="form-input" id="ed-t2-email" type="email" placeholder="correo@ejemplo.com">
+          </div>
+        </div>
+      </div>
+
+      <!-- SECCIÓN: Clínico-escolar -->
+      <div class="pac-sec-hdr">
+        <svg viewBox="0 0 24 24" fill="none" stroke="var(--azul)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+        Clínico-escolar
+      </div>
+      <div class="pac-form-grid2">
+        <div class="form-group" style="margin:0">
+          <label>Centro escolar</label>
+          <input class="form-input" id="ed-centro" type="text" placeholder="Nombre del colegio o instituto">
+        </div>
+        <div class="form-group" style="margin:0">
+          <label>Curso</label>
+          <input class="form-input" id="ed-curso" type="text" placeholder="ej. 3º ESO">
+        </div>
+      </div>
+      <div class="pac-form-grid3">
+        <div class="form-group" style="margin:0">
+          <label>Ámbito</label>
+          <select class="form-input" id="ed-ambito">
+            <option value="">— Sin especificar —</option>
+            <option value="Escolar">Escolar</option>
+            <option value="Clínico">Clínico</option>
+            <option value="Mixto">Mixto</option>
+          </select>
+        </div>
+        <div class="form-group" style="margin:0">
+          <label>Derivación</label>
+          <select class="form-input" id="ed-derivacion">
+            <option value="">— Sin especificar —</option>
+            <option value="Si">Sí</option>
+            <option value="No">No</option>
+          </select>
+        </div>
+        <div class="form-group" style="margin:0">
+          <label>Alergias</label>
+          <input class="form-input" id="ed-alergias" type="text" placeholder="Relevantes">
+        </div>
+      </div>
+      <div class="pac-form-full">
+        <div class="form-group" style="margin:0">
+          <label>Diagnóstico / motivo de consulta</label>
+          <input class="form-input" id="ed-diagnostico" type="text" placeholder="Diagnóstico o motivo de consulta">
+        </div>
+      </div>
+      <div class="pac-form-full" style="margin-bottom:0">
+        <div class="form-group" style="margin:0">
+          <label>Notas internas</label>
+          <textarea class="form-input" id="ed-notas" rows="3" placeholder="Notas visibles solo para el equipo…" style="resize:vertical"></textarea>
+        </div>
+      </div>
+
+    </div><!-- /modal-body -->
+    <div class="modal-footer">
+      <button class="btn btn-sec" onclick="cerrarEdicion()">Cancelar</button>
+      <button class="btn btn-pri" id="btn-guardar-edicion" onclick="guardarPacModal()">Guardar</button>
+    </div>
+  </div>
+</div>
 
 <!-- ── MODAL NUEVO GASTO ── -->
 <div class="overlay" id="overlay-nuevo-gasto" onclick="if(event.target===this)fiscCerrarNuevoGasto()">
@@ -1878,38 +2123,153 @@ function descargarDiarioPDF() {
 /* ═══════════════════════════════════════════
    MODAL EDICIÓN
 ═══════════════════════════════════════════ */
+/* ─── MODAL PACIENTE: estado compartido ─── */
+let pacModalModo = 'edicion'; // 'nuevo' | 'edicion'
+
+function _recogerFormPac() {
+  const tieneTutor  = document.getElementById('ed-tiene-tutor').checked;
+  const tieneTutor2 = document.getElementById('ed-tiene-tutor2').checked;
+  return {
+    nombre:            document.getElementById('ed-nombre').value.trim(),
+    apellidos:         document.getElementById('ed-apellidos').value.trim() || null,
+    alias:             document.getElementById('ed-alias').value.trim().toUpperCase() || null,
+    fecha_nacimiento:  document.getElementById('ed-fnac').value || null,
+    dni_paciente:      document.getElementById('ed-dni').value.trim() || null,
+    profesion:         document.getElementById('ed-profesion').value.trim() || null,
+    activo:            document.getElementById('ed-activo').value,
+    consentimiento:    document.getElementById('ed-consentimiento').value,
+    telefono:          document.getElementById('ed-telefono').value.trim() || null,
+    email:             document.getElementById('ed-email').value.trim() || null,
+    direccion:         document.getElementById('ed-direccion').value.trim() || null,
+    municipio:         document.getElementById('ed-municipio').value.trim() || null,
+    codigo_postal:     document.getElementById('ed-cp').value.trim() || null,
+    tiene_tutor:       tieneTutor ? 'Si' : 'No',
+    nombre_tutor1:     tieneTutor ? (document.getElementById('ed-t1-nombre').value.trim() || null) : null,
+    dni_tutor1:        tieneTutor ? (document.getElementById('ed-t1-dni').value.trim() || null) : null,
+    telefono_tutor1:   tieneTutor ? (document.getElementById('ed-t1-tel').value.trim() || null) : null,
+    email_tutor1:      tieneTutor ? (document.getElementById('ed-t1-email').value.trim() || null) : null,
+    direccion_tutor1:  tieneTutor ? (document.getElementById('ed-t1-dir').value.trim() || null) : null,
+    nombre_tutor2:     tieneTutor2 ? (document.getElementById('ed-t2-nombre').value.trim() || null) : null,
+    dni_tutor2:        tieneTutor2 ? (document.getElementById('ed-t2-dni').value.trim() || null) : null,
+    telefono_tutor2:   tieneTutor2 ? (document.getElementById('ed-t2-tel').value.trim() || null) : null,
+    email_tutor2:      tieneTutor2 ? (document.getElementById('ed-t2-email').value.trim() || null) : null,
+    centro_escolar:    document.getElementById('ed-centro').value.trim() || null,
+    curso_escolar:     document.getElementById('ed-curso').value.trim() || null,
+    ambito:            document.getElementById('ed-ambito').value || null,
+    derivacion:        document.getElementById('ed-derivacion').value || null,
+    diagnostico:       document.getElementById('ed-diagnostico').value.trim() || null,
+    alergias:          document.getElementById('ed-alergias').value.trim() || null,
+    notas:             document.getElementById('ed-notas').value.trim() || null,
+  };
+}
+
+function _rellenarFormPac(p) {
+  document.getElementById('ed-nombre').value       = p.nombre || '';
+  document.getElementById('ed-apellidos').value    = p.apellidos || '';
+  document.getElementById('ed-alias').value        = p.alias || '';
+  document.getElementById('ed-fnac').value         = p.fecha_nacimiento || '';
+  document.getElementById('ed-dni').value          = p.dni_paciente || '';
+  document.getElementById('ed-profesion').value    = p.profesion || '';
+  document.getElementById('ed-activo').value       = p.activo || 'Si';
+  document.getElementById('ed-consentimiento').value = p.consentimiento || 'Pendiente';
+  document.getElementById('ed-telefono').value     = p.telefono || '';
+  document.getElementById('ed-email').value        = p.email || '';
+  document.getElementById('ed-direccion').value    = p.direccion || '';
+  document.getElementById('ed-municipio').value    = p.municipio || '';
+  document.getElementById('ed-cp').value           = p.codigo_postal || '';
+  const tieneTutor = p.tiene_tutor === 'Si' || !!p.nombre_tutor1;
+  document.getElementById('ed-tiene-tutor').checked = tieneTutor;
+  document.getElementById('ed-tutor1-fields').style.display = tieneTutor ? '' : 'none';
+  document.getElementById('ed-t1-nombre').value    = p.nombre_tutor1 || '';
+  document.getElementById('ed-t1-dni').value       = p.dni_tutor1 || '';
+  document.getElementById('ed-t1-tel').value       = p.telefono_tutor1 || '';
+  document.getElementById('ed-t1-email').value     = p.email_tutor1 || '';
+  document.getElementById('ed-t1-dir').value       = p.direccion_tutor1 || '';
+  const tieneTutor2 = !!p.nombre_tutor2;
+  document.getElementById('ed-tiene-tutor2').checked = tieneTutor2;
+  document.getElementById('ed-tutor2-fields').style.display = tieneTutor2 ? '' : 'none';
+  document.getElementById('ed-t2-nombre').value    = p.nombre_tutor2 || '';
+  document.getElementById('ed-t2-dni').value       = p.dni_tutor2 || '';
+  document.getElementById('ed-t2-tel').value       = p.telefono_tutor2 || '';
+  document.getElementById('ed-t2-email').value     = p.email_tutor2 || '';
+  document.getElementById('ed-centro').value       = p.centro_escolar || '';
+  document.getElementById('ed-curso').value        = p.curso_escolar || '';
+  document.getElementById('ed-ambito').value       = p.ambito || '';
+  document.getElementById('ed-derivacion').value   = p.derivacion === true ? 'Si' : p.derivacion === false ? 'No' : p.derivacion || '';
+  document.getElementById('ed-diagnostico').value  = p.diagnostico || '';
+  document.getElementById('ed-alergias').value     = p.alergias || '';
+  document.getElementById('ed-notas').value        = p.notas || '';
+}
+
+function toggleTutor1() {
+  document.getElementById('ed-tutor1-fields').style.display =
+    document.getElementById('ed-tiene-tutor').checked ? '' : 'none';
+}
+
+function toggleTutor2() {
+  document.getElementById('ed-tutor2-fields').style.display =
+    document.getElementById('ed-tiene-tutor2').checked ? '' : 'none';
+}
+
+function _limpiarFormPac() {
+  ['ed-nombre','ed-apellidos','ed-alias','ed-fnac','ed-dni','ed-profesion','ed-telefono','ed-email',
+   'ed-direccion','ed-municipio','ed-cp','ed-t1-nombre','ed-t1-dni','ed-t1-tel',
+   'ed-t1-email','ed-t1-dir','ed-t2-nombre','ed-t2-dni','ed-t2-tel','ed-t2-email',
+   'ed-centro','ed-curso','ed-diagnostico','ed-alergias','ed-notas']
+    .forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
+  document.getElementById('ed-activo').value = 'Si';
+  document.getElementById('ed-consentimiento').value = 'Pendiente';
+  document.getElementById('ed-ambito').value = '';
+  document.getElementById('ed-derivacion').value = '';
+  document.getElementById('ed-tiene-tutor').checked = false;
+  document.getElementById('ed-tutor1-fields').style.display = 'none';
+  document.getElementById('ed-tiene-tutor2').checked = false;
+  document.getElementById('ed-tutor2-fields').style.display = 'none';
+}
+
+async function abrirNuevoPaciente() {
+  pacModalModo = 'nuevo';
+  _limpiarFormPac();
+
+  // Generar ID sugerido consultando el último INI-NNNN
+  const idInput = document.getElementById('ed-id');
+  const idLabel = document.getElementById('ed-id-label');
+  idInput.readOnly = false;
+  idInput.style.background = '';
+  idLabel.textContent = '(formato INI-NNNN)';
+  idInput.value = '';
+
+  try {
+    const rows = await sg('pacientes_v2?order=id.desc&limit=1&select=id');
+    if (rows.length) {
+      const ultimo = rows[0].id; // ej. "LFA-313"
+      const num = parseInt(ultimo.replace(/[^0-9]/g, ''), 10);
+      idLabel.textContent = `(último: ${ultimo})`;
+    }
+  } catch(_) {}
+
+  document.getElementById('modal-edicion-title').textContent = 'Nuevo paciente';
+  document.getElementById('btn-guardar-edicion').textContent = 'Crear paciente';
+  document.getElementById('overlay-edicion').classList.add('open');
+  document.getElementById('ed-nombre').focus();
+}
+
 function abrirEdicion() {
   const p = G.pacActual;
   if (!p) return;
 
-  document.getElementById('ed-nombre').value      = p.nombre || '';
-  document.getElementById('ed-apellidos').value   = p.apellidos || '';
-  document.getElementById('ed-alias').value       = p.alias || '';
-  document.getElementById('ed-fnac').value        = p.fecha_nacimiento || '';
-  document.getElementById('ed-dni').value         = p.dni_paciente || '';
-  document.getElementById('ed-activo').value      = p.activo || 'Si';
-  document.getElementById('ed-direccion').value   = p.direccion || '';
-  document.getElementById('ed-municipio').value   = p.municipio || '';
-  document.getElementById('ed-cp').value          = p.codigo_postal || '';
-  document.getElementById('ed-centro').value      = p.centro_escolar || '';
-  document.getElementById('ed-curso').value       = p.curso_escolar || '';
-  document.getElementById('ed-t1-nombre').value   = p.tutor1 || '';
-  document.getElementById('ed-t1-dni').value      = p.dni_tutor1 || '';
-  document.getElementById('ed-t1-tel').value      = p.telefono || '';
-  document.getElementById('ed-t1-email').value    = p.tutor1_email || p.email || '';
-  document.getElementById('ed-t1-dir').value      = p.tutor1_direccion || '';
-  document.getElementById('ed-t2-nombre').value   = p.tutor2 || '';
-  document.getElementById('ed-t2-dni').value      = p.tutor2_dni || '';
-  document.getElementById('ed-t2-tel').value      = p.tutor2_telefono || '';
-  document.getElementById('ed-t2-email').value    = p.tutor2_email || '';
-  document.getElementById('ed-diagnostico').value = p.diagnostico || '';
-  document.getElementById('ed-ambito').value      = p.ambito || '';
-  document.getElementById('ed-derivacion').value  = p.derivacion === true || p.derivacion === 'Si' ? 'Si' : p.derivacion === false || p.derivacion === 'No' ? 'No' : '';
-  document.getElementById('ed-consentimiento').value = p.consentimiento || 'Pendiente';
-  document.getElementById('ed-alergias').value    = p.alergias || '';
-  document.getElementById('ed-notas').value       = p.notas || '';
+  pacModalModo = 'edicion';
+  _rellenarFormPac(p);
+
+  // ID: solo lectura en edición
+  const idInput = document.getElementById('ed-id');
+  idInput.value = p.id;
+  idInput.readOnly = true;
+  idInput.style.background = 'var(--bg)';
+  document.getElementById('ed-id-label').textContent = '(no editable aquí)';
 
   document.getElementById('modal-edicion-title').textContent = `Editar — ${p.id}`;
+  document.getElementById('btn-guardar-edicion').textContent = 'Guardar cambios';
   document.getElementById('overlay-edicion').classList.add('open');
 }
 
@@ -1921,63 +2281,68 @@ function clickOverlayEdicion(e) {
   if (e.target === document.getElementById('overlay-edicion')) cerrarEdicion();
 }
 
-async function guardarEdicion() {
-  const p = G.pacActual;
-  if (!p) return;
-
+async function guardarPacModal() {
   const btn = document.getElementById('btn-guardar-edicion');
   btn.disabled = true;
   btn.innerHTML = '<span class="spinner"></span> Guardando…';
 
-  const body = {
-    nombre:            document.getElementById('ed-nombre').value.trim(),
-    apellidos:         document.getElementById('ed-apellidos').value.trim(),
-    alias:             document.getElementById('ed-alias').value.trim() || null,
-    fecha_nacimiento:  document.getElementById('ed-fnac').value || null,
-    dni_paciente:      document.getElementById('ed-dni').value.trim() || null,
-    activo:            document.getElementById('ed-activo').value,
-    direccion:         document.getElementById('ed-direccion').value.trim() || null,
-    municipio:         document.getElementById('ed-municipio').value.trim() || null,
-    codigo_postal:     document.getElementById('ed-cp').value.trim() || null,
-    centro_escolar:    document.getElementById('ed-centro').value.trim() || null,
-    curso_escolar:     document.getElementById('ed-curso').value.trim() || null,
-    tutor1:            document.getElementById('ed-t1-nombre').value.trim() || null,
-    dni_tutor1:        document.getElementById('ed-t1-dni').value.trim() || null,
-    telefono:          document.getElementById('ed-t1-tel').value.trim() || null,
-    tutor1_email:      document.getElementById('ed-t1-email').value.trim() || null,
-    tutor1_direccion:  document.getElementById('ed-t1-dir').value.trim() || null,
-    tutor2:            document.getElementById('ed-t2-nombre').value.trim() || null,
-    tutor2_dni:        document.getElementById('ed-t2-dni').value.trim() || null,
-    tutor2_telefono:   document.getElementById('ed-t2-tel').value.trim() || null,
-    tutor2_email:      document.getElementById('ed-t2-email').value.trim() || null,
-    diagnostico:       document.getElementById('ed-diagnostico').value.trim() || null,
-    ambito:            document.getElementById('ed-ambito').value || null,
-    derivacion:        document.getElementById('ed-derivacion').value || null,
-    consentimiento:    document.getElementById('ed-consentimiento').value,
-    alergias:          document.getElementById('ed-alergias').value.trim() || null,
-    notas:             document.getElementById('ed-notas').value.trim() || null,
-  };
+  const body = _recogerFormPac();
 
-  if (!body.nombre) { toast('El nombre es obligatorio', true); btn.disabled = false; btn.textContent = 'Guardar cambios'; return; }
+  if (!body.nombre) {
+    toast('El nombre es obligatorio', true);
+    btn.disabled = false;
+    btn.textContent = pacModalModo === 'nuevo' ? 'Crear paciente' : 'Guardar cambios';
+    return;
+  }
 
   try {
-    await spatch('pacientes_v2', p.id, body);
-    // Actualizar caché local
-    Object.assign(G.pacActual, body);
-    const idx = G.pacientes.findIndex(x => x.id === p.id);
-    if (idx >= 0) Object.assign(G.pacientes[idx], body);
+    if (pacModalModo === 'nuevo') {
+      // Validar ID
+      const idVal = document.getElementById('ed-id').value.trim().toUpperCase();
+      if (!idVal || !/^[A-Z]{3}-\d{3,4}$/.test(idVal)) {
+        toast('El expediente debe tener formato INI-NNNN (ej. AGA-042)', true);
+        btn.disabled = false;
+        btn.textContent = 'Crear paciente';
+        return;
+      }
+      // Comprobar que no exista ya
+      const existe = await sg(`pacientes_v2?id=eq.${encodeURIComponent(idVal)}&select=id&limit=1`);
+      if (existe.length) {
+        toast(`El expediente ${idVal} ya existe`, true);
+        btn.disabled = false;
+        btn.textContent = 'Crear paciente';
+        return;
+      }
+      body.id = idVal;
+      const [nuevo] = await sp('pacientes_v2', body);
+      G.pacientes.push(nuevo);
+      G.pacientes.sort((a,b) => (a.apellidos||'').localeCompare(b.apellidos||'') || a.nombre.localeCompare(b.nombre));
+      const n = G.pacientes.length;
+      document.getElementById('pac-total-label').textContent = `${n} paciente${n !== 1 ? 's' : ''} en el sistema`;
+      cerrarEdicion();
+      toast('Paciente creado', false, true);
+      // Abrir la ficha directamente
+      abrirFicha(idVal);
 
-    cerrarEdicion();
-    renderP360Header(G.pacActual);
-    renderP360Datos(G.pacActual);
-    renderP360Clinica(G.pacActual);
-    filtrarPacientes();
-    toast('Cambios guardados', false, true);
+    } else {
+      // Edición
+      const p = G.pacActual;
+      await spatch('pacientes_v2', p.id, body);
+      Object.assign(G.pacActual, body);
+      const idx = G.pacientes.findIndex(x => x.id === p.id);
+      if (idx >= 0) Object.assign(G.pacientes[idx], body);
+      cerrarEdicion();
+      renderP360Header(G.pacActual);
+      renderP360Datos(G.pacActual);
+      renderP360Clinica(G.pacActual);
+      filtrarPacientes();
+      toast('Cambios guardados', false, true);
+    }
   } catch (e) {
     toast('Error al guardar: ' + e.message, true);
   } finally {
     btn.disabled = false;
-    btn.textContent = 'Guardar cambios';
+    btn.textContent = pacModalModo === 'nuevo' ? 'Crear paciente' : 'Guardar cambios';
   }
 }
 
