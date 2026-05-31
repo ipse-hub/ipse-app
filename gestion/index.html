@@ -557,7 +557,7 @@ td.muted{color:var(--ink-muted);font-size:12px}
       <div class="lista-wrap" id="pac-lista-view">
 
         <!-- Buscador central -->
-        <div id="pac-buscador-central" style="max-width:620px;margin:32px auto 0">
+        <div id="pac-buscador-central" style="max-width:620px;margin:32px auto 0;flex-shrink:0">
           <div style="background:var(--white);border:1px solid var(--border);border-radius:16px;padding:28px 32px;box-shadow:var(--shadow-lg)">
             <div style="text-align:center;margin-bottom:22px">
               <div style="width:48px;height:48px;background:var(--azul-pale);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 12px">
@@ -1685,7 +1685,7 @@ function fmtFecha(f) {
   return `${d}/${m}/${y}`;
 }
 
-const PAC_POR_PAG = 25;
+const PAC_POR_PAG = 8;
 
 function renderTabla(pagina) {
   const tbody  = document.getElementById('pac-tbody');
@@ -1698,7 +1698,7 @@ function renderTabla(pagina) {
   document.getElementById('pac-count').textContent = n ? `${n} resultado${n !== 1 ? 's' : ''}` : 'Sin resultados';
 
   if (!n) {
-    resEl.style.display = 'flex';
+    resEl.style.display = 'block';
     tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:32px;color:var(--ink-muted);font-size:13px">Sin resultados para esta búsqueda</td></tr>`;
     footer.innerHTML = '';
     return;
@@ -1708,7 +1708,7 @@ function renderTabla(pagina) {
   const inicio = (G.pacPagina - 1) * PAC_POR_PAG;
   const pagina_actual = G.filtrados.slice(inicio, inicio + PAC_POR_PAG);
 
-  resEl.style.display = 'flex';
+  resEl.style.display = 'block';
   tbody.innerHTML = pagina_actual.map(p => {
     const ini     = ((p.nombre||'').charAt(0) + (p.apellidos||'').charAt(0)).toUpperCase() || '?';
     const edad    = calcEdad(p.fecha_nacimiento);
