@@ -1675,6 +1675,7 @@ function filtrarPacientes() {
     return true;
   });
 
+  G.pacPagina = 1;
   renderTabla();
 }
 
@@ -1684,22 +1685,31 @@ function fmtFecha(f) {
   return `${d}/${m}/${y}`;
 }
 
-function renderTabla() {
-  const tbody   = document.getElementById('pac-tbody');
-  const resEl   = document.getElementById('pac-resultados');
-  const n       = G.filtrados.length;
+const PAC_POR_PAG = 25;
 
-  document.getElementById('pac-count').textContent  = n ? `${n} resultado${n !== 1 ? 's' : ''}` : 'Sin resultados';
-  document.getElementById('pac-footer').textContent = `${n} de ${G.pacientes.length} pacientes`;
+function renderTabla(pagina) {
+  const tbody  = document.getElementById('pac-tbody');
+  const resEl  = document.getElementById('pac-resultados');
+  const footer = document.getElementById('pac-footer');
+  const n      = G.filtrados.length;
+
+  G.pacPagina = (pagina !== undefined) ? pagina : (G.pacPagina || 1);
+
+  document.getElementById('pac-count').textContent = n ? `${n} resultado${n !== 1 ? 's' : ''}` : 'Sin resultados';
 
   if (!n) {
-    resEl.style.display = 'block';
+    resEl.style.display = 'flex';
     tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:32px;color:var(--ink-muted);font-size:13px">Sin resultados para esta búsqueda</td></tr>`;
+    footer.innerHTML = '';
     return;
   }
 
-  resEl.style.display = 'block';
-  tbody.innerHTML = G.filtrados.map(p => {
+  const totalPags = Math.ceil(n / PAC_POR_PAG);  if (G.pacPagina > totalPags) G.pacPagina = totalPags;
+  const inicio = (G.pacPagina - 1) * PAC_POR_PAG;
+  const pagina_actual = G.filtrados.slice(inicio, inicio + PAC_POR_PAG);
+
+  resEl.style.display = 'flex';
+  tbody.innerHTML = pagina_actual.map(p => {
     const ini     = ((p.nombre||'').charAt(0) + (p.apellidos||'').charAt(0)).toUpperCase() || '?';
     const edad    = calcEdad(p.fecha_nacimiento);
     const edadStr = edad !== null ? `${edad} años` : '—';
@@ -1725,6 +1735,29 @@ function renderTabla() {
       <td>${incompleto}</td>
     </tr>`;
   }).join('');
+
+  // Footer con paginación
+  const desde = inicio + 1;
+  const hasta = Math.min(inicio + PAC_POR_PAG, n);
+  let pags = '';
+  if (totalPags > 1) {
+    const btn = (label, pg, disabled, active) =>
+      `<button onclick="renderTabla(${pg})" style="min-width:30px;padding:4px 8px;border:1px solid var(--border);border-radius:6px;background:${active ? 'var(--azul)' : 'var(--white)'};color:${active ? '#fff' : 'var(--ink)'};font-size:12px;font-family:inherit;cursor:${disabled ? 'default' : 'pointer'};opacity:${disabled ? '.4' : '1'}" ${disabled ? 'disabled' : ''}>${label}</button>`;
+
+    pags = `<div style="display:flex;align-items:center;gap:4px;margin-left:auto">`;
+    pags += btn('‹', G.pacPagina - 1, G.pacPagina === 1, false);
+    // Páginas: mostrar hasta 5 botones centrados en la actual
+    let p0 = Math.max(1, G.pacPagina - 2);
+    let p1 = Math.min(totalPags, p0 + 4);
+    if (p1 - p0 < 4) p0 = Math.max(1, p1 - 4);
+    if (p0 > 1) pags += btn('1', 1, false, false) + (p0 > 2 ? `<span style="font-size:12px;color:var(--ink-muted)">…</span>` : '');
+    for (let i = p0; i <= p1; i++) pags += btn(i, i, false, i === G.pacPagina);
+    if (p1 < totalPags) pags += (p1 < totalPags - 1 ? `<span style="font-size:12px;color:var(--ink-muted)">…</span>` : '') + btn(totalPags, totalPags, false, false);
+    pags += btn('›', G.pacPagina + 1, G.pacPagina === totalPags, false);
+    pags += `</div>`;
+  }
+
+  footer.innerHTML = `<div style="display:flex;align-items:center;gap:8px">${desde}–${hasta} de ${n} pacientes${pags}</div>`;
 }
 
 /* ═══════════════════════════════════════════
