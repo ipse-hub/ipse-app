@@ -307,6 +307,53 @@ td.muted{color:var(--ink-muted);font-size:12px}
 .form-grid2{display:grid;grid-template-columns:1fr 1fr;gap:0 16px}
 .form-section{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--azul);padding:10px 0 6px;border-bottom:1px solid var(--border);margin-bottom:14px}
 
+/* ── MÓDULO PRODUCCIÓN 360° ── */
+.prod-filter-block{background:var(--cream);border-radius:12px;padding:1rem 1.25rem;margin-bottom:1rem;border:1px solid var(--border)}
+.prod-filter-row{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end}
+.prod-filter-group{display:flex;flex-direction:column;gap:4px}
+.prod-section-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--azul);margin-bottom:2px}
+.prod-pills-row{display:flex;gap:6px;flex-wrap:wrap}
+.prod-pill{display:inline-flex;align-items:center;padding:4px 11px;border-radius:20px;font-size:12px;cursor:pointer;border:1px solid var(--border);background:var(--white);color:var(--ink-muted);transition:all .15s}
+.prod-pill:hover{border-color:var(--azul);color:var(--azul)}
+.prod-pill-active{background:var(--azul)!important;border-color:var(--azul)!important;color:#fff!important}
+.prod-pill-hecha{background:#EAF3DE;color:#3B6D11;border-color:#C0DD97}
+.prod-pill-noshow{background:#FAEEDA;color:#854F0B;border-color:#FAC775}
+.prod-pill-cancelada{background:#FCEBEB;color:#A32D2D;border-color:#F7C1C1}
+.prod-pill-programada{background:#E6F1FB;color:#185FA5;border-color:#B5D4F4}
+.prod-mas-filtros{font-size:12px;color:var(--ink-muted);cursor:pointer;display:flex;align-items:center;gap:4px;padding:2px 0;user-select:none}
+.prod-mas-filtros:hover{color:var(--ink)}
+.prod-mas-filtros i{font-size:14px;transition:transform .2s}
+.prod-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:1rem}
+.prod-kpi{background:var(--cream);border:1px solid var(--border);border-radius:10px;padding:.875rem 1rem}
+.prod-kpi-label{font-size:11px;color:var(--ink-muted);margin-bottom:4px}
+.prod-kpi-val{font-size:22px;font-weight:700;color:var(--ink)}
+.prod-kpi-sub{font-size:11px;color:var(--ink-muted);margin-top:2px}
+.prod-tabla-wrap{background:var(--white);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.prod-tabla-wrap table{width:100%;border-collapse:collapse;font-size:13px;table-layout:fixed}
+.prod-tabla-wrap table th{text-align:left;padding:8px 10px;font-size:11px;font-weight:600;color:var(--ink-muted);border-bottom:1px solid var(--border);background:var(--cream)}
+.prod-tabla-wrap table td{padding:9px 10px;border-bottom:1px solid var(--border);color:var(--ink);vertical-align:middle}
+.prod-tabla-wrap table tr:last-child td{border-bottom:none}
+.prod-tabla-wrap table tbody tr:hover td{background:var(--cream);cursor:pointer}
+.prod-th-sort{cursor:pointer;user-select:none}
+.prod-th-sort:hover{color:var(--ink)}
+.prod-badge{display:inline-block;padding:2px 7px;border-radius:10px;font-size:11px;font-weight:600}
+.prod-badge-hecha{background:#EAF3DE;color:#3B6D11}
+.prod-badge-noshow{background:#FAEEDA;color:#854F0B}
+.prod-badge-cancelada{background:#FCEBEB;color:#A32D2D}
+.prod-badge-programada{background:#E6F1FB;color:#185FA5}
+.prod-badge-reprogramada{background:#EEEDFE;color:#3C3489}
+.prod-badge-beca{background:#EEEDFE;color:#3C3489}
+.prod-badge-bono{background:#E6F1FB;color:#185FA5}
+.prod-badge-privado{background:#EAF3DE;color:#3B6D11}
+.prod-badge-adecco{background:#FAEEDA;color:#854F0B}
+.prod-badge-otros{background:#F1EFE8;color:#5F5E5A}
+.prod-cobro-check{color:#3B6D11;font-size:16px}
+.prod-cobro-vacio{color:var(--border);font-size:16px}
+.prod-tabla-footer{background:var(--cream);padding:9px 12px;display:flex;gap:20px;align-items:center;flex-wrap:wrap;border-top:1px solid var(--border)}
+.prod-footer-stat{font-size:12px;color:var(--ink-muted)}
+.prod-footer-stat strong{color:var(--ink);font-weight:600}
+/* ── /MÓDULO PRODUCCIÓN 360° ── */
+
 /* ── MÓDULO FISCALIDAD ── */
 .fisc-wrap{flex:1;min-height:0;overflow-y:auto;padding:16px 20px}
 .fisc-tabs{display:flex;gap:2px;background:var(--cream);border-radius:10px;padding:3px;border:1px solid var(--border);margin-bottom:16px;max-width:600px}
@@ -458,10 +505,9 @@ td.muted{color:var(--ink-muted);font-size:12px}
         <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
         Pacientes 360°
       </div>
-      <div class="nav-item disabled" id="nav-produccion">
+      <div class="nav-item" id="nav-produccion" onclick="navTo('produccion')">
         <svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
         Producción 360°
-        <span class="nav-soon">pronto</span>
       </div>
     </div>
     <div class="sidebar-divider"></div>
@@ -1087,6 +1133,171 @@ td.muted{color:var(--ink-muted);font-size:12px}
 </div>
 
 
+<!-- ── MÓDULO PRODUCCIÓN 360° ── -->
+<div class="modulo" id="mod-produccion">
+  <div class="mod-header">
+    <div>
+      <h2 class="mod-titulo">Producción 360°</h2>
+      <p class="mod-subtitulo" id="prod-subtitulo">Cargando...</p>
+    </div>
+  </div>
+
+  <div class="prod-filter-block">
+    <div class="prod-filter-row">
+      <div class="prod-filter-group">
+        <div class="prod-section-label">Período</div>
+        <div class="prod-pills-row" id="prod-period-pills">
+          <span class="prod-pill" data-period="hoy" onclick="prodSetPeriod(this)">Hoy</span>
+          <span class="prod-pill" data-period="semana" onclick="prodSetPeriod(this)">Esta semana</span>
+          <span class="prod-pill prod-pill-active" data-period="mes" onclick="prodSetPeriod(this)">Este mes</span>
+          <span class="prod-pill" data-period="mes_ant" onclick="prodSetPeriod(this)">Mes anterior</span>
+          <span class="prod-pill" data-period="trimestre" onclick="prodSetPeriod(this)">Este trimestre</span>
+          <span class="prod-pill" data-period="anio" onclick="prodSetPeriod(this)">Este año</span>
+        </div>
+      </div>
+      <div class="prod-filter-group" style="margin-left:auto">
+        <div class="prod-section-label">Rango personalizado</div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <input type="date" id="prod-fecha-desde" onchange="prodSetCustomRange()" class="form-input" style="width:140px;height:32px;padding:0 8px">
+          <span style="font-size:12px;color:var(--ink-muted)">→</span>
+          <input type="date" id="prod-fecha-hasta" onchange="prodSetCustomRange()" class="form-input" style="width:140px;height:32px;padding:0 8px">
+        </div>
+      </div>
+    </div>
+
+    <div style="height:1px;background:var(--border);margin:10px 0"></div>
+
+    <div class="prod-filter-row">
+      <div class="prod-filter-group">
+        <div class="prod-section-label">Estado</div>
+        <div class="prod-pills-row" id="prod-estado-pills">
+          <span class="prod-pill prod-pill-active" data-estado="todas" onclick="prodSetEstado(this)">Todas</span>
+          <span class="prod-pill prod-pill-hecha" data-estado="Hecha" onclick="prodSetEstado(this)">Hecha</span>
+          <span class="prod-pill prod-pill-noshow" data-estado="Noshow" onclick="prodSetEstado(this)">No show</span>
+          <span class="prod-pill prod-pill-cancelada" data-estado="Cancelada" onclick="prodSetEstado(this)">Cancelada</span>
+          <span class="prod-pill prod-pill-programada" data-estado="Programada" onclick="prodSetEstado(this)">Programada</span>
+        </div>
+      </div>
+      <div class="prod-filter-group" style="margin-left:auto">
+        <div class="prod-section-label">Profesional</div>
+        <select id="prod-sel-profesional" onchange="prodAplicarFiltros()" class="form-select" style="width:170px;height:32px;padding:0 8px">
+          <option value="">Todas</option>
+        </select>
+      </div>
+    </div>
+
+    <div style="height:1px;background:var(--border);margin:10px 0 6px"></div>
+
+    <div class="prod-mas-filtros" onclick="prodToggleExtra()">
+      <i class="ti ti-chevron-down" id="prod-chevron-extra"></i>
+      <span>Más filtros (especialidad, modalidad, cobro, paciente)</span>
+    </div>
+
+    <div id="prod-extra-filters" style="display:none;gap:12px;flex-wrap:wrap;align-items:flex-end;margin-top:10px">
+      <div class="prod-filter-group">
+        <div class="prod-section-label">Especialidad</div>
+        <select id="prod-sel-especialidad" onchange="prodAplicarFiltros()" class="form-select" style="width:150px;height:32px;padding:0 8px">
+          <option value="">Todas</option>
+          <option value="PSI">PSI — Psicología</option>
+          <option value="LOG">LOG — Logopedia</option>
+          <option value="TO">TO — T. Ocupacional</option>
+          <option value="PDG">PDG — Pedagogía</option>
+        </select>
+      </div>
+      <div class="prod-filter-group">
+        <div class="prod-section-label">Modalidad</div>
+        <select id="prod-sel-modalidad" onchange="prodAplicarFiltros()" class="form-select" style="width:130px;height:32px;padding:0 8px">
+          <option value="">Todas</option>
+          <option value="BECA">BECA</option>
+          <option value="BONO">BONO</option>
+          <option value="PRIVADO_SU">PRIVADO_SU</option>
+          <option value="ADECCO">ADECCO</option>
+          <option value="OTROS">OTROS</option>
+        </select>
+      </div>
+      <div class="prod-filter-group">
+        <div class="prod-section-label">Cobrado</div>
+        <select id="prod-sel-cobrado" onchange="prodAplicarFiltros()" class="form-select" style="width:110px;height:32px;padding:0 8px">
+          <option value="">Todas</option>
+          <option value="si">Sí</option>
+          <option value="no">No</option>
+        </select>
+      </div>
+      <div class="prod-filter-group">
+        <div class="prod-section-label">Conciliado</div>
+        <select id="prod-sel-conciliado" onchange="prodAplicarFiltros()" class="form-select" style="width:110px;height:32px;padding:0 8px">
+          <option value="">Todas</option>
+          <option value="si">Sí</option>
+          <option value="no">No</option>
+        </select>
+      </div>
+      <div class="prod-filter-group" style="flex:1;min-width:180px">
+        <div class="prod-section-label">Paciente</div>
+        <input type="text" id="prod-busq-paciente" placeholder="Nombre, apellidos o INI-NNNN…" oninput="prodAplicarFiltros()" class="form-input" style="height:32px;padding:0 8px">
+      </div>
+    </div>
+  </div>
+
+  <div class="prod-kpis">
+    <div class="prod-kpi">
+      <div class="prod-kpi-label">Sesiones</div>
+      <div class="prod-kpi-val" id="prod-kpi-sesiones">—</div>
+      <div class="prod-kpi-sub" id="prod-kpi-sesiones-sub"></div>
+    </div>
+    <div class="prod-kpi">
+      <div class="prod-kpi-label">Producción</div>
+      <div class="prod-kpi-val" id="prod-kpi-produccion">—</div>
+      <div class="prod-kpi-sub" id="prod-kpi-produccion-sub"></div>
+    </div>
+    <div class="prod-kpi prod-kpi-admin" style="display:none">
+      <div class="prod-kpi-label">Cobrado</div>
+      <div class="prod-kpi-val" id="prod-kpi-cobrado">—</div>
+      <div class="prod-kpi-sub" id="prod-kpi-cobrado-sub"></div>
+    </div>
+    <div class="prod-kpi">
+      <div class="prod-kpi-label">Tasa asistencia</div>
+      <div class="prod-kpi-val" id="prod-kpi-asistencia">—</div>
+      <div class="prod-kpi-sub" id="prod-kpi-asistencia-sub"></div>
+    </div>
+  </div>
+
+  <div class="prod-tabla-wrap">
+    <div id="prod-loading" style="padding:2rem;text-align:center;color:var(--ink-muted);font-size:14px">
+      <i class="ti ti-loader" style="font-size:20px;margin-bottom:8px;display:block"></i>
+      Cargando sesiones...
+    </div>
+    <table id="prod-tabla" style="display:none">
+      <thead>
+        <tr>
+          <th style="width:85px" class="prod-th-sort" onclick="prodOrdenar('fecha')">Fecha <i class="ti ti-arrows-sort" style="font-size:10px"></i></th>
+          <th style="width:55px">Hora</th>
+          <th style="width:165px">Paciente</th>
+          <th style="width:100px">Profesional</th>
+          <th style="width:48px">Esp.</th>
+          <th style="width:82px">Modalidad</th>
+          <th style="width:58px;text-align:right">Precio</th>
+          <th style="width:44px;text-align:center">Cobro</th>
+          <th style="width:90px">Estado</th>
+          <th style="width:38px"></th>
+        </tr>
+      </thead>
+      <tbody id="prod-tbody"></tbody>
+    </table>
+    <div id="prod-empty" style="display:none;padding:2.5rem;text-align:center;color:var(--ink-muted);font-size:14px">
+      <i class="ti ti-calendar-off" style="font-size:28px;margin-bottom:8px;display:block;opacity:.4"></i>
+      No hay sesiones con los filtros aplicados
+    </div>
+    <div class="prod-tabla-footer" id="prod-footer" style="display:none">
+      <span class="prod-footer-stat"><strong id="prod-foot-total">0</strong> sesiones</span>
+      <span class="prod-footer-stat"><strong id="prod-foot-produccion">0 €</strong> producción</span>
+      <span class="prod-footer-stat prod-footer-admin" style="display:none"><strong id="prod-foot-cobrado">0 €</strong> cobrado</span>
+      <span class="prod-footer-stat prod-footer-admin" style="display:none"><strong id="prod-foot-pendiente">0 €</strong> pendiente</span>
+      <span class="prod-footer-stat" style="margin-left:auto;color:var(--ink-muted)" id="prod-foot-pag"></span>
+    </div>
+  </div>
+</div>
+<!-- ── /MÓDULO PRODUCCIÓN 360° ── -->
+
   </div><!-- /main -->
 </div><!-- /app-body -->
 
@@ -1482,6 +1693,308 @@ function navTo(mod) {
   if (modEl) modEl.classList.add('active');
   if (mod === 'fiscalidad') fiscCargarResumen();
   if (mod === 'facturas')   factCargar();
+  if (mod === 'produccion') prodInit();
+}
+
+
+/* ═══════════════════════════════════════════
+   PRODUCCIÓN 360°
+═══════════════════════════════════════════ */
+const PROD = {
+  citas: [], cobros: {}, filtradas: [],
+  desde: null, hasta: null, estado: 'todas',
+  ordenCampo: 'fecha', ordenDir: 'asc',
+  pagina: 1, porPagina: 20
+};
+
+function prodFmtFecha(d) {
+  if (!d) return '—';
+  const [y, m, dia] = d.split('-');
+  const meses = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+  return `${parseInt(dia)} ${meses[parseInt(m)-1]}`;
+}
+
+function prodFmtEur(n) {
+  return Number(n).toLocaleString('es-ES',{minimumFractionDigits:0,maximumFractionDigits:0}) + ' €';
+}
+
+function prodNombreCorto(id) {
+  const p = G.profesionales && G.profesionales.find(x => x.id === id);
+  if (!p) return id;
+  return p.nombre.split(' ')[0] + ' ' + (p.apellidos||'').split(' ')[0].charAt(0) + '.';
+}
+
+function prodNombrePaciente(id) {
+  const p = G.pacientes && G.pacientes.find(x => x.id === id);
+  if (!p) return id;
+  const ap = (p.apellidos||'').split(' ');
+  return `${p.nombre} ${ap[0]||''}`.trim();
+}
+
+function prodCalcPeriod(tipo) {
+  const hoy = new Date();
+  const y = hoy.getFullYear(), m = hoy.getMonth(), d = hoy.getDate();
+  let desde, hasta;
+  if (tipo === 'hoy') {
+    desde = hasta = hoy.toISOString().slice(0,10);
+  } else if (tipo === 'semana') {
+    const lun = new Date(hoy); lun.setDate(d - ((hoy.getDay()||7)-1));
+    const dom = new Date(lun); dom.setDate(lun.getDate()+6);
+    desde = lun.toISOString().slice(0,10); hasta = dom.toISOString().slice(0,10);
+  } else if (tipo === 'mes') {
+    desde = `${y}-${String(m+1).padStart(2,'0')}-01`;
+    hasta = new Date(y, m+1, 0).toISOString().slice(0,10);
+  } else if (tipo === 'mes_ant') {
+    const ma = new Date(y, m, 0);
+    desde = `${ma.getFullYear()}-${String(ma.getMonth()+1).padStart(2,'0')}-01`;
+    hasta = ma.toISOString().slice(0,10);
+  } else if (tipo === 'trimestre') {
+    const qt = Math.floor(m/3);
+    desde = `${y}-${String(qt*3+1).padStart(2,'0')}-01`;
+    hasta = new Date(y, qt*3+3, 0).toISOString().slice(0,10);
+  } else if (tipo === 'anio') {
+    desde = `${y}-01-01`; hasta = `${y}-12-31`;
+  }
+  return {desde, hasta};
+}
+
+function prodSetPeriod(el) {
+  document.querySelectorAll('#prod-period-pills .prod-pill').forEach(p => p.classList.remove('prod-pill-active'));
+  el.classList.add('prod-pill-active');
+  const {desde, hasta} = prodCalcPeriod(el.dataset.period);
+  PROD.desde = desde; PROD.hasta = hasta;
+  document.getElementById('prod-fecha-desde').value = desde;
+  document.getElementById('prod-fecha-hasta').value = hasta;
+  PROD.pagina = 1;
+  prodCargar();
+}
+
+function prodSetCustomRange() {
+  const desde = document.getElementById('prod-fecha-desde').value;
+  const hasta = document.getElementById('prod-fecha-hasta').value;
+  if (!desde || !hasta) return;
+  PROD.desde = desde; PROD.hasta = hasta;
+  document.querySelectorAll('#prod-period-pills .prod-pill').forEach(p => p.classList.remove('prod-pill-active'));
+  PROD.pagina = 1;
+  prodCargar();
+}
+
+function prodSetEstado(el) {
+  document.querySelectorAll('#prod-estado-pills .prod-pill').forEach(p => p.classList.remove('prod-pill-active'));
+  el.classList.add('prod-pill-active');
+  PROD.estado = el.dataset.estado;
+  PROD.pagina = 1;
+  prodAplicarFiltros();
+}
+
+function prodToggleExtra() {
+  const panel = document.getElementById('prod-extra-filters');
+  const chev = document.getElementById('prod-chevron-extra');
+  const open = panel.style.display === 'flex';
+  panel.style.display = open ? 'none' : 'flex';
+  chev.style.transform = open ? '' : 'rotate(180deg)';
+}
+
+function prodOrdenar(campo) {
+  if (PROD.ordenCampo === campo) {
+    PROD.ordenDir = PROD.ordenDir === 'asc' ? 'desc' : 'asc';
+  } else {
+    PROD.ordenCampo = campo; PROD.ordenDir = 'asc';
+  }
+  prodRenderTabla();
+}
+
+async function prodCargar() {
+  if (!PROD.desde || !PROD.hasta) return;
+  document.getElementById('prod-loading').style.display = 'block';
+  document.getElementById('prod-tabla').style.display = 'none';
+  document.getElementById('prod-empty').style.display = 'none';
+  document.getElementById('prod-footer').style.display = 'none';
+  try {
+    const citas = await sg(`citas_v2?fecha=gte.${PROD.desde}&fecha=lte.${PROD.hasta}&order=fecha.asc,hora.asc&limit=2000`);
+    PROD.citas = citas;
+    if (citas.length > 0) {
+      const ids = citas.map(c => c.id).join(',');
+      const cobros = await sg(`cobros_v2?id_cita=in.(${ids})&limit=2000`);
+      PROD.cobros = {};
+      cobros.forEach(cb => { PROD.cobros[cb.id_cita] = cb; });
+    } else {
+      PROD.cobros = {};
+    }
+    prodPoblarSelectProfesional();
+    prodAplicarFiltros();
+  } catch(e) {
+    document.getElementById('prod-loading').innerHTML =
+      `<i class="ti ti-alert-circle" style="font-size:20px;margin-bottom:8px;display:block;color:#DA291C"></i>Error al cargar: ${e.message}`;
+  }
+}
+
+function prodPoblarSelectProfesional() {
+  const sel = document.getElementById('prod-sel-profesional');
+  const val = sel.value;
+  sel.innerHTML = '<option value="">Todas</option>';
+  const ids = [...new Set(PROD.citas.map(c => c.id_profesional).filter(Boolean))];
+  ids.forEach(id => {
+    const opt = document.createElement('option');
+    opt.value = id;
+    opt.textContent = prodNombreCorto(id);
+    sel.appendChild(opt);
+  });
+  if (val) sel.value = val;
+}
+
+function prodAplicarFiltros() {
+  const prof    = document.getElementById('prod-sel-profesional').value;
+  const espec   = document.getElementById('prod-sel-especialidad').value;
+  const modal   = document.getElementById('prod-sel-modalidad').value;
+  const cobrado = document.getElementById('prod-sel-cobrado').value;
+  const concil  = document.getElementById('prod-sel-conciliado').value;
+  const busq    = (document.getElementById('prod-busq-paciente').value||'').toLowerCase().trim();
+
+  PROD.filtradas = PROD.citas.filter(c => {
+    if (PROD.estado !== 'todas' && c.estado !== PROD.estado) return false;
+    if (prof && c.id_profesional !== prof) return false;
+    if (espec && c.especialidad !== espec) return false;
+    if (modal && c.modalidad_pago !== modal) return false;
+    if (cobrado) {
+      const tieneCobro = !!PROD.cobros[c.id];
+      if (cobrado === 'si' && !tieneCobro) return false;
+      if (cobrado === 'no' && tieneCobro) return false;
+    }
+    if (concil) {
+      const cb = PROD.cobros[c.id];
+      const esConcil = cb && cb.conciliado === 'Si';
+      if (concil === 'si' && !esConcil) return false;
+      if (concil === 'no' && esConcil) return false;
+    }
+    if (busq) {
+      const pac = G.pacientes && G.pacientes.find(x => x.id === c.id_paciente);
+      const txt = pac ? `${pac.nombre} ${pac.apellidos||''} ${c.id_paciente}`.toLowerCase() : c.id_paciente.toLowerCase();
+      if (!txt.includes(busq)) return false;
+    }
+    return true;
+  });
+
+  PROD.pagina = 1;
+  prodActualizarKPIs();
+  prodRenderTabla();
+}
+
+function prodActualizarKPIs() {
+  const f = PROD.filtradas;
+  const hechas  = f.filter(c => c.estado === 'Hecha').length;
+  const noshows = f.filter(c => c.estado === 'Noshow').length;
+  const conCita = hechas + noshows;
+  const tasa    = conCita > 0 ? Math.round(hechas / conCita * 100) : null;
+  const produccion = f.reduce((s, c) => s + (parseFloat(c.precio)||0), 0);
+  const cobrado    = f.reduce((s, c) => { const cb = PROD.cobros[c.id]; return s + (cb ? parseFloat(cb.importe)||0 : 0); }, 0);
+  const pendiente  = produccion - cobrado;
+
+  document.getElementById('prod-kpi-sesiones').textContent = f.length;
+  document.getElementById('prod-kpi-sesiones-sub').textContent = noshows > 0 ? `${noshows} no show${noshows>1?'s':''}` : '';
+  document.getElementById('prod-kpi-produccion').textContent = prodFmtEur(produccion);
+  document.getElementById('prod-kpi-produccion-sub').textContent = f.length > 0 ? prodFmtEur(Math.round(produccion/f.length)) + ' / sesión media' : '';
+  document.querySelectorAll('.prod-kpi-admin').forEach(el => el.style.display = G.esAdmin ? '' : 'none');
+  document.getElementById('prod-kpi-cobrado').textContent = prodFmtEur(cobrado);
+  document.getElementById('prod-kpi-cobrado-sub').textContent = pendiente > 0 ? prodFmtEur(Math.round(pendiente)) + ' pendiente' : 'todo cobrado';
+  document.getElementById('prod-kpi-asistencia').textContent = tasa !== null ? tasa + ' %' : '—';
+
+  document.getElementById('prod-foot-total').textContent = f.length;
+  document.getElementById('prod-foot-produccion').textContent = prodFmtEur(produccion);
+  document.getElementById('prod-foot-cobrado').textContent = prodFmtEur(cobrado);
+  document.getElementById('prod-foot-pendiente').textContent = prodFmtEur(Math.round(pendiente));
+  document.querySelectorAll('.prod-footer-admin').forEach(el => el.style.display = G.esAdmin ? '' : 'none');
+
+  const mesesN = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+  let periodoText = '';
+  if (PROD.desde && PROD.hasta) {
+    periodoText = PROD.desde === PROD.hasta ? prodFmtFecha(PROD.desde) : `${prodFmtFecha(PROD.desde)} – ${prodFmtFecha(PROD.hasta)}`;
+  }
+  document.getElementById('prod-subtitulo').textContent = `${periodoText} · ${f.length} resultado${f.length!==1?'s':''}`;
+}
+
+function prodRenderTabla() {
+  const tbody   = document.getElementById('prod-tbody');
+  const tabla   = document.getElementById('prod-tabla');
+  const empty   = document.getElementById('prod-empty');
+  const footer  = document.getElementById('prod-footer');
+  const loading = document.getElementById('prod-loading');
+  loading.style.display = 'none';
+
+  if (PROD.filtradas.length === 0) {
+    tabla.style.display = 'none'; empty.style.display = 'block'; footer.style.display = 'none'; return;
+  }
+
+  const dir = PROD.ordenDir === 'asc' ? 1 : -1;
+  const sorted = [...PROD.filtradas].sort((a, b) => {
+    const va = a[PROD.ordenCampo]||'', vb = b[PROD.ordenCampo]||'';
+    return va < vb ? -dir : va > vb ? dir : 0;
+  });
+
+  const inicio = (PROD.pagina - 1) * PROD.porPagina;
+  const pagina = sorted.slice(inicio, inicio + PROD.porPagina);
+
+  const badgeEstado = {Hecha:'prod-badge-hecha',Noshow:'prod-badge-noshow',Cancelada:'prod-badge-cancelada',Programada:'prod-badge-programada',Reprogramada:'prod-badge-reprogramada'};
+  const etiqEstado  = {Hecha:'Hecha',Noshow:'No show',Cancelada:'Cancelada',Programada:'Programada',Reprogramada:'Reprogramada'};
+  const badgeModal  = {BECA:'prod-badge-beca',BONO:'prod-badge-bono',PRIVADO_SU:'prod-badge-privado',ADECCO:'prod-badge-adecco',OTROS:'prod-badge-otros'};
+  const etiqModal   = {BECA:'BECA',BONO:'BONO',PRIVADO_SU:'PRIVADO',ADECCO:'ADECCO',OTROS:'OTROS'};
+
+  tbody.innerHTML = pagina.map(c => {
+    const cobrado = !!PROD.cobros[c.id];
+    const cobroHtml = cobrado
+      ? `<i class="ti ti-circle-check prod-cobro-check" title="Cobrada"></i>`
+      : `<i class="ti ti-circle prod-cobro-vacio" title="Sin cobro"></i>`;
+    return `<tr onclick="prodVerPaciente('${c.id_paciente}')">
+      <td>${prodFmtFecha(c.fecha)}</td>
+      <td>${c.hora ? c.hora.slice(0,5) : '—'}</td>
+      <td style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${prodNombrePaciente(c.id_paciente)}</td>
+      <td style="color:var(--ink-muted)">${prodNombreCorto(c.id_profesional)}</td>
+      <td>${c.especialidad||'—'}</td>
+      <td><span class="prod-badge ${badgeModal[c.modalidad_pago]||'prod-badge-otros'}">${etiqModal[c.modalidad_pago]||c.modalidad_pago||'—'}</span></td>
+      <td style="text-align:right">${c.precio != null ? prodFmtEur(c.precio) : '—'}</td>
+      <td style="text-align:center">${cobroHtml}</td>
+      <td><span class="prod-badge ${badgeEstado[c.estado]||''}">${etiqEstado[c.estado]||c.estado||'—'}</span></td>
+      <td style="text-align:center"><i class="ti ti-arrow-right" style="font-size:13px;color:var(--ink-muted)"></i></td>
+    </tr>`;
+  }).join('');
+
+  tabla.style.display = 'table'; empty.style.display = 'none'; footer.style.display = 'flex';
+
+  const total = PROD.filtradas.length;
+  const totalPags = Math.ceil(total / PROD.porPagina);
+  const desde = inicio + 1;
+  const hasta = Math.min(inicio + PROD.porPagina, total);
+  let pagHtml = `${desde}–${hasta} de ${total}`;
+  if (totalPags > 1) {
+    pagHtml += ` &nbsp;<button onclick="event.stopPropagation();prodPagina(${PROD.pagina-1})" ${PROD.pagina===1?'disabled':''} style="padding:2px 8px;font-size:12px;border:1px solid var(--border);border-radius:6px;background:var(--white);cursor:pointer">‹</button>`;
+    pagHtml += ` <button onclick="event.stopPropagation();prodPagina(${PROD.pagina+1})" ${PROD.pagina===totalPags?'disabled':''} style="padding:2px 8px;font-size:12px;border:1px solid var(--border);border-radius:6px;background:var(--white);cursor:pointer">›</button>`;
+  }
+  document.getElementById('prod-foot-pag').innerHTML = pagHtml;
+}
+
+function prodPagina(n) {
+  const total = Math.ceil(PROD.filtradas.length / PROD.porPagina);
+  if (n < 1 || n > total) return;
+  PROD.pagina = n;
+  prodRenderTabla();
+}
+
+function prodVerPaciente(idPaciente) {
+  navTo('pacientes');
+  setTimeout(() => {
+    const input = document.getElementById('pac-busqueda');
+    if (input) { input.value = idPaciente; input.dispatchEvent(new Event('input')); }
+    if (typeof abrirFichaPaciente === 'function') abrirFichaPaciente(idPaciente);
+  }, 150);
+}
+
+function prodInit() {
+  if (PROD.desde) { prodCargar(); return; }
+  const {desde, hasta} = prodCalcPeriod('mes');
+  PROD.desde = desde; PROD.hasta = hasta;
+  document.getElementById('prod-fecha-desde').value = desde;
+  document.getElementById('prod-fecha-hasta').value = hasta;
+  prodCargar();
 }
 
 /* ═══════════════════════════════════════════
