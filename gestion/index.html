@@ -127,6 +127,55 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--ink);f
 .ag2-vista-group{display:flex;gap:4px;background:var(--border);border-radius:8px;padding:3px}
 .ag2-vista-btn{border:none;background:none;border-radius:6px;padding:5px 13px;font-size:12px;font-weight:600;color:var(--ink-muted);cursor:pointer;font-family:inherit;transition:all .15s}
 .ag2-vista-btn.activo{background:var(--azul);color:#fff;box-shadow:0 1px 4px rgba(16,6,159,.25)}
+/* ── PROFESIONALES ── */
+.pro-wrap{padding:28px 32px;max-width:1100px}
+.pro-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:24px;gap:16px}
+.pro-titulo{font-size:20px;font-weight:700;color:var(--ink);margin:0 0 4px}
+.pro-subtitulo{font-size:13px;color:var(--ink-muted);margin:0}
+.pro-tabla{width:100%;border-collapse:collapse;font-size:13px}
+.pro-tabla th{text-align:left;padding:8px 12px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-muted);border-bottom:2px solid var(--border);white-space:nowrap}
+.pro-tabla td{padding:11px 12px;border-bottom:1px solid var(--border);vertical-align:middle}
+.pro-tabla tr:hover td{background:var(--cream)}
+.pro-avatar{width:34px;height:34px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0}
+.pro-nombre-bloque{display:flex;align-items:center;gap:10px}
+.pro-nombre{font-weight:600;color:var(--ink)}
+.pro-email{font-size:11px;color:var(--ink-muted)}
+.pro-pill{display:inline-block;padding:2px 7px;border-radius:99px;font-size:11px;font-weight:600;margin:1px 2px;background:var(--azul-pale);color:var(--azul)}
+.pro-color-muestra{width:22px;height:22px;border-radius:6px;border:1px solid var(--border);display:inline-block;vertical-align:middle}
+.pro-badge-admin{background:#fef3c7;color:#92400e;border-radius:99px;padding:2px 8px;font-size:11px;font-weight:600}
+.pro-badge-pro{background:var(--cream);color:var(--ink-muted);border-radius:99px;padding:2px 8px;font-size:11px;font-weight:600}
+.pro-badge-activa{background:#d1fae5;color:#065f46;border-radius:99px;padding:2px 8px;font-size:11px;font-weight:600}
+.pro-badge-inactiva{background:#fee2e2;color:#991b1b;border-radius:99px;padding:2px 8px;font-size:11px;font-weight:600}
+.pro-badge-cert-ok{background:#d1fae5;color:#065f46;border-radius:99px;padding:2px 8px;font-size:11px;font-weight:600}
+.pro-badge-cert-no{background:#fee2e2;color:#991b1b;border-radius:99px;padding:2px 8px;font-size:11px;font-weight:600}
+.pro-badge-cert-cauca{background:#fef3c7;color:#92400e;border-radius:99px;padding:2px 8px;font-size:11px;font-weight:600}
+.pro-btn-editar{background:none;border:1px solid var(--border);border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;color:var(--ink-muted);font-family:inherit;transition:all .15s}
+.pro-btn-editar:hover{border-color:var(--azul);color:var(--azul);background:var(--azul-pale)}
+/* Modal profesionales */
+.pro-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1000;display:none;align-items:center;justify-content:center}
+.pro-modal-overlay.open{display:flex}
+.pro-modal{background:var(--white);border-radius:14px;width:min(680px,96vw);max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.18)}
+.pro-modal-hdr{display:flex;align-items:center;justify-content:space-between;padding:20px 24px 16px;border-bottom:1px solid var(--border)}
+.pro-modal-tit{font-size:16px;font-weight:700;color:var(--ink)}
+.pro-modal-close{background:none;border:none;font-size:18px;cursor:pointer;color:var(--ink-muted);padding:2px 6px;border-radius:4px}
+.pro-modal-close:hover{background:var(--cream)}
+.pro-modal-body{padding:20px 24px}
+.pro-seccion{margin-bottom:24px}
+.pro-seccion-hdr{display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--azul-pale);border-radius:8px;margin-bottom:14px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--azul)}
+.pro-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.pro-grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+.pro-campo{display:flex;flex-direction:column;gap:4px}
+.pro-campo label{font-size:11px;font-weight:600;color:var(--ink-muted);text-transform:uppercase;letter-spacing:.04em}
+.pro-campo input,.pro-campo select{border:1px solid var(--border);border-radius:7px;padding:8px 10px;font-size:13px;font-family:inherit;color:var(--ink);background:var(--white);transition:border .15s}
+.pro-campo input:focus,.pro-campo select:focus{outline:none;border-color:var(--azul)}
+.pro-campo input[readonly]{background:var(--cream);color:var(--ink-muted);cursor:not-allowed}
+.pro-esp-group{display:flex;gap:8px;flex-wrap:wrap;padding:6px 0}
+.pro-esp-check{display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;padding:6px 12px;border:1px solid var(--border);border-radius:8px;transition:all .15s;user-select:none}
+.pro-esp-check:hover{border-color:var(--azul);background:var(--azul-pale)}
+.pro-esp-check input{margin:0;accent-color:var(--azul)}
+.pro-modal-footer{display:flex;align-items:center;justify-content:flex-end;gap:10px;padding:16px 24px;border-top:1px solid var(--border)}
+.pro-aviso-invite{background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:10px 14px;font-size:12px;color:#92400e;margin-top:12px;line-height:1.5}
+.pro-aviso-invite strong{display:block;margin-bottom:2px}
 .ag2-nav-btn{border:1px solid var(--border);background:var(--white);border-radius:7px;padding:5px 10px;font-size:13px;cursor:pointer;font-family:inherit;color:var(--ink);transition:all .15s}
 .ag2-nav-btn:hover{background:var(--cream);border-color:var(--azul)}
 .ag2-label{font-size:14px;font-weight:600;color:var(--ink);min-width:200px;text-align:center}
@@ -601,10 +650,9 @@ td.muted{color:var(--ink-muted);font-size:12px}
     <div class="sidebar-divider"></div>
     <div class="sidebar-section">
       <div class="sidebar-section-title">Sistema</div>
-      <div class="nav-item disabled" id="nav-profesionales">
+      <div class="nav-item" id="nav-profesionales" onclick="navTo('profesionales')">
         <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
         Profesionales
-        <span class="nav-soon">pronto</span>
       </div>
       <div class="nav-item disabled" id="nav-config">
         <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
@@ -1433,8 +1481,132 @@ td.muted{color:var(--ink-muted);font-size:12px}
   </div>
 </div>
 
+<!-- ── MÓDULO PROFESIONALES ── -->
+<div class="modulo" id="mod-profesionales">
+  <div class="pro-wrap">
+    <div class="pro-header">
+      <div>
+        <h2 class="pro-titulo">Profesionales</h2>
+        <p class="pro-subtitulo" id="pro-subtitulo">—</p>
+      </div>
+      <button class="btn btn-pri" onclick="proAbrirModal(null)" id="btn-nuevo-pro">+ Nuevo profesional</button>
+    </div>
+    <table class="pro-tabla">
+      <thead>
+        <tr>
+          <th>Profesional</th>
+          <th>ID</th>
+          <th>Especialidades</th>
+          <th>Color</th>
+          <th>Rol</th>
+          <th>Estado</th>
+          <th>Cert. delitos</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="pro-tbody">
+        <tr><td colspan="8" style="text-align:center;padding:40px;color:var(--ink-muted)">Cargando…</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+<!-- ── /MÓDULO PROFESIONALES ── -->
+
   </div><!-- /main -->
 </div><!-- /app-body -->
+
+<!-- ── MODAL PROFESIONALES ── -->
+<div class="pro-modal-overlay" id="pro-modal-overlay" onclick="if(event.target===this)proCerrarModal()">
+  <div class="pro-modal">
+    <div class="pro-modal-hdr">
+      <div class="pro-modal-tit" id="pro-modal-tit">Profesional</div>
+      <button class="pro-modal-close" onclick="proCerrarModal()">✕</button>
+    </div>
+    <div class="pro-modal-body">
+
+      <!-- Sección identidad y acceso -->
+      <div class="pro-seccion">
+        <div class="pro-seccion-hdr">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          Identidad y acceso
+        </div>
+        <div class="pro-grid">
+          <div class="pro-campo">
+            <label>Nombre</label>
+            <input type="text" id="pro-f-nombre" placeholder="Inés">
+          </div>
+          <div class="pro-campo">
+            <label>Apellidos</label>
+            <input type="text" id="pro-f-apellidos" placeholder="Ferreira López">
+          </div>
+          <div class="pro-campo">
+            <label>Email (acceso al sistema)</label>
+            <input type="email" id="pro-f-email" placeholder="ines@ejemplo.com">
+          </div>
+          <div class="pro-campo">
+            <label>ID profesional</label>
+            <input type="text" id="pro-f-id" placeholder="PRO-006" style="font-family:'DM Mono',monospace">
+          </div>
+          <div class="pro-campo">
+            <label>Rol</label>
+            <select id="pro-f-esadmin">
+              <option value="No">Profesional</option>
+              <option value="Si">Admin</option>
+            </select>
+          </div>
+          <div class="pro-campo">
+            <label>Estado</label>
+            <select id="pro-f-activa">
+              <option value="Si">Activa</option>
+              <option value="No">Inactiva</option>
+            </select>
+          </div>
+        </div>
+        <div class="pro-aviso-invite" id="pro-aviso-invite" style="display:none">
+          <strong>📧 Se enviará una invitación por email</strong>
+          Al guardar, el profesional recibirá un email para activar su cuenta. Hasta que active, no podrá iniciar sesión, pero ya quedará registrado en el sistema.
+        </div>
+      </div>
+
+      <!-- Sección configuración clínica -->
+      <div class="pro-seccion">
+        <div class="pro-seccion-hdr">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          Configuración clínica
+        </div>
+        <div class="pro-campo" style="margin-bottom:14px">
+          <label>Especialidades</label>
+          <div class="pro-esp-group">
+            <label class="pro-esp-check"><input type="checkbox" id="pro-esp-PSI"> PSI — Psicología</label>
+            <label class="pro-esp-check"><input type="checkbox" id="pro-esp-LOG"> LOG — Logopedia</label>
+            <label class="pro-esp-check"><input type="checkbox" id="pro-esp-TO"> TO — T. Ocupacional</label>
+            <label class="pro-esp-check"><input type="checkbox" id="pro-esp-PDG"> PDG — Pedagogía</label>
+          </div>
+        </div>
+        <div class="pro-grid-3">
+          <div class="pro-campo">
+            <label>Color en agenda</label>
+            <input type="color" id="pro-f-color" value="#10069F" style="height:38px;padding:3px 6px;cursor:pointer">
+          </div>
+          <div class="pro-campo">
+            <label>Fecha cert. delitos sexuales</label>
+            <input type="date" id="pro-f-fechapdf">
+          </div>
+          <div class="pro-campo">
+            <label>Nº / referencia cert.</label>
+            <input type="text" id="pro-f-pdf" placeholder="Ref. del certificado">
+          </div>
+        </div>
+      </div>
+
+    </div>
+    <div class="pro-modal-footer">
+      <button class="btn btn-sec" onclick="proCerrarModal()">Cancelar</button>
+      <button class="btn btn-pri" onclick="proGuardar()">Guardar</button>
+    </div>
+  </div>
+</div>
+<!-- ── /MODAL PROFESIONALES ── -->
 
 <!-- ── MODAL PACIENTE (alta + edición) ── -->
 <style>
@@ -1793,9 +1965,25 @@ async function init() {
 
   try {
     const data = await sg(`profesionales?auth_user_id=eq.${G.sesion.user_id}&select=id,nombre,apellidos,es_admin&limit=1`);
-    if (!data.length) throw new Error('no encontrado');
-    G.profesional = data[0];
-    G.esAdmin = G.profesional.es_admin === 'Si';
+    if (!data.length) {
+      // Linking: primer login tras invitación — buscar por email y enlazar el UUID
+      const email = G.sesion.user?.email || G.sesion.email || '';
+      if (email) {
+        const porEmail = await sg(`profesionales?email=eq.${encodeURIComponent(email)}&auth_user_id=is.null&select=id,nombre,apellidos,es_admin&limit=1`);
+        if (porEmail.length) {
+          await fetch(`${SUPA_URL}/rest/v1/profesionales?id=eq.${encodeURIComponent(porEmail[0].id)}`, {
+            method: 'PATCH',
+            headers: { 'apikey': SUPA_KEY, 'Authorization': `Bearer ${G.sesion.access_token}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+            body: JSON.stringify({ auth_user_id: G.sesion.user_id })
+          });
+          G.profesional = porEmail[0];
+          G.esAdmin = G.profesional.es_admin === 'Si';
+        } else throw new Error('no encontrado');
+      } else throw new Error('no encontrado');
+    } else {
+      G.profesional = data[0];
+      G.esAdmin = G.profesional.es_admin === 'Si';
+    }
   } catch {
     toast('Error cargando perfil', true);
     return;
@@ -1826,10 +2014,11 @@ function navTo(mod) {
   const modEl = document.getElementById('mod-' + mod);
   if (navEl) navEl.classList.add('active');
   if (modEl) modEl.classList.add('active');
-  if (mod === 'fiscalidad') fiscCargarResumen();
-  if (mod === 'facturas')   factCargar();
-  if (mod === 'produccion') prodInit();
-  if (mod === 'agenda')     ag2Init();
+  if (mod === 'fiscalidad')     fiscCargarResumen();
+  if (mod === 'facturas')       factCargar();
+  if (mod === 'produccion')     prodInit();
+  if (mod === 'agenda')         ag2Init();
+  if (mod === 'profesionales')  proInit();
 }
 
 
@@ -4569,6 +4758,202 @@ function ag2VerPaciente() {
     const pac = (G.pacientes||[]).find(p => p.id === idPac);
     if (pac) abrirFicha(pac);
   }, 150);
+}
+
+/* ═══════════════════════════════════════════
+   PROFESIONALES
+═══════════════════════════════════════════ */
+const PRO = {
+  lista: [],       // todos los profesionales cargados
+  editando: null,  // objeto profesional en edición, null si es alta
+};
+
+const PRO_PALETA = ['#10069F','#00B5E2','#97D700','#DA291C','#F59E0B','#6366f1','#ec4899'];
+
+function proColor(p, idx) {
+  return p.color_agenda || PRO_PALETA[idx % PRO_PALETA.length];
+}
+
+async function proInit() {
+  try {
+    PRO.lista = await sg(`profesionales?select=id,nombre,apellidos,email,especialidades,color_agenda,es_admin,activa,pdf_delitos_sexuales,fecha_pdf_delitos&order=nombre.asc&limit=50`);
+    proRenderTabla();
+    document.getElementById('pro-subtitulo').textContent =
+      `${PRO.lista.length} profesional${PRO.lista.length !== 1 ? 'es' : ''} en el sistema`;
+  } catch(e) {
+    document.getElementById('pro-tbody').innerHTML =
+      `<tr><td colspan="8" style="text-align:center;padding:40px;color:var(--rojo)">Error al cargar: ${e.message}</td></tr>`;
+  }
+}
+
+function proRenderTabla() {
+  const tbody = document.getElementById('pro-tbody');
+  if (!PRO.lista.length) {
+    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:40px;color:var(--ink-muted)">Sin profesionales</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = PRO.lista.map((p, i) => {
+    const color = proColor(p, i);
+    const ini = ((p.nombre?.[0]||'') + (p.apellidos?.[0]||'')).toUpperCase();
+    const esps = (p.especialidades || []).map(e => `<span class="pro-pill">${e}</span>`).join('') || '<span style="color:var(--ink-muted);font-size:12px">—</span>';
+    const rolBadge = p.es_admin === 'Si'
+      ? `<span class="pro-badge-admin">Admin</span>`
+      : `<span class="pro-badge-pro">Profesional</span>`;
+    const estadoBadge = p.activa === 'Si'
+      ? `<span class="pro-badge-activa">Activa</span>`
+      : `<span class="pro-badge-inactiva">Inactiva</span>`;
+
+    let certBadge;
+    if (!p.pdf_delitos_sexuales) {
+      certBadge = `<span class="pro-badge-cert-no">Sin certificado</span>`;
+    } else {
+      // Avisar si vence en < 365 días
+      const vence = new Date(p.fecha_pdf_delitos);
+      vence.setFullYear(vence.getFullYear() + 5); // cert. válido 5 años
+      const diasRestantes = Math.floor((vence - Date.now()) / 86400000);
+      if (diasRestantes < 180) {
+        certBadge = `<span class="pro-badge-cert-cauca" title="Vence ${vence.toLocaleDateString('es-ES')}">Caduca pronto</span>`;
+      } else {
+        certBadge = `<span class="pro-badge-cert-ok" title="Vence ${vence.toLocaleDateString('es-ES')}">Vigente</span>`;
+      }
+    }
+
+    return `<tr>
+      <td>
+        <div class="pro-nombre-bloque">
+          <div class="pro-avatar" style="background:${color}">${ini}</div>
+          <div>
+            <div class="pro-nombre">${p.nombre} ${p.apellidos||''}</div>
+            <div class="pro-email">${p.email||'—'}</div>
+          </div>
+        </div>
+      </td>
+      <td style="font-family:'DM Mono',monospace;font-size:12px;color:var(--azul)">${p.id}</td>
+      <td>${esps}</td>
+      <td><span class="pro-color-muestra" style="background:${color}" title="${color}"></span></td>
+      <td>${rolBadge}</td>
+      <td>${estadoBadge}</td>
+      <td>${certBadge}</td>
+      <td><button class="pro-btn-editar" onclick="proAbrirModal(${i})">Editar</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function proAbrirModal(idx) {
+  const esAlta = idx === null;
+  PRO.editando = esAlta ? null : PRO.lista[idx];
+  const p = PRO.editando || {};
+
+  document.getElementById('pro-modal-tit').textContent = esAlta ? 'Nuevo profesional' : `Editar — ${p.nombre} ${p.apellidos||''}`;
+
+  // Campos identidad
+  document.getElementById('pro-f-nombre').value    = p.nombre    || '';
+  document.getElementById('pro-f-apellidos').value = p.apellidos || '';
+  document.getElementById('pro-f-email').value     = p.email     || '';
+  document.getElementById('pro-f-id').value        = p.id        || '';
+  document.getElementById('pro-f-id').readOnly     = !esAlta;
+  document.getElementById('pro-f-esadmin').value   = p.es_admin  || 'No';
+  document.getElementById('pro-f-activa').value    = p.activa    || 'Si';
+
+  // Especialidades
+  ['PSI','LOG','TO','PDG'].forEach(e => {
+    document.getElementById(`pro-esp-${e}`).checked = (p.especialidades || []).includes(e);
+  });
+
+  // Color
+  document.getElementById('pro-f-color').value = p.color_agenda || '#10069F';
+
+  // Cert delitos
+  document.getElementById('pro-f-pdf').value        = p.pdf_delitos_sexuales  || '';
+  document.getElementById('pro-f-fechapdf').value   = p.fecha_pdf_delitos     || '';
+
+  // Aviso de invite (solo en alta)
+  document.getElementById('pro-aviso-invite').style.display = esAlta ? 'block' : 'none';
+
+  document.getElementById('pro-modal-overlay').classList.add('open');
+}
+
+function proCerrarModal() {
+  document.getElementById('pro-modal-overlay').classList.remove('open');
+  PRO.editando = null;
+}
+
+async function proGuardar() {
+  const esAlta = PRO.editando === null;
+  const nombre    = document.getElementById('pro-f-nombre').value.trim();
+  const apellidos = document.getElementById('pro-f-apellidos').value.trim();
+  const email     = document.getElementById('pro-f-email').value.trim().toLowerCase();
+  const id        = document.getElementById('pro-f-id').value.trim().toUpperCase();
+  const esAdmin   = document.getElementById('pro-f-esadmin').value;
+  const activa    = document.getElementById('pro-f-activa').value;
+  const color     = document.getElementById('pro-f-color').value;
+  const pdfDelitos     = document.getElementById('pro-f-pdf').value.trim() || null;
+  const fechaPdf       = document.getElementById('pro-f-fechapdf').value || null;
+  const especialidades = ['PSI','LOG','TO','PDG'].filter(e =>
+    document.getElementById(`pro-esp-${e}`).checked
+  );
+
+  if (!nombre || !email) { toast('Nombre y email son obligatorios', true); return; }
+  if (esAlta && !id) { toast('El ID es obligatorio', true); return; }
+
+  const payload = {
+    nombre, apellidos, email,
+    especialidades,
+    color_agenda: color,
+    es_admin: esAdmin,
+    activa,
+    pdf_delitos_sexuales: pdfDelitos,
+    fecha_pdf_delitos: fechaPdf,
+  };
+
+  try {
+    if (esAlta) {
+      // 1. Verificar que el ID no existe ya
+      const existe = await sg(`profesionales?id=eq.${encodeURIComponent(id)}&select=id&limit=1`);
+      if (existe.length) { toast('Ese ID ya existe', true); return; }
+
+      // 2. Invitar via Supabase Auth (el usuario recibirá email para activar)
+      const inviteRes = await fetch(`${SUPA_URL}/auth/v1/invite`, {
+        method: 'POST',
+        headers: {
+          'apikey': SUPA_KEY,
+          'Authorization': `Bearer ${G.sesion.access_token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ email })
+      });
+      if (!inviteRes.ok) {
+        const err = await inviteRes.json().catch(() => ({}));
+        // Si ya existe en Auth, continuamos igualmente (puede que ya tuviera cuenta)
+        if (!err.msg?.includes('already registered') && inviteRes.status !== 422) {
+          throw new Error(err.msg || `Error en invite: ${inviteRes.status}`);
+        }
+      }
+
+      // 3. Insertar en profesionales (auth_user_id queda null hasta primer login)
+      await sp('profesionales', { id, auth_user_id: null, ...payload });
+      toast(`Profesional creado. Se ha enviado invitación a ${email}`);
+    } else {
+      // Edición
+      await fetch(`${SUPA_URL}/rest/v1/profesionales?id=eq.${encodeURIComponent(PRO.editando.id)}`, {
+        method: 'PATCH',
+        headers: {
+          'apikey': SUPA_KEY,
+          'Authorization': `Bearer ${G.sesion.access_token}`,
+          'Content-Type': 'application/json',
+          'Prefer': 'return=minimal'
+        },
+        body: JSON.stringify(payload)
+      });
+      toast('Profesional actualizado');
+    }
+    proCerrarModal();
+    await proInit();
+    // Refrescar la lista global de G.profesionales usada por el resto de módulos
+    G.profesionales = await sg(`profesionales?activa=eq.Si&select=id,nombre,apellidos&order=nombre.asc&limit=50`);
+  } catch(e) {
+    toast('Error: ' + e.message, true);
+  }
 }
 
 /* ═══════════════════════════════════════════
