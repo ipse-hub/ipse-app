@@ -790,8 +790,23 @@ async function init() {
 
   try {
     const data = await supaGet(`profesionales?auth_user_id=eq.${G.sesion.user_id}&select=id,nombre,apellidos,especialidades,color_agenda,es_admin`);
-    if (!data.length) throw new Error('no encontrado');
-    G.profesional = data[0];
+    if (!data.length) {
+      // Linking: primer login tras invitación — buscar por email y enlazar el UUID
+      const email = G.sesion.user?.email || G.sesion.email || '';
+      if (email) {
+        const porEmail = await supaGet(`profesionales?email=eq.${encodeURIComponent(email)}&auth_user_id=is.null&select=id,nombre,apellidos,especialidades,color_agenda,es_admin&limit=1`);
+        if (porEmail.length) {
+          await fetch(`${SUPA_URL}/rest/v1/profesionales?id=eq.${encodeURIComponent(porEmail[0].id)}`, {
+            method: 'PATCH',
+            headers: { 'apikey': SUPA_KEY, 'Authorization': `Bearer ${G.sesion.access_token}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+            body: JSON.stringify({ auth_user_id: G.sesion.user_id })
+          });
+          G.profesional = porEmail[0];
+        } else throw new Error('no encontrado');
+      } else throw new Error('no encontrado');
+    } else {
+      G.profesional = data[0];
+    }
   } catch {
     toast('Error cargando perfil', true);
     return;
