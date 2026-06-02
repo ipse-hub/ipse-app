@@ -2045,6 +2045,7 @@ function navTo(mod) {
   if (mod === 'produccion')     prodInit();
   if (mod === 'agenda')         ag2Init();
   if (mod === 'profesionales')  proInit();
+  if (mod === 'pacientes')      { if (G.pacientes) filtrarPacientes(); }
 }
 
 
@@ -2515,8 +2516,7 @@ function limpiarBuscador() {
   document.getElementById('pac-search').value = '';
   document.getElementById('pac-filtro-estado').value = '';
   document.getElementById('pac-filtro-incompleto').value = '';
-  document.getElementById('pac-resultados').style.display = 'none';
-  document.getElementById('pac-count').textContent = '';
+  filtrarPacientes();
 }
 
 function filtrarPacientes() {
@@ -2525,11 +2525,6 @@ function filtrarPacientes() {
   const inc = document.getElementById('pac-filtro-incompleto').value;
 
   const hayFiltro = q || est || inc;
-  if (!hayFiltro) {
-    document.getElementById('pac-resultados').style.display = 'none';
-    document.getElementById('pac-count').textContent = '';
-    return;
-  }
 
   G.filtrados = G.pacientes.filter(p => {
     const texto = `${p.nombre||''} ${p.apellidos||''} ${p.alias||''} ${p.id||''}`.toLowerCase();
