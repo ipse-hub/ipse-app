@@ -179,6 +179,17 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--ink);f
 .pro-cert-drop:hover{background:var(--azul-pale);border-color:var(--azul)}
 .pro-cert-drop strong{color:var(--azul)}
 .pro-cert-actual-row{display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--white)}
+.inf-drop-zona{border:2px dashed var(--border);border-radius:8px;padding:16px;text-align:center;cursor:pointer;background:var(--cream);transition:all .15s;font-size:13px;color:var(--ink-muted)}
+.inf-drop-zona:hover,.inf-drop-zona.drag-over{background:var(--azul-pale);border-color:var(--azul);color:var(--azul)}
+.inf-drop-zona strong{color:var(--azul)}
+.inf-lista{display:flex;flex-direction:column;gap:4px;margin-top:10px}
+.inf-fila{display:flex;align-items:center;gap:10px;padding:8px 10px;border:1px solid var(--border);border-radius:7px;background:var(--white);font-size:12px}
+.inf-fila-nombre{flex:1;color:var(--azul);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.inf-fila-fecha{color:var(--ink-muted);white-space:nowrap;flex-shrink:0}
+.inf-btn-ver{background:var(--azul-pale);border:1px solid var(--azul);border-radius:5px;padding:3px 9px;font-size:11px;color:var(--azul);cursor:pointer;font-family:inherit;flex-shrink:0}
+.inf-btn-ver:hover{background:var(--azul);color:#fff}
+.inf-btn-del{background:none;border:1px solid var(--border);border-radius:5px;padding:3px 7px;font-size:11px;color:var(--ink-muted);cursor:pointer;font-family:inherit;flex-shrink:0}
+.inf-btn-del:hover{border-color:var(--rojo);color:var(--rojo)}
 .pro-cert-btn-ver{margin-left:auto;background:var(--azul-pale);border:1px solid var(--azul);border-radius:6px;padding:4px 10px;font-size:12px;color:var(--azul);cursor:pointer;font-family:inherit}
 .pro-cert-btn-ver:hover{background:var(--azul);color:#fff}
 .pro-cert-btn-quitar{background:none;border:1px solid var(--border);border-radius:6px;padding:4px 8px;font-size:12px;color:var(--ink-muted);cursor:pointer;font-family:inherit}
@@ -889,12 +900,18 @@ td.muted{color:var(--ink-muted);font-size:12px}
             </div>
             <div class="card">
               <div class="card-title">Informes PDF
-                <button class="btn btn-sec" style="padding:3px 8px;font-size:11px" onclick="alert('Función de subida de PDFs pendiente')">
+                <label class="btn btn-sec" style="padding:3px 8px;font-size:11px;cursor:pointer">
                   <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
                   Subir
-                </button>
+                  <input type="file" id="inf-file-input" accept="application/pdf" style="display:none" onchange="infSubirArchivo(this)">
+                </label>
               </div>
-              <div id="p360-informes"><div class="empty-state" style="padding:14px;text-align:left;font-size:12px">Sin informes subidos</div></div>
+              <label class="inf-drop-zona" id="inf-drop-zona" ondragover="infDragOver(event)" ondragleave="infDragLeave(event)" ondrop="infDrop(event)">
+                <input type="file" accept="application/pdf" style="display:none" onchange="infSubirArchivo(this)">
+                <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                <span>Arrastra un PDF aquí o <strong>haz clic para seleccionar</strong></span>
+              </label>
+              <div id="p360-informes"><div class="loading-row" style="display:none"><span class="spinner"></span></div></div>
             </div>
           </div>
 
@@ -2998,6 +3015,168 @@ function fmtEur(n) {
   return new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR', minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(n);
 }
 
+/* ═══════════════════════════════════════════
+   INFORMES PDF — Ficha 360°
+═══════════════════════════════════════════ */
+
+async function infCargar() {
+  const pac = G.pacActual;
+  if (!pac) return;
+  const el = document.getElementById('p360-informes');
+  el.innerHTML = '<div class="loading-row"><span class="spinner"></span></div>';
+
+  try {
+    const res = await fetch(
+      `${SUPA_URL}/storage/v1/object/list/informes`,
+      {
+        method: 'POST',
+        headers: {
+          'apikey': SUPA_KEY,
+          'Authorization': `Bearer ${G.sesion.access_token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ prefix: `pacientes/${pac.id}/`, limit: 100 })
+      }
+    );
+    const archivos = await res.json();
+    if (!res.ok) throw new Error(archivos.message || 'Error al listar informes');
+
+    if (!archivos || archivos.length === 0) {
+      el.innerHTML = '<div class="empty-state" style="padding:12px;text-align:left;font-size:12px;color:var(--ink-muted)">Sin informes subidos</div>';
+      return;
+    }
+
+    const filas = archivos.map(f => {
+      // nombre del archivo — quitar el prefijo timestamp_ para mostrar
+      const nombre = f.name.replace(/^\d+_/, '');
+      const fechaCreacion = f.created_at ? new Date(f.created_at).toLocaleDateString('es-ES') : '';
+      const rutaCompleta = `pacientes/${pac.id}/${f.name}`;
+      return `<div class="inf-fila">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--rojo)" stroke-width="2" flex-shrink="0"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        <span class="inf-fila-nombre" title="${nombre}">${nombre}</span>
+        <span class="inf-fila-fecha">${fechaCreacion}</span>
+        <button class="inf-btn-ver" onclick="infVer('${rutaCompleta}')">Ver</button>
+        <button class="inf-btn-del" onclick="infEliminar('${rutaCompleta}','${nombre}',this)">✕</button>
+      </div>`;
+    }).join('');
+
+    el.innerHTML = `<div class="inf-lista">${filas}</div>`;
+  } catch(e) {
+    el.innerHTML = `<div class="empty-state" style="padding:12px;font-size:12px;color:var(--rojo)">${e.message}</div>`;
+  }
+}
+
+async function infVer(ruta) {
+  try {
+    const res = await fetch(
+      `${SUPA_URL}/storage/v1/object/sign/informes/${ruta}`,
+      {
+        method: 'POST',
+        headers: {
+          'apikey': SUPA_KEY,
+          'Authorization': `Bearer ${G.sesion.access_token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ expiresIn: 120 })
+      }
+    );
+    if (!res.ok) throw new Error('No se pudo generar la URL');
+    const data = await res.json();
+    window.open(`${SUPA_URL}/storage/v1${data.signedURL}`, '_blank');
+  } catch(e) {
+    toast('Error al abrir el informe: ' + e.message, true);
+  }
+}
+
+async function infEliminar(ruta, nombre, btn) {
+  if (!confirm(`¿Eliminar el informe "${nombre}"?`)) return;
+  btn.disabled = true;
+  try {
+    const res = await fetch(
+      `${SUPA_URL}/storage/v1/object/informes/${ruta}`,
+      {
+        method: 'DELETE',
+        headers: {
+          'apikey': SUPA_KEY,
+          'Authorization': `Bearer ${G.sesion.access_token}`
+        }
+      }
+    );
+    if (!res.ok) throw new Error('Error al eliminar');
+    toast('Informe eliminado');
+    infCargar();
+  } catch(e) {
+    toast('Error al eliminar: ' + e.message, true);
+    btn.disabled = false;
+  }
+}
+
+async function infSubirArchivo(input) {
+  const file = input.files[0];
+  if (!file) return;
+  if (file.type !== 'application/pdf') { toast('Solo se admiten archivos PDF', true); return; }
+  if (file.size > 15 * 1024 * 1024) { toast('El archivo supera los 15 MB', true); return; }
+  await infSubir(file);
+  input.value = ''; // resetear el input para permitir subir el mismo archivo de nuevo
+}
+
+async function infSubir(file) {
+  const pac = G.pacActual;
+  if (!pac) return;
+  const ts = Date.now();
+  const nombreLimpio = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+  const ruta = `pacientes/${pac.id}/${ts}_${nombreLimpio}`;
+  const dropZona = document.getElementById('inf-drop-zona');
+
+  dropZona.innerHTML = '<span class="spinner" style="margin-right:8px"></span> Subiendo…';
+  dropZona.style.pointerEvents = 'none';
+
+  try {
+    const res = await fetch(
+      `${SUPA_URL}/storage/v1/object/informes/${ruta}`,
+      {
+        method: 'POST',
+        headers: {
+          'apikey': SUPA_KEY,
+          'Authorization': `Bearer ${G.sesion.access_token}`,
+          'Content-Type': 'application/pdf',
+          'x-upsert': 'false'
+        },
+        body: file
+      }
+    );
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.message || 'Error al subir');
+    }
+    toast('Informe subido correctamente');
+    infCargar();
+  } catch(e) {
+    toast('Error al subir el informe: ' + e.message, true);
+  } finally {
+    dropZona.innerHTML = `<input type="file" accept="application/pdf" style="display:none" onchange="infSubirArchivo(this)">
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      <span>Arrastra un PDF aquí o <strong>haz clic para seleccionar</strong></span>`;
+    dropZona.style.pointerEvents = '';
+  }
+}
+
+function infDragOver(e) {
+  e.preventDefault();
+  document.getElementById('inf-drop-zona').classList.add('drag-over');
+}
+
+function infDragLeave(e) {
+  document.getElementById('inf-drop-zona').classList.remove('drag-over');
+}
+
+function infDrop(e) {
+  e.preventDefault();
+  document.getElementById('inf-drop-zona').classList.remove('drag-over');
+  const file = e.dataTransfer.files[0];
+  if (file) infSubir(file);
+}
+
 /* ── Pestañas ── */
 function p360Tab(name, el) {
   document.querySelectorAll('.p360-tab').forEach(t => t.classList.remove('active'));
@@ -3005,6 +3184,7 @@ function p360Tab(name, el) {
   el.classList.add('active');
   const panel = document.getElementById('p360-' + name);
   if (panel) { panel.style.display = ''; panel.classList.add('active'); }
+  if (name === 'clinica') infCargar();
 }
 
 /* ── PDF diario ── */
