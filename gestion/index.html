@@ -490,6 +490,130 @@ td.muted{color:var(--ink-muted);font-size:12px}
 .prod-footer-stat strong{color:var(--ink);font-weight:600}
 /* ── /MÓDULO PRODUCCIÓN 360° ── */
 
+/* ── MÓDULO BONOS/BECAS ── */
+.bb-wrap{flex:1;min-height:0;overflow-y:auto;padding:16px 20px;display:flex;gap:16px}
+.bb-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:12px}
+.bb-panel{width:360px;flex-shrink:0;display:flex;flex-direction:column;gap:0;background:var(--white);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow);overflow:hidden;align-self:flex-start;position:sticky;top:0}
+.bb-panel.hidden{display:none}
+/* Tabs BONO / BECA */
+.bb-tabs{display:flex;gap:2px;background:var(--cream);border-radius:10px;padding:3px;border:1px solid var(--border);max-width:280px}
+.bb-tab{flex:1;text-align:center;padding:7px 16px;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;color:var(--ink-muted);transition:all .15s}
+.bb-tab:hover{color:var(--ink)}
+.bb-tab.active{background:var(--white);color:var(--azul);font-weight:700;box-shadow:0 1px 4px rgba(16,6,159,.1)}
+/* Toolbar */
+.bb-toolbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.bb-sel{padding:7px 10px;border:1px solid var(--border);border-radius:8px;font-family:inherit;font-size:13px;background:var(--white);color:var(--ink);outline:none;cursor:pointer}
+.bb-sel:focus{border-color:var(--azul)}
+.bb-btn-nuevo{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:8px;background:var(--azul);color:#fff;border:none;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:background .15s;margin-left:auto}
+.bb-btn-nuevo:hover{background:var(--azul-light)}
+.bb-btn-nuevo svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
+/* KPIs */
+.bb-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.bb-kpi{background:var(--white);border:1px solid var(--border);border-radius:10px;padding:12px 14px;box-shadow:var(--shadow)}
+.bb-kpi-val{font-size:22px;font-weight:700;color:var(--azul);line-height:1.1;font-family:'DM Mono',monospace}
+.bb-kpi-lbl{font-size:11px;color:var(--ink-muted);margin-top:3px}
+/* Tabla */
+.bb-table-wrap{background:var(--white);border:1px solid var(--border);border-radius:12px;overflow:hidden;box-shadow:var(--shadow)}
+.bb-table{width:100%;border-collapse:collapse;font-size:13px}
+.bb-table th{padding:9px 12px;text-align:left;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-muted);background:var(--cream);border-bottom:1px solid var(--border);white-space:nowrap}
+.bb-table td{padding:10px 12px;border-bottom:1px solid var(--border);vertical-align:middle}
+.bb-table tr:last-child td{border-bottom:none}
+.bb-table tr.bb-row{cursor:pointer;transition:background .1s}
+.bb-table tr.bb-row:hover{background:var(--azul-pale)}
+.bb-table tr.bb-row.selected{background:var(--azul-pale)}
+/* Badges */
+.bb-badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:600;white-space:nowrap}
+.bb-badge.bono{background:#EFF6FF;color:#1D4ED8}
+.bb-badge.beca{background:#F0FDF4;color:#15803D}
+.bb-badge.psi{background:#F5F3FF;color:#6D28D9}
+.bb-badge.log{background:#FFF7ED;color:#C2410C}
+.bb-badge.to{background:#F0FDFA;color:#0F766E}
+.bb-badge.pdg{background:#FDF4FF;color:#7E22CE}
+.bb-badge.vigente{background:var(--verde-pale);color:var(--verde-dark)}
+.bb-badge.proximo{background:var(--amber-pale);color:#92400E}
+.bb-badge.caducado{background:var(--rojo-pale);color:var(--rojo)}
+.bb-badge.agotado{background:var(--cream);color:var(--ink-muted)}
+/* Barra de progreso */
+.bb-progreso{display:flex;align-items:center;gap:8px}
+.bb-bar-wrap{flex:1;height:6px;background:var(--border);border-radius:99px;overflow:hidden;min-width:60px}
+.bb-bar-fill{height:100%;border-radius:99px;transition:width .3s}
+.bb-bar-fill.ok{background:var(--verde)}
+.bb-bar-fill.warn{background:var(--amber)}
+.bb-bar-fill.done{background:var(--ink-muted)}
+.bb-ses-resto{font-size:13px;font-weight:700;font-family:'DM Mono',monospace;min-width:28px;text-align:right}
+.bb-ses-resto.ok{color:var(--verde-dark)}
+.bb-ses-resto.warn{color:#92400E}
+.bb-ses-resto.done{color:var(--ink-muted)}
+/* Panel detalle */
+.bb-panel-hdr{padding:16px 18px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;gap:12px}
+.bb-panel-hdr-info{flex:1;min-width:0}
+.bb-panel-nombre{font-size:14px;font-weight:700;color:var(--ink);margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bb-panel-sub{font-size:12px;color:var(--ink-muted)}
+.bb-panel-close{width:28px;height:28px;display:flex;align-items:center;justify-content:center;border:none;background:none;cursor:pointer;color:var(--ink-muted);border-radius:6px;flex-shrink:0;font-size:18px;line-height:1}
+.bb-panel-close:hover{background:var(--cream);color:var(--ink)}
+.bb-panel-body{padding:16px 18px;display:flex;flex-direction:column;gap:12px;overflow-y:auto;max-height:calc(100vh - 200px)}
+.bb-panel-kpis{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.bb-panel-kpi{background:var(--cream);border-radius:8px;padding:10px 12px}
+.bb-panel-kpi-val{font-size:18px;font-weight:700;color:var(--azul);font-family:'DM Mono',monospace}
+.bb-panel-kpi-lbl{font-size:11px;color:var(--ink-muted);margin-top:2px}
+.bb-panel-section{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--azul);margin-bottom:6px;padding-bottom:6px;border-bottom:1px solid var(--border)}
+.bb-panel-field{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid var(--border);font-size:13px}
+.bb-panel-field:last-child{border-bottom:none}
+.bb-panel-field-lbl{color:var(--ink-muted)}
+.bb-panel-field-val{font-weight:600;color:var(--ink);text-align:right}
+.bb-panel-field-val.mono{font-family:'DM Mono',monospace}
+.bb-panel-progreso-big{background:var(--cream);border-radius:10px;padding:12px 14px}
+.bb-panel-prog-nums{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px}
+.bb-panel-prog-main{font-size:28px;font-weight:700;font-family:'DM Mono',monospace;color:var(--azul);line-height:1}
+.bb-panel-prog-total{font-size:13px;color:var(--ink-muted)}
+.bb-panel-prog-bar{height:8px;background:var(--border);border-radius:99px;overflow:hidden}
+.bb-panel-prog-fill{height:100%;border-radius:99px}
+.bb-panel-prog-fill.ok{background:var(--verde)}
+.bb-panel-prog-fill.warn{background:var(--amber)}
+.bb-panel-prog-fill.done{background:var(--ink-muted)}
+/* Citas consumidas en panel */
+.bb-citas-lista{display:flex;flex-direction:column;gap:4px;max-height:260px;overflow-y:auto}
+.bb-cita-row{display:flex;align-items:center;gap:8px;padding:7px 10px;background:var(--cream);border-radius:7px;font-size:12px}
+.bb-cita-fecha{font-family:'DM Mono',monospace;color:var(--ink-muted);flex-shrink:0;min-width:56px}
+.bb-cita-pac{flex:1;font-weight:500;color:var(--ink);min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bb-cita-estado{flex-shrink:0}
+.bb-cita-precio{font-family:'DM Mono',monospace;font-size:12px;font-weight:600;color:var(--ink);flex-shrink:0}
+/* Botones acción panel */
+.bb-panel-actions{display:flex;flex-direction:column;gap:6px;padding:12px 18px;border-top:1px solid var(--border)}
+.bb-panel-btn{display:flex;align-items:center;gap:8px;padding:9px 12px;border-radius:8px;border:1px solid var(--border);background:var(--white);font-family:inherit;font-size:13px;font-weight:500;cursor:pointer;color:var(--ink);transition:all .15s}
+.bb-panel-btn:hover{background:var(--cream)}
+.bb-panel-btn.primary{background:var(--azul);color:#fff;border-color:var(--azul);font-weight:600}
+.bb-panel-btn.primary:hover{background:var(--azul-light)}
+.bb-panel-btn svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+/* Modal alta/edición */
+.bb-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:900;display:none;align-items:center;justify-content:center}
+.bb-modal-overlay.open{display:flex}
+.bb-modal{background:var(--white);border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.18);width:min(640px,96vw);max-height:92vh;overflow-y:auto;display:flex;flex-direction:column}
+.bb-modal-hdr{padding:18px 22px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px}
+.bb-modal-titulo{font-size:16px;font-weight:700;color:var(--ink);flex:1}
+.bb-modal-close{width:32px;height:32px;border:none;background:none;cursor:pointer;color:var(--ink-muted);font-size:20px;border-radius:8px;display:flex;align-items:center;justify-content:center}
+.bb-modal-close:hover{background:var(--cream);color:var(--ink)}
+.bb-modal-body{padding:20px 22px;display:flex;flex-direction:column;gap:14px}
+.bb-modal-footer{padding:14px 22px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end}
+.bb-form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.bb-form-row.full{grid-template-columns:1fr}
+.bb-form-group{display:flex;flex-direction:column;gap:4px}
+.bb-form-label{font-size:12px;font-weight:600;color:var(--ink-muted)}
+.bb-form-input,.bb-form-select{padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-family:inherit;font-size:13px;color:var(--ink);background:var(--white);outline:none;width:100%}
+.bb-form-input:focus,.bb-form-select:focus{border-color:var(--azul)}
+.bb-form-input[readonly]{background:var(--cream);color:var(--ink-muted);cursor:default}
+.bb-form-section{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--azul);padding-bottom:6px;border-bottom:1px solid var(--border)}
+.bb-btn-cancel{padding:8px 18px;border:1px solid var(--border);border-radius:8px;background:var(--white);font-family:inherit;font-size:13px;cursor:pointer;color:var(--ink)}
+.bb-btn-cancel:hover{background:var(--cream)}
+.bb-btn-save{padding:8px 20px;border-radius:8px;background:var(--azul);color:#fff;border:none;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer}
+.bb-btn-save:hover{background:var(--azul-light)}
+.bb-btn-save:disabled{opacity:.5;cursor:not-allowed}
+/* Empty state */
+.bb-empty{text-align:center;padding:48px 20px;color:var(--ink-muted)}
+.bb-empty svg{width:40px;height:40px;stroke:var(--border);fill:none;stroke-width:1.5;margin-bottom:12px}
+.bb-empty p{font-size:13px}
+/* ── /MÓDULO BONOS/BECAS ── */
+
 /* ── MÓDULO FISCALIDAD ── */
 .fisc-wrap{flex:1;min-height:0;overflow-y:auto;padding:16px 20px}
 .fisc-tabs{display:flex;gap:2px;background:var(--cream);border-radius:10px;padding:3px;border:1px solid var(--border);margin-bottom:16px;max-width:600px}
@@ -648,10 +772,9 @@ td.muted{color:var(--ink-muted);font-size:12px}
     <div class="sidebar-divider"></div>
     <div class="sidebar-section">
       <div class="sidebar-section-title">Finanzas</div>
-      <div class="nav-item disabled" id="nav-bonos">
+      <div class="nav-item" id="nav-bonos" onclick="navTo('bonos')">
         <svg viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
         Bonos y becas
-        <span class="nav-soon">pronto</span>
       </div>
       <div class="nav-item disabled" id="nav-cobros">
         <svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
@@ -1538,8 +1661,216 @@ td.muted{color:var(--ink-muted);font-size:12px}
 </div>
 <!-- ── /MÓDULO PROFESIONALES ── -->
 
+  <!-- ── MÓDULO BONOS/BECAS ── -->
+  <div class="modulo" id="mod-bonos">
+    <div class="mod-header">
+      <div>
+        <h2 class="mod-titulo">Bonos y becas</h2>
+        <p class="mod-subtitulo" id="bb-subtitulo">Cargando...</p>
+      </div>
+      <button class="bb-btn-nuevo" onclick="bbAbrirModal('nuevo')">
+        <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Nuevo
+      </button>
+    </div>
+
+    <div class="bb-wrap">
+      <!-- Columna principal -->
+      <div class="bb-main">
+        <!-- Tabs + filtros -->
+        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+          <div class="bb-tabs">
+            <div class="bb-tab active" id="bb-tab-beca" onclick="bbCambiarTipo('BECA')">Becas</div>
+            <div class="bb-tab" id="bb-tab-bono" onclick="bbCambiarTipo('BONO')">Bonos</div>
+          </div>
+          <div class="bb-toolbar" style="flex:1">
+            <select class="bb-sel" id="bb-fil-estado" onchange="bbAplicarFiltros()">
+              <option value="">Todos los estados</option>
+              <option value="vigente">Vigente</option>
+              <option value="proximo">Próximo a vencer</option>
+              <option value="caducado">Caducado</option>
+              <option value="agotado">Agotado</option>
+            </select>
+            <select class="bb-sel" id="bb-fil-anio" onchange="bbAplicarFiltros()">
+              <option value="">Todos los años</option>
+            </select>
+            <select class="bb-sel" id="bb-fil-esp" onchange="bbAplicarFiltros()">
+              <option value="">Todas las especialidades</option>
+              <option value="PSI">Psicología</option>
+              <option value="LOG">Logopedia</option>
+              <option value="TO">Terapia Ocupacional</option>
+              <option value="PDG">Pedagogía</option>
+            </select>
+            <select class="bb-sel" id="bb-fil-anticipo" onchange="bbAplicarFiltros()">
+              <option value="">Anticipo: todos</option>
+              <option value="Si">Anticipo recibido</option>
+              <option value="No">Sin anticipo</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- KPIs -->
+        <div class="bb-kpis" id="bb-kpis"></div>
+
+        <!-- Tabla -->
+        <div class="bb-table-wrap">
+          <table class="bb-table">
+            <thead>
+              <tr>
+                <th>Paciente</th>
+                <th>Esp.</th>
+                <th>Progreso</th>
+                <th>Vencimiento</th>
+                <th>Anticipo</th>
+                <th id="bb-th-importe" style="display:none">Importe</th>
+                <th>Estado</th>
+              </tr>
+            </thead>
+            <tbody id="bb-tbody"></tbody>
+          </table>
+        </div>
+        <!-- Footer paginación -->
+        <div id="bb-footer" style="display:flex;align-items:center;justify-content:space-between;font-size:12px;color:var(--ink-muted)">
+          <span id="bb-contador"></span>
+          <div style="display:flex;gap:4px" id="bb-paginacion"></div>
+        </div>
+      </div>
+
+      <!-- Panel detalle (lateral derecho) -->
+      <div class="bb-panel hidden" id="bb-panel">
+        <div class="bb-panel-hdr">
+          <div class="bb-panel-hdr-info">
+            <div class="bb-panel-nombre" id="bb-panel-nombre">—</div>
+            <div class="bb-panel-sub" id="bb-panel-sub">—</div>
+          </div>
+          <button class="bb-panel-close" onclick="bbCerrarPanel()">×</button>
+        </div>
+        <div class="bb-panel-body">
+          <!-- Progreso grande -->
+          <div class="bb-panel-progreso-big" id="bb-panel-progreso"></div>
+          <!-- KPIs del detalle -->
+          <div class="bb-panel-kpis" id="bb-panel-kpis"></div>
+          <!-- Datos -->
+          <div>
+            <div class="bb-panel-section">Datos del bono/beca</div>
+            <div id="bb-panel-datos"></div>
+          </div>
+          <!-- Citas consumidas -->
+          <div>
+            <div class="bb-panel-section">Sesiones consumidas</div>
+            <div class="bb-citas-lista" id="bb-panel-citas"></div>
+          </div>
+        </div>
+        <div class="bb-panel-actions" id="bb-panel-actions"></div>
+      </div>
+    </div>
+  </div>
+  <!-- ── /MÓDULO BONOS/BECAS ── -->
+
   </div><!-- /main -->
 </div><!-- /app-body -->
+
+<!-- ── MODAL BONOS/BECAS ── -->
+<div class="bb-modal-overlay" id="bb-modal-overlay" onclick="if(event.target===this)bbCerrarModal()">
+  <div class="bb-modal">
+    <div class="bb-modal-hdr">
+      <span class="bb-modal-titulo" id="bb-modal-titulo">Nuevo bono</span>
+      <button class="bb-modal-close" onclick="bbCerrarModal()">×</button>
+    </div>
+    <div class="bb-modal-body">
+      <input type="hidden" id="bb-edit-id">
+      <!-- Tipo (solo en alta) -->
+      <div id="bb-tipo-row">
+        <div class="bb-form-section" style="margin-bottom:10px">Tipo</div>
+        <div style="display:flex;gap:8px">
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px">
+            <input type="radio" name="bb-tipo" value="BECA" checked onchange="bbTipoCambiado()"> Beca
+          </label>
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px">
+            <input type="radio" name="bb-tipo" value="BONO" onchange="bbTipoCambiado()"> Bono
+          </label>
+        </div>
+      </div>
+      <!-- Paciente -->
+      <div class="bb-form-section">Paciente</div>
+      <div class="bb-form-group">
+        <label class="bb-form-label">Buscar paciente</label>
+        <input type="text" class="bb-form-input" id="bb-pac-search" placeholder="Nombre o código INI-NNNN..." oninput="bbBuscarPaciente()" autocomplete="off">
+        <div id="bb-pac-dropdown" style="display:none;position:relative">
+          <div id="bb-pac-lista" style="position:absolute;top:2px;left:0;right:0;background:var(--white);border:1px solid var(--border);border-radius:8px;box-shadow:var(--shadow);z-index:10;max-height:180px;overflow-y:auto"></div>
+        </div>
+        <input type="hidden" id="bb-pac-id">
+        <div id="bb-pac-seleccionado" style="display:none;padding:7px 10px;background:var(--azul-pale);border-radius:7px;font-size:13px;font-weight:500;color:var(--azul)"></div>
+      </div>
+      <!-- Configuración -->
+      <div class="bb-form-section">Configuración</div>
+      <div class="bb-form-row">
+        <div class="bb-form-group">
+          <label class="bb-form-label">Especialidad</label>
+          <select class="bb-form-select" id="bb-f-esp">
+            <option value="PSI">Psicología</option>
+            <option value="LOG">Logopedia</option>
+            <option value="TO">Terapia Ocupacional</option>
+            <option value="PDG">Pedagogía</option>
+          </select>
+        </div>
+        <div class="bb-form-group">
+          <label class="bb-form-label">Nº sesiones</label>
+          <input type="number" class="bb-form-input" id="bb-f-sesiones" min="1" value="20">
+        </div>
+      </div>
+      <div class="bb-form-row">
+        <div class="bb-form-group">
+          <label class="bb-form-label">Importe total (€)</label>
+          <input type="number" class="bb-form-input" id="bb-f-importe" step="0.01" value="913">
+        </div>
+        <div class="bb-form-group">
+          <label class="bb-form-label">Anticipo recibido</label>
+          <select class="bb-form-select" id="bb-f-anticipo">
+            <option value="Si">Sí</option>
+            <option value="No">No</option>
+          </select>
+        </div>
+      </div>
+      <!-- Fechas -->
+      <div class="bb-form-section">Vigencia</div>
+      <div class="bb-form-row">
+        <div class="bb-form-group">
+          <label class="bb-form-label">Fecha inicio</label>
+          <input type="date" class="bb-form-input" id="bb-f-inicio">
+        </div>
+        <div class="bb-form-group">
+          <label class="bb-form-label">Fecha vencimiento</label>
+          <input type="date" class="bb-form-input" id="bb-f-vencimiento">
+        </div>
+      </div>
+      <!-- Campos específicos beca -->
+      <div id="bb-campos-beca">
+        <div class="bb-form-section">Datos de la beca</div>
+        <div class="bb-form-row">
+          <div class="bb-form-group">
+            <label class="bb-form-label">Año escolar</label>
+            <input type="text" class="bb-form-input" id="bb-f-anio" placeholder="2025/2026">
+          </div>
+          <div class="bb-form-group">
+            <label class="bb-form-label">Financiador</label>
+            <input type="text" class="bb-form-input" id="bb-f-financiador" placeholder="Junta de Andalucía">
+          </div>
+        </div>
+      </div>
+      <!-- Notas -->
+      <div class="bb-form-group">
+        <label class="bb-form-label">Notas</label>
+        <textarea class="bb-form-input" id="bb-f-notas" rows="2" style="resize:vertical;min-height:60px" placeholder="Observaciones..."></textarea>
+      </div>
+    </div>
+    <div class="bb-modal-footer">
+      <button class="bb-btn-cancel" onclick="bbCerrarModal()">Cancelar</button>
+      <button class="bb-btn-save" id="bb-btn-save" onclick="bbGuardar()">Guardar</button>
+    </div>
+  </div>
+</div>
+<!-- ── /MODAL BONOS/BECAS ── -->
 
 <!-- ── MODAL PROFESIONALES ── -->
 <div class="pro-modal-overlay" id="pro-modal-overlay" onclick="if(event.target===this)proCerrarModal()">
@@ -2063,6 +2394,7 @@ function navTo(mod) {
   if (mod === 'agenda')         ag2Init();
   if (mod === 'profesionales')  proInit();
   if (mod === 'pacientes')      { if (G.pacientes) filtrarPacientes(); }
+  if (mod === 'bonos')          bbInit();
 }
 
 
@@ -5250,8 +5582,575 @@ async function proGuardar() {
 /* ═══════════════════════════════════════════
    ARRANQUE
 ═══════════════════════════════════════════ */
-init();
 
-</script>
+/* ═══════════════════════════════════════════
+   BONOS / BECAS
+═══════════════════════════════════════════ */
+const BB = {
+  tipo: 'BECA',          // pestaña activa
+  todos: [],             // todos los registros cargados
+  filtrados: [],         // tras aplicar filtros
+  citas: {},             // citas por id_bono_beca
+  pagina: 1,
+  porPagina: 15,
+  seleccionado: null,    // id del registro abierto en panel
+  modalModo: 'nuevo'
+};
+
+/* ── Helpers ── */
+function bbFecha(d) {
+  if (!d) return '—';
+  const [y, m, dia] = d.split('-');
+  const meses = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+  return `${parseInt(dia)} ${meses[parseInt(m)-1]} ${y}`;
+}
+function bbFechaCorta(d) {
+  if (!d) return '—';
+  const [y, m, dia] = d.split('-');
+  return `${parseInt(dia)}/${m}/${y.slice(2)}`;
+}
+function bbEur(n) {
+  return Number(n).toLocaleString('es-ES',{minimumFractionDigits:2,maximumFractionDigits:2}) + ' €';
+}
+function bbEstado(r) {
+  const hoy = new Date(); hoy.setHours(0,0,0,0);
+  const venc = new Date(r.fecha_vencimiento);
+  const restantes = r.sesiones_total - r.sesiones_consumidas;
+  if (restantes <= 0) return 'agotado';
+  if (venc < hoy) return 'caducado';
+  const diff = (venc - hoy) / 86400000;
+  if (diff <= 30) return 'proximo';
+  return 'vigente';
+}
+function bbEstadoLabel(e) {
+  const m = {vigente:'Vigente',proximo:'Próximo a vencer',caducado:'Caducado',agotado:'Agotado'};
+  return m[e] || e;
+}
+function bbNombrePaciente(id) {
+  const p = (G.pacientes||[]).find(x => x.id === id);
+  if (!p) return id;
+  return `${p.nombre || ''} ${p.apellidos || ''}`.trim();
+}
+
+/* ── Init ── */
+async function bbInit() {
+  document.getElementById('bb-subtitulo').textContent = 'Cargando...';
+  // Mostrar/ocultar columna importe según rol
+  const esAdmin = G.profesional?.es_admin === 'Si';
+  document.getElementById('bb-th-importe').style.display = esAdmin ? '' : 'none';
+
+  try {
+    const res = await fetch(
+      `${SUPA_URL}/rest/v1/bonos_becas?select=*&order=fecha_inicio.desc&limit=2000`,
+      { headers: { apikey: SUPA_KEY, Authorization: `Bearer ${G.sesion.access_token}` } }
+    );
+    BB.todos = await res.json();
+
+    // Poblar select años escolares (becas)
+    const anios = [...new Set(BB.todos.filter(r => r.anio_escolar).map(r => r.anio_escolar))].sort().reverse();
+    const selAnio = document.getElementById('bb-fil-anio');
+    selAnio.innerHTML = '<option value="">Todos los años</option>' +
+      anios.map(a => `<option value="${a}">${a}</option>`).join('');
+
+    // Cargar citas asociadas
+    const ids = BB.todos.map(r => r.id);
+    if (ids.length > 0) {
+      const resCitas = await fetch(
+        `${SUPA_URL}/rest/v1/citas_v2?id_bono_beca=in.(${ids.join(',')})&select=id,id_bono_beca,id_paciente,fecha,estado,precio&limit=2000`,
+        { headers: { apikey: SUPA_KEY, Authorization: `Bearer ${G.sesion.access_token}` } }
+      );
+      const citas = await resCitas.json();
+      BB.citas = {};
+      citas.forEach(c => {
+        if (!BB.citas[c.id_bono_beca]) BB.citas[c.id_bono_beca] = [];
+        BB.citas[c.id_bono_beca].push(c);
+      });
+    }
+
+    bbAplicarFiltros();
+  } catch(e) {
+    document.getElementById('bb-subtitulo').textContent = 'Error al cargar';
+    console.error(e);
+  }
+}
+
+/* ── Cambiar pestaña ── */
+function bbCambiarTipo(tipo) {
+  BB.tipo = tipo;
+  BB.pagina = 1;
+  BB.seleccionado = null;
+  document.getElementById('bb-panel').classList.add('hidden');
+  document.getElementById('bb-tab-beca').classList.toggle('active', tipo === 'BECA');
+  document.getElementById('bb-tab-bono').classList.toggle('active', tipo === 'BONO');
+  // Mostrar/ocultar filtro año (relevante sobre todo en becas)
+  document.getElementById('bb-fil-anio').style.display = tipo === 'BECA' ? '' : 'none';
+  bbAplicarFiltros();
+}
+
+/* ── Filtrar ── */
+function bbAplicarFiltros() {
+  const estado = document.getElementById('bb-fil-estado').value;
+  const anio   = document.getElementById('bb-fil-anio').value;
+  const esp    = document.getElementById('bb-fil-esp').value;
+  const antic  = document.getElementById('bb-fil-anticipo').value;
+
+  BB.filtrados = BB.todos.filter(r => {
+    if (r.tipo !== BB.tipo) return false;
+    if (estado && bbEstado(r) !== estado) return false;
+    if (anio   && r.anio_escolar !== anio) return false;
+    if (esp    && r.especialidad !== esp) return false;
+    if (antic  && r.anticipo_recibido !== antic) return false;
+    return true;
+  });
+
+  BB.pagina = 1;
+  bbActualizarKPIs();
+  bbRenderTabla();
+}
+
+/* ── KPIs ── */
+function bbActualizarKPIs() {
+  const esAdmin = G.profesional?.es_admin === 'Si';
+  const lista = BB.filtrados;
+  const vigentes = lista.filter(r => bbEstado(r) === 'vigente' || bbEstado(r) === 'proximo').length;
+  const sesRest  = lista.reduce((s,r) => s + Math.max(0, r.sesiones_total - r.sesiones_consumidas), 0);
+  const sinAntic = lista.filter(r => r.anticipo_recibido === 'No').length;
+  const totalImporte = lista.reduce((s,r) => s + (Number(r.importe_total)||0), 0);
+
+  const label = BB.tipo === 'BECA' ? 'becas' : 'bonos';
+  let html = `
+    <div class="bb-kpi"><div class="bb-kpi-val">${lista.length}</div><div class="bb-kpi-lbl">Total ${label}</div></div>
+    <div class="bb-kpi"><div class="bb-kpi-val">${vigentes}</div><div class="bb-kpi-lbl">Vigentes</div></div>
+    <div class="bb-kpi"><div class="bb-kpi-val">${sesRest}</div><div class="bb-kpi-lbl">Sesiones pendientes</div></div>
+    <div class="bb-kpi"><div class="bb-kpi-val">${sinAntic}</div><div class="bb-kpi-lbl">Sin anticipo</div></div>`;
+  if (esAdmin) {
+    html = `
+    <div class="bb-kpi"><div class="bb-kpi-val">${lista.length}</div><div class="bb-kpi-lbl">Total ${label}</div></div>
+    <div class="bb-kpi"><div class="bb-kpi-val">${vigentes}</div><div class="bb-kpi-lbl">Vigentes</div></div>
+    <div class="bb-kpi"><div class="bb-kpi-val">${sesRest}</div><div class="bb-kpi-lbl">Sesiones pendientes</div></div>
+    <div class="bb-kpi"><div class="bb-kpi-val" style="font-size:16px">${bbEur(totalImporte)}</div><div class="bb-kpi-lbl">Importe total</div></div>`;
+  }
+  document.getElementById('bb-kpis').innerHTML = html;
+  document.getElementById('bb-subtitulo').textContent =
+    `${lista.length} ${label} · ${sesRest} sesiones pendientes`;
+}
+
+/* ── Render tabla ── */
+function bbRenderTabla() {
+  const esAdmin = G.profesional?.es_admin === 'Si';
+  const tbody = document.getElementById('bb-tbody');
+  const total = BB.filtrados.length;
+  const inicio = (BB.pagina - 1) * BB.porPagina;
+  const pagina = BB.filtrados.slice(inicio, inicio + BB.porPagina);
+
+  if (total === 0) {
+    const label = BB.tipo === 'BECA' ? 'becas' : 'bonos';
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:40px;color:var(--ink-muted)">
+      No hay ${label} con los filtros actuales</td></tr>`;
+    document.getElementById('bb-contador').textContent = '';
+    document.getElementById('bb-paginacion').innerHTML = '';
+    return;
+  }
+
+  tbody.innerHTML = pagina.map(r => {
+    const estado = bbEstado(r);
+    const restantes = r.sesiones_total - r.sesiones_consumidas;
+    const pct = r.sesiones_total > 0 ? Math.round((r.sesiones_consumidas / r.sesiones_total) * 100) : 0;
+    const barClass = restantes <= 0 ? 'done' : pct >= 70 ? 'warn' : 'ok';
+    const restoClass = restantes <= 0 ? 'done' : restantes <= 4 ? 'warn' : 'ok';
+    const espLow = (r.especialidad||'psi').toLowerCase();
+    const nombrePac = bbNombrePaciente(r.id_paciente);
+    const hoy = new Date(); hoy.setHours(0,0,0,0);
+    const venc = new Date(r.fecha_vencimiento);
+    const diffDias = Math.ceil((venc - hoy) / 86400000);
+    const vencStr = estado === 'caducado'
+      ? `<span style="color:var(--rojo)">${bbFechaCorta(r.fecha_vencimiento)}</span>`
+      : diffDias <= 30
+        ? `<span style="color:#92400E">${bbFechaCorta(r.fecha_vencimiento)}</span>`
+        : bbFechaCorta(r.fecha_vencimiento);
+
+    let importeTd = '';
+    if (esAdmin) {
+      const producido = (r.sesiones_consumidas || 0) * 45;
+      const pendiente = (restantes > 0 ? restantes : 0) * 45;
+      importeTd = `<td style="display:''">
+        <span class="mono" style="font-size:12px;font-family:'DM Mono',monospace">${bbEur(r.importe_total)}</span>
+        ${pendiente > 0 ? `<br><span style="font-size:11px;color:var(--ink-muted)">Pdte. producir: ${bbEur(pendiente)}</span>` : ''}
+      </td>`;
+    }
+
+    return `<tr class="bb-row${BB.seleccionado===r.id?' selected':''}" onclick="bbSeleccionar('${r.id}')">
+      <td>
+        <div style="font-weight:600;font-size:13px">${nombrePac}</div>
+        <div style="font-size:11px;color:var(--ink-muted);font-family:'DM Mono',monospace">${r.id_paciente}</div>
+      </td>
+      <td><span class="bb-badge ${espLow}">${r.especialidad||'—'}</span></td>
+      <td>
+        <div class="bb-progreso">
+          <div class="bb-bar-wrap"><div class="bb-bar-fill ${barClass}" style="width:${pct}%"></div></div>
+          <span class="bb-ses-resto ${restoClass}">${restantes}</span>
+        </div>
+        <div style="font-size:11px;color:var(--ink-muted);margin-top:2px">${r.sesiones_consumidas}/${r.sesiones_total} consumidas</div>
+      </td>
+      <td style="font-size:12px">${vencStr}</td>
+      <td style="font-size:12px">${r.anticipo_recibido==='Si'?'<span style="color:var(--verde-dark)">✓ Sí</span>':'<span style="color:var(--ink-muted)">No</span>'}</td>
+      ${importeTd}
+      <td><span class="bb-badge ${estado}">${bbEstadoLabel(estado)}</span></td>
+    </tr>`;
+  }).join('');
+
+  // Contador y paginación
+  const totalPags = Math.ceil(total / BB.porPagina);
+  document.getElementById('bb-contador').textContent =
+    `${inicio+1}–${Math.min(inicio+BB.porPagina,total)} de ${total}`;
+  let pags = '';
+  for (let i=1; i<=totalPags; i++) {
+    if (totalPags <= 7 || i===1 || i===totalPags || Math.abs(i-BB.pagina)<=1) {
+      pags += `<button onclick="bbIrPagina(${i})" style="padding:4px 9px;border-radius:6px;border:1px solid var(--border);background:${i===BB.pagina?'var(--azul)':'var(--white)'};color:${i===BB.pagina?'#fff':'var(--ink)'};font-size:12px;cursor:pointer">${i}</button>`;
+    } else if (Math.abs(i-BB.pagina)===2) {
+      pags += `<span style="color:var(--ink-muted);padding:0 2px">…</span>`;
+    }
+  }
+  document.getElementById('bb-paginacion').innerHTML = pags;
+}
+
+function bbIrPagina(n) { BB.pagina = n; bbRenderTabla(); }
+
+/* ── Seleccionar fila → panel detalle ── */
+async function bbSeleccionar(id) {
+  BB.seleccionado = id;
+  const r = BB.todos.find(x => x.id === id);
+  if (!r) return;
+
+  // Actualizar selección visual
+  document.querySelectorAll('.bb-row').forEach(tr => tr.classList.remove('selected'));
+  event.currentTarget?.classList.add('selected');
+
+  const panel = document.getElementById('bb-panel');
+  panel.classList.remove('hidden');
+
+  const nombrePac = bbNombrePaciente(r.id_paciente);
+  document.getElementById('bb-panel-nombre').textContent = nombrePac;
+  document.getElementById('bb-panel-sub').textContent =
+    `${r.tipo} · ${r.especialidad} · ${r.id}`;
+
+  // Progreso grande
+  const restantes = r.sesiones_total - r.sesiones_consumidas;
+  const pct = r.sesiones_total > 0 ? Math.round((r.sesiones_consumidas / r.sesiones_total) * 100) : 0;
+  const barClass = restantes <= 0 ? 'done' : pct >= 70 ? 'warn' : 'ok';
+  document.getElementById('bb-panel-progreso').innerHTML = `
+    <div class="bb-panel-prog-nums">
+      <span class="bb-panel-prog-main">${restantes}</span>
+      <span class="bb-panel-prog-total">sesiones restantes de ${r.sesiones_total}</span>
+    </div>
+    <div class="bb-panel-prog-bar">
+      <div class="bb-panel-prog-fill ${barClass}" style="width:${pct}%"></div>
+    </div>
+    <div style="font-size:11px;color:var(--ink-muted);margin-top:6px">${r.sesiones_consumidas} consumidas · ${pct}%</div>`;
+
+  // KPIs del panel
+  const esAdmin = G.profesional?.es_admin === 'Si';
+  let kpisHtml = `
+    <div class="bb-panel-kpi">
+      <div class="bb-panel-kpi-val">${bbFechaCorta(r.fecha_inicio)}</div>
+      <div class="bb-panel-kpi-lbl">Inicio</div>
+    </div>
+    <div class="bb-panel-kpi">
+      <div class="bb-panel-kpi-val">${bbFechaCorta(r.fecha_vencimiento)}</div>
+      <div class="bb-panel-kpi-lbl">Vencimiento</div>
+    </div>`;
+  if (esAdmin) {
+    const pendienteProd = Math.max(0, restantes) * 45;
+    kpisHtml += `
+    <div class="bb-panel-kpi">
+      <div class="bb-panel-kpi-val" style="font-size:14px">${bbEur(r.importe_total)}</div>
+      <div class="bb-panel-kpi-lbl">Importe total</div>
+    </div>
+    <div class="bb-panel-kpi">
+      <div class="bb-panel-kpi-val" style="font-size:14px;color:${pendienteProd>0?'var(--amber)':'var(--verde-dark)'}">${bbEur(pendienteProd)}</div>
+      <div class="bb-panel-kpi-lbl">Pendiente producir</div>
+    </div>`;
+  }
+  document.getElementById('bb-panel-kpis').innerHTML = kpisHtml;
+
+  // Datos
+  const estado = bbEstado(r);
+  document.getElementById('bb-panel-datos').innerHTML = `
+    <div class="bb-panel-field"><span class="bb-panel-field-lbl">Paciente</span><span class="bb-panel-field-val">${r.id_paciente}</span></div>
+    <div class="bb-panel-field"><span class="bb-panel-field-lbl">Estado</span><span class="bb-panel-field-val"><span class="bb-badge ${estado}">${bbEstadoLabel(estado)}</span></span></div>
+    <div class="bb-panel-field"><span class="bb-panel-field-lbl">Anticipo recibido</span><span class="bb-panel-field-val">${r.anticipo_recibido==='Si'?'<span style="color:var(--verde-dark)">Sí</span>':'<span style="color:var(--rojo)">No</span>'}</span></div>
+    ${r.anio_escolar?`<div class="bb-panel-field"><span class="bb-panel-field-lbl">Año escolar</span><span class="bb-panel-field-val">${r.anio_escolar}</span></div>`:''}
+    ${r.financiador?`<div class="bb-panel-field"><span class="bb-panel-field-lbl">Financiador</span><span class="bb-panel-field-val">${r.financiador}</span></div>`:''}
+    ${r.notas?`<div class="bb-panel-field"><span class="bb-panel-field-lbl">Notas</span><span class="bb-panel-field-val" style="max-width:200px;text-align:right;font-size:12px">${r.notas}</span></div>`:''}`;
+
+  // Citas consumidas
+  const citas = (BB.citas[id] || []).sort((a,b) => a.fecha > b.fecha ? 1 : -1);
+  if (citas.length === 0) {
+    document.getElementById('bb-panel-citas').innerHTML =
+      '<div style="font-size:12px;color:var(--ink-muted);padding:8px 0">Sin sesiones registradas aún</div>';
+  } else {
+    document.getElementById('bb-panel-citas').innerHTML = citas.map(c => {
+      const estadoColor = c.estado==='Hecha'?'var(--verde-dark)':c.estado==='Noshow'?'var(--rojo)':'var(--ink-muted)';
+      return `<div class="bb-cita-row">
+        <span class="bb-cita-fecha">${bbFechaCorta(c.fecha)}</span>
+        <span class="bb-cita-pac">${bbNombrePaciente(c.id_paciente)}</span>
+        <span class="bb-cita-estado"><span style="font-size:11px;color:${estadoColor}">${c.estado||'—'}</span></span>
+        ${esAdmin?`<span class="bb-cita-precio">${bbEur(c.precio||45)}</span>`:''}
+      </div>`;
+    }).join('');
+  }
+
+  // Botones de acción
+  const esAdminBtn = G.profesional?.es_admin === 'Si';
+  let acciones = `<button class="bb-panel-btn" onclick="bbAbrirModal('editar','${r.id}')">
+    <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+    Editar
+  </button>`;
+  if (esAdminBtn && r.tipo === 'BECA') {
+    acciones += `<button class="bb-panel-btn primary" onclick="bbGenerarFactura('${r.id}')">
+      <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/></svg>
+      Generar factura
+    </button>`;
+  }
+  if (esAdminBtn && r.tipo === 'BONO' && r.anticipo_recibido === 'Si') {
+    // Verificar si el cobro fue bancario — necesitaríamos cobros, por ahora mostramos siempre para bonos con anticipo
+    acciones += `<button class="bb-panel-btn" onclick="bbGenerarFactura('${r.id}')">
+      <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      Generar factura
+    </button>`;
+  }
+  document.getElementById('bb-panel-actions').innerHTML = acciones;
+}
+
+function bbCerrarPanel() {
+  BB.seleccionado = null;
+  document.getElementById('bb-panel').classList.add('hidden');
+  document.querySelectorAll('.bb-row').forEach(tr => tr.classList.remove('selected'));
+}
+
+/* ── Modal alta/edición ── */
+function bbAbrirModal(modo, id) {
+  BB.modalModo = modo;
+  const overlay = document.getElementById('bb-modal-overlay');
+  overlay.classList.add('open');
+
+  const hoy = new Date().toISOString().split('T')[0];
+  const fin2025 = new Date().getFullYear() + '-12-31';
+  const mas2m = new Date(); mas2m.setMonth(mas2m.getMonth()+2);
+  const fin2m = mas2m.toISOString().split('T')[0];
+
+  if (modo === 'nuevo') {
+    document.getElementById('bb-modal-titulo').textContent =
+      BB.tipo === 'BECA' ? 'Nueva beca' : 'Nuevo bono';
+    document.getElementById('bb-edit-id').value = '';
+    document.getElementById('bb-tipo-row').style.display = '';
+    document.querySelectorAll('[name="bb-tipo"]').forEach(r => r.checked = r.value === BB.tipo);
+    document.getElementById('bb-pac-search').value = '';
+    document.getElementById('bb-pac-id').value = '';
+    document.getElementById('bb-pac-seleccionado').style.display = 'none';
+    document.getElementById('bb-pac-search').style.display = '';
+    document.getElementById('bb-f-esp').value = 'PSI';
+    document.getElementById('bb-f-anticipo').value = 'Si';
+    document.getElementById('bb-f-notas').value = '';
+    if (BB.tipo === 'BECA') {
+      document.getElementById('bb-f-sesiones').value = '20';
+      document.getElementById('bb-f-importe').value = '913';
+      document.getElementById('bb-f-inicio').value = hoy;
+      document.getElementById('bb-f-vencimiento').value = fin2025;
+      document.getElementById('bb-f-anio').value = `${new Date().getFullYear()-1}/${new Date().getFullYear()}`;
+      document.getElementById('bb-f-financiador').value = 'Junta de Andalucía';
+      document.getElementById('bb-campos-beca').style.display = '';
+    } else {
+      document.getElementById('bb-f-sesiones').value = '4';
+      document.getElementById('bb-f-importe').value = '180';
+      document.getElementById('bb-f-inicio').value = hoy;
+      document.getElementById('bb-f-vencimiento').value = fin2m;
+      document.getElementById('bb-campos-beca').style.display = 'none';
+    }
+  } else {
+    // Editar
+    const r = BB.todos.find(x => x.id === id);
+    if (!r) return;
+    document.getElementById('bb-modal-titulo').textContent = `Editar ${r.tipo.toLowerCase()}`;
+    document.getElementById('bb-edit-id').value = r.id;
+    document.getElementById('bb-tipo-row').style.display = 'none';
+    document.getElementById('bb-pac-search').style.display = 'none';
+    document.getElementById('bb-pac-id').value = r.id_paciente;
+    document.getElementById('bb-pac-seleccionado').style.display = '';
+    document.getElementById('bb-pac-seleccionado').textContent =
+      `${bbNombrePaciente(r.id_paciente)} · ${r.id_paciente}`;
+    document.getElementById('bb-f-esp').value = r.especialidad || 'PSI';
+    document.getElementById('bb-f-sesiones').value = r.sesiones_total;
+    document.getElementById('bb-f-importe').value = r.importe_total;
+    document.getElementById('bb-f-anticipo').value = r.anticipo_recibido || 'Si';
+    document.getElementById('bb-f-inicio').value = r.fecha_inicio;
+    document.getElementById('bb-f-vencimiento').value = r.fecha_vencimiento;
+    document.getElementById('bb-f-anio').value = r.anio_escolar || '';
+    document.getElementById('bb-f-financiador').value = r.financiador || '';
+    document.getElementById('bb-f-notas').value = r.notas || '';
+    document.getElementById('bb-campos-beca').style.display = r.tipo === 'BECA' ? '' : 'none';
+  }
+}
+
+function bbTipoCambiado() {
+  const tipo = document.querySelector('[name="bb-tipo"]:checked').value;
+  document.getElementById('bb-campos-beca').style.display = tipo === 'BECA' ? '' : 'none';
+  const fin2025 = new Date().getFullYear() + '-12-31';
+  const mas2m = new Date(); mas2m.setMonth(mas2m.getMonth()+2);
+  if (tipo === 'BECA') {
+    document.getElementById('bb-f-sesiones').value = '20';
+    document.getElementById('bb-f-importe').value = '913';
+    document.getElementById('bb-f-vencimiento').value = fin2025;
+  } else {
+    document.getElementById('bb-f-sesiones').value = '4';
+    document.getElementById('bb-f-importe').value = '180';
+    document.getElementById('bb-f-vencimiento').value = mas2m.toISOString().split('T')[0];
+  }
+}
+
+function bbCerrarModal() {
+  document.getElementById('bb-modal-overlay').classList.remove('open');
+  document.getElementById('bb-pac-dropdown').style.display = 'none';
+}
+
+/* ── Buscador paciente en modal ── */
+function bbBuscarPaciente() {
+  const q = document.getElementById('bb-pac-search').value.trim().toLowerCase();
+  const dropdown = document.getElementById('bb-pac-dropdown');
+  const lista = document.getElementById('bb-pac-lista');
+  if (q.length < 2) { dropdown.style.display = 'none'; return; }
+  const res = (G.pacientes||[]).filter(p => {
+    const texto = `${p.nombre} ${p.apellidos||''} ${p.id}`.toLowerCase();
+    return texto.includes(q);
+  }).slice(0, 8);
+  if (res.length === 0) { dropdown.style.display = 'none'; return; }
+  lista.innerHTML = res.map(p => `
+    <div onclick="bbSeleccionarPaciente('${p.id}')"
+      style="padding:8px 12px;cursor:pointer;font-size:13px;border-bottom:1px solid var(--border)"
+      onmouseover="this.style.background='var(--cream)'" onmouseout="this.style.background=''">
+      <strong>${p.nombre} ${p.apellidos||''}</strong>
+      <span style="font-size:11px;color:var(--ink-muted);font-family:'DM Mono',monospace;margin-left:8px">${p.id}</span>
+    </div>`).join('');
+  dropdown.style.display = '';
+}
+
+function bbSeleccionarPaciente(id) {
+  document.getElementById('bb-pac-id').value = id;
+  document.getElementById('bb-pac-dropdown').style.display = 'none';
+  document.getElementById('bb-pac-search').value = '';
+  const p = (G.pacientes||[]).find(x => x.id === id);
+  const sel = document.getElementById('bb-pac-seleccionado');
+  sel.textContent = p ? `${p.nombre} ${p.apellidos||''} · ${id}` : id;
+  sel.style.display = '';
+}
+
+/* ── Guardar ── */
+async function bbGuardar() {
+  const btn = document.getElementById('bb-btn-save');
+  btn.disabled = true; btn.textContent = 'Guardando...';
+
+  const editId = document.getElementById('bb-edit-id').value;
+  const esEdicion = !!editId;
+  const tipo = esEdicion
+    ? BB.todos.find(x => x.id === editId)?.tipo
+    : document.querySelector('[name="bb-tipo"]:checked').value;
+  const idPaciente = document.getElementById('bb-pac-id').value;
+
+  if (!esEdicion && !idPaciente) {
+    bbToast('Selecciona un paciente', 'error');
+    btn.disabled = false; btn.textContent = 'Guardar'; return;
+  }
+
+  const payload = {
+    id_paciente:        esEdicion ? undefined : idPaciente,
+    tipo:               esEdicion ? undefined : tipo,
+    especialidad:       document.getElementById('bb-f-esp').value,
+    sesiones_total:     parseInt(document.getElementById('bb-f-sesiones').value),
+    importe_total:      parseFloat(document.getElementById('bb-f-importe').value),
+    anticipo_recibido:  document.getElementById('bb-f-anticipo').value,
+    fecha_inicio:       document.getElementById('bb-f-inicio').value,
+    fecha_vencimiento:  document.getElementById('bb-f-vencimiento').value,
+    anio_escolar:       document.getElementById('bb-f-anio').value || null,
+    financiador:        document.getElementById('bb-f-financiador').value || null,
+    notas:              document.getElementById('bb-f-notas').value || null,
+  };
+  // Limpiar undefined
+  Object.keys(payload).forEach(k => payload[k] === undefined && delete payload[k]);
+
+  try {
+    if (esEdicion) {
+      const res = await fetch(`${SUPA_URL}/rest/v1/bonos_becas?id=eq.${editId}`, {
+        method: 'PATCH',
+        headers: { apikey: SUPA_KEY, Authorization: `Bearer ${G.sesion.access_token}`,
+          'Content-Type': 'application/json', Prefer: 'return=representation' },
+        body: JSON.stringify(payload)
+      });
+      if (!res.ok) throw new Error(await res.text());
+      const actualizado = (await res.json())[0];
+      const idx = BB.todos.findIndex(x => x.id === editId);
+      if (idx >= 0) BB.todos[idx] = actualizado;
+    } else {
+      // Generar nuevo ID BB-NNN
+      const resUlt = await fetch(
+        `${SUPA_URL}/rest/v1/bonos_becas?select=id&order=id.desc&limit=1`,
+        { headers: { apikey: SUPA_KEY, Authorization: `Bearer ${G.sesion.access_token}` } }
+      );
+      const ult = await resUlt.json();
+      const num = ult.length > 0 ? parseInt(ult[0].id.replace(/\D/g,'')) + 1 : 1;
+      payload.id = 'BB-' + String(num).padStart(3,'0');
+
+      const res = await fetch(`${SUPA_URL}/rest/v1/bonos_becas`, {
+        method: 'POST',
+        headers: { apikey: SUPA_KEY, Authorization: `Bearer ${G.sesion.access_token}`,
+          'Content-Type': 'application/json', Prefer: 'return=representation' },
+        body: JSON.stringify(payload)
+      });
+      if (!res.ok) throw new Error(await res.text());
+      BB.todos.unshift((await res.json())[0]);
+    }
+
+    bbCerrarModal();
+    bbAplicarFiltros();
+    bbToast(esEdicion ? 'Cambios guardados' : 'Bono/beca creado', 'ok');
+  } catch(e) {
+    bbToast('Error al guardar: ' + e.message, 'error');
+    console.error(e);
+  } finally {
+    btn.disabled = false; btn.textContent = 'Guardar';
+  }
+}
+
+/* ── Generar factura (conecta con módulo Facturas) ── */
+function bbGenerarFactura(idBonoBeca) {
+  const r = BB.todos.find(x => x.id === idBonoBeca);
+  if (!r) return;
+  // Pasar datos al módulo de facturas y navegar
+  window._bbFacturaPrefill = {
+    id_paciente_v2: r.id_paciente,
+    concepto: r.tipo === 'BECA'
+      ? `Sesiones de intervención psicoeducativa/logopédica - ${r.anio_escolar||''} (Beca Junta de Andalucía)`
+      : `Sesiones de tratamiento - Bono ${r.especialidad}`,
+    importe: r.importe_total,
+    id_bono_beca: r.id
+  };
+  navTo('facturas');
+  // factCargar() ya se llama por navTo; después de cargar intentamos abrir el modal prefilled
+  setTimeout(() => {
+    if (typeof factNueva === 'function') factNueva(window._bbFacturaPrefill);
+  }, 400);
+}
+
+/* ── Toast ── */
+function bbToast(msg, tipo) {
+  // Reutilizar toast del sistema si existe, si no crear uno temporal
+  if (typeof mostrarToast === 'function') { mostrarToast(msg, tipo === 'ok'); return; }
+  const t = document.createElement('div');
+  t.textContent = msg;
+  t.style.cssText = `position:fixed;bottom:24px;right:24px;padding:10px 18px;border-radius:10px;font-size:13px;font-weight:600;z-index:9999;color:#fff;background:${tipo==='ok'?'#16a34a':'#dc2626'}`;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 3000);
+}
+
+
 </body>
 </html>
