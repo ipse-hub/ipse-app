@@ -2340,7 +2340,7 @@ async function init() {
     const raw = localStorage.getItem('ipse_sesion');
     if (!raw) throw new Error('sin sesión');
     G.sesion = JSON.parse(raw);
-    if (!G.sesion.access_token || G.sesion.expires_at < Date.now() + 60_000) throw new Error('caducada');
+    if (!G.sesion.access_token || G.sesion.expires_at * 1000 < Date.now() + 60_000) throw new Error('caducada');
   } catch {
     window.location.href = '../index.html';
     return;
