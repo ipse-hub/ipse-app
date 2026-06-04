@@ -2053,7 +2053,6 @@ td.muted{color:var(--ink-muted);font-size:12px}
         <div class="form-group" style="margin:0">
           <label>Expediente <span id="ed-id-label" style="font-size:11px;color:var(--ink-muted);font-weight:400"></span></label>
           <input class="form-input" id="ed-id" type="text" placeholder="INI-NNNN" style="font-family:'DM Mono',monospace">
-        </div>
         <div class="form-group" style="margin:0">
           <label>Estado</label>
           <select class="form-input" id="ed-activo">
@@ -2064,9 +2063,8 @@ td.muted{color:var(--ink-muted);font-size:12px}
         <div class="form-group" style="margin:0">
           <label>Consentimiento</label>
           <select class="form-input" id="ed-consentimiento">
-            <option value="Pendiente">Pendiente</option>
-            <option value="Firmado">Firmado</option>
-            <option value="Digital">Digital</option>
+            <option value="No">Pendiente</option>
+            <option value="Si">Firmado</option>
           </select>
         </div>
       </div>
@@ -2867,7 +2865,7 @@ function calcEdad(fnac) {
 
 function fichaIncompleta(p) {
   // Consideramos incompleta si falta alguno de estos campos clave
-  return !p.fecha_nacimiento || !p.telefono || !p.tutor1 || !p.consentimiento || p.consentimiento === 'Pendiente';
+  return !p.fecha_nacimiento || !p.telefono || !p.tutor1 || !p.consentimiento || p.consentimiento === 'No';
 }
 
 function limpiarBuscador() {
@@ -3057,7 +3055,7 @@ function renderP360Header(p) {
   const badges = [];
   if (p.activo !== 'No') badges.push(`<span class="badge badge-ok">Activo</span>`);
   else badges.push(`<span class="badge badge-muted">Baja</span>`);
-  if (p.consentimiento === 'Firmado') badges.push(`<span class="badge badge-ok">Consentimiento firmado</span>`);
+  if (p.consentimiento === 'Si') badges.push(`<span class="badge badge-ok">Consentimiento firmado</span>`);
   else badges.push(`<span class="badge badge-warn">Consentimiento pendiente</span>`);
   if (fichaIncompleta(p)) badges.push(`<span class="badge badge-warn">Ficha incompleta</span>`);
   document.getElementById('p360-badges').innerHTML = badges.join('');
@@ -3121,11 +3119,11 @@ function renderP360Datos(p) {
   }
 
   // Consentimiento
-  const firmado = p.consentimiento === 'Firmado';
+  const firmado = p.consentimiento === 'Si';
   document.getElementById('p360-consent').innerHTML = `
     <div class="consent-row">
       <div class="consent-dot" style="background:${firmado ? 'var(--verde-dark)' : 'var(--ink-muted)'}"></div>
-      <span style="font-size:13px;font-weight:600">${p.consentimiento || 'Pendiente'}</span>
+      <span style="font-size:13px;font-weight:600">${firmado ? 'Firmado' : 'Pendiente'}</span>
       ${p.fecha_alta ? `<span style="font-size:12px;color:var(--ink-muted)">— alta ${fmtFecha(p.fecha_alta)}</span>` : ''}
     </div>`;
 }
@@ -3590,7 +3588,7 @@ function _rellenarFormPac(p) {
   document.getElementById('ed-dni').value          = p.dni_paciente || '';
   document.getElementById('ed-profesion').value    = p.profesion || '';
   document.getElementById('ed-activo').value       = p.activo || 'Si';
-  document.getElementById('ed-consentimiento').value = p.consentimiento || 'Pendiente';
+  document.getElementById('ed-consentimiento').value = p.consentimiento || 'No';
   document.getElementById('ed-telefono').value     = p.telefono || '';
   document.getElementById('ed-email').value        = p.email || '';
   document.getElementById('ed-direccion').value    = p.direccion || '';
@@ -3637,7 +3635,7 @@ function _limpiarFormPac() {
    'ed-centro','ed-curso','ed-diagnostico','ed-alergias','ed-notas']
     .forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
   document.getElementById('ed-activo').value = 'Si';
-  document.getElementById('ed-consentimiento').value = 'Pendiente';
+  document.getElementById('ed-consentimiento').value = 'No';
   document.getElementById('ed-ambito').value = '';
   document.getElementById('ed-derivacion').value = '';
   document.getElementById('ed-tiene-tutor').checked = false;
