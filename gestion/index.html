@@ -1810,20 +1810,13 @@ td.muted{color:var(--ink-muted);font-size:12px}
           <select class="bb-form-select" id="bb-f-esp">
             <option value="PSI">Psicología</option>
             <option value="LOG">Logopedia</option>
+            <option value="TO">Terapia Ocupacional</option>
+            <option value="PDG">Pedagogía</option>
           </select>
         </div>
         <div class="bb-form-group">
-          <label class="bb-form-label">Nº sesiones total</label>
+          <label class="bb-form-label">Nº sesiones</label>
           <input type="number" class="bb-form-input" id="bb-f-sesiones" min="1" value="20">
-        </div>
-      </div>
-      <div class="bb-form-row" id="bb-row-consumidas" style="display:none">
-        <div class="bb-form-group">
-          <label class="bb-form-label">Sesiones ya realizadas</label>
-          <input type="number" class="bb-form-input" id="bb-f-consumidas" min="0" value="0">
-        </div>
-        <div class="bb-form-group" style="display:flex;align-items:flex-end;padding-bottom:6px">
-          <span style="font-size:12px;color:var(--ink-muted);line-height:1.4">Sesiones consumidas antes<br>de dar de alta en el sistema</span>
         </div>
       </div>
       <div class="bb-form-row">
@@ -1857,7 +1850,11 @@ td.muted{color:var(--ink-muted);font-size:12px}
         <div class="bb-form-row">
           <div class="bb-form-group">
             <label class="bb-form-label">Año escolar</label>
-            <select class="bb-form-select" id="bb-f-anio"></select>
+            <input type="text" class="bb-form-input" id="bb-f-anio" placeholder="2025/2026">
+          </div>
+          <div class="bb-form-group">
+            <label class="bb-form-label">Financiador</label>
+            <input type="text" class="bb-form-input" id="bb-f-financiador" placeholder="Junta de Andalucía">
           </div>
         </div>
       </div>
@@ -1997,6 +1994,7 @@ td.muted{color:var(--ink-muted);font-size:12px}
   .pac-sec-hdr:first-child { margin-top: 0; }
   .pac-sec-hdr svg { flex-shrink: 0; }
   .pac-form-grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; margin-bottom: 12px; }
+  .pac-form-grid4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 14px; margin-bottom: 12px; }
   .pac-form-grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 12px; }
   .pac-form-grid2-wide { display: grid; grid-template-columns: 2fr 1fr; gap: 14px; margin-bottom: 12px; }
   .pac-form-full { margin-bottom: 12px; }
@@ -2018,11 +2016,11 @@ td.muted{color:var(--ink-muted);font-size:12px}
       <div class="pac-form-grid3">
         <div class="form-group" style="margin:0">
           <label>Nombre *</label>
-          <input class="form-input" id="ed-nombre" type="text" placeholder="Nombre">
+          <input class="form-input" id="ed-nombre" type="text" placeholder="Nombre" oninput="edSugerirId()">
         </div>
         <div class="form-group" style="margin:0">
           <label>Apellidos</label>
-          <input class="form-input" id="ed-apellidos" type="text" placeholder="Apellidos">
+          <input class="form-input" id="ed-apellidos" type="text" placeholder="Apellidos" oninput="edSugerirId()">
         </div>
         <div class="form-group" style="margin:0">
           <label>Alias (agenda)</label>
@@ -2043,7 +2041,15 @@ td.muted{color:var(--ink-muted);font-size:12px}
           <input class="form-input" id="ed-profesion" type="text" placeholder="Ocupación">
         </div>
       </div>
-      <div class="pac-form-grid3">
+      <div class="pac-form-grid4">
+        <div class="form-group" style="margin:0">
+          <label>Modalidad</label>
+          <select class="form-input" id="ed-modalidad" onchange="edSugerirId()">
+            <option value="privado">Privado</option>
+            <option value="beca">Beca</option>
+            <option value="adecco">Adecco</option>
+          </select>
+        </div>
         <div class="form-group" style="margin:0">
           <label>Expediente <span id="ed-id-label" style="font-size:11px;color:var(--ink-muted);font-weight:400"></span></label>
           <input class="form-input" id="ed-id" type="text" placeholder="INI-NNNN" style="font-family:'DM Mono',monospace">
@@ -3545,6 +3551,12 @@ function _recogerFormPac() {
     profesion:         document.getElementById('ed-profesion').value.trim() || null,
     activo:            document.getElementById('ed-activo').value,
     consentimiento:    document.getElementById('ed-consentimiento').value,
+    modalidad_principal: (() => {
+      const m = document.getElementById('ed-modalidad')?.value;
+      if (m === 'beca') return 'BECA';
+      if (m === 'adecco') return 'ADECCO';
+      return 'PRIVADO_SU';
+    })(),
     telefono:          document.getElementById('ed-telefono').value.trim() || null,
     email:             document.getElementById('ed-email').value.trim() || null,
     direccion:         document.getElementById('ed-direccion').value.trim() || null,
@@ -3634,26 +3646,60 @@ function _limpiarFormPac() {
   document.getElementById('ed-tutor2-fields').style.display = 'none';
 }
 
+async function edSugerirId() {
+  if (pacModalModo !== 'nuevo') return;
+  const nombre    = document.getElementById('ed-nombre').value.trim();
+  const apellidos = document.getElementById('ed-apellidos').value.trim();
+  const modalidad = document.getElementById('ed-modalidad').value;
+  const idInput   = document.getElementById('ed-id');
+  const idLabel   = document.getElementById('ed-id-label');
+
+  // Calcular iniciales (sin tildes, mayúsculas)
+  const norm = s => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().replace(/[^A-Z]/g, '');
+  const partes = [nombre, ...apellidos.split(' ')].filter(Boolean);
+  const iniciales = partes.slice(0, 3).map(p => norm(p)[0] || '').join('');
+  if (iniciales.length < 3) {
+    idLabel.textContent = '(escribe nombre y apellidos)';
+    idInput.placeholder = 'INI-NNNN';
+    return;
+  }
+
+  // Determinar serie y formato
+  let filtro, siguiente;
+  if (modalidad === 'beca') {
+    filtro = `pacientes_v2?id=like.${iniciales}-B*&order=id.desc&limit=1&select=id`;
+    const rows = await sg(filtro).catch(() => []);
+    const num = rows.length ? parseInt(rows[0].id.replace(/[^0-9]/g, ''), 10) + 1 : 1;
+    siguiente = `${iniciales}-B${String(num).padStart(3, '0')}`;
+  } else if (modalidad === 'adecco') {
+    filtro = `pacientes_v2?id=like.${iniciales}-A*&order=id.desc&limit=1&select=id`;
+    const rows = await sg(filtro).catch(() => []);
+    const num = rows.length ? parseInt(rows[0].id.replace(/[^0-9]/g, ''), 10) + 1 : 1;
+    siguiente = `${iniciales}-A${String(num).padStart(3, '0')}`;
+  } else {
+    filtro = `pacientes_v2?id=like.${iniciales}-[0-9]*&order=id.desc&limit=1&select=id`;
+    const rows = await sg(filtro).catch(() => []);
+    const num = rows.length ? parseInt(rows[0].id.replace(/[^0-9]/g, ''), 10) + 1 : 1;
+    siguiente = `${iniciales}-${String(num).padStart(4, '0')}`;
+  }
+
+  idInput.value = siguiente;
+  idLabel.textContent = '(sugerido — editable)';
+  idInput.placeholder = siguiente;
+}
+
 async function abrirNuevoPaciente() {
   pacModalModo = 'nuevo';
   _limpiarFormPac();
 
-  // Generar ID sugerido consultando el último INI-NNNN
   const idInput = document.getElementById('ed-id');
   const idLabel = document.getElementById('ed-id-label');
   idInput.readOnly = false;
   idInput.style.background = '';
-  idLabel.textContent = '(formato INI-NNNN)';
   idInput.value = '';
-
-  try {
-    const rows = await sg('pacientes_v2?order=id.desc&limit=1&select=id');
-    if (rows.length) {
-      const ultimo = rows[0].id; // ej. "LFA-313"
-      const num = parseInt(ultimo.replace(/[^0-9]/g, ''), 10);
-      idLabel.textContent = `(último: ${ultimo})`;
-    }
-  } catch(_) {}
+  idLabel.textContent = '(escribe nombre y apellidos)';
+  document.getElementById('ed-modalidad').value = 'privado';
+  document.getElementById('ed-modalidad').closest('.form-group').style.display = '';
 
   document.getElementById('modal-edicion-title').textContent = 'Nuevo paciente';
   document.getElementById('btn-guardar-edicion').textContent = 'Crear paciente';
@@ -3674,6 +3720,8 @@ function abrirEdicion() {
   idInput.readOnly = true;
   idInput.style.background = 'var(--bg)';
   document.getElementById('ed-id-label').textContent = '(no editable aquí)';
+  // Ocultar modalidad en edición — el ID ya no cambia
+  document.getElementById('ed-modalidad').closest('.form-group').style.display = 'none';
 
   document.getElementById('modal-edicion-title').textContent = `Editar — ${p.id}`;
   document.getElementById('btn-guardar-edicion').textContent = 'Guardar cambios';
@@ -3704,10 +3752,10 @@ async function guardarPacModal() {
 
   try {
     if (pacModalModo === 'nuevo') {
-      // Validar ID
+      // Validar ID — formatos: INI-NNNN (privado), INI-BNNN (beca), INI-ANNN (Adecco)
       const idVal = document.getElementById('ed-id').value.trim().toUpperCase();
-      if (!idVal || !/^[A-Z]{3}-\d{3,4}$/.test(idVal)) {
-        toast('El expediente debe tener formato INI-NNNN (ej. AGA-042)', true);
+      if (!idVal || !/^[A-Z]{3}-([0-9]{4}|[BA][0-9]{3})$/.test(idVal)) {
+        toast('El expediente debe tener formato INI-NNNN, INI-BNNN o INI-ANNN', true);
         btn.disabled = false;
         btn.textContent = 'Crear paciente';
         return;
@@ -5635,15 +5683,6 @@ function bbNombrePaciente(id) {
   return `${p.nombre || ''} ${p.apellidos || ''}`.trim();
 }
 
-function bbPoblarAnios() {
-  const sel = document.getElementById('bb-f-anio');
-  if (!sel) return;
-  const anioActual = new Date().getFullYear();
-  const opciones = [['', '— Sin especificar —']];
-  for (let y = 2024; y <= anioActual + 1; y++) opciones.push([`${y}/${y+1}`, `${y}/${y+1}`]);
-  sel.innerHTML = opciones.map(([v,l]) => `<option value="${v}">${l}</option>`).join('');
-}
-
 /* ── Init ── */
 async function bbInit() {
   document.getElementById('bb-subtitulo').textContent = 'Cargando...';
@@ -5892,7 +5931,7 @@ async function bbSeleccionar(id) {
     <div class="bb-panel-field"><span class="bb-panel-field-lbl">Estado</span><span class="bb-panel-field-val"><span class="bb-badge ${estado}">${bbEstadoLabel(estado)}</span></span></div>
     <div class="bb-panel-field"><span class="bb-panel-field-lbl">Anticipo recibido</span><span class="bb-panel-field-val">${r.anticipo_recibido==='Si'?'<span style="color:var(--verde-dark)">Sí</span>':'<span style="color:var(--rojo)">No</span>'}</span></div>
     ${r.anio_escolar?`<div class="bb-panel-field"><span class="bb-panel-field-lbl">Año escolar</span><span class="bb-panel-field-val">${r.anio_escolar}</span></div>`:''}
-
+    ${r.financiador?`<div class="bb-panel-field"><span class="bb-panel-field-lbl">Financiador</span><span class="bb-panel-field-val">${r.financiador}</span></div>`:''}
     ${r.notas?`<div class="bb-panel-field"><span class="bb-panel-field-lbl">Notas</span><span class="bb-panel-field-val" style="max-width:200px;text-align:right;font-size:12px">${r.notas}</span></div>`:''}`;
 
   // Citas consumidas
@@ -5945,7 +5984,6 @@ function bbAbrirModal(modo, id) {
   BB.modalModo = modo;
   const overlay = document.getElementById('bb-modal-overlay');
   overlay.classList.add('open');
-  bbPoblarAnios();
 
   const hoy = new Date().toISOString().split('T')[0];
   const fin2025 = new Date().getFullYear() + '-12-31';
@@ -5965,13 +6003,13 @@ function bbAbrirModal(modo, id) {
     document.getElementById('bb-f-esp').value = 'PSI';
     document.getElementById('bb-f-anticipo').value = 'Si';
     document.getElementById('bb-f-notas').value = '';
-    document.getElementById('bb-row-consumidas').style.display = 'none';
     if (BB.tipo === 'BECA') {
       document.getElementById('bb-f-sesiones').value = '20';
       document.getElementById('bb-f-importe').value = '913';
       document.getElementById('bb-f-inicio').value = hoy;
       document.getElementById('bb-f-vencimiento').value = fin2025;
       document.getElementById('bb-f-anio').value = `${new Date().getFullYear()-1}/${new Date().getFullYear()}`;
+      document.getElementById('bb-f-financiador').value = 'Junta de Andalucía';
       document.getElementById('bb-campos-beca').style.display = '';
     } else {
       document.getElementById('bb-f-sesiones').value = '4';
@@ -5999,9 +6037,8 @@ function bbAbrirModal(modo, id) {
     document.getElementById('bb-f-inicio').value = r.fecha_inicio;
     document.getElementById('bb-f-vencimiento').value = r.fecha_vencimiento;
     document.getElementById('bb-f-anio').value = r.anio_escolar || '';
+    document.getElementById('bb-f-financiador').value = r.financiador || '';
     document.getElementById('bb-f-notas').value = r.notas || '';
-    document.getElementById('bb-row-consumidas').style.display = '';
-    document.getElementById('bb-f-consumidas').value = r.sesiones_consumidas || 0;
     document.getElementById('bb-campos-beca').style.display = r.tipo === 'BECA' ? '' : 'none';
   }
 }
@@ -6080,12 +6117,12 @@ async function bbGuardar() {
     tipo:               esEdicion ? undefined : tipo,
     especialidad:       document.getElementById('bb-f-esp').value,
     sesiones_total:     parseInt(document.getElementById('bb-f-sesiones').value),
-    sesiones_consumidas: esEdicion ? parseInt(document.getElementById('bb-f-consumidas').value) : undefined,
     importe_total:      parseFloat(document.getElementById('bb-f-importe').value),
     anticipo_recibido:  document.getElementById('bb-f-anticipo').value,
     fecha_inicio:       document.getElementById('bb-f-inicio').value,
     fecha_vencimiento:  document.getElementById('bb-f-vencimiento').value,
     anio_escolar:       document.getElementById('bb-f-anio').value || null,
+    financiador:        document.getElementById('bb-f-financiador').value || null,
     notas:              document.getElementById('bb-f-notas').value || null,
   };
   // Limpiar undefined
