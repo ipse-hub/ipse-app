@@ -1813,8 +1813,17 @@ td.muted{color:var(--ink-muted);font-size:12px}
           </select>
         </div>
         <div class="bb-form-group">
-          <label class="bb-form-label">Nº sesiones</label>
+          <label class="bb-form-label">Nº sesiones total</label>
           <input type="number" class="bb-form-input" id="bb-f-sesiones" min="1" value="20">
+        </div>
+      </div>
+      <div class="bb-form-row" id="bb-row-consumidas" style="display:none">
+        <div class="bb-form-group">
+          <label class="bb-form-label">Sesiones ya realizadas</label>
+          <input type="number" class="bb-form-input" id="bb-f-consumidas" min="0" value="0">
+        </div>
+        <div class="bb-form-group" style="display:flex;align-items:flex-end;padding-bottom:6px">
+          <span style="font-size:12px;color:var(--ink-muted);line-height:1.4">Sesiones consumidas antes<br>de dar de alta en el sistema</span>
         </div>
       </div>
       <div class="bb-form-row">
@@ -1848,12 +1857,7 @@ td.muted{color:var(--ink-muted);font-size:12px}
         <div class="bb-form-row">
           <div class="bb-form-group">
             <label class="bb-form-label">Año escolar</label>
-            <select class="bb-form-select" id="bb-f-anio">
-              <option value="">— Sin especificar —</option>
-              <option value="2024/2025">2024/2025</option>
-              <option value="2025/2026">2025/2026</option>
-              <option value="2026/2027">2026/2027</option>
-            </select>
+            <select class="bb-form-select" id="bb-f-anio"></select>
           </div>
         </div>
       </div>
@@ -5631,6 +5635,15 @@ function bbNombrePaciente(id) {
   return `${p.nombre || ''} ${p.apellidos || ''}`.trim();
 }
 
+function bbPoblarAnios() {
+  const sel = document.getElementById('bb-f-anio');
+  if (!sel) return;
+  const anioActual = new Date().getFullYear();
+  const opciones = [['', '— Sin especificar —']];
+  for (let y = 2024; y <= anioActual + 1; y++) opciones.push([`${y}/${y+1}`, `${y}/${y+1}`]);
+  sel.innerHTML = opciones.map(([v,l]) => `<option value="${v}">${l}</option>`).join('');
+}
+
 /* ── Init ── */
 async function bbInit() {
   document.getElementById('bb-subtitulo').textContent = 'Cargando...';
@@ -5932,6 +5945,7 @@ function bbAbrirModal(modo, id) {
   BB.modalModo = modo;
   const overlay = document.getElementById('bb-modal-overlay');
   overlay.classList.add('open');
+  bbPoblarAnios();
 
   const hoy = new Date().toISOString().split('T')[0];
   const fin2025 = new Date().getFullYear() + '-12-31';
@@ -5951,6 +5965,7 @@ function bbAbrirModal(modo, id) {
     document.getElementById('bb-f-esp').value = 'PSI';
     document.getElementById('bb-f-anticipo').value = 'Si';
     document.getElementById('bb-f-notas').value = '';
+    document.getElementById('bb-row-consumidas').style.display = 'none';
     if (BB.tipo === 'BECA') {
       document.getElementById('bb-f-sesiones').value = '20';
       document.getElementById('bb-f-importe').value = '913';
@@ -5985,6 +6000,8 @@ function bbAbrirModal(modo, id) {
     document.getElementById('bb-f-vencimiento').value = r.fecha_vencimiento;
     document.getElementById('bb-f-anio').value = r.anio_escolar || '';
     document.getElementById('bb-f-notas').value = r.notas || '';
+    document.getElementById('bb-row-consumidas').style.display = '';
+    document.getElementById('bb-f-consumidas').value = r.sesiones_consumidas || 0;
     document.getElementById('bb-campos-beca').style.display = r.tipo === 'BECA' ? '' : 'none';
   }
 }
@@ -6063,6 +6080,7 @@ async function bbGuardar() {
     tipo:               esEdicion ? undefined : tipo,
     especialidad:       document.getElementById('bb-f-esp').value,
     sesiones_total:     parseInt(document.getElementById('bb-f-sesiones').value),
+    sesiones_consumidas: esEdicion ? parseInt(document.getElementById('bb-f-consumidas').value) : undefined,
     importe_total:      parseFloat(document.getElementById('bb-f-importe').value),
     anticipo_recibido:  document.getElementById('bb-f-anticipo').value,
     fecha_inicio:       document.getElementById('bb-f-inicio').value,
