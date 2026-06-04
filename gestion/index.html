@@ -3552,9 +3552,9 @@ function _recogerFormPac() {
     consentimiento:    document.getElementById('ed-consentimiento').value,
     modalidad_principal: (() => {
       const m = document.getElementById('ed-modalidad')?.value;
-      if (m === 'beca') return 'BECA';
-      if (m === 'adecco') return 'ADECCO';
-      return 'PRIVADO_SU';
+      if (m === 'beca') return 'Beca';
+      if (m === 'adecco') return 'Adecco';
+      return 'Privado';
     })(),
     telefono:          document.getElementById('ed-telefono').value.trim() || null,
     email:             document.getElementById('ed-email').value.trim() || null,
