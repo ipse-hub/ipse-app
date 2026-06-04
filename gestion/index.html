@@ -1810,13 +1810,20 @@ td.muted{color:var(--ink-muted);font-size:12px}
           <select class="bb-form-select" id="bb-f-esp">
             <option value="PSI">Psicología</option>
             <option value="LOG">Logopedia</option>
-            <option value="TO">Terapia Ocupacional</option>
-            <option value="PDG">Pedagogía</option>
           </select>
         </div>
         <div class="bb-form-group">
-          <label class="bb-form-label">Nº sesiones</label>
+          <label class="bb-form-label">Nº sesiones total</label>
           <input type="number" class="bb-form-input" id="bb-f-sesiones" min="1" value="20">
+        </div>
+      </div>
+      <div class="bb-form-row" id="bb-row-consumidas" style="display:none">
+        <div class="bb-form-group">
+          <label class="bb-form-label">Sesiones ya realizadas</label>
+          <input type="number" class="bb-form-input" id="bb-f-consumidas" min="0" value="0">
+        </div>
+        <div class="bb-form-group" style="display:flex;align-items:flex-end;padding-bottom:6px">
+          <span style="font-size:12px;color:var(--ink-muted);line-height:1.4">Sesiones consumidas antes<br>de dar de alta en el sistema</span>
         </div>
       </div>
       <div class="bb-form-row">
@@ -1850,11 +1857,7 @@ td.muted{color:var(--ink-muted);font-size:12px}
         <div class="bb-form-row">
           <div class="bb-form-group">
             <label class="bb-form-label">Año escolar</label>
-            <input type="text" class="bb-form-input" id="bb-f-anio" placeholder="2025/2026">
-          </div>
-          <div class="bb-form-group">
-            <label class="bb-form-label">Financiador</label>
-            <input type="text" class="bb-form-input" id="bb-f-financiador" placeholder="Junta de Andalucía">
+            <select class="bb-form-select" id="bb-f-anio"></select>
           </div>
         </div>
       </div>
@@ -5682,6 +5685,15 @@ function bbNombrePaciente(id) {
   return `${p.nombre || ''} ${p.apellidos || ''}`.trim();
 }
 
+function bbPoblarAnios() {
+  const sel = document.getElementById('bb-f-anio');
+  if (!sel) return;
+  const anioActual = new Date().getFullYear();
+  const opciones = [['', '— Sin especificar —']];
+  for (let y = 2024; y <= anioActual + 1; y++) opciones.push([`${y}/${y+1}`, `${y}/${y+1}`]);
+  sel.innerHTML = opciones.map(([v,l]) => `<option value="${v}">${l}</option>`).join('');
+}
+
 /* ── Init ── */
 async function bbInit() {
   document.getElementById('bb-subtitulo').textContent = 'Cargando...';
@@ -5930,7 +5942,7 @@ async function bbSeleccionar(id) {
     <div class="bb-panel-field"><span class="bb-panel-field-lbl">Estado</span><span class="bb-panel-field-val"><span class="bb-badge ${estado}">${bbEstadoLabel(estado)}</span></span></div>
     <div class="bb-panel-field"><span class="bb-panel-field-lbl">Anticipo recibido</span><span class="bb-panel-field-val">${r.anticipo_recibido==='Si'?'<span style="color:var(--verde-dark)">Sí</span>':'<span style="color:var(--rojo)">No</span>'}</span></div>
     ${r.anio_escolar?`<div class="bb-panel-field"><span class="bb-panel-field-lbl">Año escolar</span><span class="bb-panel-field-val">${r.anio_escolar}</span></div>`:''}
-    ${r.financiador?`<div class="bb-panel-field"><span class="bb-panel-field-lbl">Financiador</span><span class="bb-panel-field-val">${r.financiador}</span></div>`:''}
+
     ${r.notas?`<div class="bb-panel-field"><span class="bb-panel-field-lbl">Notas</span><span class="bb-panel-field-val" style="max-width:200px;text-align:right;font-size:12px">${r.notas}</span></div>`:''}`;
 
   // Citas consumidas
@@ -5983,6 +5995,7 @@ function bbAbrirModal(modo, id) {
   BB.modalModo = modo;
   const overlay = document.getElementById('bb-modal-overlay');
   overlay.classList.add('open');
+  bbPoblarAnios();
 
   const hoy = new Date().toISOString().split('T')[0];
   const fin2025 = new Date().getFullYear() + '-12-31';
@@ -6002,13 +6015,13 @@ function bbAbrirModal(modo, id) {
     document.getElementById('bb-f-esp').value = 'PSI';
     document.getElementById('bb-f-anticipo').value = 'Si';
     document.getElementById('bb-f-notas').value = '';
+    document.getElementById('bb-row-consumidas').style.display = 'none';
     if (BB.tipo === 'BECA') {
       document.getElementById('bb-f-sesiones').value = '20';
       document.getElementById('bb-f-importe').value = '913';
       document.getElementById('bb-f-inicio').value = hoy;
       document.getElementById('bb-f-vencimiento').value = fin2025;
       document.getElementById('bb-f-anio').value = `${new Date().getFullYear()-1}/${new Date().getFullYear()}`;
-      document.getElementById('bb-f-financiador').value = 'Junta de Andalucía';
       document.getElementById('bb-campos-beca').style.display = '';
     } else {
       document.getElementById('bb-f-sesiones').value = '4';
@@ -6036,8 +6049,9 @@ function bbAbrirModal(modo, id) {
     document.getElementById('bb-f-inicio').value = r.fecha_inicio;
     document.getElementById('bb-f-vencimiento').value = r.fecha_vencimiento;
     document.getElementById('bb-f-anio').value = r.anio_escolar || '';
-    document.getElementById('bb-f-financiador').value = r.financiador || '';
     document.getElementById('bb-f-notas').value = r.notas || '';
+    document.getElementById('bb-row-consumidas').style.display = '';
+    document.getElementById('bb-f-consumidas').value = r.sesiones_consumidas || 0;
     document.getElementById('bb-campos-beca').style.display = r.tipo === 'BECA' ? '' : 'none';
   }
 }
@@ -6116,12 +6130,12 @@ async function bbGuardar() {
     tipo:               esEdicion ? undefined : tipo,
     especialidad:       document.getElementById('bb-f-esp').value,
     sesiones_total:     parseInt(document.getElementById('bb-f-sesiones').value),
+    sesiones_consumidas: esEdicion ? parseInt(document.getElementById('bb-f-consumidas').value) : undefined,
     importe_total:      parseFloat(document.getElementById('bb-f-importe').value),
     anticipo_recibido:  document.getElementById('bb-f-anticipo').value,
     fecha_inicio:       document.getElementById('bb-f-inicio').value,
     fecha_vencimiento:  document.getElementById('bb-f-vencimiento').value,
     anio_escolar:       document.getElementById('bb-f-anio').value || null,
-    financiador:        document.getElementById('bb-f-financiador').value || null,
     notas:              document.getElementById('bb-f-notas').value || null,
   };
   // Limpiar undefined
