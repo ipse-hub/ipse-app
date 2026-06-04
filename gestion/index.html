@@ -1698,8 +1698,6 @@ td.muted{color:var(--ink-muted);font-size:12px}
               <option value="">Todas las especialidades</option>
               <option value="PSI">Psicología</option>
               <option value="LOG">Logopedia</option>
-              <option value="TO">Terapia Ocupacional</option>
-              <option value="PDG">Pedagogía</option>
             </select>
             <select class="bb-sel" id="bb-fil-anticipo" onchange="bbAplicarFiltros()">
               <option value="">Anticipo: todos</option>
@@ -5645,7 +5643,7 @@ const BB = {
   filtrados: [],         // tras aplicar filtros
   citas: {},             // citas por id_bono_beca
   pagina: 1,
-  porPagina: 15,
+  porPagina: 10,
   seleccionado: null,    // id del registro abierto en panel
   modalModo: 'nuevo'
 };
