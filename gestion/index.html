@@ -684,6 +684,32 @@ td.muted{color:var(--ink-muted);font-size:12px}
 .btn-nueva-factura{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:8px;background:var(--azul);color:#fff;border:none;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:background .15s;flex-shrink:0}
 .btn-nueva-factura:hover{background:var(--azul-light)}
 .btn-nueva-factura svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
+.btn-bloque-becas{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:8px;background:#fff;color:var(--azul);border:1.5px solid var(--azul);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s;flex-shrink:0}
+.btn-bloque-becas:hover{background:var(--azul-faint,#eef0ff)}
+.btn-bloque-becas svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.fact-bloque-panel{background:#f8f9ff;border:1.5px solid #c7cbf4;border-radius:12px;padding:18px 20px;margin-bottom:18px;display:none}
+.fact-bloque-panel.open{display:block}
+.fact-bloque-panel h3{font-size:14px;font-weight:700;color:var(--azul);margin:0 0 14px;display:flex;align-items:center;gap:8px}
+.fact-bloque-filtros{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;margin-bottom:14px}
+.fact-bloque-filtros label{font-size:11px;font-weight:600;color:var(--ink-muted);text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:4px}
+.fact-bloque-filtros select,.fact-bloque-filtros input[type=date]{font-size:13px;padding:6px 10px;border:1.5px solid var(--border);border-radius:8px;background:#fff;color:var(--ink);font-family:inherit;cursor:pointer}
+.fact-bloque-lista{margin-bottom:14px}
+.fact-bloque-lista table{width:100%;border-collapse:collapse;font-size:12px}
+.fact-bloque-lista th{background:var(--azul);color:#fff;padding:6px 10px;text-align:left;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.4px}
+.fact-bloque-lista td{padding:6px 10px;border-bottom:1px solid var(--border);vertical-align:middle}
+.fact-bloque-lista tr:last-child td{border-bottom:none}
+.fact-bloque-lista .warn-cell{color:#b45309;font-size:11px}
+.fact-bloque-acciones{display:flex;align-items:center;gap:10px}
+.fact-bloque-info{font-size:12px;color:var(--ink-muted);flex:1}
+.btn-emitir-bloque{padding:8px 20px;border-radius:8px;background:var(--azul);color:#fff;border:none;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:background .15s}
+.btn-emitir-bloque:hover{background:var(--azul-light)}
+.btn-emitir-bloque:disabled{opacity:.5;cursor:not-allowed}
+.fact-bloque-badge-warn{display:inline-block;background:#fef3c7;color:#92400e;border-radius:4px;padding:1px 6px;font-size:10px;font-weight:600;margin-left:6px}
+.fact-bloque-badge-ok{display:inline-block;background:#d1fae5;color:#065f46;border-radius:4px;padding:1px 6px;font-size:10px;font-weight:600;margin-left:6px}
+.fact-bloque-progress{margin-top:10px;display:none}
+.fact-bloque-progress-bar{height:6px;border-radius:3px;background:var(--border);overflow:hidden;margin-bottom:6px}
+.fact-bloque-progress-bar-fill{height:100%;background:var(--azul);transition:width .3s}
+.fact-bloque-progress-txt{font-size:12px;color:var(--ink-muted)}
 .fact-estado-pill{display:inline-flex;align-items:center;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;cursor:pointer;border:none;font-family:inherit}
 .fact-estado-pill.emitida{background:var(--azul-pale);color:var(--azul)}
 .fact-estado-pill.pagada{background:var(--verde-pale);color:var(--verde-dark)}
@@ -1081,10 +1107,63 @@ td.muted{color:var(--ink-muted);font-size:12px}
         <div style="font-size:18px;font-weight:700;color:var(--ink)">Facturas</div>
         <div style="font-size:12px;color:var(--ink-muted);margin-top:2px" id="fact-count-label">Cargando…</div>
       </div>
-      <button class="btn-nueva-factura" onclick="factNuevaFactura()">
-        <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-        Nueva factura
-      </button>
+      <div style="display:flex;gap:8px">
+        <button class="btn-bloque-becas" onclick="factBloqueToggle()">
+          <svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+          Emisión en bloque — Becas
+        </button>
+        <button class="btn-nueva-factura" onclick="factNuevaFactura()">
+          <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Nueva factura
+        </button>
+      </div>
+    </div>
+
+    <!-- Panel Emisión en Bloque Becas -->
+    <div class="fact-bloque-panel" id="fact-bloque-panel">
+      <h3>
+        <svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:var(--azul);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+        Emisión en bloque — Becas NEAE
+      </h3>
+      <div class="fact-bloque-filtros">
+        <div>
+          <label>Año escolar</label>
+          <select id="blq-anio-escolar" onchange="factBloqueCargar()">
+            <option value="2024/2025">2024/2025</option>
+            <option value="2025/2026" selected>2025/2026</option>
+          </select>
+        </div>
+        <div>
+          <label>Especialidad</label>
+          <select id="blq-especialidad" onchange="factBloqueCargar()">
+            <option value="">Todas</option>
+            <option value="PSI">Psicología (PSI)</option>
+            <option value="LOG">Logopedia (LOG)</option>
+          </select>
+        </div>
+        <div>
+          <label>Fecha de factura</label>
+          <input type="date" id="blq-fecha">
+        </div>
+        <div style="padding-bottom:2px">
+          <button class="btn-emitir-bloque" id="btn-blq-recargar" onclick="factBloqueCargar()" style="background:#fff;color:var(--azul);border:1.5px solid var(--azul);padding:6px 14px;font-size:12px">
+            Actualizar lista
+          </button>
+        </div>
+      </div>
+      <div id="fact-bloque-lista-wrap" class="fact-bloque-lista">
+        <div style="color:var(--ink-muted);font-size:13px;padding:10px 0">Selecciona los filtros y pulsa «Actualizar lista».</div>
+      </div>
+      <div class="fact-bloque-acciones">
+        <div class="fact-bloque-info" id="blq-info-txt"></div>
+        <button class="btn-emitir-bloque" id="btn-blq-emitir" onclick="factBloqueEmitir()" disabled>
+          Emitir todas las facturas
+        </button>
+      </div>
+      <div class="fact-bloque-progress" id="blq-progress">
+        <div class="fact-bloque-progress-bar"><div class="fact-bloque-progress-bar-fill" id="blq-progress-fill" style="width:0%"></div></div>
+        <div class="fact-bloque-progress-txt" id="blq-progress-txt"></div>
+      </div>
     </div>
 
     <!-- Filtros -->
@@ -4251,17 +4330,51 @@ function factGenerarPDF(f, descargar = true) {
   y += 7;
 
   doc.setFillColor(...CREAM);
-  const clienteLines = [
-    f.receptor_nombre,
-    f.receptor_dni ? `D.N.I.: ${f.receptor_dni}` : null,
-    f.receptor_direccion,
-    [f.receptor_cp, f.receptor_municipio].filter(Boolean).join(' · '),
-  ].filter(Boolean);
-  const clienteH = Math.max(18, clienteLines.length * 5 + 6);
-  doc.rect(M, y, W - M * 2, clienteH, 'F');
-  doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.setTextColor(...DARK);
-  clienteLines.forEach((l, i) => doc.text(l, M + 4, y + 6 + i * 5));
-  y += clienteH + 8;
+  // Detectar si es factura de beca (tiene _pac_nombre y _especialidad)
+  const esBeca = !!(f._pac_nombre && f._especialidad);
+  if (esBeca) {
+    // Formato Junta de Andalucía: BENEFICIARIO + TUTOR/A LEGAL
+    const pacNom = f._pac_nombre || '';
+    const tutorNom = f.receptor_nombre || '';
+    const tutorDNI = f.receptor_dni ? `D.N.I.:${f.receptor_dni}` : '';
+    const tutorDir = f.receptor_direccion || '';
+    const tutorCP  = f.receptor_cp ? `C.P./${f.receptor_cp}` : '';
+    const tutorMun = f.receptor_municipio || '';
+
+    const becaLines = [
+      { bold: true,  italic: true,  txt: `BENEFICIARIO/A BECA NEAE CURSO ${f._anio_escolar||''}: ${pacNom}` },
+      { bold: true,  italic: true,  txt: `PADRE/MADRE O TUTOR/A LEGAL: ${tutorNom}` },
+      { bold: false, italic: true,  txt: tutorDNI },
+      { bold: false, italic: false, txt: tutorDir ? `C/ ${tutorDir}` : '' },
+      { bold: false, italic: false, txt: tutorCP },
+      { bold: false, italic: false, txt: tutorMun },
+    ].filter(l => l.txt);
+
+    const clienteH = Math.max(24, becaLines.length * 5 + 8);
+    doc.rect(M, y, W - M * 2, clienteH, 'F');
+    let cy = y + 6;
+    becaLines.forEach(l => {
+      const style = l.bold ? (l.italic ? 'bolditalic' : 'bold') : (l.italic ? 'italic' : 'normal');
+      doc.setFont('helvetica', style);
+      doc.setFontSize(8.5);
+      doc.setTextColor(...DARK);
+      doc.text(l.txt, M + 4, cy);
+      cy += 5;
+    });
+    y += clienteH + 8;
+  } else {
+    const clienteLines = [
+      f.receptor_nombre,
+      f.receptor_dni ? `D.N.I.: ${f.receptor_dni}` : null,
+      f.receptor_direccion,
+      [f.receptor_cp, f.receptor_municipio].filter(Boolean).join(' · '),
+    ].filter(Boolean);
+    const clienteH = Math.max(18, clienteLines.length * 5 + 6);
+    doc.rect(M, y, W - M * 2, clienteH, 'F');
+    doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.setTextColor(...DARK);
+    clienteLines.forEach((l, i) => doc.text(l, M + 4, y + 6 + i * 5));
+    y += clienteH + 8;
+  }
 
   // ── Tabla de conceptos ──────────────────────────────────
   const colW = [W - M * 2 - 50 - 40 - 40, 50, 40, 40];
@@ -4284,23 +4397,44 @@ function factGenerarPDF(f, descargar = true) {
   // Filas
   lineas.forEach((l, idx) => {
     const bg = idx % 2 === 0 ? WHITE : CREAM;
-    const rowH = 14;
+    // Para becas: el concepto puede tener saltos de línea → calcular altura dinámica
+    const rawConcepto = l.concepto || '';
+    const sublineas = rawConcepto.split('\n').filter(Boolean);
+    // Primera sublínea en negrita (es el título del concepto), resto en normal
+    let allConcLines = [];
+    sublineas.forEach((sl, si) => {
+      const wrapped = doc.splitTextToSize(sl, colW[0] - 6);
+      allConcLines.push({ lines: wrapped, bold: si === 0 });
+    });
+    const totalTextLines = allConcLines.reduce((s, g) => s + g.lines.length, 0);
+    const rowH = Math.max(14, totalTextLines * 4.5 + 8);
+
     doc.setFillColor(...bg); doc.rect(M, y, W - M * 2, rowH, 'F');
     doc.setDrawColor(...BORDER); doc.setLineWidth(0.2);
     doc.line(M, y + rowH, W - M, y + rowH);
 
-    doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(...DARK);
-    const concLines = doc.splitTextToSize(l.concepto || '', colW[0] - 6);
-    doc.text(concLines, M + 3, y + 5);
+    // Renderizar líneas de concepto
+    let ty = y + 5;
+    allConcLines.forEach(grp => {
+      doc.setFont('helvetica', grp.bold ? 'bold' : 'normal');
+      doc.setFontSize(7.5); doc.setTextColor(...DARK);
+      grp.lines.forEach(ln => { doc.text(ln, M + 3, ty); ty += 4.2; });
+    });
 
-    doc.setTextColor(...MUTED);
+    // Columnas numéricas centradas verticalmente
+    const midY = y + rowH / 2 + 1.5;
+    doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(...MUTED);
     cx = M + colW[0];
-    doc.text(String(l.horas || 1) + ' h', cx + colW[1] / 2, y + 7.5, { align: 'center' });
-    cx += colW[1];
-    doc.text(fmtEurFact(l.precio || 0), cx + colW[2] / 2, y + 7.5, { align: 'center' });
-    cx += colW[2];
+    if (l.horas && l.precio) {
+      doc.text(String(l.horas) + ' h', cx + colW[1] / 2, midY, { align: 'center' });
+      cx += colW[1];
+      doc.text(fmtEurFact(l.precio || 0), cx + colW[2] / 2, midY, { align: 'center' });
+      cx += colW[2];
+    } else {
+      cx += colW[1] + colW[2];
+    }
     doc.setTextColor(...DARK); doc.setFont('helvetica','bold');
-    doc.text(fmtEurFact(l.total || 0), cx + colW[3] / 2, y + 7.5, { align: 'center' });
+    doc.text(fmtEurFact(l.total || 0), cx + colW[3] / 2, midY, { align: 'center' });
     y += rowH;
   });
 
@@ -5628,6 +5762,260 @@ async function proGuardar() {
   } catch(e) {
     toast('Error: ' + e.message, true);
   }
+}
+
+/* ═══════════════════════════════════════════
+   FACTURAS — EMISIÓN EN BLOQUE BECAS
+═══════════════════════════════════════════ */
+const BLOQUE = {
+  becas: [],          // bonos_becas tipo BECA cargados
+  candidatos: [],     // becas sin factura emitida
+};
+
+function factBloqueToggle() {
+  const panel = document.getElementById('fact-bloque-panel');
+  panel.classList.toggle('open');
+  if (panel.classList.contains('open')) {
+    // Fecha por defecto: último día del mes actual
+    const hoy = new Date();
+    const ult = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 0);
+    const iso = ult.getFullYear() + '-' + String(ult.getMonth()+1).padStart(2,'0') + '-' + String(ult.getDate()).padStart(2,'0');
+    document.getElementById('blq-fecha').value = iso;
+    factBloqueCargar();
+  }
+}
+
+async function factBloqueCargar() {
+  const anioEscolar  = document.getElementById('blq-anio-escolar').value;
+  const especialidad = document.getElementById('blq-especialidad').value;
+  const wrap = document.getElementById('fact-bloque-lista-wrap');
+  const btnEmitir = document.getElementById('btn-blq-emitir');
+  document.getElementById('blq-info-txt').textContent = '';
+  btnEmitir.disabled = true;
+  wrap.innerHTML = '<div style="color:var(--ink-muted);font-size:13px;padding:10px 0"><span class="spinner"></span> Cargando becas…</div>';
+
+  try {
+    // 1. Cargar becas activas del año escolar
+    let url = `bonos_becas?tipo=eq.BECA&anio_escolar=eq.${encodeURIComponent(anioEscolar)}&select=*`;
+    const becas = await sg(url);
+
+    // 2. Filtrar por especialidad si procede
+    const becasFiltradas = especialidad
+      ? becas.filter(b => b.especialidad === especialidad)
+      : becas;
+
+    // 3. Cruzar con facturas ya emitidas para ese año escolar
+    // Buscamos facturas que referencien estos pacientes y cuyo concepto incluya el año escolar
+    const idsPacientes = [...new Set(becasFiltradas.map(b => b.id_paciente).filter(Boolean))];
+
+    let facturasExistentes = [];
+    if (idsPacientes.length) {
+      // Cargamos facturas del ejercicio fiscal correspondiente
+      const anioFactura = parseInt((anioEscolar || '2025/2026').split('/')[1] || '2026');
+      try {
+        const facs = await sg(`facturas?fecha=gte.${anioFactura-1}-01-01&fecha=lte.${anioFactura}-12-31&select=id_paciente_v2,numero_factura,lineas`);
+        // Solo las que sean de beca (lineas contienen el año escolar o el concepto clave)
+        facturasExistentes = facs.filter(f => {
+          const lineas = Array.isArray(f.lineas) ? f.lineas : (typeof f.lineas === 'string' ? JSON.parse(f.lineas||'[]') : []);
+          return lineas.some(l => (l.concepto||'').toUpperCase().includes('BECA') && (l.concepto||'').includes(anioEscolar));
+        });
+      } catch { /* no crítico */ }
+    }
+
+    const pacientesYaFacturados = new Set(facturasExistentes.map(f => f.id_paciente_v2).filter(Boolean));
+
+    // 4. Candidatos = becas sin factura beca emitida para ese año escolar
+    const pacMap = {};
+    (G.pacientes || []).forEach(p => { pacMap[p.id] = p; });
+
+    BLOQUE.candidatos = becasFiltradas.map(b => {
+      const pac = pacMap[b.id_paciente] || {};
+      const yaFacturado = pacientesYaFacturados.has(b.id_paciente);
+      const tieneTutor  = !!(pac.nombre_tutor1);
+      const tieneDNI    = !!(pac.dni_tutor1);
+      return { ...b, pac, yaFacturado, tieneTutor, tieneDNI };
+    });
+
+    const pendientes = BLOQUE.candidatos.filter(c => !c.yaFacturado);
+    const sinDatos   = pendientes.filter(c => !c.tieneTutor || !c.tieneDNI);
+    const listos     = pendientes.filter(c => c.tieneTutor && c.tieneDNI);
+
+    // Render tabla
+    if (!BLOQUE.candidatos.length) {
+      wrap.innerHTML = '<div style="color:var(--ink-muted);font-size:13px;padding:10px 0">No hay becas para los filtros seleccionados.</div>';
+      return;
+    }
+
+    let html = `<table><thead><tr>
+      <th>Paciente</th><th>Especialidad</th><th>Tutor / Receptor</th><th>DNI</th><th>Estado</th>
+    </tr></thead><tbody>`;
+
+    BLOQUE.candidatos.forEach(c => {
+      const nomPac = ((c.pac.nombre||'') + ' ' + (c.pac.apellidos||'')).trim() || c.id_paciente;
+      const nomTutor = c.pac.nombre_tutor1 || '—';
+      const dni = c.pac.dni_tutor1 || '—';
+      let estadoBadge;
+      if (c.yaFacturado) {
+        estadoBadge = '<span class="fact-bloque-badge-ok">Ya facturada</span>';
+      } else if (!c.tieneTutor || !c.tieneDNI) {
+        estadoBadge = '<span class="fact-bloque-badge-warn">Datos incompletos</span>';
+      } else {
+        estadoBadge = '<span class="fact-bloque-badge-ok">Lista para emitir</span>';
+      }
+      const rowStyle = c.yaFacturado ? 'opacity:.45' : '';
+      html += `<tr style="${rowStyle}">
+        <td><strong>${nomPac}</strong><br><span style="color:var(--ink-muted);font-size:11px">${c.id_paciente}</span></td>
+        <td>${c.especialidad || '—'}</td>
+        <td>${nomTutor}</td>
+        <td>${dni}</td>
+        <td>${estadoBadge}</td>
+      </tr>`;
+    });
+    html += '</tbody></table>';
+    wrap.innerHTML = html;
+
+    // Info y botón
+    let infoTxt = `${pendientes.length} facturas pendientes`;
+    if (sinDatos.length) infoTxt += ` · ${sinDatos.length} con datos incompletos (se omitirán)`;
+    if (listos.length) infoTxt += ` · ${listos.length} listas para emitir`;
+    document.getElementById('blq-info-txt').textContent = infoTxt;
+    btnEmitir.disabled = listos.length === 0;
+    btnEmitir.textContent = listos.length > 0 ? `Emitir ${listos.length} facturas` : 'Emitir todas las facturas';
+
+  } catch(e) {
+    wrap.innerHTML = `<div style="color:var(--rojo);font-size:13px;padding:10px 0">Error: ${e.message}</div>`;
+  }
+}
+
+async function factBloqueEmitir() {
+  const listos = BLOQUE.candidatos.filter(c => !c.yaFacturado && c.tieneTutor && c.tieneDNI);
+  if (!listos.length) return;
+
+  const fecha = document.getElementById('blq-fecha').value;
+  if (!fecha) { toast('Selecciona una fecha de factura', true); return; }
+
+  const anioEscolar = document.getElementById('blq-anio-escolar').value;
+  const btnEmitir = document.getElementById('btn-blq-emitir');
+  const progressEl = document.getElementById('blq-progress');
+  const fillEl = document.getElementById('blq-progress-fill');
+  const txtEl = document.getElementById('blq-progress-txt');
+
+  btnEmitir.disabled = true;
+  progressEl.style.display = 'block';
+
+  await factCargarEmisor();
+
+  // Número de factura de partida
+  let nextNum = 1;
+  try {
+    const last = await sg('facturas?order=numero_factura.desc&limit=5&select=numero_factura');
+    const anio = new Date(fecha).getFullYear();
+    const thisYear = last.filter(f => (f.numero_factura||'').includes(String(anio)));
+    if (thisYear.length) {
+      const nums = thisYear.map(f => parseInt((f.numero_factura||'').split('/')[0])).filter(n => !isNaN(n));
+      if (nums.length) nextNum = Math.max(...nums) + 1;
+    }
+  } catch { /* primera */ }
+
+  let emitidas = 0;
+  let errores = 0;
+
+  for (let i = 0; i < listos.length; i++) {
+    const c = listos[i];
+    const pct = Math.round((i / listos.length) * 100);
+    fillEl.style.width = pct + '%';
+    txtEl.textContent = `Emitiendo ${i+1} de ${listos.length}: ${(c.pac.nombre||'')} ${(c.pac.apellidos||'')}…`;
+
+    try {
+      const anio = new Date(fecha).getFullYear();
+      const numFactura = `${String(nextNum).padStart(3,'0')}/${anio}`;
+      nextNum++;
+
+      // Concepto según especialidad
+      const esp = c.especialidad || 'PSI';
+      const tipoTexto = esp === 'LOG' ? 'reeducación del lenguaje' : 'reeducación psicopedagógica';
+      const concepto1 = `"BECA DE ${esp === 'LOG' ? 'REEDUCACIÓN DEL LENGUAJE' : 'REEDUCACIÓN PSICOPEDAGÓGICA'}. CURSO ${anioEscolar}"`;
+
+      // Fechas descriptivas del período (enero a junio del año de fin)
+      const anioFin = parseInt((anioEscolar||'2025/2026').split('/')[1] || '2026');
+      const anioIni = anioFin - 1;
+      const detalle1 = `* 20 Sesiones de ${tipoTexto} de Enero a Junio de ${anioFin}.`;
+      const detalle2 = `* Una sesión de repaso${esp === 'LOG' ? ' extra' : ''} en Junio`;
+
+      // Dirección del tutor
+      const pac = c.pac;
+      // Parsear dirección del tutor si está en un solo campo
+      let recDir = pac.direccion_tutor1 || '';
+      let recCP = '';
+      let recMun = '';
+      // Intentar extraer CP y municipio si están en la dirección
+      const cpMatch = recDir.match(/\b(\d{5})\b/);
+      if (cpMatch) {
+        recCP = cpMatch[1];
+        recDir = recDir.replace(cpMatch[0], '').replace(/\s{2,}/g,' ').trim().replace(/[·,]+$/, '').trim();
+      }
+      // Municipio por defecto desde datos del paciente
+      if (!recMun) recMun = pac.municipio || 'Las Gabias';
+
+      const lineas = [
+        { concepto: concepto1 + '\n' + detalle1, horas: 20, precio: 45, total: 900 },
+        { concepto: detalle2, horas: 1, precio: 13, total: 13 },
+      ];
+      const base = 913;
+      const total = 913;
+
+      const datos = {
+        id_factura:         'FAC-' + String(Date.now()).slice(-6) + String(i).padStart(2,'0'),
+        numero_factura:     numFactura,
+        fecha,
+        estado:             'Emitida',
+        id_paciente_v2:     c.id_paciente,
+        receptor_nombre:    pac.nombre_tutor1,
+        receptor_dni:       pac.dni_tutor1,
+        receptor_direccion: recDir || null,
+        receptor_cp:        recCP || null,
+        receptor_municipio: recMun || null,
+        lineas,
+        base_imponible:     base,
+        iva_pct:            0,
+        iva_importe:        0,
+        irpf_pct:           0,
+        irpf_importe:       0,
+        total,
+        notas:              FACT.emisor?.texto_exencion || null,
+      };
+
+      await sp('facturas', datos);
+      FACT.facturas.unshift({ ...datos });
+      emitidas++;
+
+      // Generar y descargar PDF automáticamente
+      const pacNom = ((pac.nombre||'')+' '+(pac.apellidos||'')).trim();
+      factGenerarPDFBeca({ ...datos, _pac_nombre: pacNom, _especialidad: esp, _anio_escolar: anioEscolar }, true);
+
+      // Pequeña pausa para no saturar
+      await new Promise(r => setTimeout(r, 300));
+
+    } catch(e) {
+      console.error('Error emitiendo factura para', c.id_paciente, e);
+      errores++;
+    }
+  }
+
+  fillEl.style.width = '100%';
+  txtEl.textContent = `✓ ${emitidas} facturas emitidas${errores ? ` · ${errores} errores` : ''}`;
+
+  factFiltrar();
+  toast(`${emitidas} facturas emitidas correctamente${errores ? ` (${errores} errores)` : ''}`, errores > 0, true);
+
+  // Recargar lista para reflejar estado
+  setTimeout(() => factBloqueCargar(), 800);
+}
+
+/* Versión del PDF adaptada al formato Junta para becas */
+function factGenerarPDFBeca(f, descargar) {
+  // Reutiliza factGenerarPDF pero con datos ya preparados
+  factGenerarPDF(f, descargar);
 }
 
 /* ═══════════════════════════════════════════
