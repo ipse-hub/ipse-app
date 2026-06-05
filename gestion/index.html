@@ -4034,6 +4034,15 @@ async function factNuevaFactura(prefill) {
       // Guardar meta para el PDF
       FACT._beca_meta = prefill._beca_meta;
     }
+    // Guardar campos de vínculo para persistirlos al guardar
+    FACT._vinculo = {
+      tipo_factura:    prefill.tipo_factura    || null,
+      curso_academico: prefill.curso_academico || null,
+      id_bono:         prefill.id_bono         || null,
+      id_cita:         prefill.id_cita         || null,
+    };
+  } else {
+    FACT._vinculo = null;
   }
   factRenderLineas();
   factRecalcular();
@@ -4190,7 +4199,7 @@ function factRecogerDatos() {
 }
 
 async function factGuardar(yDescargar = false) {
-  const datos = factRecogerDatos();
+  const datos = { ...factRecogerDatos(), ...(FACT._vinculo || {}) };
   if (!datos.numero_factura) { toast('El número de factura es obligatorio', true); return; }
   if (!datos.fecha)          { toast('La fecha es obligatoria', true); return; }
   if (!datos.receptor_nombre){ toast('El receptor es obligatorio', true); return; }
@@ -5639,7 +5648,7 @@ async function factBloqueCargar() {
     const bf=especialidad?becas.filter(b=>b.especialidad===especialidad):becas;
     const anioF=parseInt((anioEscolar||'2025/2026').split('/')[1]||'2026');
     let fexi=[];
-    try{const fs=await sg(`facturas?fecha=gte.${anioF-1}-01-01&fecha=lte.${anioF}-12-31&select=id_paciente_v2,lineas`);fexi=fs.filter(f=>{const ls=Array.isArray(f.lineas)?f.lineas:(typeof f.lineas==='string'?JSON.parse(f.lineas||'[]'):[]);return ls.some(l=>(l.concepto||'').toUpperCase().includes('BECA')&&(l.concepto||'').includes(anioEscolar));});}catch{}
+    try{fexi=await sg(`facturas?tipo_factura=eq.beca&curso_academico=eq.${encodeURIComponent(anioEscolar)}&estado=neq.Anulada&select=id_paciente_v2`);}catch{}
     const yafact=new Set(fexi.map(f=>f.id_paciente_v2).filter(Boolean));
     const pm={};(G.pacientes||[]).forEach(p=>{pm[p.id]=p;});
     BLOQUE.candidatos=bf.map(b=>{const pac=pm[b.id_paciente]||{};return{...b,pac,yaFacturado:yafact.has(b.id_paciente),tieneTutor:!!(pac.nombre_tutor1),tieneDNI:!!(pac.dni_tutor1)};});
@@ -5682,7 +5691,7 @@ async function factBloqueEmitir() {
       const tit='"BECA DE '+(esp==='LOG'?'REEDUCACIÓN DEL LENGUAJE':'REEDUCACIÓN PSICOPEDAGÓGICA')+'. CURSO '+anioEscolar+'"';
       const lineas=[{concepto:tit+'\n* 20 Sesiones de '+tt+' de Enero a Junio de '+anioFin+'.',horas:20,precio:45,total:900},{concepto:'* Una sesión de repaso'+(esp==='LOG'?' extra':'')+' en Junio',horas:1,precio:13,total:13}];
       const pac=c.pac;
-      const datos={id_factura:'FAC-'+String(Date.now()).slice(-6)+String(i).padStart(2,'0'),numero_factura:nf,fecha,estado:'Emitida',id_paciente_v2:c.id_paciente,receptor_nombre:pac.nombre_tutor1,receptor_dni:pac.dni_tutor1,receptor_direccion:pac.direccion_tutor1||null,receptor_cp:null,receptor_municipio:pac.municipio||'Las Gabias',lineas,base_imponible:913,iva_pct:0,iva_importe:0,irpf_pct:0,irpf_importe:0,total:913,notas:FACT.emisor?.texto_exencion||null};
+      const datos={id_factura:'FAC-'+String(Date.now()).slice(-6)+String(i).padStart(2,'0'),numero_factura:nf,fecha,estado:'Emitida',tipo_factura:'beca',curso_academico:anioEscolar,id_paciente_v2:c.id_paciente,receptor_nombre:pac.nombre_tutor1,receptor_dni:pac.dni_tutor1,receptor_direccion:pac.direccion_tutor1||null,receptor_cp:null,receptor_municipio:pac.municipio||'Las Gabias',lineas,base_imponible:913,iva_pct:0,iva_importe:0,irpf_pct:0,irpf_importe:0,total:913,notas:FACT.emisor?.texto_exencion||null};
       await sp('facturas',datos);FACT.facturas.unshift({...datos});
       factGenerarPDF({...datos,_pac_nombre:((pac.nombre||'')+' '+(pac.apellidos||'')).trim(),_especialidad:esp,_anio_escolar:anioEscolar},true);
       emitidas++;await new Promise(r=>setTimeout(r,300));
@@ -6250,7 +6259,6 @@ async function bbGenerarFactura(idBonoBeca) {
   const r = BB.todos.find(x => x.id === idBonoBeca);
   if (!r) return;
 
-  // Construir prefill según tipo
   const pac = (G.pacientes||[]).find(p => p.id === r.id_paciente) || {};
   let prefill;
 
@@ -6258,10 +6266,22 @@ async function bbGenerarFactura(idBonoBeca) {
     const esp = r.especialidad || 'PSI';
     const anioEscolar = r.anio_escolar || '';
     const anioFin = parseInt((anioEscolar||'2025/2026').split('/')[1]||'2026');
+
+    // Guard: comprobar si ya existe factura activa para este paciente+curso
+    try {
+      const existe = await sg(`facturas?tipo_factura=eq.beca&curso_academico=eq.${encodeURIComponent(anioEscolar)}&id_paciente_v2=eq.${r.id_paciente}&estado=neq.Anulada&select=numero_factura&limit=1`);
+      if (existe && existe.length > 0) {
+        bbToast(`Ya existe la factura ${existe[0].numero_factura} para este paciente y curso. Anúlala primero si necesitas volver a facturar.`, 'error');
+        return;
+      }
+    } catch(e) { console.warn('Guard beca:', e); }
+
     const tipoTexto = esp==='LOG' ? 'reeducación del lenguaje' : 'reeducación psicopedagógica';
     const titulo = '"BECA DE '+(esp==='LOG'?'REEDUCACIÓN DEL LENGUAJE':'REEDUCACIÓN PSICOPEDAGÓGICA')+'. CURSO '+anioEscolar+'"';
     prefill = {
       id_paciente_v2:     r.id_paciente,
+      tipo_factura:       'beca',
+      curso_academico:    anioEscolar,
       receptor_nombre:    pac.nombre_tutor1 || null,
       receptor_dni:       pac.dni_tutor1 || null,
       receptor_direccion: pac.direccion_tutor1 || null,
@@ -6278,12 +6298,15 @@ async function bbGenerarFactura(idBonoBeca) {
       }
     };
   } else {
-    // Bono privado
+    // Bono privado — receptor: tutor si menor, paciente si mayor
+    const esMenor = pac.tiene_tutor === 'Si';
     prefill = {
       id_paciente_v2:     r.id_paciente,
-      receptor_nombre:    pac.nombre_tutor1 || ((pac.nombre||'')+' '+(pac.apellidos||'')).trim() || null,
-      receptor_dni:       pac.dni_tutor1 || pac.dni || null,
-      receptor_direccion: pac.direccion || null,
+      tipo_factura:       'bono',
+      id_bono:            r.id,
+      receptor_nombre:    esMenor ? (pac.nombre_tutor1||null) : ((pac.nombre||'')+' '+(pac.apellidos||'')).trim()||null,
+      receptor_dni:       esMenor ? (pac.dni_tutor1||null) : (pac.dni||null),
+      receptor_direccion: esMenor ? (pac.direccion_tutor1||null) : (pac.direccion||null),
       receptor_cp:        pac.codigo_postal || null,
       receptor_municipio: pac.municipio || null,
       lineas: [
@@ -6294,7 +6317,6 @@ async function bbGenerarFactura(idBonoBeca) {
 
   // Navegar y abrir modal con datos ya cargados
   navTo('facturas');
-  // Esperar a que factCargar() termine (es async lanzado por navTo)
   await new Promise(r => setTimeout(r, 350));
   factNuevaFactura(prefill);
 }
