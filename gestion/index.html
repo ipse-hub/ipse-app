@@ -4272,9 +4272,9 @@ function factGenerarPDF(f, descargar = true) {
   // Encabezado emisor — alineado a la izquierda del bloque derecho
   const exl=W/2+10;
   const profRaw=em.profesional||'Inés Ferreira Reyes. Psicóloga Sanitaria. Máster en Psicología Infanto-Juvenil.';
-  const profPartes=profRaw.split(/Máster/);
-  const profL1=profPartes[0].trim().replace(/\.$/,'.');
-  const profL2=profPartes.length>1?'Máster'+profPartes[1].trim():'';
+  const profIdx=profRaw.indexOf('ster en');
+  const profL1=profIdx>0?profRaw.slice(0,profIdx-2).trim():profRaw;
+  const profL2=profIdx>0?profRaw.slice(profIdx-2).trim():'';
   const emLineas=[
     [em.nombre_clinica||'IPSE. Instituto Psicoeducativo.',true],
     [em.nica?'N.I.C.A.: '+em.nica:'N.I.C.A.: 60.178',true],
