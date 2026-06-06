@@ -4311,7 +4311,7 @@ function factGenerarPDF(f, descargar = true) {
   const esBeca=!!(f._pac_nombre&&f._especialidad);
   if(esBeca){
     const pN=(f._pac_nombre||'').toUpperCase(),tN=(f.receptor_nombre||'').toUpperCase();
-    const cls=[{txt:'BENEFICIARIO/A BECA NEAE CURSO '+(f._anio_escolar||'')+': '+pN,b:true,i:true},{txt:'PADRE/MADRE O TUTOR/A LEGAL: '+tN,b:true,i:true},{txt:f.receptor_dni?'D.N.I.:'+f.receptor_dni:'',b:false,i:true},{txt:f.receptor_direccion?'C/ '+f.receptor_direccion:'',b:false,i:false},{txt:f.receptor_cp?'C.P./'+f.receptor_cp:'',b:false,i:false},{txt:f.receptor_municipio||'',b:false,i:false}].filter(l=>l.txt);
+    const cls=[{txt:'BENEFICIARIO/A BECA NEAE CURSO '+(f._anio_escolar||'')+': '+pN,b:true,i:true},{txt:'PADRE/MADRE O TUTOR/A LEGAL: '+tN,b:true,i:true},{txt:f.receptor_dni?'D.N.I.:'+f.receptor_dni:'',b:false,i:true},{txt:f.receptor_direccion||'',b:false,i:false},{txt:f.receptor_cp?'C.P./'+f.receptor_cp:'',b:false,i:false},{txt:f.receptor_municipio||'',b:false,i:false}].filter(l=>l.txt);
     const ch=Math.max(28,cls.length*5.2+8);doc.setDrawColor(...BORDR);doc.setLineWidth(0.3);doc.rect(M,y,W-M*2,ch);
     let cy=y+7;cls.forEach(l=>{doc.setFont('helvetica',l.b?(l.i?'bolditalic':'bold'):(l.i?'italic':'normal'));doc.setFontSize(9);doc.setTextColor(...DARK);doc.splitTextToSize(l.txt,W-M*2-8).forEach(ln=>{doc.text(ln,M+4,cy);cy+=5;});});y+=ch+4;
   }else{
