@@ -3170,7 +3170,7 @@ function renderP360Datos(p) {
     campo('DNI / NIE', p.dni_tutor1),
     campoA('Teléfono', p.telefono, `tel:${p.telefono}`),
     campoA('Email', p.tutor1_email || p.email, `mailto:${p.tutor1_email || p.email}`),
-    campo('Dirección', p.tutor1_direccion || [p.direccion, p.codigo_postal, p.municipio].filter(Boolean).join(', ')),
+    campo('Dirección', p.direccion_tutor1 || [p.direccion, p.codigo_postal, p.municipio].filter(Boolean).join(', ')),
   ].join('');
 
   // Tutor 2
@@ -4116,7 +4116,7 @@ function factSelPaciente(id) {
     const nombre = p.tutor1 || `${p.nombre} ${p.apellidos||''}`.trim();
     document.getElementById('fact-rec-nombre').value = nombre;
     if (p.dni_tutor1) document.getElementById('fact-rec-dni').value = p.dni_tutor1;
-    if (p.tutor1_direccion) document.getElementById('fact-rec-dir').value = p.tutor1_direccion;
+    if (p.direccion_tutor1) document.getElementById('fact-rec-dir').value = p.direccion_tutor1;
     if (p.codigo_postal)    document.getElementById('fact-rec-cp').value = p.codigo_postal;
     if (p.municipio)        document.getElementById('fact-rec-municipio').value = p.municipio;
   }
@@ -5692,7 +5692,7 @@ async function factBloqueEmitir() {
       const tit='"BECA DE '+(esp==='LOG'?'REEDUCACIÓN DEL LENGUAJE':'REEDUCACIÓN PSICOPEDAGÓGICA')+'. CURSO '+anioEscolar+'"';
       const lineas=[{concepto:tit+'\n* 20 Sesiones de '+tt+' de Enero a Junio de '+anioFin+'.',horas:20,precio:45,total:900},{concepto:'* Una sesión de repaso'+(esp==='LOG'?' extra':'')+' en Junio',horas:1,precio:13,total:13}];
       const pac=c.pac;
-      const datos={id_factura:'FAC-'+String(Date.now()).slice(-6)+String(i).padStart(2,'0'),numero_factura:nf,fecha,estado:'Emitida',tipo_factura:'beca',curso_academico:anioEscolar,id_paciente_v2:c.id_paciente,receptor_nombre:pac.nombre_tutor1,receptor_dni:pac.dni_tutor1,receptor_direccion:pac.direccion_tutor1||null,receptor_cp:null,receptor_municipio:pac.municipio||'Las Gabias',lineas,base_imponible:913,iva_pct:0,iva_importe:0,irpf_pct:0,irpf_importe:0,total:913,notas:FACT.emisor?.texto_exencion||null};
+      const datos={id_factura:'FAC-'+String(Date.now()).slice(-6)+String(i).padStart(2,'0'),numero_factura:nf,fecha,estado:'Emitida',tipo_factura:'beca',curso_academico:anioEscolar,id_paciente_v2:c.id_paciente,receptor_nombre:pac.nombre_tutor1,receptor_dni:pac.dni_tutor1,receptor_direccion:pac.direccion_tutor1||pac.direccion||null,receptor_cp:null,receptor_municipio:pac.municipio||'Las Gabias',lineas,base_imponible:913,iva_pct:0,iva_importe:0,irpf_pct:0,irpf_importe:0,total:913,notas:FACT.emisor?.texto_exencion||null};
       await sp('facturas',datos);FACT.facturas.unshift({...datos});
       factGenerarPDF({...datos,_pac_nombre:((pac.nombre||'')+' '+(pac.apellidos||'')).trim(),_especialidad:esp,_anio_escolar:anioEscolar},true);
       emitidas++;await new Promise(r=>setTimeout(r,300));
@@ -6285,7 +6285,7 @@ async function bbGenerarFactura(idBonoBeca) {
       curso_academico:    anioEscolar,
       receptor_nombre:    pac.nombre_tutor1 || null,
       receptor_dni:       pac.dni_tutor1 || null,
-      receptor_direccion: pac.direccion_tutor1 || null,
+      receptor_direccion: pac.direccion_tutor1 || pac.direccion || null,
       receptor_cp:        null,
       receptor_municipio: pac.municipio || null,
       lineas: [
