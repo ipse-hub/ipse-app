@@ -493,7 +493,7 @@ td.muted{color:var(--ink-muted);font-size:12px}
 /* ── MÓDULO BONOS/BECAS ── */
 .bb-wrap{flex:1;min-height:0;overflow-y:auto;padding:16px 20px;display:flex;gap:16px}
 .bb-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:12px}
-.bb-panel{width:360px;flex-shrink:0;display:flex;flex-direction:column;gap:0;background:var(--white);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow);overflow:hidden;align-self:flex-start;position:sticky;top:0}
+.bb-panel{width:420px;max-width:96vw;max-height:90vh;display:flex;flex-direction:column;gap:0;background:var(--white);border-radius:16px;box-shadow:var(--shadow-lg);overflow:hidden;animation:modalIn .2s ease}
 .bb-panel.hidden{display:none}
 /* Tabs BONO / BECA */
 .bb-tabs{display:flex;gap:2px;background:var(--cream);border-radius:10px;padding:3px;border:1px solid var(--border);max-width:280px}
@@ -551,7 +551,7 @@ td.muted{color:var(--ink-muted);font-size:12px}
 .bb-panel-sub{font-size:12px;color:var(--ink-muted)}
 .bb-panel-close{width:28px;height:28px;display:flex;align-items:center;justify-content:center;border:none;background:none;cursor:pointer;color:var(--ink-muted);border-radius:6px;flex-shrink:0;font-size:18px;line-height:1}
 .bb-panel-close:hover{background:var(--cream);color:var(--ink)}
-.bb-panel-body{padding:16px 18px;display:flex;flex-direction:column;gap:12px;overflow-y:auto;max-height:calc(100vh - 200px)}
+.bb-panel-body{padding:16px 18px;display:flex;flex-direction:column;gap:12px;overflow-y:auto;flex:1}
 .bb-panel-kpis{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .bb-panel-kpi{background:var(--cream);border-radius:8px;padding:10px 12px}
 .bb-panel-kpi-val{font-size:18px;font-weight:700;color:var(--azul);font-family:'DM Mono',monospace}
@@ -1754,6 +1754,10 @@ td.muted{color:var(--ink-muted);font-size:12px}
             <div class="bb-tab" id="bb-tab-bono" onclick="bbCambiarTipo('BONO')">Bonos</div>
           </div>
           <div class="bb-toolbar" style="flex:1">
+            <div style="position:relative;flex:1;min-width:160px">
+              <svg style="position:absolute;left:9px;top:50%;transform:translateY(-50%);width:14px;height:14px;stroke:var(--ink-muted);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;pointer-events:none" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <input type="text" id="bb-fil-buscar" placeholder="Buscar paciente..." oninput="bbAplicarFiltros()" autocomplete="off" style="width:100%;padding:7px 10px 7px 30px;border:1px solid var(--border);border-radius:8px;font-family:inherit;font-size:13px;background:var(--white);color:var(--ink);box-sizing:border-box">
+            </div>
             <select class="bb-sel" id="bb-fil-estado" onchange="bbAplicarFiltros()">
               <option value="">Todos los estados</option>
               <option value="vigente">Vigente</option>
@@ -1804,39 +1808,38 @@ td.muted{color:var(--ink-muted);font-size:12px}
         </div>
       </div>
 
-      <!-- Panel detalle (lateral derecho) -->
-      <div class="bb-panel hidden" id="bb-panel">
-        <div class="bb-panel-hdr">
-          <div class="bb-panel-hdr-info">
-            <div class="bb-panel-nombre" id="bb-panel-nombre">—</div>
-            <div class="bb-panel-sub" id="bb-panel-sub">—</div>
-          </div>
-          <button class="bb-panel-close" onclick="bbCerrarPanel()">×</button>
-        </div>
-        <div class="bb-panel-body">
-          <!-- Progreso grande -->
-          <div class="bb-panel-progreso-big" id="bb-panel-progreso"></div>
-          <!-- KPIs del detalle -->
-          <div class="bb-panel-kpis" id="bb-panel-kpis"></div>
-          <!-- Datos -->
-          <div>
-            <div class="bb-panel-section">Datos del bono/beca</div>
-            <div id="bb-panel-datos"></div>
-          </div>
-          <!-- Citas consumidas -->
-          <div>
-            <div class="bb-panel-section">Sesiones consumidas</div>
-            <div class="bb-citas-lista" id="bb-panel-citas"></div>
-          </div>
-        </div>
-        <div class="bb-panel-actions" id="bb-panel-actions"></div>
-      </div>
     </div>
   </div>
   <!-- ── /MÓDULO BONOS/BECAS ── -->
 
   </div><!-- /main -->
 </div><!-- /app-body -->
+
+<!-- ── PANEL DETALLE BONOS/BECAS ── -->
+<div class="overlay" id="bb-panel-overlay" onclick="if(event.target===this)bbCerrarPanel()">
+  <div class="bb-panel" id="bb-panel">
+    <div class="bb-panel-hdr">
+      <div class="bb-panel-hdr-info">
+        <div class="bb-panel-nombre" id="bb-panel-nombre">—</div>
+        <div class="bb-panel-sub" id="bb-panel-sub">—</div>
+      </div>
+      <button class="bb-panel-close" onclick="bbCerrarPanel()">×</button>
+    </div>
+    <div class="bb-panel-body">
+      <div class="bb-panel-progreso-big" id="bb-panel-progreso"></div>
+      <div class="bb-panel-kpis" id="bb-panel-kpis"></div>
+      <div>
+        <div class="bb-panel-section">Datos del bono/beca</div>
+        <div id="bb-panel-datos"></div>
+      </div>
+      <div>
+        <div class="bb-panel-section">Sesiones consumidas</div>
+        <div class="bb-citas-lista" id="bb-panel-citas"></div>
+      </div>
+    </div>
+    <div class="bb-panel-actions" id="bb-panel-actions"></div>
+  </div>
+</div>
 
 <!-- ── MODAL BONOS/BECAS ── -->
 <div class="bb-modal-overlay" id="bb-modal-overlay" onclick="if(event.target===this)bbCerrarModal()">
@@ -5812,7 +5815,7 @@ function bbCambiarTipo(tipo) {
   BB.tipo = tipo;
   BB.pagina = 1;
   BB.seleccionado = null;
-  document.getElementById('bb-panel').classList.add('hidden');
+  document.getElementById('bb-panel-overlay').classList.remove('open');
   document.getElementById('bb-tab-beca').classList.toggle('active', tipo === 'BECA');
   document.getElementById('bb-tab-bono').classList.toggle('active', tipo === 'BONO');
   // Mostrar/ocultar filtro año (relevante sobre todo en becas)
@@ -5826,6 +5829,7 @@ function bbAplicarFiltros() {
   const anio   = document.getElementById('bb-fil-anio').value;
   const esp    = document.getElementById('bb-fil-esp').value;
   const antic  = document.getElementById('bb-fil-anticipo').value;
+  const q      = (document.getElementById('bb-fil-buscar')?.value||'').trim().toLowerCase();
 
   BB.filtrados = BB.todos.filter(r => {
     if (r.tipo !== BB.tipo) return false;
@@ -5833,6 +5837,11 @@ function bbAplicarFiltros() {
     if (anio   && r.anio_escolar !== anio) return false;
     if (esp    && r.especialidad !== esp) return false;
     if (antic  && r.anticipo_recibido !== antic) return false;
+    if (q) {
+      const pac = (G.pacientes||[]).find(p => p.id === r.id_paciente);
+      const texto = `${pac?.nombre||''} ${pac?.apellidos||''} ${r.id_paciente}`.toLowerCase();
+      if (!texto.includes(q)) return false;
+    }
     return true;
   });
 
@@ -5959,8 +5968,7 @@ async function bbSeleccionar(id) {
   document.querySelectorAll('.bb-row').forEach(tr => tr.classList.remove('selected'));
   event.currentTarget?.classList.add('selected');
 
-  const panel = document.getElementById('bb-panel');
-  panel.classList.remove('hidden');
+  document.getElementById('bb-panel-overlay').classList.add('open');
 
   const nombrePac = bbNombrePaciente(r.id_paciente);
   document.getElementById('bb-panel-nombre').textContent = nombrePac;
@@ -6057,8 +6065,8 @@ async function bbSeleccionar(id) {
 
 function bbCerrarPanel() {
   BB.seleccionado = null;
-  document.getElementById('bb-panel').classList.add('hidden');
   document.querySelectorAll('.bb-row').forEach(tr => tr.classList.remove('selected'));
+  document.getElementById('bb-panel-overlay').classList.remove('open');
 }
 
 /* ── Modal alta/edición ── */
