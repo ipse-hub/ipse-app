@@ -444,7 +444,7 @@ td.muted{color:var(--ink-muted);font-size:12px}
 .form-section{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--azul);padding:10px 0 6px;border-bottom:1px solid var(--border);margin-bottom:14px}
 
 /* ── MÓDULO PRODUCCIÓN 360° ── */
-.prod-filter-block{background:var(--cream);border-radius:12px;padding:1rem 1.25rem;margin-bottom:1rem;border:1px solid var(--border)}
+.prod-filter-block{background:var(--white);border-radius:12px;padding:1rem 1.25rem;margin-bottom:1rem;border:1px solid var(--border)}
 .prod-filter-row{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end}
 .prod-filter-group{display:flex;flex-direction:column;gap:4px}
 .prod-section-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--azul);margin-bottom:2px}
@@ -1476,47 +1476,35 @@ td.muted{color:var(--ink-muted);font-size:12px}
   </div>
 
   <div class="prod-filter-block">
-    <div class="prod-filter-row">
-      <div class="prod-filter-group">
-        <div class="prod-section-label">Período</div>
-        <div class="prod-pills-row" id="prod-period-pills">
-          <span class="prod-pill" data-period="hoy" onclick="prodSetPeriod(this)">Hoy</span>
-          <span class="prod-pill" data-period="semana" onclick="prodSetPeriod(this)">Esta semana</span>
-          <span class="prod-pill prod-pill-active" data-period="mes" onclick="prodSetPeriod(this)">Este mes</span>
-          <span class="prod-pill" data-period="mes_ant" onclick="prodSetPeriod(this)">Mes anterior</span>
-          <span class="prod-pill" data-period="trimestre" onclick="prodSetPeriod(this)">Este trimestre</span>
-          <span class="prod-pill" data-period="anio" onclick="prodSetPeriod(this)">Este año</span>
-        </div>
+    <div class="prod-filter-row" style="align-items:center">
+      <div class="prod-pills-row" id="prod-period-pills">
+        <span class="prod-pill" data-period="hoy" onclick="prodSetPeriod(this)">Hoy</span>
+        <span class="prod-pill" data-period="semana" onclick="prodSetPeriod(this)">Esta semana</span>
+        <span class="prod-pill prod-pill-active" data-period="mes" onclick="prodSetPeriod(this)">Este mes</span>
+        <span class="prod-pill" data-period="mes_ant" onclick="prodSetPeriod(this)">Mes anterior</span>
+        <span class="prod-pill" data-period="trimestre" onclick="prodSetPeriod(this)">Este trimestre</span>
+        <span class="prod-pill" data-period="anio" onclick="prodSetPeriod(this)">Este año</span>
       </div>
-      <div class="prod-filter-group" style="margin-left:auto">
-        <div class="prod-section-label">Rango personalizado</div>
-        <div style="display:flex;gap:8px;align-items:center">
-          <input type="date" id="prod-fecha-desde" onchange="prodSetCustomRange()" class="form-input" style="width:140px;height:32px;padding:0 8px">
-          <span style="font-size:12px;color:var(--ink-muted)">→</span>
-          <input type="date" id="prod-fecha-hasta" onchange="prodSetCustomRange()" class="form-input" style="width:140px;height:32px;padding:0 8px">
-        </div>
+      <div style="display:flex;gap:8px;align-items:center;margin-left:auto;flex-shrink:0">
+        <input type="date" id="prod-fecha-desde" onchange="prodSetCustomRange()" class="form-input" style="width:140px;height:32px;padding:0 8px">
+        <span style="font-size:12px;color:var(--ink-muted)">→</span>
+        <input type="date" id="prod-fecha-hasta" onchange="prodSetCustomRange()" class="form-input" style="width:140px;height:32px;padding:0 8px">
       </div>
     </div>
 
     <div style="height:1px;background:var(--border);margin:10px 0"></div>
 
-    <div class="prod-filter-row">
-      <div class="prod-filter-group">
-        <div class="prod-section-label">Estado</div>
-        <div class="prod-pills-row" id="prod-estado-pills">
-          <span class="prod-pill prod-pill-active" data-estado="todas" onclick="prodSetEstado(this)">Todas</span>
-          <span class="prod-pill prod-pill-hecha" data-estado="Hecha" onclick="prodSetEstado(this)">Hecha</span>
-          <span class="prod-pill prod-pill-noshow" data-estado="Noshow" onclick="prodSetEstado(this)">No show</span>
-          <span class="prod-pill prod-pill-cancelada" data-estado="Cancelada" onclick="prodSetEstado(this)">Cancelada</span>
-          <span class="prod-pill prod-pill-programada" data-estado="Programada" onclick="prodSetEstado(this)">Programada</span>
-        </div>
+    <div class="prod-filter-row" style="align-items:center">
+      <div class="prod-pills-row" id="prod-estado-pills">
+        <span class="prod-pill prod-pill-active" data-estado="todas" onclick="prodSetEstado(this)">Todas</span>
+        <span class="prod-pill prod-pill-hecha" data-estado="Hecha" onclick="prodSetEstado(this)">Hecha</span>
+        <span class="prod-pill prod-pill-noshow" data-estado="Noshow" onclick="prodSetEstado(this)">No show</span>
+        <span class="prod-pill prod-pill-cancelada" data-estado="Cancelada" onclick="prodSetEstado(this)">Cancelada</span>
+        <span class="prod-pill prod-pill-programada" data-estado="Programada" onclick="prodSetEstado(this)">Programada</span>
       </div>
-      <div class="prod-filter-group" style="margin-left:auto">
-        <div class="prod-section-label">Profesional</div>
-        <select id="prod-sel-profesional" onchange="prodAplicarFiltros()" class="form-select" style="width:170px;height:32px;padding:0 8px">
-          <option value="">Todas</option>
-        </select>
-      </div>
+      <select id="prod-sel-profesional" onchange="prodAplicarFiltros()" class="form-select" style="width:170px;height:32px;padding:0 8px;margin-left:auto;flex-shrink:0">
+        <option value="">Todas las profesionales</option>
+      </select>
     </div>
 
     <div style="height:1px;background:var(--border);margin:10px 0 6px"></div>
@@ -1738,22 +1726,19 @@ td.muted{color:var(--ink-muted);font-size:12px}
         <h2 class="mod-titulo">Bonos y becas</h2>
         <p class="mod-subtitulo" id="bb-subtitulo">Cargando...</p>
       </div>
-      <button class="bb-btn-nuevo" onclick="bbAbrirModal('nuevo')">
-        <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-        Nuevo
-      </button>
     </div>
 
     <div class="bb-wrap">
       <!-- Columna principal -->
       <div class="bb-main">
-        <!-- Tabs + filtros -->
-        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
-          <div class="bb-tabs">
+        <!-- Tabs + filtros en caja unificada -->
+        <div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:1rem 1.25rem">
+          <div class="bb-tabs" style="margin-bottom:12px">
             <div class="bb-tab active" id="bb-tab-beca" onclick="bbCambiarTipo('BECA')">Becas</div>
             <div class="bb-tab" id="bb-tab-bono" onclick="bbCambiarTipo('BONO')">Bonos</div>
           </div>
-          <div class="bb-toolbar" style="flex:1">
+          <div style="height:1px;background:var(--border);margin-bottom:12px"></div>
+          <div class="bb-toolbar">
             <div style="position:relative;flex:1;min-width:160px">
               <svg style="position:absolute;left:9px;top:50%;transform:translateY(-50%);width:14px;height:14px;stroke:var(--ink-muted);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;pointer-events:none" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
               <input type="text" id="bb-fil-buscar" placeholder="Buscar paciente..." oninput="bbAplicarFiltros()" autocomplete="off" style="width:100%;padding:7px 10px 7px 30px;border:1px solid var(--border);border-radius:8px;font-family:inherit;font-size:13px;background:var(--white);color:var(--ink);box-sizing:border-box">
@@ -1778,6 +1763,14 @@ td.muted{color:var(--ink-muted);font-size:12px}
               <option value="Si">Anticipo recibido</option>
               <option value="No">Sin anticipo</option>
             </select>
+          </div>
+          <div style="height:1px;background:var(--border);margin:12px 0 10px"></div>
+          <div style="display:flex;align-items:center;justify-content:space-between">
+            <span id="bb-contador-inline" style="font-size:12px;color:var(--ink-muted)"></span>
+            <button class="bb-btn-nuevo" onclick="bbAbrirModal('nuevo')">
+              <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Nuevo
+            </button>
           </div>
         </div>
 
@@ -5890,6 +5883,7 @@ function bbRenderTabla() {
     tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:40px;color:var(--ink-muted)">
       No hay ${label} con los filtros actuales</td></tr>`;
     document.getElementById('bb-contador').textContent = '';
+    document.getElementById('bb-contador-inline').textContent = '';
     document.getElementById('bb-paginacion').innerHTML = '';
     return;
   }
@@ -5943,8 +5937,9 @@ function bbRenderTabla() {
 
   // Contador y paginación
   const totalPags = Math.ceil(total / BB.porPagina);
-  document.getElementById('bb-contador').textContent =
-    `${inicio+1}–${Math.min(inicio+BB.porPagina,total)} de ${total}`;
+  const contadorTxt = `${inicio+1}–${Math.min(inicio+BB.porPagina,total)} de ${total}`;
+  document.getElementById('bb-contador').textContent = contadorTxt;
+  document.getElementById('bb-contador-inline').textContent = contadorTxt;
   let pags = '';
   for (let i=1; i<=totalPags; i++) {
     if (totalPags <= 7 || i===1 || i===totalPags || Math.abs(i-BB.pagina)<=1) {
