@@ -2940,7 +2940,7 @@ function calcEdad(fnac) {
 
 function fichaIncompleta(p) {
   // Consideramos incompleta si falta alguno de estos campos clave
-  return !p.fecha_nacimiento || !p.telefono || !p.tutor1 || !p.consentimiento || p.consentimiento === 'No';
+  return !p.fecha_nacimiento || !p.telefono || !p.nombre_tutor1 || !p.consentimiento || p.consentimiento === 'No';
 }
 
 function limpiarBuscador() {
@@ -3114,7 +3114,7 @@ function renderP360Header(p) {
   if (p.telefono) {
     contactParts.push(`<div class="p360-hci">
       <svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.99 13 19.79 19.79 0 0 1 1.93 4.36 2 2 0 0 1 3.9 2.18h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-      <a href="tel:${p.telefono}">${p.telefono}</a>${p.tutor1 ? `<span style="color:var(--ink-muted);font-size:11px">(${p.tutor1.split(' ')[0]})</span>` : ''}
+      <a href="tel:${p.telefono}">${p.telefono}</a>${p.nombre_tutor1 ? `<span style="color:var(--ink-muted);font-size:11px">(${p.nombre_tutor1.split(' ')[0]})</span>` : ''}
     </div>`);
   }
   if (p.tutor1_email || p.email) {
@@ -3167,9 +3167,9 @@ function renderP360Datos(p) {
   ].join('');
 
   // Tutor 1
-  document.getElementById('p360-tutor1-label').textContent = p.tutor1 || '';
+  document.getElementById('p360-tutor1-label').textContent = p.nombre_tutor1 || '';
   document.getElementById('p360-tutor1').innerHTML = [
-    campo('Nombre', p.tutor1),
+    campo('Nombre', p.nombre_tutor1),
     campo('DNI / NIE', p.dni_tutor1),
     campoA('Teléfono', p.telefono, `tel:${p.telefono}`),
     campoA('Email', p.tutor1_email || p.email, `mailto:${p.tutor1_email || p.email}`),
@@ -3177,17 +3177,17 @@ function renderP360Datos(p) {
   ].join('');
 
   // Tutor 2
-  const hayT2 = p.tutor2 || p.tutor2_dni || p.tutor2_telefono || p.tutor2_email;
+  const hayT2 = p.nombre_tutor2 || p.dni_tutor2 || p.telefono_tutor2 || p.email_tutor2;
   const t2card = document.getElementById('p360-tutor2-card');
   if (hayT2) {
     t2card.style.display = '';
-    document.getElementById('p360-tutor2-label').textContent = p.tutor2 || '';
+    document.getElementById('p360-tutor2-label').textContent = p.nombre_tutor2 || '';
     document.getElementById('p360-tutor2').innerHTML = [
-      campo('Nombre', p.tutor2),
-      campo('DNI / NIE', p.tutor2_dni),
-      campoA('Teléfono', p.tutor2_telefono || p.telefono2, `tel:${p.tutor2_telefono || p.telefono2}`),
-      campoA('Email', p.tutor2_email, `mailto:${p.tutor2_email}`),
-      campo('Dirección', p.tutor2_direccion),
+      campo('Nombre', p.nombre_tutor2),
+      campo('DNI / NIE', p.dni_tutor2),
+      campoA('Teléfono', p.telefono_tutor2, `tel:${p.telefono_tutor2}`),
+      campoA('Email', p.email_tutor2, `mailto:${p.email_tutor2}`),
+      campo('Dirección', p.direccion_tutor2),
     ].join('');
   } else {
     t2card.style.display = 'none';
@@ -4116,7 +4116,7 @@ function factSelPaciente(id) {
 
   // Autorellenar receptor con datos del tutor si existen
   if (!document.getElementById('fact-rec-nombre').value) {
-    const nombre = p.tutor1 || `${p.nombre} ${p.apellidos||''}`.trim();
+    const nombre = p.nombre_tutor1 || `${p.nombre} ${p.apellidos||''}`.trim();
     document.getElementById('fact-rec-nombre').value = nombre;
     if (p.dni_tutor1) document.getElementById('fact-rec-dni').value = p.dni_tutor1;
     if (p.direccion_tutor1) document.getElementById('fact-rec-dir').value = p.direccion_tutor1;
