@@ -1791,7 +1791,7 @@ td.muted{color:var(--ink-muted);font-size:12px}
                 <th>Esp.</th>
                 <th>Progreso</th>
                 <th>Vencimiento</th>
-                <th>Anticipo</th>
+                <th>Cobro</th>
                 <th id="bb-th-importe" style="display:none">Importe</th>
                 <th>Estado</th>
               </tr>
@@ -5933,7 +5933,16 @@ function bbRenderTabla() {
         <div style="font-size:11px;color:var(--ink-muted);margin-top:2px">${r.sesiones_consumidas}/${r.sesiones_total} consumidas</div>
       </td>
       <td style="font-size:12px">${vencStr}</td>
-      <td style="font-size:12px">${r.anticipo_recibido==='Si'?'<span style="color:var(--verde-dark)">✓ Sí</span>':'<span style="color:var(--ink-muted)">No</span>'}</td>
+      <td style="font-size:12px">${(() => {
+        if (r.tipo === 'BONO') {
+          if (r.forma_cobro_bono) return `<span style="color:var(--verde-dark)">✓ ${r.forma_cobro_bono}</span>`;
+          return `<span style="color:var(--rojo);font-weight:600">⚠ Pendiente</span>`;
+        } else {
+          return r.anticipo_recibido === 'Si'
+            ? '<span style="color:var(--verde-dark)">✓ Anticipado</span>'
+            : '<span style="color:var(--ink-muted)">No anticipado</span>';
+        }
+      })()}</td>
       ${importeTd}
       <td><span class="bb-badge ${estado}">${bbEstadoLabel(estado)}</span></td>
     </tr>`;
@@ -6014,13 +6023,22 @@ async function bbSeleccionar(id) {
 
   // Datos
   const estado = bbEstado(r);
+  const cobroHtml = r.tipo === 'BONO'
+    ? '<div class="bb-panel-field"><span class="bb-panel-field-lbl">Cobro del bono</span><span class="bb-panel-field-val">' +
+      (r.forma_cobro_bono
+        ? '<span style="color:var(--verde-dark)">✓ ' + r.forma_cobro_bono + '</span>'
+        : '<span style="color:var(--rojo);font-weight:600">⚠ Pendiente de cobro</span>') +
+      '</span></div>'
+    : '<div class="bb-panel-field"><span class="bb-panel-field-lbl">Anticipo recibido</span><span class="bb-panel-field-val">' +
+      (r.anticipo_recibido === 'Si' ? '<span style="color:var(--verde-dark)">Sí</span>' : '<span style="color:var(--rojo)">No</span>') +
+      '</span></div>';
+
   document.getElementById('bb-panel-datos').innerHTML = `
     <div class="bb-panel-field"><span class="bb-panel-field-lbl">Paciente</span><span class="bb-panel-field-val">${r.id_paciente}</span></div>
     <div class="bb-panel-field"><span class="bb-panel-field-lbl">Estado</span><span class="bb-panel-field-val"><span class="bb-badge ${estado}">${bbEstadoLabel(estado)}</span></span></div>
-    <div class="bb-panel-field"><span class="bb-panel-field-lbl">Anticipo recibido</span><span class="bb-panel-field-val">${r.anticipo_recibido==='Si'?'<span style="color:var(--verde-dark)">Sí</span>':'<span style="color:var(--rojo)">No</span>'}</span></div>
-    ${r.anio_escolar?`<div class="bb-panel-field"><span class="bb-panel-field-lbl">Año escolar</span><span class="bb-panel-field-val">${r.anio_escolar}</span></div>`:''}
-
-    ${r.notas?`<div class="bb-panel-field"><span class="bb-panel-field-lbl">Notas</span><span class="bb-panel-field-val" style="max-width:200px;text-align:right;font-size:12px">${r.notas}</span></div>`:''}`;
+    ${cobroHtml}
+    ${r.anio_escolar ? '<div class="bb-panel-field"><span class="bb-panel-field-lbl">Año escolar</span><span class="bb-panel-field-val">' + r.anio_escolar + '</span></div>' : ''}
+    ${r.notas ? '<div class="bb-panel-field"><span class="bb-panel-field-lbl">Notas</span><span class="bb-panel-field-val" style="max-width:200px;text-align:right;font-size:12px">' + r.notas + '</span></div>' : ''}`;
 
   // Citas consumidas
   const citas = (BB.citas[id] || []).sort((a,b) => a.fecha > b.fecha ? 1 : -1);
