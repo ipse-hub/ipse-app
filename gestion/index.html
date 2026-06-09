@@ -2450,7 +2450,7 @@ async function init() {
 
   // Cargar profesionales para mostrar nombres en dashboard y ficha
   try {
-    G.profesionales = await sg(`profesionales?activa=eq.Si&select=id,nombre,apellidos&order=nombre.asc&limit=50`);
+    G.profesionales = await sg(`profesionales?activa=eq.Si&select=id,nombre,apellidos,color_agenda&order=nombre.asc&limit=50`);
   } catch { /* no crítico */ }
 
   // Carga en paralelo: pacientes primero (dashboard los necesita para nombres)
@@ -5617,7 +5617,7 @@ async function proGuardar() {
     proCerrarModal();
     await proInit();
     // Refrescar la lista global de G.profesionales usada por el resto de módulos
-    G.profesionales = await sg(`profesionales?activa=eq.Si&select=id,nombre,apellidos&order=nombre.asc&limit=50`);
+    G.profesionales = await sg(`profesionales?activa=eq.Si&select=id,nombre,apellidos,color_agenda&order=nombre.asc&limit=50`);
   } catch(e) {
     toast('Error: ' + e.message, true);
   }
