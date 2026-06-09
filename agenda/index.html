@@ -188,6 +188,10 @@ select.fc{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.o
 .alert-green{background:#f0fff4;border:1px solid #86efac;color:#166534}
 .alert-blue{background:#eff6ff;border:1px solid #93c5fd;color:#1e40af}
 .alert-amber{background:#fffbeb;border:1px solid var(--amber);color:#78350f}
+.alert-info{background:#eff6ff;border:1px solid #bfdbfe;color:#1e40af}
+.repro-panel{background:#fffbeb;border:1px solid var(--amber);border-radius:10px;padding:12px 14px;margin-top:10px;display:none}
+.repro-panel .sec-label{font-size:11px;font-weight:600;color:#92400e;margin-bottom:10px;text-transform:uppercase;letter-spacing:.05em}
+.pago-section.oculto-bb{display:none}
 .alert-neutral{background:var(--bg);border:1px solid var(--border);color:var(--muted);align-items:center}
 
 /* alta rápida */
@@ -592,6 +596,25 @@ select.fc{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.o
         <div class="alert alert-amber" id="noshow-hint" style="display:none;margin-top:8px">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
           <span>No show con beca/bono activo: <strong>se descuenta una sesión</strong></span>
+        </div>
+
+        <!-- PANEL REPROGRAMACIÓN -->
+        <div class="repro-panel" id="repro-panel">
+          <div class="sec-label">Nueva fecha para la cita reprogramada</div>
+          <div class="form-row">
+            <div class="fg">
+              <label class="fl">Fecha</label>
+              <input type="date" class="fc" id="repro-fecha" autocomplete="off">
+            </div>
+            <div class="fg">
+              <label class="fl">Hora</label>
+              <input type="time" class="fc" id="repro-hora" step="900" autocomplete="off">
+            </div>
+          </div>
+          <div class="alert alert-info" style="margin-top:8px;margin-bottom:0">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;flex-shrink:0;margin-top:1px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            <span>Esta cita quedará como <strong>Reprogramada</strong>. Se creará una nueva cita en la fecha indicada con los mismos datos, vinculada a ésta para trazabilidad.</span>
+          </div>
         </div>
       </div>
 
@@ -1307,8 +1330,12 @@ function resetModal() {
 
   document.querySelectorAll('.est-btn').forEach(b => b.classList.remove('sel-Hecha','sel-Noshow','sel-Reprogramada','sel-Cancelada'));
   document.getElementById('pago-section').classList.add('locked');
+  document.getElementById('pago-section').classList.remove('oculto-bb');
   document.getElementById('pago-hint').style.display = '';
   document.getElementById('noshow-hint').style.display = 'none';
+  document.getElementById('repro-panel').style.display = 'none';
+  document.getElementById('repro-fecha').value = '';
+  document.getElementById('repro-hora').value  = '';
   document.querySelectorAll('input[name="forma-cobro"]').forEach(r => r.checked = false);
 
   document.getElementById('chk-recur').checked = false;
@@ -1729,6 +1756,22 @@ function selPill(el, mod, precio, skipFocus) {
     document.getElementById('noshow-hint').style.display =
       G.modalEstado === 'No show' ? 'flex' : 'none';
   }
+
+  // Sección cobro: oculta para BONO siempre; oculta para BECA con anticipo
+  const esBB = ['BONO','BECA'].includes(mod);
+  const becaSinAnticipo = mod === 'BECA' &&
+    G.bonosBecas?.find(b => b.tipo === 'BECA')?.anticipo_recibido === 'No';
+  const mostrarCobro = !esBB || becaSinAnticipo;
+  const pagoSection = document.getElementById('pago-section');
+  if (!mostrarCobro) {
+    pagoSection.classList.add('oculto-bb');
+  } else {
+    pagoSection.classList.remove('oculto-bb');
+    // Mantener estado locked según si está Hecha o no
+    const locked = G.modalEstado !== 'Hecha';
+    pagoSection.classList.toggle('locked', locked);
+    document.getElementById('pago-hint').style.display = locked ? '' : 'none';
+  }
 }
 
 /* ═══════════════════════════════════════════
@@ -1743,15 +1786,38 @@ function selEstado(btn, tipo) {
     document.getElementById('pago-section').classList.add('locked');
     document.getElementById('pago-hint').style.display = '';
     document.getElementById('noshow-hint').style.display = 'none';
+    document.getElementById('repro-panel').style.display = 'none';
     return;
   }
 
   G.modalEstado = tipo;
   btn.classList.add('sel-' + tipo.replace(' ',''));
 
-  const locked = tipo !== 'Hecha';
-  document.getElementById('pago-section').classList.toggle('locked', locked);
-  document.getElementById('pago-hint').style.display = locked ? '' : 'none';
+  // Panel reprogramación
+  document.getElementById('repro-panel').style.display = tipo === 'Reprogramada' ? '' : 'none';
+  if (tipo === 'Reprogramada') {
+    // Prefill con la misma hora de la cita actual
+    const hora = document.getElementById('inp-hora').value;
+    if (hora) document.getElementById('repro-hora').value = hora;
+    document.getElementById('repro-fecha').focus();
+  }
+
+  // Sección cobro: oculta para BONO siempre; oculta para BECA con anticipo
+  const esBB = ['BONO','BECA'].includes(G.modalMod);
+  const becaSinAnticipo = G.modalMod === 'BECA' &&
+    G.bonosBecas?.find(b => b.tipo === 'BECA')?.anticipo_recibido === 'No';
+  const mostrarCobro = !esBB || becaSinAnticipo;
+
+  const pagoSection = document.getElementById('pago-section');
+  if (!mostrarCobro) {
+    pagoSection.classList.add('oculto-bb');
+  } else {
+    pagoSection.classList.remove('oculto-bb');
+    const locked = tipo !== 'Hecha';
+    pagoSection.classList.toggle('locked', locked);
+    document.getElementById('pago-hint').style.display = locked ? '' : 'none';
+  }
+
   document.getElementById('noshow-hint').style.display =
     (tipo === 'No show' && G.bonosBecas?.length) ? 'flex' : 'none';
 }
@@ -1775,8 +1841,24 @@ function calcRecur() {
   if (!fecha) { document.getElementById('recur-info').innerHTML = ''; return; }
   const fechaFin = new Date(fecha + 'T12:00:00');
   fechaFin.setDate(fechaFin.getDate() + (n - 1) * dias);
+
+  let avisoSesiones = '';
+  if (['BONO','BECA'].includes(G.modalMod)) {
+    const bb = G.bonosBecas?.find(b => b.tipo === G.modalMod);
+    if (bb) {
+      const restantes = (bb.sesiones_total || 0) - (bb.sesiones_consumidas || 0);
+      // Esta cita (la principal) + las repetidas = n total
+      if (n > restantes) {
+        avisoSesiones = `<div class="alert alert-amber" style="margin-top:8px;margin-bottom:0">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;flex-shrink:0;margin-top:1px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          <span>⚠ El ${G.modalMod === 'BONO' ? 'bono' : 'beca'} tiene <strong>${restantes} sesión${restantes !== 1 ? 'es' : ''} disponible${restantes !== 1 ? 's' : ''}</strong> pero se van a crear <strong>${n}</strong>. Se superará el saldo.</span>
+        </div>`;
+      }
+    }
+  }
+
   document.getElementById('recur-info').innerHTML =
-    `Se crearán <strong>${n} citas</strong> a las ${hora} (${frecLabel}) hasta el <strong>${fmtFecha(fechaFin)}</strong>`;
+    `Se crearán <strong>${n} citas</strong> a las ${hora} (${frecLabel}) hasta el <strong>${fmtFecha(fechaFin)}</strong>${avisoSesiones}`;
 }
 
 /* ═══════════════════════════════════════════
@@ -1790,6 +1872,14 @@ async function guardarCita() {
   const hora  = document.getElementById('inp-hora').value;
   if (!fecha) { toast('Indica la fecha', true); return; }
   if (!hora)  { toast('Indica la hora', true); return; }
+
+  // Validación reprogramación: si el estado es Reprogramada, exigir nueva fecha
+  if (G.modalEstado === 'Reprogramada') {
+    const reproFecha = document.getElementById('repro-fecha').value;
+    const reproHora  = document.getElementById('repro-hora').value;
+    if (!reproFecha) { toast('Indica la fecha de la nueva cita', true); return; }
+    if (!reproHora)  { toast('Indica la hora de la nueva cita', true); return; }
+  }
 
   let precio;
   if (G.modalMod === 'OTROS') {
@@ -1831,7 +1921,31 @@ async function guardarCita() {
   try {
     if (G.modalCitaId) {
       await supaPatch('citas_v2', G.modalCitaId, payload);
-      toast('Cita actualizada', false, true);
+
+      // Si se marca como Reprogramada, crear cita derivada con id_cita_origen
+      if (G.modalEstado === 'Reprogramada') {
+        const reproFecha = document.getElementById('repro-fecha').value;
+        const reproHora  = document.getElementById('repro-hora').value;
+        const count  = await supaGet('citas_v2?select=id&order=id.desc&limit=1');
+        const ultimo = count[0]?.id || 'CIT-000';
+        const num    = parseInt(ultimo.split('-')[1] || '0') + 1;
+        // La cita_origen es la raíz: si la cita actual ya tiene origen, heredamos ese; si no, es ella misma
+        const citaActual = await supaGet(`citas_v2?id=eq.${G.modalCitaId}&select=id_cita_origen&limit=1`);
+        const origenRaiz = citaActual[0]?.id_cita_origen || G.modalCitaId;
+        await supaPost('citas_v2', {
+          ...payload,
+          id:             `CIT-${String(num).padStart(3,'0')}`,
+          fecha:          reproFecha,
+          hora:           reproHora,
+          estado:         'Programada',
+          forma_cobro:    null,
+          cobrado:        'No',
+          id_cita_origen: origenRaiz
+        });
+        toast('Cita reprogramada — nueva cita creada', false, true);
+      } else {
+        toast('Cita actualizada', false, true);
+      }
     } else {
       const count  = await supaGet('citas_v2?select=id&order=id.desc&limit=1');
       const ultimo = count[0]?.id || 'CIT-000';
