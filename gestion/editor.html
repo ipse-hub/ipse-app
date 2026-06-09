@@ -293,6 +293,7 @@ const TABLAS = {
           { id:'telefono_tutor2',  label:'Teléfono',         type:'text' },
           { id:'email_tutor2',     label:'Email',            type:'email' },
           { id:'dni_tutor2',       label:'DNI',              type:'text' },
+          { id:'direccion_tutor2', label:'Dirección',        type:'text', span2:true },
           { id:'facturacion_tutor',label:'Facturación a',    type:'select', options:['','tutor1','tutor2','ambos'] },
         ]
       },
@@ -364,10 +365,12 @@ const TABLAS = {
           { id:'duracion_min',   label:'Duración (min)',    type:'number' },
           { id:'modalidad_pago', label:'Modalidad',         type:'select', options:['BECA','BONO','PRIVADO_SU','ADECCO','OTROS'] },
           { id:'precio',         label:'Precio (€)',        type:'number' },
-          { id:'estado',         label:'Estado',            type:'select', options:['Programada','Hecha','Noshow','Reprogramada','Cancelada'] },
-          { id:'forma_cobro',    label:'Forma cobro',       type:'select', options:['','Efectivo','Bizum','Transferencia'] },
-          { id:'cobrado',        label:'Cobrado',           type:'select', options:['No','Si'] },
-          { id:'notas',          label:'Notas',             type:'textarea', span2:true },
+          { id:'estado',          label:'Estado',            type:'select', options:['Programada','Hecha','No show','Reprogramada','Cancelada'] },
+          { id:'forma_cobro',     label:'Forma cobro',       type:'select', options:['','Efectivo','Bizum','Transferencia'] },
+          { id:'cobrado',         label:'Cobrado',           type:'select', options:['No','Si'] },
+          { id:'id_serie',        label:'ID Serie',          type:'text' },
+          { id:'id_cita_origen',  label:'ID Cita origen',    type:'text' },
+          { id:'notas',           label:'Notas',             type:'textarea', span2:true },
         ]
       }
     ]
