@@ -478,6 +478,14 @@ select.fc{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.o
           </select>
         </div>
 
+        <!-- AVISO bono pendiente de cobro -->
+        <div id="bono-pendiente-wrap" style="display:none;margin-top:8px">
+          <div class="alert" style="background:#fef3c7;border:1px solid #f59e0b;color:#78350f">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;width:14px;height:14px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            <span id="bono-pendiente-texto">Este bono está <strong>pendiente de cobro</strong> (180 €)</span>
+          </div>
+        </div>
+
         <!-- AVISO sin bono/beca activo -->
         <div id="bb-aviso-wrap" style="display:none;margin-top:8px">
           <div class="alert alert-amber" style="margin-bottom:8px">
@@ -508,6 +516,16 @@ select.fc{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.o
               <div class="fg">
                 <label class="fl">Fecha de fin *</label>
                 <input type="date" class="fc" id="bono-fecha-fin" oninput="actualizarResumenBono()">
+              </div>
+            </div>
+            <!-- COBRO DEL BONO -->
+            <div style="border-top:1px solid #bae6fd;margin:10px 0 8px;padding-top:10px">
+              <div style="font-size:11px;font-weight:700;color:#0369a1;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">💳 Cobro del bono (180 €)</div>
+              <div class="check-row">
+                <label class="check-item"><input type="radio" name="bono-cobro" value="Bizum"> Bizum</label>
+                <label class="check-item"><input type="radio" name="bono-cobro" value="Transferencia"> Transferencia</label>
+                <label class="check-item"><input type="radio" name="bono-cobro" value="Efectivo"> Efectivo</label>
+                <label class="check-item"><input type="radio" name="bono-cobro" value="Pendiente" checked> Pendiente</label>
               </div>
             </div>
             <div class="bb-resumen" id="bono-resumen" style="display:none"></div>
@@ -1336,6 +1354,7 @@ function resetModal() {
   document.getElementById('repro-panel').style.display = 'none';
   document.getElementById('repro-fecha').value = '';
   document.getElementById('repro-hora').value  = '';
+  document.getElementById('bono-pendiente-wrap').style.display = 'none';
   document.querySelectorAll('input[name="forma-cobro"]').forEach(r => r.checked = false);
 
   document.getElementById('chk-recur').checked = false;
@@ -1514,7 +1533,7 @@ async function cargarBonoBeca(idPaciente) {
   try {
     const hoy = fmtISO(new Date());
     const bb  = await supaGet(
-      `bonos_becas?id_paciente=eq.${idPaciente}&fecha_vencimiento=gte.${hoy}&select=id,tipo,especialidad,sesiones_total,sesiones_consumidas,fecha_inicio,fecha_vencimiento,importe_total&order=fecha_vencimiento.asc&limit=20`
+      `bonos_becas?id_paciente=eq.${idPaciente}&fecha_vencimiento=gte.${hoy}&select=id,tipo,especialidad,sesiones_total,sesiones_consumidas,fecha_inicio,fecha_vencimiento,importe_total,anticipo_recibido,forma_cobro_bono&order=fecha_vencimiento.asc&limit=20`
     );
     G.bonosBecas = bb;
   } catch (e) { console.error('cargarBonoBeca:', e); }
@@ -1575,6 +1594,9 @@ function cerrarNuevoBono() {
   document.getElementById('bono-fecha-inicio').value = '';
   document.getElementById('bono-fecha-fin').value    = '';
   document.getElementById('bono-resumen').style.display = 'none';
+  // Reset cobro a Pendiente
+  const rPend = document.querySelector('input[name="bono-cobro"][value="Pendiente"]');
+  if (rPend) rPend.checked = true;
 }
 
 function actualizarResumenBono() {
@@ -1604,6 +1626,19 @@ async function crearNuevoBono() {
   if (!ff) { toast('Indica la fecha de fin del bono', true); return; }
   if (ff < fi) { toast('La fecha de fin no puede ser anterior al inicio', true); return; }
 
+  const espBono    = document.getElementById('sel-especialidad').value || 'PSI';
+  const formaCobro = document.querySelector('input[name="bono-cobro"]:checked')?.value || 'Pendiente';
+
+  // Verificar que no hay otro bono vigente del mismo paciente + especialidad
+  const hoy = fmtISO(new Date());
+  const duplicado = await supaGet(
+    `bonos_becas?id_paciente=eq.${G.modalPacId}&tipo=eq.BONO&especialidad=eq.${espBono}&fecha_vencimiento=gte.${hoy}&select=id&limit=1`
+  );
+  if (duplicado.length) {
+    toast(`Ya existe un bono de ${espBono} vigente para este paciente`, true);
+    return;
+  }
+
   const ultimos = await supaGet(`bonos_becas?select=id&order=id.desc&limit=1`);
   const ultId   = ultimos[0]?.id || 'BB-000';
   const num     = parseInt(ultId.replace(/\D/g,'') || '0') + 1;
@@ -1614,15 +1649,38 @@ async function crearNuevoBono() {
   btn.innerHTML = `<div class="btn-spinner"></div> Creando…`;
 
   try {
-    const espBono = document.getElementById('sel-especialidad').value || 'PSI';
+    let idCobro = null;
+
+    // Si se indica forma de cobro (no Pendiente), crear registro en cobros_v2
+    if (formaCobro !== 'Pendiente') {
+      const cobCount = await supaGet('cobros_v2?select=id&order=id.desc&limit=1');
+      const cobUlt   = cobCount[0]?.id || 'COB-000';
+      const cobNum   = parseInt(cobUlt.split('-')[1] || '0') + 1;
+      idCobro = `COB-${String(cobNum).padStart(3,'0')}`;
+      await supaPost('cobros_v2', {
+        id:           idCobro,
+        id_paciente:  G.modalPacId,
+        id_bono_beca: nuevoId,
+        fecha:        fi,
+        importe:      180,
+        metodo:       formaCobro,
+        concepto:     `Bono ${espBono} — ${nuevoId}`,
+        conciliado:   'No'
+      });
+    }
+
     await supaPost('bonos_becas', {
       id: nuevoId, id_paciente: G.modalPacId, tipo: 'BONO',
       especialidad: espBono,
       sesiones_total: 4, sesiones_consumidas: 0,
       fecha_inicio: fi, fecha_vencimiento: ff,
-      anticipo_recibido: 'No', importe_total: 180
+      anticipo_recibido: formaCobro !== 'Pendiente' ? 'Si' : 'No',
+      importe_total: 180,
+      forma_cobro_bono: formaCobro !== 'Pendiente' ? formaCobro : null,
+      id_cobro_bono: idCobro
     });
-    toast(`Bono ${nuevoId} creado`, false, true);
+
+    toast(`Bono ${nuevoId} creado${formaCobro !== 'Pendiente' ? ' · cobro registrado' : ' · pendiente de cobro'}`, false, true);
     cerrarNuevoBono();
     await cargarBonoBeca(G.modalPacId);
     ocultarAvisoBonoBeca();
@@ -1718,17 +1776,41 @@ async function crearNuevaBeca() {
 /* ═══════════════════════════════════════════
    MODALIDAD PAGO / PRECIO
 ═══════════════════════════════════════════ */
+function mostrarAvisoBonoPendiente() {
+  const bono = G.bonosBecas?.find(b => b.tipo === 'BONO');
+  const wrap  = document.getElementById('bono-pendiente-wrap');
+  const texto = document.getElementById('bono-pendiente-texto');
+  if (!wrap) return;
+  if (bono && !bono.forma_cobro_bono) {
+    const restantes = (bono.sesiones_total || 4) - (bono.sesiones_consumidas || 0);
+    const esAntepenultima = restantes === 2; // queda 1 sesion despues de esta
+    const esPenultima = restantes === 2;
+    const esUltima = restantes === 1;
+    let msg = `Este bono está <strong>pendiente de cobro</strong> (180 €)`;
+    if (esPenultima) msg += ` · <strong style="color:#dc2626">⚠️ Penúltima sesión</strong>`;
+    if (esUltima)    msg += ` · <strong style="color:#dc2626">⚠️ Última sesión del bono</strong>`;
+    texto.innerHTML = msg;
+    wrap.style.display = '';
+  } else {
+    wrap.style.display = 'none';
+  }
+}
+
 function selPill(el, mod, precio, skipFocus) {
   // Para Bono/Beca: verificar si hay activo antes de seleccionar
   if (['BECA','BONO'].includes(mod)) {
     const match = G.bonosBecas?.find(b => b.tipo === mod);
     if (!match) {
       mostrarAvisoBonoBeca(mod);
+      document.getElementById('bono-pendiente-wrap').style.display = 'none';
       return; // no seleccionar la pill hasta que haya activo
     }
     ocultarAvisoBonoBeca();
+    if (mod === 'BONO') mostrarAvisoBonoPendiente();
+    else document.getElementById('bono-pendiente-wrap').style.display = 'none';
   } else {
     ocultarAvisoBonoBeca();
+    document.getElementById('bono-pendiente-wrap').style.display = 'none';
   }
 
   document.querySelectorAll('.pill').forEach(p => p.classList.remove('sel','sel-beca','sel-otros'));
