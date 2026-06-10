@@ -1953,7 +1953,7 @@ function selEstado(btn, tipo) {
   btn.classList.add('sel-' + tipo.replace(' ',''));
 
   // Panel reprogramación
-  document.getElementById('repro-panel').style.display = tipo === 'Reprogramada' ? '' : 'none';
+  document.getElementById('repro-panel').style.display = tipo === 'Reprogramada' ? 'block' : 'none';
   if (tipo === 'Reprogramada') {
     // Prefill con la misma hora de la cita actual
     const hora = document.getElementById('inp-hora').value;
