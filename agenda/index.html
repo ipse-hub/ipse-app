@@ -1958,7 +1958,12 @@ function selEstado(btn, tipo) {
     // Prefill con la misma hora de la cita actual
     const hora = document.getElementById('inp-hora').value;
     if (hora) document.getElementById('repro-hora').value = hora;
-    document.getElementById('repro-fecha').focus();
+    // Scroll para que el panel sea visible
+    setTimeout(() => {
+      const panel = document.getElementById('repro-panel');
+      panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      document.getElementById('repro-fecha').focus();
+    }, 50);
   }
 
   // Sección cobro: oculta para BONO siempre; oculta para BECA con anticipo
