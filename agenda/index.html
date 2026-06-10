@@ -440,7 +440,6 @@ select.fc{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.o
             <input type="text" class="fc" id="np-expediente" placeholder="0467" maxlength="4"
               inputmode="numeric" pattern="[0-9]*"
               oninput="this.value=this.value.replace(/\D/g,'');actualizarIdPreview()" autocomplete="off">
-            <div id="np-expediente-hint" style="display:none;font-size:11px;color:var(--muted);margin-top:4px;font-family:var(--mono)"></div>
           </div>
           <div class="np-id-preview" id="np-id-preview" style="display:none">
             ID que se asignará: <strong id="np-id-val"></strong>
@@ -1393,26 +1392,6 @@ function toggleNuevoPaciente() {
   if (panel.style.display !== 'none') { cerrarNuevoPaciente(); return; }
   panel.style.display = '';
   document.getElementById('np-nombre').focus();
-  sugerirSiguienteExpediente();
-}
-
-async function sugerirSiguienteExpediente() {
-  const hint = document.getElementById('np-expediente-hint');
-  if (!hint) return;
-  try {
-    const todos = await supaGet(`pacientes_v2?select=id&order=id.desc&limit=200`);
-    let maxNum = 0;
-    for (const p of todos) {
-      const partes = p.id.split('-');
-      if (partes.length === 2) {
-        const n = parseInt(partes[1]);
-        if (!isNaN(n) && n > maxNum) maxNum = n;
-      }
-    }
-    const siguiente = maxNum + 1;
-    hint.textContent = `Último: ${String(maxNum).padStart(4,'0')} — siguiente sugerido: ${String(siguiente).padStart(4,'0')}`;
-    hint.style.display = '';
-  } catch { hint.style.display = 'none'; }
 }
 
 function cerrarNuevoPaciente() {
@@ -1423,8 +1402,6 @@ function cerrarNuevoPaciente() {
   document.getElementById('np-id-preview').style.display   = 'none';
   document.getElementById('np-id-aviso').style.display     = 'none';
   document.getElementById('np-similares-wrap').style.display = 'none';
-  const hint = document.getElementById('np-expediente-hint');
-  if (hint) hint.style.display = 'none';
 }
 
 function usarPacienteSimilar(id, nombre, apellidos) {
@@ -1469,14 +1446,13 @@ function actualizarIdPreview() {
       const res = await supaGet(`pacientes_v2?id=eq.${idGen}&select=id&limit=1`);
       avisoEl.style.display = res.length ? '' : 'none';
 
-      // Buscar pacientes con nombre similar (nombre + primer apellido)
+      // Buscar pacientes con nombre o apellidos similares (al menos 3 letras del apellido)
       const similWrap = document.getElementById('np-similares-wrap');
       const similLista = document.getElementById('np-similares-lista');
-      const nombreBusq = nombre.trim();
-      const primerApellido = apellidos.trim().split(/\s+/)[0];
-      if (nombreBusq.length >= 3 && primerApellido.length >= 3) {
+      if (apellidos.trim().length >= 3) {
+        const ap = apellidos.trim().split(/\s+/)[0].substring(0, 5); // primer apellido, 5 chars
         const similares = await supaGet(
-          `pacientes_v2?nombre=ilike.*${encodeURIComponent(nombreBusq)}*&apellidos=ilike.*${encodeURIComponent(primerApellido)}*&select=id,nombre,apellidos&limit=5`
+          `pacientes_v2?apellidos=ilike.*${ap}*&select=id,nombre,apellidos&limit=5`
         );
         if (similares.length) {
           similLista.innerHTML = similares.map(p =>
