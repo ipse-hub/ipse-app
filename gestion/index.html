@@ -4953,8 +4953,8 @@ async function cobProcesarExtracto(file) {
       const movimiento = String(row[iMov]   || '').trim();
 
       const id = 'MOV-' + fecha.replace(/-/g,'') + '-' +
-        Math.abs(Math.round(importe * 100)).toString().slice(-6) + '-' +
-        Math.random().toString(36).slice(2, 5).toUpperCase();
+        String(nuevos.length + 1).padStart(4,'0') + '-' +
+        Math.random().toString(36).slice(2, 6).toUpperCase();
 
       nuevos.push({ id, fecha, concepto, movimiento, importe, saldo, categoria: 'Sin clasificar', origen: 'Importado' });
     }
