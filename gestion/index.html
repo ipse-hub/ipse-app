@@ -4892,65 +4892,75 @@ async function cobProcesarExtracto(file) {
   toast('Procesando extracto…');
   try {
     const data = await file.arrayBuffer();
-    // Leer con SheetJS
     const XLSX = window.XLSX;
     if (!XLSX) { toast('Librería XLSX no disponible', true); return; }
-    const wb = XLSX.read(data, { type: 'array', cellDates: true });
+    const wb = XLSX.read(data, { type: 'array' });
     const ws = wb.Sheets[wb.SheetNames[0]];
-    const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+    const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '', raw: false });
 
-    // Buscar fila de cabecera (contiene "F.Valor" o "Fecha")
+    // Buscar fila de cabecera
     let headerRow = -1;
     for (let i = 0; i < rows.length; i++) {
-      if (rows[i].some(c => String(c).includes('F.Valor') || String(c).includes('Fecha'))) {
+      const row = rows[i].map(c => String(c).trim());
+      if (row.includes('F.Valor') || row.includes('Fecha') || row.includes('Importe')) {
         headerRow = i;
         break;
       }
     }
     if (headerRow < 0) { toast('No se encontró la cabecera del extracto', true); return; }
 
+    // Mapear columnas por nombre (ignorar columnas vacías)
     const headers = rows[headerRow].map(c => String(c).trim());
-    const iValor = headers.findIndex(h => h.includes('F.Valor'));
-    const iFecha = headers.findIndex(h => h === 'Fecha');
-    const iConc  = headers.findIndex(h => h.includes('Concepto'));
-    const iMov   = headers.findIndex(h => h.includes('Movimiento'));
-    const iImp   = headers.findIndex(h => h.includes('Importe'));
-    const iSaldo = headers.findIndex(h => h.includes('Disponible'));
+    const col = name => headers.findIndex(h => h.toLowerCase().includes(name.toLowerCase()));
+    const iValor = col('F.Valor');
+    const iFecha = col('Fecha');
+    const iConc  = col('Concepto');
+    const iMov   = col('Movimiento');
+    const iImp   = col('Importe');
+    const iSaldo = col('Disponible');
+
+    // Helper: parsear fecha DD/MM/YYYY o DD/MM/YY → YYYY-MM-DD
+    function parseFecha(raw) {
+      if (!raw) return null;
+      const s = String(raw).trim();
+      const parts = s.split('/');
+      if (parts.length === 3) {
+        let [d, m, y] = parts;
+        if (y.length === 2) y = '20' + y;
+        return `${y}-${m.padStart(2,'0')}-${d.padStart(2,'0')}`;
+      }
+      return null;
+    }
 
     const nuevos = [];
-    const hoy = new Date().toISOString().slice(0, 10);
-
     for (let i = headerRow + 1; i < rows.length; i++) {
       const row = rows[i];
-      if (!row[iImp] && row[iImp] !== 0) continue;
+      const rawImp = row[iImp];
+      if (rawImp === '' || rawImp == null) continue;
+      const importe = Number(String(rawImp).replace(/\./g,'').replace(',','.'));
+      if (isNaN(importe)) continue;
+
       const rawFecha = row[iFecha] || row[iValor];
-      if (!rawFecha) continue;
+      const fecha = parseFecha(rawFecha);
+      if (!fecha) continue;
 
-      // Parsear fecha (puede venir como Date o como string DD/MM/YYYY)
-      let fecha;
-      if (rawFecha instanceof Date) {
-        fecha = rawFecha.toISOString().slice(0, 10);
-      } else {
-        const parts = String(rawFecha).split('/');
-        if (parts.length === 3) fecha = `${parts[2]}-${parts[1].padStart(2,'0')}-${parts[0].padStart(2,'0')}`;
-        else continue;
-      }
+      const saldoRaw = iSaldo >= 0 ? row[iSaldo] : null;
+      const saldo = saldoRaw != null && saldoRaw !== ''
+        ? Number(String(saldoRaw).replace(/\./g,'').replace(',','.'))
+        : null;
 
-      const importe = Number(String(row[iImp]).replace(',', '.'));
-      const saldo   = iSaldo >= 0 ? Number(String(row[iSaldo]).replace(',', '.')) : null;
-      const concepto = String(row[iConc] || '').trim();
-      const movimiento = String(row[iMov] || '').trim();
+      const concepto   = String(row[iConc]  || '').trim();
+      const movimiento = String(row[iMov]   || '').trim();
 
-      // Generar ID único
-      const idBase = `MOV-${fecha.replace(/-/g,'')}-${Math.abs(Math.round(importe*100))}`;
-      const id = idBase + '-' + Math.random().toString(36).slice(2, 6).toUpperCase();
+      const id = 'MOV-' + fecha.replace(/-/g,'') + '-' +
+        Math.abs(Math.round(importe * 100)).toString().slice(-6) + '-' +
+        Math.random().toString(36).slice(2, 5).toUpperCase();
 
       nuevos.push({ id, fecha, concepto, movimiento, importe, saldo, categoria: 'Sin clasificar', origen: 'Importado' });
     }
 
     if (!nuevos.length) { toast('No se encontraron movimientos válidos', true); return; }
 
-    // Insertar en Supabase con upsert (ignorar duplicados por id)
     let insertados = 0;
     const CHUNK = 50;
     for (let i = 0; i < nuevos.length; i += CHUNK) {
@@ -4974,7 +4984,7 @@ async function cobProcesarExtracto(file) {
     await cobCargarBanco();
   } catch(e) {
     console.error(e);
-    toast('Error procesando el extracto', true);
+    toast('Error procesando el extracto: ' + e.message, true);
   }
 }
 
