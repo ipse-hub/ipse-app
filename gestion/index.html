@@ -4943,7 +4943,8 @@ async function cobReclasificarTodo() {
   cobRenderPendientes();
 }
 
-/* ── DRAG & DROP ── */ { e.preventDefault(); document.getElementById('cob-upload-zone').style.borderColor = 'var(--azul)'; }
+/* ── DRAG & DROP ── */
+function cobDragOver(e) { e.preventDefault(); document.getElementById('cob-upload-zone').style.borderColor = 'var(--azul)'; }
 function cobDragLeave(e) { document.getElementById('cob-upload-zone').style.borderColor = 'var(--border)'; }
 function cobDrop(e) {
   e.preventDefault();
