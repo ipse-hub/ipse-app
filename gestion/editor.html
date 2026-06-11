@@ -125,7 +125,24 @@ textarea.form-control{resize:vertical;}
 .btn-danger:hover{opacity:.85;}
 .btn:disabled{opacity:.5;cursor:not-allowed;}
 
-/* TOAST */
+/* SELECCIÓN MÚLTIPLE */
+.cb-col{width:36px;text-align:center;}
+.cb-row{width:36px;text-align:center;vertical-align:middle;}
+input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--blue);}
+.bulk-bar{background:var(--blue);color:#fff;border-radius:10px;padding:10px 18px;display:none;align-items:center;gap:14px;margin-bottom:14px;font-size:13px;font-weight:600;}
+.bulk-bar.show{display:flex;}
+.bulk-count{flex:1;}
+.btn-bulk-del{padding:6px 16px;background:#fff;color:var(--red);border:none;border-radius:6px;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;}
+.btn-bulk-del:hover{background:var(--red-pale);}
+.btn-bulk-cancel{padding:6px 14px;background:rgba(255,255,255,.2);color:#fff;border:none;border-radius:6px;font-family:inherit;font-size:13px;cursor:pointer;}
+.btn-bulk-cancel:hover{background:rgba(255,255,255,.35);}
+
+/* FILTRO BONOS/BECAS */
+.bb-filter-bar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;}
+.filter-pill{padding:6px 16px;border-radius:20px;font-family:inherit;font-size:12px;font-weight:600;cursor:pointer;border:1.5px solid var(--border);background:var(--white);color:var(--ink-muted);transition:all .15s;}
+.filter-pill.active{background:var(--blue);color:#fff;border-color:var(--blue);}
+.filter-pill:hover:not(.active){border-color:var(--blue);color:var(--blue);}
+
 #toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:9000;display:flex;flex-direction:column;gap:8px;align-items:center;}
 .toast-msg{padding:10px 20px;border-radius:10px;font-size:13px;font-weight:600;box-shadow:var(--shadow-lg);animation:toastIn .2s ease;white-space:nowrap;}
 .toast-msg.ok{background:#1a4d00;color:#fff;}
@@ -171,6 +188,17 @@ textarea.form-control{resize:vertical;}
       <input type="text" id="search-input" placeholder="Buscar en cualquier campo…" oninput="renderTabla()">
       <span class="search-count" id="search-count"></span>
       <button class="btn btn-primary" style="font-size:12px;padding:6px 14px" onclick="abrirNuevo()">+ Nuevo</button>
+    </div>
+    <div class="bulk-bar" id="bulk-bar">
+      <span class="bulk-count" id="bulk-count"></span>
+      <button class="btn-bulk-del" onclick="eliminarSeleccionados()">🗑 Eliminar seleccionados</button>
+      <button class="btn-bulk-cancel" onclick="limpiarSeleccion()">✕ Cancelar</button>
+    </div>
+    <div class="bb-filter-bar" id="bb-filter-bar" style="display:none">
+      <span style="font-size:12px;font-weight:700;color:var(--ink-muted);text-transform:uppercase;letter-spacing:.6px">Tipo:</span>
+      <button class="filter-pill active" onclick="setBBFiltro('todos',this)">Todos</button>
+      <button class="filter-pill" onclick="setBBFiltro('BONO',this)">🎟 Bonos</button>
+      <button class="filter-pill" onclick="setBBFiltro('BECA',this)">🏫 Becas</button>
     </div>
     <div class="table-wrap">
       <div id="tabla-container" style="padding:40px;text-align:center;color:var(--ink-muted)">Selecciona una tabla</div>
@@ -403,6 +431,55 @@ const TABLAS = {
     ]
   },
 
+  facturas: {
+    label: '🧾 Facturas',
+    tabla: 'facturas',
+    idField: 'id',
+    orderBy: 'fecha.desc',
+    cascade: [],
+    cols: ['id','numero_factura','fecha','id_paciente_v2','tipo_factura','estado','importe_total'],
+    colLabels: ['ID','Número','Fecha','Paciente','Tipo','Estado','Importe'],
+    sections: [
+      {
+        title: 'Identificación',
+        fields: [
+          { id:'id',               label:'ID',               type:'text', cls:'field-id' },
+          { id:'numero_factura',   label:'Número factura',   type:'text' },
+          { id:'fecha',            label:'Fecha',            type:'date' },
+          { id:'estado',           label:'Estado',           type:'select', options:['Emitida','Pagada','Anulada'] },
+          { id:'tipo_factura',     label:'Tipo',             type:'select', options:['','beca','bono','privada','adecco'] },
+          { id:'curso_academico',  label:'Curso académico',  type:'text' },
+          { id:'medio_cobro',      label:'Medio cobro',      type:'select', options:['','transferencia','bizum','efectivo','domiciliacion'] },
+          { id:'importe_total',    label:'Importe total (€)',type:'number' },
+          { id:'irpf_pct',         label:'IRPF %',           type:'number' },
+        ]
+      },
+      {
+        title: 'Receptor',
+        fields: [
+          { id:'id_paciente_v2',   label:'ID Paciente',      type:'text' },
+          { id:'receptor_nombre',  label:'Nombre receptor',  type:'text', span2:true },
+          { id:'receptor_dni',     label:'DNI receptor',     type:'text' },
+          { id:'receptor_direccion',label:'Dirección receptor',type:'text', span2:true },
+        ]
+      },
+      {
+        title: 'Vínculos',
+        fields: [
+          { id:'id_bono',          label:'ID Bono/Beca',     type:'text' },
+          { id:'id_cita',          label:'ID Cita',          type:'text' },
+        ]
+      },
+      {
+        title: 'Contenido',
+        fields: [
+          { id:'lineas',           label:'Líneas (JSON)',    type:'textarea', span2:true },
+          { id:'notas',            label:'Notas',            type:'textarea', span2:true },
+        ]
+      },
+    ]
+  },
+
   profesionales: {
     label: '🧑‍⚕️ Profesionales',
     tabla: 'profesionales',
@@ -446,6 +523,8 @@ let G = {
   pacMap: {},
   proMap: {},
   sesion: null,
+  seleccionados: new Set(),
+  bbFiltro: 'todos',
 };
 
 // ── AUTH ──────────────────────────────────────────────────────────────────────
@@ -538,10 +617,18 @@ async function initApp() {
 async function cambiarTabla(key) {
   G.tabla = key;
   G.datos = [];
+  G.seleccionados = new Set();
+  G.bbFiltro = 'todos';
   document.querySelectorAll('.tab-btn').forEach((b,i) => {
     b.classList.toggle('active', Object.keys(TABLAS)[i] === key);
   });
   document.getElementById('search-input').value = '';
+  // Filtro BB: solo visible en bonos_becas
+  const bbBar = document.getElementById('bb-filter-bar');
+  bbBar.style.display = key === 'bonos_becas' ? 'flex' : 'none';
+  // Resetear pills BB
+  bbBar.querySelectorAll('.filter-pill').forEach((p,i) => p.classList.toggle('active', i===0));
+  actualizarBulkBar();
   const badge = document.getElementById('conn-badge');
   badge.className = 'conn-badge loading';
   badge.textContent = '⏳ Cargando…';
@@ -562,10 +649,16 @@ async function cambiarTabla(key) {
 // ── RENDER ────────────────────────────────────────────────────────────────────
 function filtrados() {
   const q = document.getElementById('search-input').value.toLowerCase().trim();
-  if (!q) return G.datos;
-  return G.datos.filter(r => {
+  let rows = G.datos;
+  // Filtro tipo bonos/becas
+  if (G.tabla === 'bonos_becas' && G.bbFiltro !== 'todos') {
+    rows = rows.filter(r => r.tipo === G.bbFiltro);
+  }
+  if (!q) return rows;
+  return rows.filter(r => {
     const partes = Object.entries(r).map(([k, v]) => {
       if (k === 'id_paciente' && v && G.pacMap[v]) return v + ' ' + G.pacMap[v];
+      if (k === 'id_paciente_v2' && v && G.pacMap[v]) return v + ' ' + G.pacMap[v];
       if (k === 'id_profesional' && v && G.proMap[v]) return v + ' ' + G.proMap[v];
       if (typeof v === 'string' && v.length > 10 && v.includes('T')) return v.substring(0,10) + ' ' + v;
       return v;
@@ -579,19 +672,24 @@ function renderTabla() {
   const rows = filtrados();
   document.getElementById('search-count').textContent = `${rows.length} / ${G.datos.length}`;
 
-  const thead = `<thead><tr>${cfg.cols.map((c,i) =>
-    `<th onclick="sortBy('${c}')">${cfg.colLabels[i]} ↕</th>`
-  ).join('')}<th>Acciones</th></tr></thead>`;
+  const todosSeleccionados = rows.length > 0 && rows.every(r => G.seleccionados.has(r[cfg.idField]));
+  const thead = `<thead><tr>
+    <th class="cb-col"><input type="checkbox" title="Seleccionar todos" ${todosSeleccionados?'checked':''} onchange="toggleTodos(this.checked, ${JSON.stringify(rows.map(r=>r[cfg.idField]))})"></th>
+    ${cfg.cols.map((c,i) => `<th onclick="sortBy('${c}')">${cfg.colLabels[i]} ↕</th>`).join('')}
+    <th>Acciones</th></tr></thead>`;
 
   const tbody = rows.length === 0
-    ? `<tbody><tr class="empty-row"><td colspan="${cfg.cols.length+1}">Sin resultados</td></tr></tbody>`
+    ? `<tbody><tr class="empty-row"><td colspan="${cfg.cols.length+2}">Sin resultados</td></tr></tbody>`
     : `<tbody>${rows.map(r => {
-        return `<tr>
+        const id = r[cfg.idField];
+        const sel = G.seleccionados.has(id);
+        return `<tr${sel?' style="background:#eef0fb"':''}>
+          <td class="cb-row"><input type="checkbox" ${sel?'checked':''} onchange="toggleSel(${JSON.stringify(id)},this.checked)"></td>
           ${cfg.cols.map(c => {
             let celda;
             if (c === cfg.idField) {
               celda = `<span class="id-badge">${r[c]||'—'}</span>`;
-            } else if (c === 'id_paciente' && G.tabla !== 'pacientes_v2') {
+            } else if ((c === 'id_paciente' || c === 'id_paciente_v2') && G.tabla !== 'pacientes_v2') {
               celda = `<span title="${r[c]||''}">${r[c] ? (G.pacMap[r[c]] || r[c]) : '—'}</span>`;
             } else if (c === 'id_profesional') {
               celda = `<span title="${r[c]||''}">${r[c] ? (G.proMap[r[c]] || r[c]) : '—'}</span>`;
@@ -599,14 +697,16 @@ function renderTabla() {
               celda = String(r[c]).substring(0,10);
             } else if (c === 'hora' && r[c]) {
               celda = String(r[c]).slice(0,5);
+            } else if (c === 'importe_total' && r[c] !== null && r[c] !== undefined) {
+              celda = Number(r[c]).toLocaleString('es-ES',{minimumFractionDigits:2,maximumFractionDigits:2}) + ' €';
             } else {
               celda = r[c]!==null && r[c]!==undefined ? r[c] : '—';
             }
             return `<td>${celda}</td>`;
           }).join('')}
           <td style="white-space:nowrap">
-            <button class="btn-edit" onclick='abrirEditar(${JSON.stringify(r[cfg.idField])})'>✏️</button>
-            <button class="btn-del" onclick='confirmarEliminar(${JSON.stringify(r[cfg.idField])})'>🗑</button>
+            <button class="btn-edit" onclick='abrirEditar(${JSON.stringify(id)})'>✏️</button>
+            <button class="btn-del" onclick='confirmarEliminar(${JSON.stringify(id)})'>🗑</button>
           </td>
         </tr>`;
       }).join('')}</tbody>`;
@@ -827,6 +927,69 @@ async function ejecutarCascade() {
     btn.disabled = false; btn.textContent = '🔄 Reintentar';
     toast('Error en cascade — revisa los pasos y usa el SQL manual si es necesario', 'err');
   }
+}
+
+// ── SELECCIÓN MÚLTIPLE ────────────────────────────────────────────────────────
+function toggleSel(id, checked) {
+  if (checked) G.seleccionados.add(id);
+  else G.seleccionados.delete(id);
+  actualizarBulkBar();
+  renderTabla();
+}
+
+function toggleTodos(checked, ids) {
+  if (checked) ids.forEach(id => G.seleccionados.add(id));
+  else ids.forEach(id => G.seleccionados.delete(id));
+  actualizarBulkBar();
+  renderTabla();
+}
+
+function limpiarSeleccion() {
+  G.seleccionados = new Set();
+  actualizarBulkBar();
+  renderTabla();
+}
+
+function actualizarBulkBar() {
+  const n = G.seleccionados.size;
+  const bar = document.getElementById('bulk-bar');
+  bar.classList.toggle('show', n > 0);
+  document.getElementById('bulk-count').textContent =
+    n === 1 ? '1 registro seleccionado' : `${n} registros seleccionados`;
+}
+
+async function eliminarSeleccionados() {
+  const n = G.seleccionados.size;
+  if (n === 0) return;
+  const cfg = TABLAS[G.tabla];
+  if (!confirm(`¿Eliminar ${n} registro${n>1?'s':''}?\n\nEsta acción es irreversible.`)) return;
+
+  const ids = [...G.seleccionados];
+  let ok = 0, err = 0;
+  for (const id of ids) {
+    try {
+      await supaDelete(cfg.tabla, `${cfg.idField}=eq.${encodeURIComponent(id)}`);
+      G.datos = G.datos.filter(r => r[cfg.idField] !== id);
+      ok++;
+    } catch(e) {
+      err++;
+    }
+  }
+  G.seleccionados = new Set();
+  actualizarBulkBar();
+  renderTabla();
+  if (err === 0) toast(`🗑 ${ok} registro${ok>1?'s':''} eliminado${ok>1?'s':''}`, 'warn');
+  else toast(`${ok} eliminados, ${err} fallidos (puede haber datos relacionados)`, 'err');
+}
+
+// ── FILTRO BONOS/BECAS ────────────────────────────────────────────────────────
+function setBBFiltro(tipo, btn) {
+  G.bbFiltro = tipo;
+  document.querySelectorAll('#bb-filter-bar .filter-pill').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  G.seleccionados = new Set();
+  actualizarBulkBar();
+  renderTabla();
 }
 
 // ── TOAST ─────────────────────────────────────────────────────────────────────
