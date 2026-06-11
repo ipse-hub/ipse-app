@@ -4965,11 +4965,11 @@ async function cobProcesarExtracto(file) {
     const CHUNK = 50;
     for (let i = 0; i < nuevos.length; i += CHUNK) {
       const chunk = nuevos.slice(i, i + CHUNK);
-      const res = await fetch(`${G.surl}/rest/v1/movimientos_banco`, {
+      const res = await fetch(`${SUPA_URL}/rest/v1/movimientos_banco`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'apikey': G.skey,
+          'apikey': SUPA_KEY,
           'Authorization': `Bearer ${G.sesion.access_token}`,
           'Prefer': 'resolution=ignore-duplicates,return=minimal'
         },
