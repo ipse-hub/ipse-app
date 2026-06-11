@@ -1922,7 +1922,12 @@ td.muted{color:var(--ink-muted);font-size:12px}
         <div id="cob-sin-conciliar-section" style="display:none">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
             <div style="font-size:13px;font-weight:600;color:var(--ink)">Pendientes de clasificar</div>
-            <span id="cob-sinconc-count" style="font-size:12px;color:var(--ink-muted)"></span>
+            <div style="display:flex;gap:8px;align-items:center">
+              <span id="cob-sinconc-count" style="font-size:12px;color:var(--ink-muted)"></span>
+              <button class="btn-sec" style="font-size:12px" onclick="cobReclasificarTodo()">
+                <svg viewBox="0 0 24 24" style="width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2;display:inline;vertical-align:-1px;margin-right:4px"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>Clasificar automáticamente
+              </button>
+            </div>
           </div>
           <div class="cob-table-wrap" id="cob-conc-lista"></div>
         </div>
@@ -4875,7 +4880,70 @@ async function cobGuardarModalClasif(id) {
 }
 
 /* ── IMPORTAR EXTRACTO BBVA ── */
-function cobDragOver(e) { e.preventDefault(); document.getElementById('cob-upload-zone').style.borderColor = 'var(--azul)'; }
+/* ── AUTOCLASIFICACIÓN ── */
+function cobAutoClasificar(concepto, movimiento, importe) {
+  const c = (concepto + ' ' + movimiento).toLowerCase();
+  const imp = Number(importe);
+
+  // Cobros de pacientes — Bizum recibido
+  if (c.includes('bizum') && (c.includes('recibido') || imp > 0 && c.includes('bizum'))) {
+    if (!c.includes('enviado')) return 'Cobro paciente';
+  }
+  // Pagos a profesionales — transferencias con keywords de liquidación
+  if ((c.includes('pago psico') || c.includes('pago logo') || c.includes('pago logp') ||
+       c.includes('pago pedago') || c.includes('pago to ') || c.includes('pago nomina') ||
+       c.includes('liquidacion') || c.includes('liquidación'))) {
+    return 'Pago profesional';
+  }
+  // Gastos fijos de clínica
+  if (c.includes('seguridad social') || c.includes('tgss') || c.includes('autónomo') ||
+      c.includes('autonomo') || c.includes('emasagra') || c.includes('repsol') ||
+      c.includes('o2 fibra') || c.includes('o2 movil') || c.includes('telefonica') ||
+      c.includes('alquiler') || c.includes('mutua') || c.includes('colegial')) {
+    return 'Gasto clinica';
+  }
+  // Impuestos y modelos — gasto clínica
+  if (c.includes('pago de impuestos') || c.includes('nrc.') || c.includes('modelo 130') ||
+      c.includes('modelo 303') || c.includes('aeat')) {
+    return 'Gasto clinica';
+  }
+  // Bizum enviado o pago con tarjeta → personal por defecto
+  if ((c.includes('bizum') && c.includes('enviado')) || c.includes('pago con tarjeta')) {
+    return 'Personal';
+  }
+  // Traspaso entre cuentas → personal
+  if (c.includes('traspaso') || c.includes('de casa a') || c.includes('a casa')) {
+    return 'Personal';
+  }
+  // Apple, Mercadona, Amazon y similares → personal
+  if (c.includes('apple') || c.includes('mercadona') || c.includes('amazon') ||
+      c.includes('netflix') || c.includes('spotify')) {
+    return 'Personal';
+  }
+
+  return 'Sin clasificar';
+}
+
+async function cobReclasificarTodo() {
+  if (!COB.movimientos.length) { toast('No hay movimientos cargados', true); return; }
+  const sinClasif = COB.movimientos.filter(m => m.categoria === 'Sin clasificar');
+  if (!sinClasif.length) { toast('No hay movimientos sin clasificar', false, true); return; }
+
+  let actualizados = 0;
+  for (const m of sinClasif) {
+    const cat = cobAutoClasificar(m.concepto || '', m.movimiento || '', m.importe);
+    if (cat !== 'Sin clasificar') {
+      const ok = await sp(`movimientos_banco?id=eq.${m.id}`, { categoria: cat }, 'PATCH');
+      if (ok !== null) { m.categoria = cat; actualizados++; }
+    }
+  }
+  toast(`${actualizados} movimientos clasificados automáticamente`, false, true);
+  cobActualizarKpisBanco();
+  cobFiltrarBanco();
+  cobRenderPendientes();
+}
+
+/* ── DRAG & DROP ── */ { e.preventDefault(); document.getElementById('cob-upload-zone').style.borderColor = 'var(--azul)'; }
 function cobDragLeave(e) { document.getElementById('cob-upload-zone').style.borderColor = 'var(--border)'; }
 function cobDrop(e) {
   e.preventDefault();
@@ -4937,7 +5005,8 @@ async function cobProcesarExtracto(file) {
       const row = rows[i];
       const rawImp = row[iImp];
       if (rawImp === '' || rawImp == null) continue;
-      const importe = Number(String(rawImp).replace(/\./g,'').replace(',','.'));
+      // BBVA exporta con punto decimal anglosajón — solo eliminar caracteres no numéricos salvo punto y signo
+      const importe = Number(String(rawImp).replace(/[^0-9.-]/g, ''));
       if (isNaN(importe)) continue;
 
       const rawFecha = row[iFecha] || row[iValor];
@@ -4946,7 +5015,7 @@ async function cobProcesarExtracto(file) {
 
       const saldoRaw = iSaldo >= 0 ? row[iSaldo] : null;
       const saldo = saldoRaw != null && saldoRaw !== ''
-        ? Number(String(saldoRaw).replace(/\./g,'').replace(',','.'))
+        ? Number(String(saldoRaw).replace(/[^0-9.-]/g, ''))
         : null;
 
       const concepto   = String(row[iConc]  || '').trim();
@@ -4956,7 +5025,8 @@ async function cobProcesarExtracto(file) {
         String(nuevos.length + 1).padStart(4,'0') + '-' +
         Math.random().toString(36).slice(2, 6).toUpperCase();
 
-      nuevos.push({ id, fecha, concepto, movimiento, importe, saldo, categoria: 'Sin clasificar', origen: 'Importado' });
+      const categoria = cobAutoClasificar(concepto, movimiento, importe);
+      nuevos.push({ id, fecha, concepto, movimiento, importe, saldo, categoria, origen: 'Importado' });
     }
 
     if (!nuevos.length) { toast('No se encontraron movimientos válidos', true); return; }
