@@ -5174,7 +5174,9 @@ async function cobCargarLiq() {
   cobActualizarKpisLiq();
   cobLiqRenderHistorial();
   cobRenderLiqPendientes();
-} {
+}
+
+function cobActualizarKpisLiq() {
   const pendTotal = COB.liquidaciones.filter(l => l.estado === 'Pendiente')
     .reduce((s, l) => s + Number(l.importe_calculado), 0);
   const hoy = new Date();
