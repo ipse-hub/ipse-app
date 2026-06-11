@@ -5161,7 +5161,7 @@ async function cobGuardarEditCaja(id, signo) {
 async function cobCargarLiq() {
   const [liqRes, prosRes] = await Promise.all([
     sg('liquidaciones_profesionales?select=*,profesionales(nombre,apellidos,color_agenda)&order=created_at.desc&limit=500'),
-    sg('profesionales?select=id,nombre,apellidos,color_agenda,porcentaje_reparto&eq.activa=Si')
+    sg('profesionales?select=id,nombre,apellidos,color_agenda,porcentaje_reparto&activa=eq.Si')
   ]);
   COB.liquidaciones = liqRes || [];
   // Poblar select de profesionales
@@ -5238,7 +5238,7 @@ async function cobLiqEjecutarCalculo() {
   });
 
   // Cargar porcentajes de profesionales
-  const pros = await sg('profesionales?select=id,nombre,apellidos,porcentaje_reparto&eq.activa=Si');
+  const pros = await sg('profesionales?select=id,nombre,apellidos,porcentaje_reparto&activa=eq.Si');
   const proMap = {};
   (pros || []).forEach(p => { proMap[p.id] = p; });
 
