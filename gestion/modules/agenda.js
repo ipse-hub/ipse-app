@@ -1,6 +1,15 @@
 /* ═══════════════════════════════════════════
    AGENDA (gestión) — ag2
 ═══════════════════════════════════════════ */
+const AG2 = {
+  vista: 'semana',
+  lunes: null,
+  diaActual: null,
+  mesAnio: null,
+  citas: [],
+  iniciado: false,
+  citaModalActual: null,
+};
 const AG2_H_INI = 8;
 const AG2_H_FIN = 21;
 const AG2_DIAS_ES    = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
