@@ -1,3 +1,4 @@
+/* ═══════════════════════════════════════════
    PROFESIONALES
 ═══════════════════════════════════════════ */
 const PRO = {
@@ -13,7 +14,7 @@ function proColor(p, idx) {
 
 async function proInit() {
   try {
-    PRO.lista = await sg(`profesionales?select=id,nombre,apellidos,email,especialidades,color_agenda,es_admin,activa,pdf_delitos_sexuales,fecha_pdf_delitos&order=nombre.asc&limit=50`);
+    PRO.lista = await sg(`profesionales?select=id,nombre,apellidos,email,especialidades,color_agenda,es_admin,activa,pdf_delitos_sexuales,fecha_pdf_delitos,porcentaje_reparto&order=nombre.asc&limit=50`);
     proRenderTabla();
     document.getElementById('pro-subtitulo').textContent =
       `${PRO.lista.length} profesional${PRO.lista.length !== 1 ? 'es' : ''} en el sistema`;
@@ -55,7 +56,7 @@ function proRenderTabla() {
       }
     }
 
-    return `<tr>
+    return `<tr onclick="pfAbrirFicha(${i})" style="cursor:pointer">
       <td>
         <div class="pro-nombre-bloque">
           <div class="pro-avatar" style="background:${color}">${ini}</div>
@@ -71,7 +72,7 @@ function proRenderTabla() {
       <td>${rolBadge}</td>
       <td>${estadoBadge}</td>
       <td>${certBadge}</td>
-      <td><button class="pro-btn-editar" onclick="proAbrirModal(${i})">Editar</button></td>
+      <td><button class="pro-btn-editar" onclick="event.stopPropagation();proAbrirModal(${i})">Editar</button></td>
     </tr>`;
   }).join('');
 }
@@ -99,6 +100,9 @@ function proAbrirModal(idx) {
 
   // Color
   document.getElementById('pro-f-color').value = p.color_agenda || '#10069F';
+
+  // % de reparto
+  document.getElementById('pro-f-reparto').value = p.porcentaje_reparto != null ? p.porcentaje_reparto : 60;
 
   // Cert delitos
   PRO._certRuta = p.pdf_delitos_sexuales || null; // ruta en Storage o null
@@ -188,6 +192,7 @@ async function proGuardar() {
   const esAdmin   = document.getElementById('pro-f-esadmin').value;
   const activa    = document.getElementById('pro-f-activa').value;
   const color     = document.getElementById('pro-f-color').value;
+  const reparto   = parseFloat(document.getElementById('pro-f-reparto').value);
   const fechaPdf       = document.getElementById('pro-f-fechapdf').value || null;
   const especialidades = ['PSI','LOG','TO','PDG'].filter(e =>
     document.getElementById(`pro-esp-${e}`).checked
@@ -195,6 +200,7 @@ async function proGuardar() {
 
   if (!nombre || !email) { toast('Nombre y email son obligatorios', true); return; }
   if (esAlta && !id) { toast('El ID es obligatorio', true); return; }
+  if (isNaN(reparto) || reparto < 0 || reparto > 100) { toast('El % de reparto debe estar entre 0 y 100', true); return; }
 
   // Gestión del certificado PDF
   let pdfRuta = PRO._certRuta; // mantener ruta existente por defecto
@@ -229,6 +235,7 @@ async function proGuardar() {
     color_agenda: color,
     es_admin: esAdmin,
     activa,
+    porcentaje_reparto: reparto,
     pdf_delitos_sexuales: pdfRuta,
     fecha_pdf_delitos: fechaPdf,
   };
@@ -278,6 +285,11 @@ async function proGuardar() {
     await proInit();
     // Refrescar la lista global de G.profesionales usada por el resto de módulos
     G.profesionales = await sg(`profesionales?activa=eq.Si&select=id,nombre,apellidos,color_agenda&order=nombre.asc&limit=50`);
+    // Si la ficha 360 de este profesional está abierta, refrescarla con los datos nuevos
+    if (typeof PF !== 'undefined' && PF.actual) {
+      const idxActualizado = PRO.lista.findIndex(x => x.id === PF.actual.id);
+      if (idxActualizado > -1) pfAbrirFicha(idxActualizado);
+    }
   } catch(e) {
     toast('Error: ' + e.message, true);
   }
