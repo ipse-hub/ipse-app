@@ -813,6 +813,20 @@ td.muted{color:var(--ink-muted);font-size:12px}
 .fact-preview-btn{display:inline-flex;align-items:center;gap:6px;padding:7px 13px;border-radius:8px;border:1px solid var(--border);background:var(--white);color:var(--ink-light);font-size:12px;font-weight:500;cursor:pointer;font-family:inherit;transition:all .15s}
 .fact-preview-btn:hover{background:var(--cream);border-color:var(--azul);color:var(--azul)}
 .fact-preview-btn svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+
+/* ── INDICADORES 360° ── */
+.ind-wrap{padding:20px 24px}
+.ind-pill{display:none;align-items:center;gap:6px;padding:5px 12px;border-radius:8px;font-size:12px;font-weight:600}
+.ind-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-top:16px}
+.ind-card{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px;box-shadow:var(--shadow)}
+.ind-card-top{display:flex;justify-content:space-between;align-items:flex-start}
+.ind-label{font-size:12px;color:var(--ink-muted);font-weight:500}
+.ind-dot{width:8px;height:8px;border-radius:50%;margin-top:3px;flex-shrink:0;background:var(--ink-muted)}
+.ind-val{font-size:24px;font-weight:700;color:var(--ink);margin:6px 0 2px;letter-spacing:-.3px}
+.ind-sub{font-size:12px;color:var(--ink-muted)}
+.ind-bar{display:flex;height:6px;border-radius:3px;overflow:hidden;margin-top:10px;background:var(--cream)}
+.ind-legend{font-size:11px;color:var(--ink-muted);margin-top:8px;line-height:1.8}
+.ind-loading{padding:60px 20px;text-align:center;color:var(--ink-muted);font-size:13px}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -824,6 +838,7 @@ td.muted{color:var(--ink-muted);font-size:12px}
 <script src="modules/profesionales.js"></script>
 <script src="modules/pf360.js"></script>
 <script src="modules/bonos.js"></script>
+<script src="modules/indicadores.js"></script>
 </head>
 <body>
 
@@ -877,6 +892,10 @@ td.muted{color:var(--ink-muted);font-size:12px}
     <div class="sidebar-divider"></div>
     <div class="sidebar-section">
       <div class="sidebar-section-title">Finanzas</div>
+      <div class="nav-item" id="nav-indicadores" onclick="navTo('indicadores')">
+        <svg viewBox="0 0 24 24"><path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/></svg>
+        Indicadores 360°
+      </div>
       <div class="nav-item" id="nav-bonos" onclick="navTo('bonos')">
         <svg viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
         Bonos y becas
@@ -1944,6 +1963,89 @@ td.muted{color:var(--ink-muted);font-size:12px}
   </div>
   <!-- ── /MÓDULO BONOS/BECAS ── -->
 
+  <!-- ── MÓDULO INDICADORES 360° ── -->
+  <div class="modulo" id="mod-indicadores">
+    <div class="mod-header" style="padding:16px 20px 0">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div>
+          <div class="mod-title">Indicadores 360°</div>
+          <div class="mod-subtitle">¿Vamos bien o vamos mal?</div>
+        </div>
+        <div class="ind-pill" id="ind-pill">
+          <i class="ti ti-check" style="font-size:14px"></i>
+          <span></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="ind-wrap">
+      <div class="ind-loading" id="ind-loading">Cargando indicadores…</div>
+
+      <div id="ind-content" style="display:none">
+        <div class="ind-grid">
+
+          <div class="ind-card">
+            <div class="ind-card-top">
+              <span class="ind-label">Agenda próximos 30 días</span>
+              <span class="ind-dot" id="ind-dot-cobertura"></span>
+            </div>
+            <div class="ind-val" id="ind-k-cobertura">—</div>
+            <div class="ind-sub" id="ind-k-cobertura-sub"></div>
+            <div class="ind-bar" id="ind-modal-bar"></div>
+            <div class="ind-legend" id="ind-modal-legend"></div>
+          </div>
+
+          <div class="ind-card">
+            <div class="ind-card-top">
+              <span class="ind-label">Tasa de no-shows</span>
+              <span class="ind-dot" id="ind-dot-noshow"></span>
+            </div>
+            <div class="ind-val" id="ind-k-noshow">—</div>
+            <div class="ind-sub" id="ind-k-noshow-sub"></div>
+          </div>
+
+          <div class="ind-card">
+            <div class="ind-card-top">
+              <span class="ind-label">Pendiente de cobro</span>
+              <span class="ind-dot" id="ind-dot-pendiente"></span>
+            </div>
+            <div class="ind-val" id="ind-k-pendiente">—</div>
+            <div class="ind-sub" id="ind-k-pendiente-sub"></div>
+            <div class="ind-bar" id="ind-aging-bar"></div>
+            <div class="ind-legend">&lt;15 días · 15-30 días · &gt;30 días</div>
+          </div>
+
+          <div class="ind-card">
+            <div class="ind-card-top">
+              <span class="ind-label">Liquidez (banco + caja)</span>
+            </div>
+            <div class="ind-val" id="ind-k-liquidez">—</div>
+            <div class="ind-sub" id="ind-k-liquidez-sub"></div>
+          </div>
+
+          <div class="ind-card">
+            <div class="ind-card-top">
+              <span class="ind-label">Margen operativo (mes en curso)</span>
+              <span class="ind-dot" id="ind-dot-margen"></span>
+            </div>
+            <div class="ind-val" id="ind-k-margen">—</div>
+            <div class="ind-sub" id="ind-k-margen-sub"></div>
+          </div>
+
+          <div class="ind-card">
+            <div class="ind-card-top">
+              <span class="ind-label">Pacientes activos</span>
+            </div>
+            <div class="ind-val" id="ind-k-cartera">—</div>
+            <div class="ind-sub" id="ind-k-cartera-sub"></div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- ── /MÓDULO INDICADORES 360° ── -->
+
   <!-- ── MÓDULO COBROS ── -->
   <div class="modulo" id="mod-cobros">
     <div class="mod-header" style="padding:16px 20px 0">
@@ -2780,6 +2882,7 @@ function navTo(mod) {
   if (mod === 'pacientes')      { if (G.pacientes) filtrarPacientes(); }
   if (mod === 'bonos')          bbInit();
   if (mod === 'cobros')         cobInit();
+  if (mod === 'indicadores')    indInit();
 }
 
 
