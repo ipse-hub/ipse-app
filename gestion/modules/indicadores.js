@@ -70,7 +70,7 @@ function indRenderTodo() {
 /* ── HELPERS ── */
 function indFmt(v) {
   if (v == null || isNaN(v)) return '—';
-  return new Intl.NumberFormat('es-ES', { minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(Math.round(v)) + ' €';
+  return new Intl.NumberFormat('es-ES', { minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(Math.round(v));
 }
 function indFmtFecha(f) {
   if (!f) return '—';
