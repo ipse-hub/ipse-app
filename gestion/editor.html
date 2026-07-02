@@ -674,8 +674,9 @@ function renderTabla() {
   document.getElementById('search-count').textContent = `${rows.length} / ${G.datos.length}`;
 
   const todosSeleccionados = rows.length > 0 && rows.every(r => G.seleccionados.has(r[cfg.idField]));
+  G._idsVisibles = rows.map(r => r[cfg.idField]);
   const thead = `<thead><tr>
-    <th class="cb-col"><input type="checkbox" title="Seleccionar todos" ${todosSeleccionados?'checked':''} onchange="toggleTodos(this.checked, ${JSON.stringify(rows.map(r=>r[cfg.idField]))})"></th>
+    <th class="cb-col"><input type="checkbox" title="Seleccionar todos" ${todosSeleccionados?'checked':''} onchange="toggleTodos(this.checked)"></th>
     ${cfg.cols.map((c,i) => `<th onclick="sortBy('${c}')">${cfg.colLabels[i]} ↕</th>`).join('')}
     <th>Acciones</th></tr></thead>`;
 
@@ -938,7 +939,8 @@ function toggleSel(id, checked) {
   renderTabla();
 }
 
-function toggleTodos(checked, ids) {
+function toggleTodos(checked) {
+  const ids = G._idsVisibles || [];
   if (checked) ids.forEach(id => G.seleccionados.add(id));
   else ids.forEach(id => G.seleccionados.delete(id));
   actualizarBulkBar();
