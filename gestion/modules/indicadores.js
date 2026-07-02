@@ -70,7 +70,11 @@ function indRenderTodo() {
 /* ── HELPERS ── */
 function indFmt(v) {
   if (v == null || isNaN(v)) return '—';
-  return new Intl.NumberFormat('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(v) + ' €';
+  return new Intl.NumberFormat('es-ES', { minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(Math.round(v)) + ' €';
+}
+function indFmtFecha(f) {
+  if (!f) return '—';
+  return new Date(f + 'T00:00:00').toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
 }
 function indColorSemaforo(estado) {
   return estado === 1 ? 'var(--verde)' : estado === 0 ? 'var(--amber)' : estado === -1 ? 'var(--rojo)' : 'var(--ink-muted)';
@@ -213,19 +217,21 @@ function indRenderMargen() {
   const inicioMesAnt = sumarDias(inicioMes, -1).slice(0, 8) + '01';
   const finMesAntComparable = sumarDias(inicioMesAnt, diaHoy - 1); // mismo nº de días que llevamos este mes
 
-  const costesOperativos = IND.costesFijos
-    .filter(c => !(c.concepto || '').toLowerCase().includes('irpf'))
-    .reduce((s, c) => s + (parseFloat(c.importe_mensual) || 0), 0);
+  const costesFiltrados = IND.costesFijos.filter(c => !(c.concepto || '').toLowerCase().includes('irpf'));
+  const costesOperativos = costesFiltrados.reduce((s, c) => s + (parseFloat(c.importe_mensual) || 0), 0);
 
   const producir = (desde, hasta) => IND.citas
     .filter(c => c.estado === 'Hecha' && c.fecha >= desde && c.fecha <= hasta)
     .reduce((s, c) => s + (parseFloat(c.precio) || 0), 0);
 
-  const prodMes = producir(inicioMes, hoy);
+  const sesionesMes = IND.citas.filter(c => c.estado === 'Hecha' && c.fecha >= inicioMes && c.fecha <= hoy);
+  const prodMes = sesionesMes.reduce((s, c) => s + (parseFloat(c.precio) || 0), 0);
   const prodMesAntComparable = producir(inicioMesAnt, finMesAntComparable);
 
   const margenMes = prodMes * 0.4 - costesOperativos;
   const margenMesAntComparable = prodMesAntComparable * 0.4 - costesOperativos;
+
+  IND.margenDetalle = { costes: costesFiltrados, sesiones: sesionesMes, prodMes, costesOperativos, margenMes };
 
   let estado;
   if (margenMes < 0) estado = -1;
@@ -271,4 +277,49 @@ function indRenderPill() {
   icon.className = rojos > 0 ? 'ti ti-alert-triangle' : verdes === vals.length ? 'ti ti-check' : 'ti ti-minus';
   icon.style.color = rojos > 0 ? 'var(--rojo)' : verdes === vals.length ? '#1a7a4a' : '#92400E';
   el.style.color = rojos > 0 ? 'var(--rojo)' : verdes === vals.length ? '#1a7a4a' : '#92400E';
+}
+
+/* ── MODAL DE DETALLE (genérico, reutilizable por otras tarjetas) ── */
+function indAbrirModal(titulo, html) {
+  document.getElementById('ind-modal-title').textContent = titulo;
+  document.getElementById('ind-modal-body').innerHTML = html;
+  document.getElementById('ind-modal-overlay').style.display = 'flex';
+}
+function indCerrarModal() {
+  document.getElementById('ind-modal-overlay').style.display = 'none';
+}
+
+function indVerDetalleMargen() {
+  const d = IND.margenDetalle;
+  if (!d) return;
+
+  const filaCoste = c => `<tr><td style="padding:4px 0;color:var(--ink-light)">${c.concepto}</td>
+    <td style="padding:4px 0;text-align:right;font-family:'DM Mono',monospace">${indFmt(c.importe_mensual)}</td></tr>`;
+  const filaSesion = s => `<tr><td style="padding:4px 0;color:var(--ink-light)">${indFmtFecha(s.fecha)} · ${s.id_paciente}</td>
+    <td style="padding:4px 0;text-align:right;font-family:'DM Mono',monospace">${indFmt(s.precio)}</td></tr>`;
+
+  const html = `
+    <p style="font-size:13px;color:var(--ink-light);line-height:1.6;margin-bottom:16px">
+      Margen = Producción del mes × 40% − Costes fijos operativos<br>
+      ${indFmt(d.prodMes)} × 40% − ${indFmt(d.costesOperativos)} = <strong style="color:var(--ink)">${indFmt(d.margenMes)}</strong>
+    </p>
+
+    <p style="font-size:12px;font-weight:600;color:var(--ink);margin-bottom:6px">Costes fijos incluidos (${d.costes.length}) — excluye IRPF, que es tesorería</p>
+    <table style="width:100%;font-size:12px;border-collapse:collapse;margin-bottom:18px">
+      ${d.costes.map(filaCoste).join('')}
+      <tr style="border-top:1px solid var(--border)">
+        <td style="padding:6px 0;font-weight:600">Total costes fijos</td>
+        <td style="padding:6px 0;text-align:right;font-weight:600;font-family:'DM Mono',monospace">${indFmt(d.costesOperativos)}</td>
+      </tr>
+    </table>
+
+    <p style="font-size:12px;font-weight:600;color:var(--ink);margin-bottom:6px">Sesiones "Hecha" contabilizadas este mes (${d.sesiones.length})</p>
+    ${d.sesiones.length === 0
+      ? `<p style="font-size:12px;color:var(--ink-muted);line-height:1.5">Ninguna sesión marcada como Hecha en lo que va de mes — por eso el margen sale negativo: los costes fijos corren igual aunque todavía no haya producción registrada.</p>`
+      : `<div style="max-height:220px;overflow-y:auto"><table style="width:100%;font-size:12px;border-collapse:collapse">
+          ${d.sesiones.map(filaSesion).join('')}
+        </table></div>`
+    }
+  `;
+  indAbrirModal('Margen operativo — cómo se calcula', html);
 }

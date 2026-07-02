@@ -827,6 +827,15 @@ td.muted{color:var(--ink-muted);font-size:12px}
 .ind-bar{display:flex;height:6px;border-radius:3px;overflow:hidden;margin-top:10px;background:var(--cream)}
 .ind-legend{font-size:11px;color:var(--ink-muted);margin-top:8px;line-height:1.8}
 .ind-loading{padding:60px 20px;text-align:center;color:var(--ink-muted);font-size:13px}
+.ind-card-clickable{cursor:pointer;transition:box-shadow .15s,border-color .15s}
+.ind-card-clickable:hover{box-shadow:var(--shadow-lg);border-color:var(--azul)}
+.ind-detalle-hint{font-size:11px;color:var(--azul);font-weight:500;margin-top:10px}
+.ind-modal-overlay{display:none;position:fixed;inset:0;background:rgba(26,31,53,.45);z-index:200;align-items:center;justify-content:center}
+.ind-modal-box{background:var(--white);border-radius:var(--radius);width:480px;max-width:90vw;max-height:80vh;display:flex;flex-direction:column;box-shadow:var(--shadow-lg)}
+.ind-modal-header{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;border-bottom:1px solid var(--border);font-size:14px;font-weight:600;color:var(--ink)}
+.ind-modal-close{cursor:pointer;color:var(--ink-muted);font-size:14px;padding:2px 6px}
+.ind-modal-close:hover{color:var(--ink)}
+.ind-modal-body{padding:18px;overflow-y:auto}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -2023,13 +2032,14 @@ td.muted{color:var(--ink-muted);font-size:12px}
             <div class="ind-sub" id="ind-k-liquidez-sub"></div>
           </div>
 
-          <div class="ind-card">
+          <div class="ind-card ind-card-clickable" onclick="indVerDetalleMargen()">
             <div class="ind-card-top">
               <span class="ind-label">Margen operativo (mes en curso)</span>
               <span class="ind-dot" id="ind-dot-margen"></span>
             </div>
             <div class="ind-val" id="ind-k-margen">—</div>
             <div class="ind-sub" id="ind-k-margen-sub"></div>
+            <div class="ind-detalle-hint">Ver cálculo →</div>
           </div>
 
           <div class="ind-card">
@@ -2041,6 +2051,16 @@ td.muted{color:var(--ink-muted);font-size:12px}
           </div>
 
         </div>
+      </div>
+    </div>
+
+    <div class="ind-modal-overlay" id="ind-modal-overlay" onclick="if(event.target===this) indCerrarModal()">
+      <div class="ind-modal-box">
+        <div class="ind-modal-header">
+          <span id="ind-modal-title"></span>
+          <span class="ind-modal-close" onclick="indCerrarModal()">✕</span>
+        </div>
+        <div class="ind-modal-body" id="ind-modal-body"></div>
       </div>
     </div>
   </div>
