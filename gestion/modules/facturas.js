@@ -466,4 +466,99 @@ function factGenerarPDF(f, descargar = true) {
   if(descargar){doc.save(fn);toast('PDF descargado',false,true);}else{window.open(URL.createObjectURL(doc.output('blob')),'_blank');}
 }
 
+/* ── Emisión en bloque — Becas ── */
+const BLOQUE = { candidatos: [] };
+
+function factBloqueToggle() {
+  const panel = document.getElementById('fact-bloque-panel');
+  panel.classList.toggle('open');
+  if (panel.classList.contains('open')) {
+    const hoy = new Date(), ult = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 0);
+    document.getElementById('blq-fecha').value = ult.getFullYear() + '-' + String(ult.getMonth() + 1).padStart(2, '0') + '-' + String(ult.getDate()).padStart(2, '0');
+    factBloqueCargar();
+  }
+}
+
+async function factBloqueCargar() {
+  const anioEscolar = document.getElementById('blq-anio-escolar').value;
+  const especialidad = document.getElementById('blq-especialidad').value;
+  const wrap = document.getElementById('fact-bloque-lista-wrap');
+  const btn = document.getElementById('btn-blq-emitir');
+  document.getElementById('blq-info-txt').textContent = ''; btn.disabled = true;
+  wrap.innerHTML = '<div style="color:var(--ink-muted);font-size:13px;padding:10px 0"><span class="spinner"></span> Cargando…</div>';
+  try {
+    const becas = await sg(`bonos_becas?tipo=eq.BECA&anio_escolar=eq.${encodeURIComponent(anioEscolar)}&select=*`);
+    const bf = especialidad ? becas.filter(b => b.especialidad === especialidad) : becas;
+    let fexi = [];
+    try { fexi = await sg(`facturas?tipo_factura=eq.beca&curso_academico=eq.${encodeURIComponent(anioEscolar)}&estado=neq.Anulada&select=id_paciente_v2`); } catch { }
+    const yafact = new Set(fexi.map(f => f.id_paciente_v2).filter(Boolean));
+    const pm = {}; (G.pacientes || []).forEach(p => { pm[p.id] = p; });
+    BLOQUE.candidatos = bf.map(b => {
+      const pac = pm[b.id_paciente] || {};
+      return { ...b, pac, yaFacturado: yafact.has(b.id_paciente), tieneTutor: !!(pac.nombre_tutor1), tieneDNI: !!(pac.dni_tutor1) };
+    });
+    const pend = BLOQUE.candidatos.filter(c => !c.yaFacturado);
+    const sinD = pend.filter(c => !c.tieneTutor || !c.tieneDNI);
+    const list = pend.filter(c => c.tieneTutor && c.tieneDNI);
+    if (!BLOQUE.candidatos.length) { wrap.innerHTML = '<div style="color:var(--ink-muted);font-size:13px;padding:10px 0">Sin becas para estos filtros.</div>'; return; }
+    let html = '<table><thead><tr><th>Paciente</th><th>Especialidad</th><th>Tutor</th><th>DNI</th><th>Estado</th></tr></thead><tbody>';
+    BLOQUE.candidatos.forEach(c => {
+      const nom = ((c.pac.nombre || '') + ' ' + (c.pac.apellidos || '')).trim() || c.id_paciente;
+      const badge = c.yaFacturado ? '<span class="fact-bloque-badge-ok">Ya facturada</span>' : (!c.tieneTutor || !c.tieneDNI ? '<span class="fact-bloque-badge-warn">Datos incompletos</span>' : '<span class="fact-bloque-badge-ok">Lista para emitir</span>');
+      html += `<tr style="${c.yaFacturado ? 'opacity:.45' : ''}"><td><strong>${nom}</strong><br><span style="color:var(--ink-muted);font-size:11px">${c.id_paciente}</span></td><td>${c.especialidad || '—'}</td><td>${c.pac.nombre_tutor1 || '—'}</td><td>${c.pac.dni_tutor1 || '—'}</td><td>${badge}</td></tr>`;
+    });
+    html += '</tbody></table>'; wrap.innerHTML = html;
+    const campoNum = document.getElementById('blq-num-inicio');
+    if (!campoNum.value) {
+      try {
+        const last = await sg('facturas?order=numero_factura.desc&limit=5&select=numero_factura');
+        const anio = new Date(document.getElementById('blq-fecha').value || Date.now()).getFullYear();
+        const ty = last.filter(f => (f.numero_factura || '').includes(String(anio)));
+        let nx = 1; if (ty.length) { const ns = ty.map(f => parseInt((f.numero_factura || '').split('/')[0])).filter(n => !isNaN(n)); if (ns.length) nx = Math.max(...ns) + 1; }
+        campoNum.value = String(nx).padStart(3, '0') + '/' + anio;
+      } catch { }
+    }
+    let info = `${pend.length} facturas pendientes`; if (sinD.length) info += ` · ${sinD.length} con datos incompletos`; if (list.length) info += ` · ${list.length} listas`;
+    document.getElementById('blq-info-txt').textContent = info; btn.disabled = list.length === 0; btn.textContent = list.length > 0 ? `Emitir ${list.length} facturas` : 'Emitir todas las facturas';
+  } catch (e) { wrap.innerHTML = `<div style="color:var(--rojo);font-size:13px;padding:10px 0">Error: ${e.message}</div>`; }
+}
+
+async function factBloqueEmitir() {
+  const list = BLOQUE.candidatos.filter(c => !c.yaFacturado && c.tieneTutor && c.tieneDNI);
+  if (!list.length) return;
+  const fecha = document.getElementById('blq-fecha').value;
+  if (!fecha) { toast('Selecciona una fecha', true); return; }
+  const numRaw = document.getElementById('blq-num-inicio').value.trim();
+  let nextNum = 1; const anioF = new Date(fecha).getFullYear();
+  if (numRaw) { const m = numRaw.match(/^(\d+)\/(\d{4})$/); if (!m) { toast('Formato incorrecto. Usa NNN/AAAA', true); return; } nextNum = parseInt(m[1]); }
+  else {
+    try {
+      const last = await sg('facturas?order=numero_factura.desc&limit=5&select=numero_factura');
+      const ty = last.filter(f => (f.numero_factura || '').includes(String(anioF)));
+      if (ty.length) { const ns = ty.map(f => parseInt((f.numero_factura || '').split('/')[0])).filter(n => !isNaN(n)); if (ns.length) nextNum = Math.max(...ns) + 1; }
+    } catch { }
+  }
+  const anioEscolar = document.getElementById('blq-anio-escolar').value;
+  const btn = document.getElementById('btn-blq-emitir'), pe = document.getElementById('blq-progress'), fe = document.getElementById('blq-progress-fill'), te = document.getElementById('blq-progress-txt');
+  btn.disabled = true; pe.style.display = 'block'; await factCargarEmisor();
+  let emitidas = 0, errores = 0; const anioFin = parseInt((anioEscolar || '2025/2026').split('/')[1] || '2026');
+  for (let i = 0; i < list.length; i++) {
+    const c = list[i]; fe.style.width = Math.round((i / list.length) * 100) + '%'; te.textContent = `Emitiendo ${i + 1}/${list.length}: ${((c.pac.nombre || '') + ' ' + (c.pac.apellidos || '')).trim()}…`;
+    try {
+      const nf = String(nextNum).padStart(3, '0') + '/' + anioF; nextNum++;
+      const esp = c.especialidad || 'PSI', tt = esp === 'LOG' ? 'reeducación del lenguaje' : 'reeducación psicopedagógica';
+      const tit = '"BECA DE ' + (esp === 'LOG' ? 'REEDUCACIÓN DEL LENGUAJE' : 'REEDUCACIÓN PSICOPEDAGÓGICA') + '. CURSO ' + anioEscolar + '"';
+      const lineas = [{ concepto: tit + '\n* 20 Sesiones de ' + tt + ' de Enero a Junio de ' + anioFin + '.', horas: 20, precio: 45, total: 900 }, { concepto: '* Una sesión de repaso' + (esp === 'LOG' ? ' extra' : '') + ' en Junio', horas: 1, precio: 13, total: 13 }];
+      const pac = c.pac;
+      const datos = { id_factura: 'FAC-' + String(Date.now()).slice(-6) + String(i).padStart(2, '0'), numero_factura: nf, fecha, estado: 'Emitida', tipo_factura: 'beca', curso_academico: anioEscolar, id_paciente_v2: c.id_paciente, receptor_nombre: pac.nombre_tutor1, receptor_dni: pac.dni_tutor1, receptor_direccion: pac.direccion_tutor1 || pac.direccion || null, receptor_cp: null, receptor_municipio: pac.municipio || 'Las Gabias', lineas, base_imponible: 913, iva_pct: 0, iva_importe: 0, irpf_pct: 0, irpf_importe: 0, total: 913, notas: FACT.emisor?.texto_exencion || null };
+      await sp('facturas', datos); FACT.facturas.unshift({ ...datos });
+      factGenerarPDF({ ...datos, _pac_nombre: ((pac.nombre || '') + ' ' + (pac.apellidos || '')).trim(), _especialidad: esp, _anio_escolar: anioEscolar }, true);
+      emitidas++; await new Promise(r => setTimeout(r, 300));
+    } catch (e) { console.error('Error', c.id_paciente, e); errores++; }
+  }
+  fe.style.width = '100%'; te.textContent = `✓ ${emitidas} emitidas${errores ? ` · ${errores} errores` : ''}`;
+  factFiltrar(); toast(`${emitidas} facturas emitidas${errores ? ` (${errores} errores)` : ''}`, errores > 0, true);
+  setTimeout(() => factBloqueCargar(), 800);
+}
+
 /* ── navTo extension para facturas ── */
