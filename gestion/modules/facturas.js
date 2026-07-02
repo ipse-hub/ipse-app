@@ -547,9 +547,13 @@ async function factBloqueEmitir() {
   if (!list.length) return;
   const fecha = document.getElementById('blq-fecha').value;
   if (!fecha) { toast('Selecciona una fecha', true); return; }
-  const numRaw = document.getElementById('blq-num-inicio').value.trim();
   const anioF = new Date(fecha).getFullYear();
+  const anioEscolar = document.getElementById('blq-anio-escolar').value;
+  const anioFin = parseInt((anioEscolar || '2025/2026').split('/')[1] || '2026');
+
+  // Calcular siguiente número
   let nextNum = 1;
+  const numRaw = document.getElementById('blq-num-inicio').value.trim();
   if (numRaw) {
     const m = numRaw.match(/^(\d+)\/(\d{4})$/);
     if (!m) { toast('Formato incorrecto. Usa NNN/AAAA', true); return; }
@@ -561,35 +565,91 @@ async function factBloqueEmitir() {
       if (ty.length) { const ns = ty.map(f => parseInt((f.numero_factura || '').split('/')[0])).filter(n => !isNaN(n)); if (ns.length) nextNum = Math.max(...ns) + 1; }
     } catch { }
   }
-  const anioEscolar = document.getElementById('blq-anio-escolar').value;
-  const anioFin = parseInt((anioEscolar || '2025/2026').split('/')[1] || '2026');
 
-  // Previsualización para confirmar concepto y numeración
+  const hayPSI = list.some(c => (c.especialidad || 'PSI') === 'PSI');
+  const hayLOG = list.some(c => c.especialidad === 'LOG');
+  const defConceptoPSI = `"BECA DE REEDUCACIÓN PSICOPEDAGÓGICA. CURSO ${anioEscolar}"\n* 20 Sesiones de reeducación psicopedagógica de Enero a Junio de ${anioFin}.`;
+  const defConceptoLOG = `"BECA DE REEDUCACIÓN DEL LENGUAJE. CURSO ${anioEscolar}"\n* 20 Sesiones de reeducación del lenguaje de Enero a Junio de ${anioFin}.`;
+
+  // PASO 1 — Modal de configuración: número y conceptos
+  const paso1Html = `
+    <div style="position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;display:flex;align-items:center;justify-content:center" id="blq-config-overlay">
+      <div style="background:#fff;border-radius:14px;padding:28px 32px;max-width:560px;width:95%;display:flex;flex-direction:column;gap:20px;box-shadow:0 8px 32px rgba(0,0,0,.18)">
+        <div style="font-size:16px;font-weight:700;color:var(--azul)">Configurar emisión — ${list.length} factura${list.length > 1 ? 's' : ''}</div>
+
+        <div>
+          <label style="font-size:11px;font-weight:700;color:var(--ink-muted);text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:6px">Primer número de factura</label>
+          <input id="blq-cfg-num" type="text" value="${String(nextNum).padStart(3,'0')}/${anioF}"
+            style="width:100%;font-size:18px;font-weight:700;font-family:'DM Mono',monospace;color:var(--azul);padding:10px 14px;border:2px solid var(--azul);border-radius:8px;box-sizing:border-box;text-align:center">
+          <div style="font-size:11px;color:var(--ink-muted);margin-top:4px;text-align:center">Formato NNN/AAAA · Las siguientes se numerarán correlativamente</div>
+        </div>
+
+        ${hayPSI ? `<div>
+          <label style="font-size:11px;font-weight:700;color:var(--ink-muted);text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:6px">Concepto PSI — línea principal</label>
+          <textarea id="blq-cfg-psi" rows="3" style="width:100%;font-size:12px;padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;font-family:inherit;resize:vertical;box-sizing:border-box">${defConceptoPSI}</textarea>
+        </div>` : ''}
+
+        ${hayLOG ? `<div>
+          <label style="font-size:11px;font-weight:700;color:var(--ink-muted);text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:6px">Concepto LOG — línea principal</label>
+          <textarea id="blq-cfg-log" rows="3" style="width:100%;font-size:12px;padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;font-family:inherit;resize:vertical;box-sizing:border-box">${defConceptoLOG}</textarea>
+        </div>` : ''}
+
+        <div style="display:flex;gap:10px;justify-content:flex-end">
+          <button onclick="document.getElementById('blq-config-overlay').remove()" style="padding:8px 20px;border-radius:8px;border:1.5px solid var(--border);background:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">Cancelar</button>
+          <button onclick="factBloquePrevisualizarDesdeConfig()" style="padding:8px 22px;border-radius:8px;background:var(--azul);color:#fff;border:none;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">Previsualizar →</button>
+        </div>
+      </div>
+    </div>`;
+  document.body.insertAdjacentHTML('beforeend', paso1Html);
+}
+
+function factBloquePrevisualizarDesdeConfig() {
+  const list = BLOQUE.candidatos.filter(c => c.seleccionado);
+  const fecha = document.getElementById('blq-fecha').value;
+  const anioF = new Date(fecha).getFullYear();
+  const anioEscolar = document.getElementById('blq-anio-escolar').value;
+
+  const numCfg = document.getElementById('blq-cfg-num').value.trim();
+  const m = numCfg.match(/^(\d+)\/(\d{4})$/);
+  if (!m) { toast('Formato incorrecto. Usa NNN/AAAA', true); return; }
+  const nextNum = parseInt(m[1]);
+
+  const conceptoPSI = (document.getElementById('blq-cfg-psi') || {value: ''}).value.trim();
+  const conceptoLOG = (document.getElementById('blq-cfg-log') || {value: ''}).value.trim();
+
+  // Guardar en BLOQUE para usarlo en la ejecución
+  BLOQUE._cfg = { nextNum, anioF, conceptoPSI, conceptoLOG };
+
+  document.getElementById('blq-config-overlay').remove();
+
   const previews = list.map((c, i) => {
     const esp = c.especialidad || 'PSI';
-    const tit = '"BECA DE ' + (esp === 'LOG' ? 'REEDUCACIÓN DEL LENGUAJE' : 'REEDUCACIÓN PSICOPEDAGÓGICA') + '. CURSO ' + anioEscolar + '"';
+    const concepto = esp === 'LOG' ? conceptoLOG : conceptoPSI;
+    const tit = concepto.split('\n')[0];
     const nf = String(nextNum + i).padStart(3, '0') + '/' + anioF;
     const nom = ((c.pac.nombre || '') + ' ' + (c.pac.apellidos || '')).trim();
     return { nf, nom, tit, esp };
   });
 
-  const preHtml = `
+  const paso2Html = `
     <div style="position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;display:flex;align-items:center;justify-content:center" id="blq-confirm-overlay">
       <div style="background:#fff;border-radius:14px;padding:28px 32px;max-width:700px;width:95%;max-height:82vh;display:flex;flex-direction:column;gap:16px;box-shadow:0 8px 32px rgba(0,0,0,.18)">
         <div style="font-size:16px;font-weight:700;color:var(--azul)">Confirmar emisión — ${list.length} factura${list.length > 1 ? 's' : ''}</div>
-        <div style="font-size:12px;color:var(--ink-muted)">Numeración desde <strong>${String(nextNum).padStart(3,'0')}/${anioF}</strong>. Revisa el concepto antes de emitir.</div>
+        <div style="font-size:12px;color:var(--ink-muted)">Numeración desde <strong>${String(nextNum).padStart(3,'0')}/${anioF}</strong>. Si necesitas cambiar algo, usa ← Atrás.</div>
         <div style="overflow-y:auto;flex:1;border:1.5px solid var(--border);border-radius:8px">
           <table style="width:100%;border-collapse:collapse;font-size:12px">
             <thead><tr style="background:var(--azul);color:#fff;position:sticky;top:0">
               <th style="padding:7px 10px;text-align:left">Nº</th>
               <th style="padding:7px 10px;text-align:left">Paciente</th>
-              <th style="padding:7px 10px;text-align:left">Concepto principal</th>
+              <th style="padding:7px 10px;text-align:left">Esp.</th>
+              <th style="padding:7px 10px;text-align:left">Concepto</th>
               <th style="padding:7px 10px;text-align:right">Total</th>
             </tr></thead>
             <tbody>${previews.map((p, i) => `
               <tr style="background:${i % 2 === 0 ? '#fff' : '#f8f9ff'};border-bottom:1px solid var(--border)">
                 <td style="padding:6px 10px;font-family:'DM Mono',monospace;font-weight:600;color:var(--azul);white-space:nowrap">${p.nf}</td>
                 <td style="padding:6px 10px;white-space:nowrap">${p.nom}</td>
+                <td style="padding:6px 10px;font-weight:600;color:${p.esp === 'LOG' ? 'var(--verde-dark)' : 'var(--azul)'}">${p.esp}</td>
                 <td style="padding:6px 10px;color:var(--ink-muted);font-size:11px">${p.tit}</td>
                 <td style="padding:6px 10px;text-align:right;font-weight:600;white-space:nowrap">913,00 €</td>
               </tr>`).join('')}
@@ -597,20 +657,20 @@ async function factBloqueEmitir() {
           </table>
         </div>
         <div style="display:flex;gap:10px;justify-content:flex-end;padding-top:4px">
-          <button onclick="document.getElementById('blq-confirm-overlay').remove()" style="padding:8px 20px;border-radius:8px;border:1.5px solid var(--border);background:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">Cancelar</button>
-          <button onclick="document.getElementById('blq-confirm-overlay').remove();factBloqueEjecutar(${nextNum})" style="padding:8px 22px;border-radius:8px;background:var(--azul);color:#fff;border:none;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">Emitir ${list.length} factura${list.length > 1 ? 's' : ''}</button>
+          <button onclick="document.getElementById('blq-confirm-overlay').remove();factBloqueEmitir()" style="padding:8px 20px;border-radius:8px;border:1.5px solid var(--border);background:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">← Atrás</button>
+          <button onclick="document.getElementById('blq-confirm-overlay').remove();factBloqueEjecutar()" style="padding:8px 22px;border-radius:8px;background:var(--azul);color:#fff;border:none;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">Emitir ${list.length} factura${list.length > 1 ? 's' : ''}</button>
         </div>
       </div>
     </div>`;
-  document.body.insertAdjacentHTML('beforeend', preHtml);
+  document.body.insertAdjacentHTML('beforeend', paso2Html);
 }
 
-async function factBloqueEjecutar(nextNum) {
+async function factBloqueEjecutar() {
   const list = BLOQUE.candidatos.filter(c => c.seleccionado);
   const fecha = document.getElementById('blq-fecha').value;
-  const anioF = new Date(fecha).getFullYear();
+  const { nextNum: nextNumInicial, anioF, conceptoPSI, conceptoLOG } = BLOQUE._cfg;
+  let nextNum = nextNumInicial;
   const anioEscolar = document.getElementById('blq-anio-escolar').value;
-  const anioFin = parseInt((anioEscolar || '2025/2026').split('/')[1] || '2026');
   const btn = document.getElementById('btn-blq-emitir'), pe = document.getElementById('blq-progress'), fe = document.getElementById('blq-progress-fill'), te = document.getElementById('blq-progress-txt');
   btn.disabled = true; pe.style.display = 'block'; await factCargarEmisor();
   let emitidas = 0, errores = 0;
@@ -618,9 +678,12 @@ async function factBloqueEjecutar(nextNum) {
     const c = list[i]; fe.style.width = Math.round((i / list.length) * 100) + '%'; te.textContent = `Emitiendo ${i + 1}/${list.length}: ${((c.pac.nombre || '') + ' ' + (c.pac.apellidos || '')).trim()}…`;
     try {
       const nf = String(nextNum).padStart(3, '0') + '/' + anioF; nextNum++;
-      const esp = c.especialidad || 'PSI', tt = esp === 'LOG' ? 'reeducación del lenguaje' : 'reeducación psicopedagógica';
-      const tit = '"BECA DE ' + (esp === 'LOG' ? 'REEDUCACIÓN DEL LENGUAJE' : 'REEDUCACIÓN PSICOPEDAGÓGICA') + '. CURSO ' + anioEscolar + '"';
-      const lineas = [{ concepto: tit + '\n* 20 Sesiones de ' + tt + ' de Enero a Junio de ' + anioFin + '.', horas: 20, precio: 45, total: 900 }, { concepto: '* Una sesión de repaso' + (esp === 'LOG' ? ' extra' : '') + ' en Junio', horas: 1, precio: 13, total: 13 }];
+      const esp = c.especialidad || 'PSI';
+      const conceptoCompleto = esp === 'LOG' ? conceptoLOG : conceptoPSI;
+      const lineas = [
+        { concepto: conceptoCompleto, horas: 20, precio: 45, total: 900 },
+        { concepto: '* Una sesión de repaso' + (esp === 'LOG' ? ' extra' : '') + ' en Junio', horas: 1, precio: 13, total: 13 }
+      ];
       const pac = c.pac;
       const datos = { id_factura: 'FAC-' + String(Date.now()).slice(-6) + String(i).padStart(2, '0'), numero_factura: nf, fecha, estado: 'Emitida', tipo_factura: 'beca', curso_academico: anioEscolar, id_paciente_v2: c.id_paciente, receptor_nombre: pac.nombre_tutor1, receptor_dni: pac.dni_tutor1, receptor_direccion: pac.direccion_tutor1 || pac.direccion || null, receptor_cp: null, receptor_municipio: pac.municipio || 'Las Gabias', lineas, base_imponible: 913, iva_pct: 0, iva_importe: 0, irpf_pct: 0, irpf_importe: 0, total: 913, notas: FACT.emisor?.texto_exencion || null };
       await sp('facturas', datos); FACT.facturas.unshift({ ...datos });
