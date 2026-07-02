@@ -495,17 +495,21 @@ async function factBloqueCargar() {
     const pm = {}; (G.pacientes || []).forEach(p => { pm[p.id] = p; });
     BLOQUE.candidatos = bf.map(b => {
       const pac = pm[b.id_paciente] || {};
-      return { ...b, pac, yaFacturado: yafact.has(b.id_paciente), tieneTutor: !!(pac.nombre_tutor1), tieneDNI: !!(pac.dni_tutor1) };
+      const lista = !yafact.has(b.id_paciente) && !!(pac.nombre_tutor1) && !!(pac.dni_tutor1);
+      return { ...b, pac, yaFacturado: yafact.has(b.id_paciente), tieneTutor: !!(pac.nombre_tutor1), tieneDNI: !!(pac.dni_tutor1), seleccionado: lista };
     });
     const pend = BLOQUE.candidatos.filter(c => !c.yaFacturado);
     const sinD = pend.filter(c => !c.tieneTutor || !c.tieneDNI);
     const list = pend.filter(c => c.tieneTutor && c.tieneDNI);
     if (!BLOQUE.candidatos.length) { wrap.innerHTML = '<div style="color:var(--ink-muted);font-size:13px;padding:10px 0">Sin becas para estos filtros.</div>'; return; }
-    let html = '<table><thead><tr><th>Paciente</th><th>Especialidad</th><th>Tutor</th><th>DNI</th><th>Estado</th></tr></thead><tbody>';
-    BLOQUE.candidatos.forEach(c => {
+    let html = '<table><thead><tr><th style="width:32px"></th><th>Paciente</th><th>Especialidad</th><th>Tutor</th><th>DNI</th><th>Estado</th></tr></thead><tbody>';
+    BLOQUE.candidatos.forEach((c, i) => {
       const nom = ((c.pac.nombre || '') + ' ' + (c.pac.apellidos || '')).trim() || c.id_paciente;
       const badge = c.yaFacturado ? '<span class="fact-bloque-badge-ok">Ya facturada</span>' : (!c.tieneTutor || !c.tieneDNI ? '<span class="fact-bloque-badge-warn">Datos incompletos</span>' : '<span class="fact-bloque-badge-ok">Lista para emitir</span>');
-      html += `<tr style="${c.yaFacturado ? 'opacity:.45' : ''}"><td><strong>${nom}</strong><br><span style="color:var(--ink-muted);font-size:11px">${c.id_paciente}</span></td><td>${c.especialidad || '—'}</td><td>${c.pac.nombre_tutor1 || '—'}</td><td>${c.pac.dni_tutor1 || '—'}</td><td>${badge}</td></tr>`;
+      const chk = (c.tieneTutor && c.tieneDNI && !c.yaFacturado)
+        ? `<input type="checkbox" ${c.seleccionado ? 'checked' : ''} onchange="factBloqueToggleCandidato(${i},this.checked)" style="cursor:pointer;width:15px;height:15px">`
+        : '';
+      html += `<tr style="${c.yaFacturado ? 'opacity:.45' : ''}"><td style="text-align:center">${chk}</td><td><strong>${nom}</strong><br><span style="color:var(--ink-muted);font-size:11px">${c.id_paciente}</span></td><td>${c.especialidad || '—'}</td><td>${c.pac.nombre_tutor1 || '—'}</td><td>${c.pac.dni_tutor1 || '—'}</td><td>${badge}</td></tr>`;
     });
     html += '</tbody></table>'; wrap.innerHTML = html;
     const campoNum = document.getElementById('blq-num-inicio');
@@ -518,20 +522,39 @@ async function factBloqueCargar() {
         campoNum.value = String(nx).padStart(3, '0') + '/' + anio;
       } catch { }
     }
-    let info = `${pend.length} facturas pendientes`; if (sinD.length) info += ` · ${sinD.length} con datos incompletos`; if (list.length) info += ` · ${list.length} listas`;
-    document.getElementById('blq-info-txt').textContent = info; btn.disabled = list.length === 0; btn.textContent = list.length > 0 ? `Emitir ${list.length} facturas` : 'Emitir todas las facturas';
+    factBloqueActualizarContador();
   } catch (e) { wrap.innerHTML = `<div style="color:var(--rojo);font-size:13px;padding:10px 0">Error: ${e.message}</div>`; }
 }
 
+function factBloqueToggleCandidato(i, checked) {
+  if (BLOQUE.candidatos[i]) BLOQUE.candidatos[i].seleccionado = checked;
+  factBloqueActualizarContador();
+}
+
+function factBloqueActualizarContador() {
+  const pend = BLOQUE.candidatos.filter(c => !c.yaFacturado);
+  const sinD = pend.filter(c => !c.tieneTutor || !c.tieneDNI);
+  const sel = BLOQUE.candidatos.filter(c => c.seleccionado);
+  let info = `${pend.length} facturas pendientes`; if (sinD.length) info += ` · ${sinD.length} con datos incompletos`; if (sel.length) info += ` · ${sel.length} seleccionadas`;
+  const btn = document.getElementById('btn-blq-emitir');
+  document.getElementById('blq-info-txt').textContent = info;
+  btn.disabled = sel.length === 0;
+  btn.textContent = sel.length > 0 ? `Emitir ${sel.length} facturas` : 'Emitir todas las facturas';
+}
+
 async function factBloqueEmitir() {
-  const list = BLOQUE.candidatos.filter(c => !c.yaFacturado && c.tieneTutor && c.tieneDNI);
+  const list = BLOQUE.candidatos.filter(c => c.seleccionado);
   if (!list.length) return;
   const fecha = document.getElementById('blq-fecha').value;
   if (!fecha) { toast('Selecciona una fecha', true); return; }
   const numRaw = document.getElementById('blq-num-inicio').value.trim();
-  let nextNum = 1; const anioF = new Date(fecha).getFullYear();
-  if (numRaw) { const m = numRaw.match(/^(\d+)\/(\d{4})$/); if (!m) { toast('Formato incorrecto. Usa NNN/AAAA', true); return; } nextNum = parseInt(m[1]); }
-  else {
+  const anioF = new Date(fecha).getFullYear();
+  let nextNum = 1;
+  if (numRaw) {
+    const m = numRaw.match(/^(\d+)\/(\d{4})$/);
+    if (!m) { toast('Formato incorrecto. Usa NNN/AAAA', true); return; }
+    nextNum = parseInt(m[1]);
+  } else {
     try {
       const last = await sg('facturas?order=numero_factura.desc&limit=5&select=numero_factura');
       const ty = last.filter(f => (f.numero_factura || '').includes(String(anioF)));
@@ -539,9 +562,58 @@ async function factBloqueEmitir() {
     } catch { }
   }
   const anioEscolar = document.getElementById('blq-anio-escolar').value;
+  const anioFin = parseInt((anioEscolar || '2025/2026').split('/')[1] || '2026');
+
+  // Previsualización para confirmar concepto y numeración
+  const previews = list.map((c, i) => {
+    const esp = c.especialidad || 'PSI';
+    const tit = '"BECA DE ' + (esp === 'LOG' ? 'REEDUCACIÓN DEL LENGUAJE' : 'REEDUCACIÓN PSICOPEDAGÓGICA') + '. CURSO ' + anioEscolar + '"';
+    const nf = String(nextNum + i).padStart(3, '0') + '/' + anioF;
+    const nom = ((c.pac.nombre || '') + ' ' + (c.pac.apellidos || '')).trim();
+    return { nf, nom, tit, esp };
+  });
+
+  const preHtml = `
+    <div style="position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;display:flex;align-items:center;justify-content:center" id="blq-confirm-overlay">
+      <div style="background:#fff;border-radius:14px;padding:28px 32px;max-width:700px;width:95%;max-height:82vh;display:flex;flex-direction:column;gap:16px;box-shadow:0 8px 32px rgba(0,0,0,.18)">
+        <div style="font-size:16px;font-weight:700;color:var(--azul)">Confirmar emisión — ${list.length} factura${list.length > 1 ? 's' : ''}</div>
+        <div style="font-size:12px;color:var(--ink-muted)">Numeración desde <strong>${String(nextNum).padStart(3,'0')}/${anioF}</strong>. Revisa el concepto antes de emitir.</div>
+        <div style="overflow-y:auto;flex:1;border:1.5px solid var(--border);border-radius:8px">
+          <table style="width:100%;border-collapse:collapse;font-size:12px">
+            <thead><tr style="background:var(--azul);color:#fff;position:sticky;top:0">
+              <th style="padding:7px 10px;text-align:left">Nº</th>
+              <th style="padding:7px 10px;text-align:left">Paciente</th>
+              <th style="padding:7px 10px;text-align:left">Concepto principal</th>
+              <th style="padding:7px 10px;text-align:right">Total</th>
+            </tr></thead>
+            <tbody>${previews.map((p, i) => `
+              <tr style="background:${i % 2 === 0 ? '#fff' : '#f8f9ff'};border-bottom:1px solid var(--border)">
+                <td style="padding:6px 10px;font-family:'DM Mono',monospace;font-weight:600;color:var(--azul);white-space:nowrap">${p.nf}</td>
+                <td style="padding:6px 10px;white-space:nowrap">${p.nom}</td>
+                <td style="padding:6px 10px;color:var(--ink-muted);font-size:11px">${p.tit}</td>
+                <td style="padding:6px 10px;text-align:right;font-weight:600;white-space:nowrap">913,00 €</td>
+              </tr>`).join('')}
+            </tbody>
+          </table>
+        </div>
+        <div style="display:flex;gap:10px;justify-content:flex-end;padding-top:4px">
+          <button onclick="document.getElementById('blq-confirm-overlay').remove()" style="padding:8px 20px;border-radius:8px;border:1.5px solid var(--border);background:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">Cancelar</button>
+          <button onclick="document.getElementById('blq-confirm-overlay').remove();factBloqueEjecutar(${nextNum})" style="padding:8px 22px;border-radius:8px;background:var(--azul);color:#fff;border:none;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">Emitir ${list.length} factura${list.length > 1 ? 's' : ''}</button>
+        </div>
+      </div>
+    </div>`;
+  document.body.insertAdjacentHTML('beforeend', preHtml);
+}
+
+async function factBloqueEjecutar(nextNum) {
+  const list = BLOQUE.candidatos.filter(c => c.seleccionado);
+  const fecha = document.getElementById('blq-fecha').value;
+  const anioF = new Date(fecha).getFullYear();
+  const anioEscolar = document.getElementById('blq-anio-escolar').value;
+  const anioFin = parseInt((anioEscolar || '2025/2026').split('/')[1] || '2026');
   const btn = document.getElementById('btn-blq-emitir'), pe = document.getElementById('blq-progress'), fe = document.getElementById('blq-progress-fill'), te = document.getElementById('blq-progress-txt');
   btn.disabled = true; pe.style.display = 'block'; await factCargarEmisor();
-  let emitidas = 0, errores = 0; const anioFin = parseInt((anioEscolar || '2025/2026').split('/')[1] || '2026');
+  let emitidas = 0, errores = 0;
   for (let i = 0; i < list.length; i++) {
     const c = list[i]; fe.style.width = Math.round((i / list.length) * 100) + '%'; te.textContent = `Emitiendo ${i + 1}/${list.length}: ${((c.pac.nombre || '') + ' ' + (c.pac.apellidos || '')).trim()}…`;
     try {

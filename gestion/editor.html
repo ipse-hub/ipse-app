@@ -434,23 +434,24 @@ const TABLAS = {
   facturas: {
     label: '🧾 Facturas',
     tabla: 'facturas',
-    idField: 'id',
+    idField: 'id_factura',
     orderBy: 'fecha.desc',
     cascade: [],
-    cols: ['id','numero_factura','fecha','id_paciente_v2','tipo_factura','estado','importe_total'],
+    cols: ['id_factura','numero_factura','fecha','id_paciente_v2','tipo_factura','estado','total'],
     colLabels: ['ID','Número','Fecha','Paciente','Tipo','Estado','Importe'],
     sections: [
       {
         title: 'Identificación',
         fields: [
-          { id:'id',               label:'ID',               type:'text', cls:'field-id' },
+          { id:'id_factura',       label:'ID',               type:'text', cls:'field-id' },
           { id:'numero_factura',   label:'Número factura',   type:'text' },
           { id:'fecha',            label:'Fecha',            type:'date' },
           { id:'estado',           label:'Estado',           type:'select', options:['Emitida','Pagada','Anulada'] },
           { id:'tipo_factura',     label:'Tipo',             type:'select', options:['','beca','bono','privada','adecco'] },
           { id:'curso_academico',  label:'Curso académico',  type:'text' },
           { id:'medio_cobro',      label:'Medio cobro',      type:'select', options:['','transferencia','bizum','efectivo','domiciliacion'] },
-          { id:'importe_total',    label:'Importe total (€)',type:'number' },
+          { id:'total',            label:'Total (€)',        type:'number' },
+          { id:'base_imponible',   label:'Base imponible (€)',type:'number' },
           { id:'irpf_pct',         label:'IRPF %',           type:'number' },
         ]
       },
