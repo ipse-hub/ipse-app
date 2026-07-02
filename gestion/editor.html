@@ -837,20 +837,12 @@ async function guardar() {
 
 // ── DELETE ────────────────────────────────────────────────────────────────────
 function confirmarEliminar(id) {
-  const cfg = TABLAS[G.tabla];
-  const deps = cfg.cascade && cfg.cascade.length
-    ? `\n\nSe eliminarán también los registros relacionados en:\n${cfg.cascade.map(c => '· ' + c.tabla).join('\n')}`
-    : '\n\nEsta acción es irreversible.';
-  if (!confirm(`¿Eliminar "${id}"?${deps}`)) return;
+  if (!confirm(`¿Eliminar "${id}"?\n\nEsta acción es irreversible y puede fallar si el registro tiene datos relacionados.`)) return;
   eliminar(id);
 }
 async function eliminar(id) {
   const cfg = TABLAS[G.tabla];
   try {
-    // Borrar dependencias en cascade antes que el registro principal
-    for (const dep of (cfg.cascade || [])) {
-      await supaDelete(dep.tabla, `${dep.col}=eq.${encodeURIComponent(id)}`);
-    }
     await supaDelete(cfg.tabla, `${cfg.idField}=eq.${encodeURIComponent(id)}`);
     G.datos = G.datos.filter(r => r[cfg.idField] !== id);
     renderTabla();
@@ -973,18 +965,12 @@ async function eliminarSeleccionados() {
   const n = G.seleccionados.size;
   if (n === 0) return;
   const cfg = TABLAS[G.tabla];
-  const deps = cfg.cascade && cfg.cascade.length
-    ? `\n\nSe eliminarán también los registros relacionados en:\n${cfg.cascade.map(c => '· ' + c.tabla).join('\n')}`
-    : '\n\nEsta acción es irreversible.';
-  if (!confirm(`¿Eliminar ${n} registro${n>1?'s':''}?${deps}`)) return;
+  if (!confirm(`¿Eliminar ${n} registro${n>1?'s':''}?\n\nEsta acción es irreversible y puede fallar si los registros tienen datos relacionados.`)) return;
 
   const ids = [...G.seleccionados];
   let ok = 0, err = 0;
   for (const id of ids) {
     try {
-      for (const dep of (cfg.cascade || [])) {
-        await supaDelete(dep.tabla, `${dep.col}=eq.${encodeURIComponent(id)}`);
-      }
       await supaDelete(cfg.tabla, `${cfg.idField}=eq.${encodeURIComponent(id)}`);
       G.datos = G.datos.filter(r => r[cfg.idField] !== id);
       ok++;
