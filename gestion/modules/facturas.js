@@ -426,11 +426,11 @@ function factGenerarPDF(f, descargar = true) {
   const esBeca=!!(f._pac_nombre&&f._especialidad);
   if(esBeca){
     const pN=(f._pac_nombre||'').toUpperCase(),tN=(f.receptor_nombre||'').toUpperCase();
-    const cls=[{txt:'BENEFICIARIO/A BECA NEAE CURSO '+(f._anio_escolar||'')+': '+pN,b:true,i:true},{txt:'PADRE/MADRE O TUTOR/A LEGAL: '+tN,b:true,i:true},{txt:f.receptor_dni?'D.N.I.:'+f.receptor_dni:'',b:false,i:true},{txt:f.receptor_direccion||'',b:false,i:false},{txt:f.receptor_cp?'C.P./'+f.receptor_cp:'',b:false,i:false},{txt:f.receptor_municipio||'',b:false,i:false}].filter(l=>l.txt);
+    const cls=[{txt:'BENEFICIARIO/A BECA NEAE CURSO '+(f._anio_escolar||'')+': '+pN,b:true,i:true},{txt:'PADRE/MADRE O TUTOR/A LEGAL: '+tN,b:true,i:true},{txt:f.receptor_dni?'D.N.I.:'+f.receptor_dni:'',b:false,i:true},{txt:f.receptor_direccion||'',b:false,i:false},{txt:f.receptor_cp?'C.P./'+f.receptor_cp:'',b:false,i:false},{txt:f.receptor_municipio||'',b:false,i:false},{txt:'Granada',b:false,i:false}].filter(l=>l.txt);
     const ch=Math.max(28,cls.length*5.2+8);doc.setDrawColor(...BORDR);doc.setLineWidth(0.3);doc.rect(M,y,W-M*2,ch);
     let cy=y+7;cls.forEach(l=>{doc.setFont('helvetica',l.b?(l.i?'bolditalic':'bold'):(l.i?'italic':'normal'));doc.setFontSize(9);doc.setTextColor(...DARK);doc.splitTextToSize(l.txt,W-M*2-8).forEach(ln=>{doc.text(ln,M+4,cy);cy+=5;});});y+=ch+4;
   }else{
-    doc.setDrawColor(...BORDR);doc.setLineWidth(0.3);doc.rect(M,y,W-M*2,28);doc.setFont('helvetica','bold');doc.setFontSize(9.5);doc.setTextColor(...DARK);doc.text((f.receptor_nombre||'').toUpperCase(),M+4,y+7);doc.setFont('helvetica','normal');doc.setFontSize(9);[f.receptor_dni?'D.N.I.: '+f.receptor_dni:'',f.receptor_direccion||'',[f.receptor_cp?'C.P./'+f.receptor_cp:'',f.receptor_municipio||''].filter(Boolean).join('  ')].filter(Boolean).forEach((l,i)=>doc.text(l,M+4,y+13+i*5));y+=34;
+    doc.setDrawColor(...BORDR);doc.setLineWidth(0.3);doc.rect(M,y,W-M*2,28);doc.setFont('helvetica','bold');doc.setFontSize(9.5);doc.setTextColor(...DARK);doc.text((f.receptor_nombre||'').toUpperCase(),M+4,y+7);doc.setFont('helvetica','normal');doc.setFontSize(9);[f.receptor_dni?'D.N.I.: '+f.receptor_dni:'',f.receptor_direccion||'',[f.receptor_cp?'C.P./'+f.receptor_cp:'',f.receptor_municipio||''].filter(Boolean).join('  ')+(f.receptor_municipio?'\nGranada':'')].filter(Boolean).forEach((l,i)=>doc.text(l,M+4,y+13+i*5));y+=34;
   }
   y+=4;doc.setFillColor(...RED);doc.rect(M,y,W-M*2,8,'F');doc.setFont('helvetica','bold');doc.setFontSize(8.5);doc.setTextColor(255,255,255);
   const C1=M+3,C2=128,C3=153,C4=W-M-3;
@@ -685,7 +685,7 @@ async function factBloqueEjecutar() {
         { concepto: '* Una sesión de repaso' + (esp === 'LOG' ? ' extra' : '') + ' en Junio', horas: 1, precio: 13, total: 13 }
       ];
       const pac = c.pac;
-      const datos = { id_factura: 'FAC-' + String(Date.now()).slice(-6) + String(i).padStart(2, '0'), numero_factura: nf, fecha, estado: 'Emitida', tipo_factura: 'beca', curso_academico: anioEscolar, id_paciente_v2: c.id_paciente, receptor_nombre: pac.nombre_tutor1, receptor_dni: pac.dni_tutor1, receptor_direccion: pac.direccion_tutor1 || pac.direccion || null, receptor_cp: null, receptor_municipio: pac.municipio || 'Las Gabias', lineas, base_imponible: 913, iva_pct: 0, iva_importe: 0, irpf_pct: 0, irpf_importe: 0, total: 913, notas: FACT.emisor?.texto_exencion || null };
+      const datos = { id_factura: 'FAC-' + String(Date.now()).slice(-6) + String(i).padStart(2, '0'), numero_factura: nf, fecha, estado: 'Emitida', tipo_factura: 'beca', curso_academico: anioEscolar, id_paciente_v2: c.id_paciente, receptor_nombre: pac.nombre_tutor1, receptor_dni: pac.dni_tutor1, receptor_direccion: pac.direccion_tutor1 || pac.direccion || null, receptor_cp: pac.codigo_postal || null, receptor_municipio: pac.municipio || 'Las Gabias', lineas, base_imponible: 913, iva_pct: 0, iva_importe: 0, irpf_pct: 0, irpf_importe: 0, total: 913, notas: FACT.emisor?.texto_exencion || null };
       await sp('facturas', datos); FACT.facturas.unshift({ ...datos });
       factGenerarPDF({ ...datos, _pac_nombre: ((pac.nombre || '') + ' ' + (pac.apellidos || '')).trim(), _especialidad: esp, _anio_escolar: anioEscolar }, true);
       emitidas++; await new Promise(r => setTimeout(r, 300));
