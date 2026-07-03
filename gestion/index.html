@@ -1461,6 +1461,7 @@ td.muted{color:var(--ink-muted);font-size:12px}
       <div class="fisc-tab" onclick="fiscTab('gastos',this)">Gastos</div>
       <div class="fisc-tab" onclick="fiscTab('ingresos',this)">Ingresos</div>
       <div class="fisc-tab" onclick="fiscTab('130',this)">Modelo 130</div>
+      <div class="fisc-tab" onclick="fiscTab('cg',this)">Control de gestión</div>
     </div>
 
     <!-- PANEL: RESUMEN ANUAL -->
@@ -1482,7 +1483,7 @@ td.muted{color:var(--ink-muted);font-size:12px}
     <!-- PANEL: GASTOS -->
     <div class="fisc-panel" id="fisc-panel-gastos">
       <div class="fisc-toolbar">
-        <span style="font-size:13px;font-weight:600;color:var(--ink)">Gastos deducibles</span>
+        <span style="font-size:13px;font-weight:600;color:var(--ink)">Gastos reales</span>
         <select class="fisc-year-sel" id="fisc-gas-trim" onchange="fiscCargarGastos()">
           <option value="0">Todo el año</option>
           <option value="1">1er trimestre</option>
@@ -1503,6 +1504,7 @@ td.muted{color:var(--ink-muted);font-size:12px}
                 <th>Fecha</th>
                 <th>Descripción</th>
                 <th>Categoría</th>
+                <th>Deducible</th>
                 <th>Proveedor</th>
                 <th>Trimestre</th>
                 <th style="text-align:right">Importe</th>
@@ -1564,6 +1566,37 @@ td.muted{color:var(--ink-muted);font-size:12px}
 
       <div id="fisc-130-contenido">
         <div class="loading-row"><span class="spinner"></span></div>
+      </div>
+    </div>
+
+    <!-- PANEL: CONTROL DE GESTIÓN -->
+    <div class="fisc-panel" id="fisc-panel-cg">
+      <div class="fisc-toolbar">
+        <span style="font-size:13px;font-weight:600;color:var(--ink)">Presupuesto vs. real, por partida</span>
+        <select class="fisc-year-sel" id="fisc-cg-trim" onchange="fiscCargarControlGestion()">
+          <option value="0">Todo el año</option>
+          <option value="1">1er trimestre</option>
+          <option value="2">2º trimestre</option>
+          <option value="3">3er trimestre</option>
+          <option value="4">4º trimestre</option>
+        </select>
+        <span style="margin-left:auto;font-size:12px;color:var(--ink-muted)">costes_fijos (presupuesto) vs. gastos_reales (ejecutado)</span>
+      </div>
+      <div class="table-wrap">
+        <div class="table-scroll">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Partida</th>
+                <th style="text-align:right">Presupuestado</th>
+                <th style="text-align:right">Real</th>
+                <th style="text-align:right">Diferencia</th>
+              </tr>
+            </thead>
+            <tbody id="fisc-cg-tbody"></tbody>
+          </table>
+        </div>
+        <div class="table-footer" id="fisc-cg-footer">—</div>
       </div>
     </div>
 
@@ -2756,6 +2789,19 @@ td.muted{color:var(--ink-muted);font-size:12px}
         <div class="form-group"><label>Proveedor</label><input class="form-input" id="gas-proveedor" type="text" placeholder="Nombre o empresa"></div>
       </div>
       <div class="form-group"><label>Nº Factura</label><input class="form-input" id="gas-num-factura" type="text" placeholder="Referencia opcional"></div>
+      <div class="form-grid2">
+        <div class="form-group"><label>¿Deducible?</label>
+          <select class="form-select" id="gas-deducible">
+            <option value="Si">Sí — cuenta para el Modelo 130</option>
+            <option value="No">No — gasto real, pero no fiscal</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Partida presupuestaria</label>
+          <select class="form-select" id="gas-coste-fijo">
+            <option value="">Sin partida asignada</option>
+          </select>
+        </div>
+      </div>
       <div class="form-group"><label>Notas</label><textarea class="form-input" id="gas-notas" rows="2" style="resize:vertical"></textarea></div>
     </div>
     <div class="modal-footer">

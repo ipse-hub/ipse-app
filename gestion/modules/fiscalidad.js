@@ -24,6 +24,7 @@ function fiscTab(name, el) {
   if (name === 'gastos')  fiscCargarGastos();
   if (name === 'ingresos') fiscCargarIngresos();
   if (name === '130') fisc130Render();
+  if (name === 'cg') fiscCargarControlGestion();
 }
 
 function fiscCambiarEjercicio(val) {
@@ -43,7 +44,7 @@ async function fiscCargarResumen() {
   try {
     const [cobros, gastos, datos130] = await Promise.all([
       sg(`cobros_v2?fecha=gte.${ini}&fecha=lte.${fin}&select=fecha,importe,id_cita&limit=2000`),
-      sg(`gastos_deducibles?ejercicio=eq.${FISC.ejercicio}&order=fecha.asc&limit=2000`),
+      sg(`gastos_reales?ejercicio=eq.${FISC.ejercicio}&es_deducible=eq.Si&order=fecha.asc&limit=2000`),
       sg(`irpf_130?ejercicio=eq.${FISC.ejercicio}&order=trimestre.asc`)
     ]);
 
@@ -145,7 +146,7 @@ function fiscRenderTrimCards(cobros, gastos) {
 ══════════════════════════════════════════ */
 async function fiscCargarGastos() {
   const trim = parseInt(document.getElementById('fisc-gas-trim')?.value || '0');
-  let url = `gastos_deducibles?ejercicio=eq.${FISC.ejercicio}&order=fecha.desc&limit=2000`;
+  let url = `gastos_reales?ejercicio=eq.${FISC.ejercicio}&order=fecha.desc&limit=2000`;
   if (trim > 0) {
     const { ini, fin } = fiscRangoTrim(FISC.ejercicio, trim);
     url += `&fecha=gte.${ini}&fecha=lte.${fin}`;
@@ -165,16 +166,18 @@ function fiscRenderGastos(gastos) {
   const tbody = document.getElementById('fisc-gas-tbody');
   const footer = document.getElementById('fisc-gas-footer');
   if (!gastos.length) {
-    tbody.innerHTML = `<tr><td colspan="7" class="empty-state" style="padding:32px;text-align:center;color:var(--ink-muted)">Sin gastos registrados</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="8" class="empty-state" style="padding:32px;text-align:center;color:var(--ink-muted)">Sin gastos registrados</td></tr>`;
     footer.textContent = '0 gastos · 0,00 €';
     return;
   }
-  const total = gastos.reduce((s,g) => s + (parseFloat(g.importe)||0), 0);
+  const totalDeducible = gastos.filter(g => g.es_deducible !== 'No').reduce((s,g) => s + (parseFloat(g.importe)||0), 0);
+  const totalNoDeducible = gastos.filter(g => g.es_deducible === 'No').reduce((s,g) => s + (parseFloat(g.importe)||0), 0);
   tbody.innerHTML = gastos.map(g => `
     <tr>
       <td class="mono">${fmtFecha(g.fecha)}</td>
       <td class="strong">${g.descripcion}</td>
       <td><span class="badge badge-info">${g.categoria}</span></td>
+      <td>${g.es_deducible === 'No' ? '<span class="badge badge-muted">No deducible</span>' : '<span class="badge badge-ok">Deducible</span>'}</td>
       <td class="muted">${g.proveedor || '—'}</td>
       <td class="muted">Q${fiscTrimestre(g.fecha)}</td>
       <td style="text-align:right;font-family:'DM Mono',monospace;font-weight:600;color:var(--verde-dark)">${fmtEur(parseFloat(g.importe)||0)}</td>
@@ -182,10 +185,22 @@ function fiscRenderGastos(gastos) {
         <button onclick="fiscEditarGasto('${g.id}')" style="background:none;border:1px solid var(--border);border-radius:5px;padding:3px 8px;font-size:11px;color:var(--ink-muted);cursor:pointer;font-family:inherit" onmouseover="this.style.color='var(--azul)'" onmouseout="this.style.color='var(--ink-muted)'">Editar</button>
       </td>
     </tr>`).join('');
-  footer.textContent = `${gastos.length} gasto${gastos.length!==1?'s':''} · Total: ${fmtEur(total)}`;
+  footer.textContent = `${gastos.length} gasto${gastos.length!==1?'s':''} · Deducible: ${fmtEur(totalDeducible)}` +
+    (totalNoDeducible > 0 ? ` · No deducible: ${fmtEur(totalNoDeducible)}` : '');
 }
 
 /* ── Modal gasto ── */
+async function fiscCargarCostesFijosSelect() {
+  if (!FISC.costesFijos.length) {
+    try {
+      FISC.costesFijos = await sg('costes_fijos?activo=eq.true&order=concepto.asc&select=id,concepto,categoria');
+    } catch { FISC.costesFijos = []; }
+  }
+  const sel = document.getElementById('gas-coste-fijo');
+  sel.innerHTML = '<option value="">Sin partida asignada</option>' +
+    FISC.costesFijos.map(c => `<option value="${c.id}">${c.concepto}</option>`).join('');
+}
+
 function fiscAbrirNuevoGasto() {
   FISC.gasEditandoId = null;
   document.getElementById('nuevo-gasto-title').textContent = 'Nuevo gasto';
@@ -196,6 +211,8 @@ function fiscAbrirNuevoGasto() {
   document.getElementById('gas-proveedor').value = '';
   document.getElementById('gas-num-factura').value = '';
   document.getElementById('gas-notas').value = '';
+  document.getElementById('gas-deducible').value = 'Si';
+  fiscCargarCostesFijosSelect().then(() => { document.getElementById('gas-coste-fijo').value = ''; });
   document.getElementById('overlay-nuevo-gasto').classList.add('open');
 }
 
@@ -211,6 +228,8 @@ function fiscEditarGasto(id) {
   document.getElementById('gas-proveedor').value = g.proveedor || '';
   document.getElementById('gas-num-factura').value = g.num_factura || '';
   document.getElementById('gas-notas').value = g.notas || '';
+  document.getElementById('gas-deducible').value = g.es_deducible || 'Si';
+  fiscCargarCostesFijosSelect().then(() => { document.getElementById('gas-coste-fijo').value = g.id_coste_fijo || ''; });
   document.getElementById('overlay-nuevo-gasto').classList.add('open');
 }
 
@@ -234,23 +253,26 @@ async function fiscGuardarGasto() {
 
   const body = {
     ejercicio: FISC.ejercicio, fecha, descripcion, categoria, importe,
-    proveedor:   document.getElementById('gas-proveedor').value.trim() || null,
-    num_factura: document.getElementById('gas-num-factura').value.trim() || null,
-    notas:       document.getElementById('gas-notas').value.trim() || null,
+    proveedor:    document.getElementById('gas-proveedor').value.trim() || null,
+    num_factura:  document.getElementById('gas-num-factura').value.trim() || null,
+    notas:        document.getElementById('gas-notas').value.trim() || null,
+    es_deducible: document.getElementById('gas-deducible').value,
+    id_coste_fijo: document.getElementById('gas-coste-fijo').value ? parseInt(document.getElementById('gas-coste-fijo').value) : null,
   };
+  if (!FISC.gasEditandoId) body.origen = 'Manual';
 
   try {
     if (FISC.gasEditandoId) {
-      await spatch('gastos_deducibles', FISC.gasEditandoId, body);
+      await spatch('gastos_reales', FISC.gasEditandoId, body);
     } else {
       // Generar ID secuencial GAS-NNN
       let nextNum = 1;
       try {
-        const last = await sg('gastos_deducibles?order=id.desc&limit=1&select=id');
+        const last = await sg('gastos_reales?order=id.desc&limit=1&select=id');
         if (last.length) nextNum = parseInt(last[0].id.replace(/\D/g,'')) + 1;
       } catch { /* primera vez */ }
       body.id = 'GAS-' + String(nextNum).padStart(3,'0');
-      await sp('gastos_deducibles', body);
+      await sp('gastos_reales', body);
     }
     fiscCerrarNuevoGasto();
     await fiscCargarGastos();
@@ -345,7 +367,7 @@ async function fisc130Render() {
 
     const [cobros, gastos, datos130arr] = await Promise.all([
       sg(`cobros_v2?fecha=gte.${ini}&fecha=lte.${fin}&select=fecha,importe,id_cita&limit=2000`),
-      sg(`gastos_deducibles?ejercicio=eq.${FISC.ejercicio}&fecha=lte.${fin}&order=fecha.asc&limit=2000`),
+      sg(`gastos_reales?ejercicio=eq.${FISC.ejercicio}&es_deducible=eq.Si&fecha=lte.${fin}&order=fecha.asc&limit=2000`),
       sg(`irpf_130?ejercicio=eq.${FISC.ejercicio}&trimestre=eq.${t}&limit=1`)
     ]);
 
@@ -529,6 +551,80 @@ async function fisc130Guardar(t) {
     toast('Error al guardar: ' + e.message, true);
   } finally {
     btn.disabled = false; btn.textContent = 'Guardar datos del gestor';
+  }
+}
+
+/* ══════════════════════════════════════════
+   PANEL: CONTROL DE GESTIÓN
+   Presupuesto (costes_fijos) vs. real (gastos_reales), por partida
+══════════════════════════════════════════ */
+async function fiscCargarControlGestion() {
+  const trim = parseInt(document.getElementById('fisc-cg-trim')?.value || '0');
+  const tbody = document.getElementById('fisc-cg-tbody');
+  const footer = document.getElementById('fisc-cg-footer');
+  tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;padding:24px"><span class="spinner"></span></td></tr>`;
+
+  try {
+    let iniQ, finQ, nMeses;
+    if (trim > 0) {
+      const r = fiscRangoTrim(FISC.ejercicio, trim);
+      iniQ = r.ini; finQ = r.fin; nMeses = 3;
+    } else {
+      const r = fiscRangoAnual(FISC.ejercicio);
+      iniQ = r.ini; finQ = r.fin; nMeses = 12;
+    }
+
+    const [costesFijos, gastos] = await Promise.all([
+      sg('costes_fijos?activo=eq.true&order=concepto.asc&select=id,concepto,categoria,importe_mensual'),
+      sg(`gastos_reales?ejercicio=eq.${FISC.ejercicio}&fecha=gte.${iniQ}&fecha=lte.${finQ}&limit=2000`)
+    ]);
+    FISC.costesFijos = costesFijos;
+
+    // Agrupar real por partida
+    const realPorPartida = {};
+    let realSinPartida = 0;
+    gastos.forEach(g => {
+      const importe = parseFloat(g.importe) || 0;
+      if (g.id_coste_fijo) realPorPartida[g.id_coste_fijo] = (realPorPartida[g.id_coste_fijo] || 0) + importe;
+      else realSinPartida += importe;
+    });
+
+    let totalPresupuestado = 0, totalReal = 0;
+    const filas = costesFijos.map(c => {
+      const presupuestado = (parseFloat(c.importe_mensual) || 0) * nMeses;
+      const real = realPorPartida[c.id] || 0;
+      const diff = presupuestado - real;
+      totalPresupuestado += presupuestado;
+      totalReal += real;
+      return { concepto: c.concepto, presupuestado, real, diff };
+    });
+
+    if (realSinPartida > 0) {
+      totalReal += realSinPartida;
+      filas.push({ concepto: 'Sin partida asignada', presupuestado: null, real: realSinPartida, diff: null });
+    }
+
+    if (!filas.length) {
+      tbody.innerHTML = `<tr><td colspan="4" class="empty-state" style="padding:32px;text-align:center;color:var(--ink-muted)">Sin partidas presupuestarias activas</td></tr>`;
+      footer.textContent = '—';
+      return;
+    }
+
+    tbody.innerHTML = filas.map(f => {
+      const diffColor = f.diff == null ? 'var(--ink-muted)' : f.diff >= 0 ? 'var(--verde-dark)' : 'var(--rojo)';
+      const diffTxt = f.diff == null ? '—' : (f.diff >= 0 ? '+' : '') + fmtEur(f.diff);
+      return `<tr>
+        <td class="strong">${f.concepto}</td>
+        <td style="text-align:right;font-family:'DM Mono',monospace">${f.presupuestado == null ? '—' : fmtEur(f.presupuestado)}</td>
+        <td style="text-align:right;font-family:'DM Mono',monospace">${fmtEur(f.real)}</td>
+        <td style="text-align:right;font-family:'DM Mono',monospace;font-weight:600;color:${diffColor}">${diffTxt}</td>
+      </tr>`;
+    }).join('');
+
+    const diffTotal = totalPresupuestado - totalReal;
+    footer.textContent = `Presupuestado: ${fmtEur(totalPresupuestado)} · Real: ${fmtEur(totalReal)} · Diferencia: ${diffTotal >= 0 ? '+' : ''}${fmtEur(diffTotal)}`;
+  } catch(e) {
+    tbody.innerHTML = `<tr><td colspan="4" style="color:var(--rojo);padding:12px 14px">Error: ${e.message}</td></tr>`;
   }
 }
 

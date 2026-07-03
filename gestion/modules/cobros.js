@@ -923,10 +923,11 @@ function cobLiqVerDetalle(id) {
 const FISC = {
   ejercicio: 2026,
   trimActivo130: 1,        // trimestre seleccionado en panel 130
-  gastos: [],              // cache gastos_deducibles cargados
+  gastos: [],              // cache gastos_reales cargados
   ingresos: [],            // cache cobros_v2 cargados
   datos130: {},            // cache irpf_130 por trimestre {1:{…}, 2:{…}, …}
-  gasEditandoId: null      // id del gasto en edición (null = nuevo)
+  gasEditandoId: null,     // id del gasto en edición (null = nuevo)
+  costesFijos: []          // cache costes_fijos activos (partidas presupuestarias)
 };
 
 const FISC_CATS = ['Alquiler','Cuota autónomo','Suministros','Material clínico','Seguros','Servicios profesionales','Otros'];
