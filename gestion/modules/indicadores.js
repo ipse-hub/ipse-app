@@ -70,7 +70,9 @@ function indRenderTodo() {
 /* ── HELPERS ── */
 function indFmt(v) {
   if (v == null || isNaN(v)) return '—';
-  return new Intl.NumberFormat('es-ES', { minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(Math.round(v));
+  const n = Math.round(v);
+  const abs = Math.abs(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  return (n < 0 ? '-' : '') + abs;
 }
 function indFmtFecha(f) {
   if (!f) return '—';
