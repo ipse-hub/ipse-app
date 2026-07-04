@@ -452,7 +452,10 @@ const TABLAS = {
           { id:'medio_cobro',      label:'Medio cobro',      type:'select', options:['','transferencia','bizum','efectivo','domiciliacion'] },
           { id:'total',            label:'Total (€)',        type:'number' },
           { id:'base_imponible',   label:'Base imponible (€)',type:'number' },
+          { id:'iva_pct',          label:'IVA %',            type:'number' },
+          { id:'iva_importe',      label:'IVA importe (€)',  type:'number' },
           { id:'irpf_pct',         label:'IRPF %',           type:'number' },
+          { id:'irpf_importe',     label:'IRPF importe (€)', type:'number' },
         ]
       },
       {
@@ -462,6 +465,8 @@ const TABLAS = {
           { id:'receptor_nombre',  label:'Nombre receptor',  type:'text', span2:true },
           { id:'receptor_dni',     label:'DNI receptor',     type:'text' },
           { id:'receptor_direccion',label:'Dirección receptor',type:'text', span2:true },
+          { id:'receptor_cp',      label:'C. Postal receptor', type:'text' },
+          { id:'receptor_municipio',label:'Municipio receptor', type:'text' },
         ]
       },
       {
@@ -489,6 +494,7 @@ const TABLAS = {
     cascade: [
       { tabla: 'citas_v2',    col: 'id_profesional' },
       { tabla: 'series_citas',col: 'id_profesional' },
+      { tabla: 'liquidaciones_profesionales', col: 'id_profesional' },
     ],
     cols: ['id','nombre','apellidos','email','es_admin','activa'],
     colLabels: ['ID','Nombre','Apellidos','Email','Admin','Activa'],
@@ -505,6 +511,201 @@ const TABLAS = {
           { id:'es_admin',     label:'Es admin',      type:'select', options:['No','Si'] },
           { id:'activa',       label:'Activa',        type:'select', options:['Si','No'] },
           { id:'fecha_alta',   label:'F. Alta',       type:'date' },
+          { id:'porcentaje_reparto', label:'% Reparto (facturado a Inés)', type:'number' },
+        ]
+      }
+    ]
+  },
+
+  costes_fijos: {
+    label: '📋 Costes fijos',
+    tabla: 'costes_fijos',
+    idField: 'id',
+    orderBy: 'concepto.asc',
+    cascade: [],
+    cols: ['id','concepto','categoria','importe_mensual','es_deducible','activo'],
+    colLabels: ['ID','Concepto','Categoría','€/mes','Deducible','Activo'],
+    sections: [
+      {
+        title: 'Coste fijo (partida presupuestaria)',
+        fields: [
+          { id:'id',              label:'ID (numérico, autogenerado)', type:'text', cls:'field-id' },
+          { id:'concepto',        label:'Concepto',            type:'text', span2:true },
+          { id:'categoria',       label:'Categoría',           type:'select', options:['Alquiler','Cuota autónomo','Suministros','Material clínico','Seguros','Servicios profesionales','Otros'] },
+          { id:'importe_mensual', label:'Importe mensual (€)', type:'number' },
+          { id:'es_deducible',    label:'Deducible',           type:'select', options:['Si','No'] },
+          { id:'activo',          label:'Activo (true/false — columna booleana, no Si/No)', type:'select', options:['true','false'] },
+        ]
+      }
+    ]
+  },
+
+  gastos_reales: {
+    label: '🧾 Gastos reales',
+    tabla: 'gastos_reales',
+    idField: 'id',
+    orderBy: 'fecha.desc',
+    cascade: [],
+    cols: ['id','fecha','descripcion','categoria','importe','es_deducible','proveedor'],
+    colLabels: ['ID','Fecha','Descripción','Categoría','€','Deducible','Proveedor'],
+    sections: [
+      {
+        title: 'Gasto real',
+        fields: [
+          { id:'id',             label:'ID (GAS-NNN)',        type:'text', cls:'field-id' },
+          { id:'ejercicio',      label:'Ejercicio',           type:'number' },
+          { id:'fecha',          label:'Fecha',               type:'date' },
+          { id:'descripcion',    label:'Descripción',         type:'text', span2:true },
+          { id:'categoria',      label:'Categoría',           type:'select', options:['Alquiler','Cuota autónomo','Suministros','Material clínico','Seguros','Servicios profesionales','Otros'] },
+          { id:'importe',        label:'Importe (€)',         type:'number' },
+          { id:'proveedor',      label:'Proveedor',           type:'text' },
+          { id:'num_factura',    label:'Nº factura',          type:'text' },
+          { id:'es_deducible',   label:'Deducible',           type:'select', options:['Si','No'] },
+          { id:'id_coste_fijo',  label:'ID Coste fijo (número, no texto)', type:'number' },
+          { id:'id_liquidacion', label:'ID Liquidación',      type:'text' },
+          { id:'origen',         label:'Origen',              type:'select', options:['Manual','Liquidación','Coste fijo'] },
+          { id:'notas',          label:'Notas',               type:'textarea', span2:true },
+        ]
+      }
+    ]
+  },
+
+  irpf_130: {
+    label: '📈 IRPF 130',
+    tabla: 'irpf_130',
+    idField: 'id',
+    orderBy: 'id.asc',
+    cascade: [],
+    cols: ['id','ejercicio','trimestre','c01_ingresos','c02_gastos','c07_resultado','fecha_presentacion'],
+    colLabels: ['ID','Ejercicio','Trim.','Ingresos','Gastos','Resultado','F. Presentación'],
+    sections: [
+      {
+        title: 'Modelo 130 — declarado por el gestor',
+        fields: [
+          { id:'id',                 label:'ID (130-AAAA-NT)',    type:'text', cls:'field-id' },
+          { id:'ejercicio',          label:'Ejercicio',           type:'number' },
+          { id:'trimestre',          label:'Trimestre',           type:'select', options:['1','2','3','4'] },
+          { id:'c01_ingresos',       label:'01 · Ingresos',       type:'number' },
+          { id:'c02_gastos',         label:'02 · Gastos',         type:'number' },
+          { id:'c03_rdto_neto',      label:'03 · Rendimiento neto', type:'number' },
+          { id:'c04_20pct',          label:'04 · 20% rendimiento', type:'number' },
+          { id:'c05_pagos_ant',      label:'05 · Pagos fraccionados anteriores', type:'number' },
+          { id:'c06_retenciones',    label:'06 · Retenciones soportadas', type:'number' },
+          { id:'c07_resultado',      label:'07 · Resultado',      type:'number' },
+          { id:'fecha_presentacion', label:'Fecha presentación',  type:'date' },
+          { id:'notas',              label:'Notas',               type:'textarea', span2:true },
+        ]
+      }
+    ]
+  },
+
+  movimientos_banco: {
+    label: '🏦 Mov. banco',
+    tabla: 'movimientos_banco',
+    idField: 'id',
+    orderBy: 'fecha.desc',
+    cascade: [],
+    cols: ['id','fecha','concepto','importe','saldo','categoria','origen'],
+    colLabels: ['ID','Fecha','Concepto','Importe','Saldo','Categoría','Origen'],
+    sections: [
+      {
+        title: 'Movimiento bancario (extracto BBVA)',
+        fields: [
+          { id:'id',         label:'ID (MOV-AAAAMMDD-...)', type:'text', cls:'field-id' },
+          { id:'fecha',      label:'Fecha',                 type:'date' },
+          { id:'concepto',   label:'Concepto',              type:'text', span2:true },
+          { id:'movimiento', label:'Descripción banco (larga)', type:'text', span2:true },
+          { id:'importe',    label:'Importe (€, con signo)',type:'number' },
+          { id:'saldo',      label:'Saldo tras movimiento', type:'number' },
+          { id:'categoria',  label:'Categoría',             type:'select', options:['Sin clasificar','Cobro paciente','Pago profesional','Gasto clinica','Personal'] },
+          { id:'origen',     label:'Origen',                type:'select', options:['Importado','Manual'] },
+          { id:'id_cobro',   label:'ID Cobro',              type:'text' },
+          { id:'id_gasto',   label:'ID Gasto',              type:'text' },
+          { id:'notas',      label:'Notas',                 type:'textarea', span2:true },
+        ]
+      }
+    ]
+  },
+
+  movimientos_caja: {
+    label: '💵 Mov. caja',
+    tabla: 'movimientos_caja',
+    idField: 'id',
+    orderBy: 'fecha.desc',
+    cascade: [],
+    cols: ['id','fecha','concepto','importe','categoria'],
+    colLabels: ['ID','Fecha','Concepto','Importe','Categoría'],
+    sections: [
+      {
+        title: 'Movimiento de caja (efectivo)',
+        fields: [
+          { id:'id',             label:'ID (CAJ-...)',   type:'text', cls:'field-id' },
+          { id:'fecha',          label:'Fecha',          type:'date' },
+          { id:'concepto',       label:'Concepto',       type:'text', span2:true },
+          { id:'importe',        label:'Importe (€, con signo)', type:'number' },
+          { id:'categoria',      label:'Categoría',      type:'select', options:['Cobro paciente','Pago profesional','Personal'] },
+          { id:'id_cobro',       label:'ID Cobro',       type:'text' },
+          { id:'id_liquidacion', label:'ID Liquidación', type:'text' },
+          { id:'notas',          label:'Notas',          type:'textarea', span2:true },
+        ]
+      }
+    ]
+  },
+
+  liquidaciones_profesionales: {
+    label: '🤝 Liquidaciones',
+    tabla: 'liquidaciones_profesionales',
+    idField: 'id',
+    orderBy: 'periodo_desde.desc',
+    cascade: [],
+    cols: ['id','id_profesional','periodo_desde','periodo_hasta','importe_calculado','estado'],
+    colLabels: ['ID','Profesional','Desde','Hasta','Calculado','Estado'],
+    sections: [
+      {
+        title: 'Liquidación de honorarios',
+        fields: [
+          { id:'id',                   label:'ID (LIQ-...)',           type:'text', cls:'field-id' },
+          { id:'id_profesional',       label:'ID Profesional',         type:'select', options:['PRO-001','PRO-002','PRO-003','PRO-004','PRO-005'] },
+          { id:'periodo_desde',        label:'Periodo desde',          type:'date' },
+          { id:'periodo_hasta',        label:'Periodo hasta',          type:'date' },
+          { id:'importe_calculado',    label:'Importe calculado (€)',  type:'number' },
+          { id:'importe_facturado',    label:'Importe facturado (€)',  type:'number' },
+          { id:'importe_acordado',     label:'Importe acordado (€)',   type:'number' },
+          { id:'porcentaje_retencion', label:'% Retención IRPF',       type:'number' },
+          { id:'importe_retenido',     label:'Importe retenido (€)',   type:'number' },
+          { id:'medio_pago',           label:'Medio de pago',          type:'select', options:['','Efectivo','Bizum','Transferencia'] },
+          { id:'estado',               label:'Estado',                 type:'select', options:['Pendiente','Pagado'] },
+          { id:'fecha_pago',           label:'Fecha de pago',          type:'date' },
+          { id:'pdf_factura',          label:'Ruta PDF factura (Storage)', type:'text', span2:true },
+        ]
+      }
+    ]
+  },
+
+  configuracion_emisor: {
+    label: '🏢 Emisor',
+    tabla: 'configuracion_emisor',
+    idField: 'id',
+    orderBy: 'id.asc',
+    cascade: [],
+    cols: ['id','nombre_clinica','nif','municipio','telefono','email'],
+    colLabels: ['ID','Nombre clínica','NIF','Municipio','Teléfono','Email'],
+    sections: [
+      {
+        title: 'Datos del emisor (aparecen en las facturas PDF) — tabla de una sola fila (id fijo: IPSE)',
+        fields: [
+          { id:'id',             label:'ID (fijo: IPSE)', type:'text', cls:'field-id' },
+          { id:'nombre_clinica', label:'Nombre clínica',  type:'text', span2:true },
+          { id:'profesional',    label:'Profesional (título/colegiatura, texto libre)', type:'textarea', span2:true },
+          { id:'nica',           label:'N.I.C.A.',        type:'text' },
+          { id:'num_colegiado',  label:'Nº Colegiado',    type:'text' },
+          { id:'nif',            label:'NIF',             type:'text' },
+          { id:'direccion',      label:'Dirección',       type:'text', span2:true },
+          { id:'cp',             label:'C. Postal',       type:'text' },
+          { id:'municipio',      label:'Municipio',       type:'text' },
+          { id:'telefono',       label:'Teléfono',        type:'text' },
+          { id:'email',          label:'Email',           type:'email' },
+          { id:'texto_exencion', label:'Texto exención IVA (nota por defecto en factura)', type:'textarea', span2:true },
         ]
       }
     ]
