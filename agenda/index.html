@@ -285,6 +285,14 @@ select.fc{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.o
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 #toast.error{background:var(--rojo)}
 #toast.success{background:#166534}
+#toast-undo{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(10px);background:#1A1B2E;color:#fff;border-radius:10px;padding:10px 14px 10px 20px;font-size:13px;font-weight:500;z-index:9999;opacity:0;transition:opacity .3s,transform .3s;pointer-events:none;white-space:nowrap;font-family:'DM Sans',sans-serif;display:flex;align-items:center;gap:14px}
+#toast-undo.show{opacity:1;transform:translateX(-50%) translateY(0);pointer-events:auto}
+#toast-undo button{background:rgba(255,255,255,.14);color:#fff;border:none;border-radius:6px;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:background .15s}
+#toast-undo button:hover{background:rgba(255,255,255,.24)}
+.cita[draggable="true"],.dia-cita[draggable="true"],.mes-pill[draggable="true"]{cursor:grab}
+.cita.dragging,.dia-cita.dragging,.mes-pill.dragging{opacity:.35}
+.day-slot.drop-hover,.dia-slot.drop-hover{background:rgba(0,181,226,.14);box-shadow:inset 0 0 0 1px var(--cyan)}
+.mes-dia.drop-hover{background:rgba(0,181,226,.1);box-shadow:inset 0 0 0 1px var(--cyan)}
 
 /* notas */
 .notas-ta{resize:vertical;min-height:70px}
@@ -766,6 +774,7 @@ select.fc{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.o
 </div><!-- /overlay -->
 
 <div id="toast"></div>
+<div id="toast-undo"></div>
 
 <script>
 /* ═══════════════════════════════════════════
@@ -798,7 +807,8 @@ let G = {
   modalPacId:    null,
   modalMod:      null,
   modalEstado:   'Programada',
-  busquedaTimer: null
+  busquedaTimer: null,
+  dragCita:      null
 };
 
 /* ═══════════════════════════════════════════
@@ -1123,7 +1133,21 @@ function renderSemana(citas, pacMap) {
     HORAS_GRID.forEach(h => {
       const s = document.createElement('div');
       s.className = 'day-slot';
-      s.onclick = () => abrirModalNueva(fechaISO, `${String(h).padStart(2,'0')}:00`);
+      const horaSlot = `${String(h).padStart(2,'0')}:00`;
+      s.onclick = () => abrirModalNueva(fechaISO, horaSlot);
+      s.addEventListener('dragover', e => {
+        if (!G.dragCita) return;
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        s.classList.add('drop-hover');
+      });
+      s.addEventListener('dragleave', () => s.classList.remove('drop-hover'));
+      s.addEventListener('drop', e => {
+        e.preventDefault();
+        s.classList.remove('drop-hover');
+        if (!G.dragCita) return;
+        intentarMoverCita(G.dragCita, fechaISO, horaSlot);
+      });
       col.appendChild(s);
     });
 
@@ -1143,6 +1167,19 @@ function renderSemana(citas, pacMap) {
         <div class="cita-nombre">${nombre}</div>
         <div class="cita-info">${espLabel}${cita.estado && cita.estado!=='Programada'?' · '+cita.estado:''}</div>`;
       el.onclick = e => { e.stopPropagation(); abrirModalEditar(cita, pac); };
+      if (cita.estado === 'Programada') {
+        el.draggable = true;
+        el.addEventListener('dragstart', e => {
+          e.stopPropagation();
+          G.dragCita = cita;
+          e.dataTransfer.effectAllowed = 'move';
+          setTimeout(() => el.classList.add('dragging'), 0);
+        });
+        el.addEventListener('dragend', () => {
+          el.classList.remove('dragging');
+          G.dragCita = null;
+        });
+      }
       if (!G.terFiltro.has(cita.id_profesional)) el.style.display = 'none';
       col.appendChild(el);
     });
@@ -1187,7 +1224,21 @@ function renderDia(citas, pacMap) {
   HORAS_GRID.forEach(h => {
     const s = document.createElement('div');
     s.className = 'dia-slot';
-    s.onclick = () => abrirModalNueva(fechaISO, `${String(h).padStart(2,'0')}:00`);
+    const horaSlot = `${String(h).padStart(2,'0')}:00`;
+    s.onclick = () => abrirModalNueva(fechaISO, horaSlot);
+    s.addEventListener('dragover', e => {
+      if (!G.dragCita) return;
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      s.classList.add('drop-hover');
+    });
+    s.addEventListener('dragleave', () => s.classList.remove('drop-hover'));
+    s.addEventListener('drop', e => {
+      e.preventDefault();
+      s.classList.remove('drop-hover');
+      if (!G.dragCita) return;
+      intentarMoverCita(G.dragCita, fechaISO, horaSlot);
+    });
     col.appendChild(s);
   });
 
@@ -1209,6 +1260,19 @@ function renderDia(citas, pacMap) {
       <div class="dia-cita-meta">${espLabel} · ${terLabel} · ${cita.hora?.substring(0,5)}</div>
       ${cita.estado && cita.estado !== 'Programada' ? `<div class="dia-cita-estado">${cita.estado}</div>` : ''}`;
     el.onclick = () => abrirModalEditar(cita, pac);
+    if (cita.estado === 'Programada') {
+      el.draggable = true;
+      el.addEventListener('dragstart', e => {
+        e.stopPropagation();
+        G.dragCita = cita;
+        e.dataTransfer.effectAllowed = 'move';
+        setTimeout(() => el.classList.add('dragging'), 0);
+      });
+      el.addEventListener('dragend', () => {
+        el.classList.remove('dragging');
+        G.dragCita = null;
+      });
+    }
     col.appendChild(el);
   });
 
@@ -1241,6 +1305,19 @@ function renderMes(citas, pacMap) {
     const celda = document.createElement('div');
     celda.className = `mes-dia${!esMesActual?' otro-mes':''}${esHoy?' hoy-mes':''}`;
     celda.onclick = () => irADia(fechaISO);
+    celda.addEventListener('dragover', e => {
+      if (!G.dragCita) return;
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      celda.classList.add('drop-hover');
+    });
+    celda.addEventListener('dragleave', () => celda.classList.remove('drop-hover'));
+    celda.addEventListener('drop', e => {
+      e.preventDefault();
+      celda.classList.remove('drop-hover');
+      if (!G.dragCita) return;
+      intentarMoverCita(G.dragCita, fechaISO, G.dragCita.hora);
+    });
 
     const numEl = document.createElement('div');
     numEl.className = 'mes-dia-num';
@@ -1261,6 +1338,19 @@ function renderMes(citas, pacMap) {
       pill.style.background = color;
       pill.textContent = `${cita.hora?.substring(0,5)} ${nombre}`;
       pill.onclick = e => { e.stopPropagation(); abrirModalEditar(cita, pac); };
+      if (cita.estado === 'Programada') {
+        pill.draggable = true;
+        pill.addEventListener('dragstart', e => {
+          e.stopPropagation();
+          G.dragCita = cita;
+          e.dataTransfer.effectAllowed = 'move';
+          setTimeout(() => pill.classList.add('dragging'), 0);
+        });
+        pill.addEventListener('dragend', () => {
+          pill.classList.remove('dragging');
+          G.dragCita = null;
+        });
+      }
       celda.appendChild(pill);
     });
 
@@ -2344,6 +2434,110 @@ function toast(msg, esError, esExito) {
   el.className   = 'show' + (esError ? ' error' : esExito ? ' success' : '');
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => el.className = '', 3000);
+}
+
+/* ═══════════════════════════════════════════
+   AGENDA — MOVER CITA (DRAG & DROP)
+   Dispara la misma lógica de reprogramación con
+   trazabilidad que el panel ámbar del modal:
+   la cita original pasa a 'Reprogramada' y se
+   crea una cita nueva con id_cita_origen apuntando
+   a la raíz de la cadena.
+═══════════════════════════════════════════ */
+let toastUndoTimer = null;
+
+function fechaHoraEsPasada(fecha, hora) {
+  const objetivo = new Date(`${fecha}T${hora}`);
+  return objetivo.getTime() < Date.now();
+}
+
+async function intentarMoverCita(cita, nuevaFecha, nuevaHora) {
+  if (cita.fecha === nuevaFecha && cita.hora === nuevaHora) return; // soltada en su propio slot
+
+  if (G.profesional.es_admin !== 'Si' && fechaHoraEsPasada(nuevaFecha, nuevaHora)) {
+    toast('No puedes mover una cita a una fecha u hora pasada', true);
+    return;
+  }
+
+  try {
+    // Choque de horario: cualquier cita activa (no Reprogramada/Cancelada) del mismo
+    // profesional ya en ese slot bloquea el movimiento.
+    const choque = await supaGet(
+      `citas_v2?id_profesional=eq.${cita.id_profesional}&fecha=eq.${nuevaFecha}&hora=eq.${nuevaHora}&estado=not.in.(Reprogramada,Cancelada)&id=neq.${cita.id}&select=id&limit=1`
+    );
+    if (choque.length) {
+      toast('Ya hay una cita de este profesional en ese horario', true);
+      return;
+    }
+
+    // Registro completo desde BD (evita depender de qué campos trajo cargarCitas)
+    const full = await supaGet(`citas_v2?id=eq.${cita.id}&select=*&limit=1`);
+    const citaFull = full[0];
+    if (!citaFull) { toast('No se ha podido leer la cita', true); return; }
+
+    const origenRaiz = citaFull.id_cita_origen || citaFull.id;
+
+    const count  = await supaGet('citas_v2?select=id&order=id.desc&limit=1');
+    const ultimo = count[0]?.id || 'CIT-000';
+    const num    = parseInt(ultimo.split('-')[1] || '0') + 1;
+    const nuevoId = `CIT-${String(num).padStart(3,'0')}`;
+
+    await supaPatch('citas_v2', citaFull.id, { estado: 'Reprogramada' });
+
+    await supaPost('citas_v2', {
+      id:             nuevoId,
+      id_paciente:    citaFull.id_paciente,
+      id_profesional: citaFull.id_profesional,
+      especialidad:   citaFull.especialidad,
+      fecha:          nuevaFecha,
+      hora:           nuevaHora,
+      duracion_min:   citaFull.duracion_min,
+      modalidad_pago: citaFull.modalidad_pago,
+      id_bono_beca:   citaFull.id_bono_beca,
+      precio:         citaFull.precio,
+      estado:         'Programada',
+      forma_cobro:    null,
+      cobrado:        'No',
+      notas:          citaFull.notas,
+      id_cita_origen: origenRaiz
+    });
+
+    mostrarToastDeshacer(`Cita movida a ${nuevaFecha} · ${nuevaHora}`, citaFull.id, nuevoId);
+    cargarCitas();
+  } catch (err) {
+    console.error('Error moviendo cita:', err);
+    toast('Error al mover la cita', true);
+  }
+}
+
+function mostrarToastDeshacer(msg, citaOriginalId, citaNuevaId) {
+  const el = document.getElementById('toast-undo');
+  el.innerHTML = `<span>${msg}</span><button id="btn-deshacer-mov">Deshacer</button>`;
+  el.className = 'show';
+  document.getElementById('btn-deshacer-mov').onclick = () => {
+    clearTimeout(toastUndoTimer);
+    el.className = '';
+    deshacerMovimiento(citaOriginalId, citaNuevaId);
+  };
+  clearTimeout(toastUndoTimer);
+  toastUndoTimer = setTimeout(() => { el.className = ''; }, 6000);
+}
+
+async function deshacerMovimiento(citaOriginalId, citaNuevaId) {
+  try {
+    const nueva = await supaGet(`citas_v2?id=eq.${citaNuevaId}&select=estado,cobrado&limit=1`);
+    if (!nueva.length || nueva[0].estado !== 'Programada' || nueva[0].cobrado === 'Si') {
+      toast('Ya no se puede deshacer: la cita se modificó después de moverla', true);
+      return;
+    }
+    await supaDelete('citas_v2', citaNuevaId);
+    await supaPatch('citas_v2', citaOriginalId, { estado: 'Programada' });
+    toast('Movimiento deshecho', false, true);
+    cargarCitas();
+  } catch (err) {
+    console.error('Error deshaciendo movimiento:', err);
+    toast('Error al deshacer el movimiento', true);
+  }
 }
 
 /* ═══════════════════════════════════════════
