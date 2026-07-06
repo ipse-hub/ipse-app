@@ -993,7 +993,12 @@ function leerFormulario() {
       const el = document.getElementById('field-' + f.id);
       if (!el) return;
       const val = el.value.trim();
-      datos[f.id] = val === '' ? null : (f.type === 'number' ? parseFloat(val) || null : val);
+      if (f.type === 'number') {
+        const num = parseFloat(val);
+        datos[f.id] = val === '' || isNaN(num) ? null : num;
+      } else {
+        datos[f.id] = val === '' ? null : val;
+      }
     });
   });
   return datos;
