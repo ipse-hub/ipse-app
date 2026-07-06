@@ -250,6 +250,10 @@ function factRenderLineas() {
         oninput="FACT.lineas[${i}].precio=parseFloat(this.value)||0;factRecalcularLinea(${i})">
       <input type="number" value="${l.total||0}" min="0" step="0.01" readonly
         style="background:var(--cream);color:var(--azul);font-weight:600">
+      <label style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--ink-muted);white-space:nowrap" title="No mostrar 'h' ni €/h en el PDF (el total se mantiene)">
+        <input type="checkbox" ${l.ocultar_horas?'checked':''} onchange="FACT.lineas[${i}].ocultar_horas=this.checked" style="width:13px;height:13px">
+        Ocultar h
+      </label>
       <button class="fact-linea-del" onclick="factDelLinea(${i})">×</button>
     </div>`).join('');
 }
@@ -443,8 +447,8 @@ function factGenerarPDF(f, descargar = true) {
       doc.setFillColor(i%2===0?255:248,i%2===0?255:248,i%2===0?255:248);doc.rect(M,y,W-M*2,rh,'F');doc.setDrawColor(...BORDR);doc.setLineWidth(0.2);doc.rect(M,y,W-M*2,rh);
       let cy=y+6;subs.forEach((s,si)=>{doc.setFont('helvetica',si===0?'bolditalic':'normal');doc.setFontSize(8.5);doc.setTextColor(...DARK);doc.splitTextToSize(s,C2-C1-4).forEach(ln=>{doc.text(ln,C1,cy);cy+=4.5;});});
       const midY=y+rh/2+1.5;doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(...MUTED);
-      if(l.horas)doc.text(String(l.horas)+' h',C2,midY,{align:'center'});
-      doc.text(fmtI(l.precio)+(l.horas?' €/h':' €'),C3,midY,{align:'center'});
+      if(l.horas&&!l.ocultar_horas)doc.text(String(l.horas)+' h',C2,midY,{align:'center'});
+      doc.text(fmtI(l.precio)+((l.horas&&!l.ocultar_horas)?' €/h':' €'),C3,midY,{align:'center'});
       doc.setFont('helvetica','bold');doc.setTextColor(...DARK);doc.text(fmtI(l.total)+' €',C4,midY,{align:'right'});y+=rh;
     });
   }else{
@@ -452,7 +456,7 @@ function factGenerarPDF(f, descargar = true) {
       const rh=24;doc.setFillColor(i%2===0?255:248,i%2===0?255:248,i%2===0?255:248);doc.rect(M,y,W-M*2,rh,'F');doc.setDrawColor(...BORDR);doc.setLineWidth(0.2);doc.rect(M,y,W-M*2,rh);
       doc.setFont('helvetica','bold');doc.setFontSize(9);doc.setTextColor(...DARK);doc.text((l.concepto||'').split('\n')[0].toUpperCase(),C1,y+7);
       const det=(l.concepto||'').split('\n').slice(1).join(' ').trim();if(det){doc.setFont('helvetica','normal');doc.setFontSize(8.5);doc.splitTextToSize('* '+det,C2-C1-4).forEach((ln,li)=>doc.text(ln,C1,y+13+li*4));}
-      doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(...MUTED);doc.text(String(l.horas||0)+' h',C2,y+10,{align:'center'});doc.text(fmtI(l.precio||l.precio_hora||0)+' €/h',C3,y+10,{align:'center'});doc.setFont('helvetica','bold');doc.setTextColor(...DARK);doc.text(fmtI(l.total||l.importe||0)+' €',C4,y+10,{align:'right'});y+=rh;
+      doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(...MUTED);if(l.horas&&!l.ocultar_horas)doc.text(String(l.horas)+' h',C2,y+10,{align:'center'});doc.text(fmtI(l.precio||l.precio_hora||0)+((l.horas&&!l.ocultar_horas)?' €/h':' €'),C3,y+10,{align:'center'});doc.setFont('helvetica','bold');doc.setTextColor(...DARK);doc.text(fmtI(l.total||l.importe||0)+' €',C4,y+10,{align:'right'});y+=rh;
     });
   }
   doc.setFillColor(...CREAM);doc.rect(M,y,W-M*2,8,'F');doc.setFont('helvetica','bold');doc.setFontSize(9.5);doc.setTextColor(...DARK);doc.text('TOTAL',C4-25,y+5.5,{align:'right'});doc.text(fmtI(f.base_imponible)+' €',C4,y+5.5,{align:'right'});y+=14;
@@ -490,13 +494,13 @@ async function factBloqueCargar() {
     const becas = await sg(`bonos_becas?tipo=eq.BECA&anio_escolar=eq.${encodeURIComponent(anioEscolar)}&select=*`);
     const bf = especialidad ? becas.filter(b => b.especialidad === especialidad) : becas;
     let fexi = [];
-    try { fexi = await sg(`facturas?tipo_factura=eq.beca&curso_academico=eq.${encodeURIComponent(anioEscolar)}&estado=neq.Anulada&select=id_paciente_v2`); } catch { }
-    const yafact = new Set(fexi.map(f => f.id_paciente_v2).filter(Boolean));
+    try { fexi = await sg(`facturas?tipo_factura=eq.beca&curso_academico=eq.${encodeURIComponent(anioEscolar)}&estado=neq.Anulada&select=id_bono`); } catch { }
+    const yafact = new Set(fexi.map(f => f.id_bono).filter(Boolean));
     const pm = {}; (G.pacientes || []).forEach(p => { pm[p.id] = p; });
     BLOQUE.candidatos = bf.map(b => {
       const pac = pm[b.id_paciente] || {};
-      const lista = !yafact.has(b.id_paciente) && !!(pac.nombre_tutor1) && !!(pac.dni_tutor1);
-      return { ...b, pac, yaFacturado: yafact.has(b.id_paciente), tieneTutor: !!(pac.nombre_tutor1), tieneDNI: !!(pac.dni_tutor1), seleccionado: lista };
+      const lista = !yafact.has(b.id) && !!(pac.nombre_tutor1) && !!(pac.dni_tutor1);
+      return { ...b, pac, yaFacturado: yafact.has(b.id), tieneTutor: !!(pac.nombre_tutor1), tieneDNI: !!(pac.dni_tutor1), seleccionado: lista };
     });
     const pend = BLOQUE.candidatos.filter(c => !c.yaFacturado);
     const sinD = pend.filter(c => !c.tieneTutor || !c.tieneDNI);
@@ -566,10 +570,12 @@ async function factBloqueEmitir() {
     } catch { }
   }
 
-  const hayPSI = list.some(c => (c.especialidad || 'PSI') === 'PSI');
+  const hayPSI = list.some(c => (c.especialidad || 'PSI') === 'PSI' && c.pac.alta_capacidad !== 'Si');
   const hayLOG = list.some(c => c.especialidad === 'LOG');
+  const hayAltaCap = list.some(c => (c.especialidad || 'PSI') === 'PSI' && c.pac.alta_capacidad === 'Si');
   const defConceptoPSI = `"BECA DE REEDUCACIÓN PSICOPEDAGÓGICA. CURSO ${anioEscolar}"\n* 20 Sesiones de reeducación psicopedagógica de Enero a Junio de ${anioFin}.`;
   const defConceptoLOG = `"BECA DE REEDUCACIÓN DEL LENGUAJE. CURSO ${anioEscolar}"\n* 20 Sesiones de reeducación del lenguaje de Enero a Junio de ${anioFin}.`;
+  const defConceptoAltaCap = `"PROGRAMA ESPECÍFICO PARA ALUMNADO CON ALTAS CAPACIDADES INTELECTUALES"\nBECA NEAE CONVOCATORIA ${anioEscolar}\n* 20 Sesiones de entrenamiento en un programa de Alta Capacidad de Enero a Junio de ${anioFin}.`;
 
   // PASO 1 — Modal de configuración: número y conceptos
   const paso1Html = `
@@ -594,6 +600,12 @@ async function factBloqueEmitir() {
           <textarea id="blq-cfg-log" rows="3" style="width:100%;font-size:12px;padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;font-family:inherit;resize:vertical;box-sizing:border-box">${defConceptoLOG}</textarea>
         </div>` : ''}
 
+        ${hayAltaCap ? `<div>
+          <label style="font-size:11px;font-weight:700;color:var(--ink-muted);text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:6px">Concepto Alta Capacidad (NEAE) — línea principal</label>
+          <textarea id="blq-cfg-altacap" rows="3" style="width:100%;font-size:12px;padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;font-family:inherit;resize:vertical;box-sizing:border-box">${defConceptoAltaCap}</textarea>
+          <div style="font-size:11px;color:var(--ink-muted);margin-top:4px">Se aplicará a los pacientes marcados como Alta Capacidad en su ficha.</div>
+        </div>` : ''}
+
         <div style="display:flex;gap:10px;justify-content:flex-end">
           <button onclick="document.getElementById('blq-config-overlay').remove()" style="padding:8px 20px;border-radius:8px;border:1.5px solid var(--border);background:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">Cancelar</button>
           <button onclick="factBloquePrevisualizarDesdeConfig()" style="padding:8px 22px;border-radius:8px;background:var(--azul);color:#fff;border:none;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">Previsualizar →</button>
@@ -616,19 +628,21 @@ function factBloquePrevisualizarDesdeConfig() {
 
   const conceptoPSI = (document.getElementById('blq-cfg-psi') || {value: ''}).value.trim();
   const conceptoLOG = (document.getElementById('blq-cfg-log') || {value: ''}).value.trim();
+  const conceptoAltaCap = (document.getElementById('blq-cfg-altacap') || {value: ''}).value.trim();
 
   // Guardar en BLOQUE para usarlo en la ejecución
-  BLOQUE._cfg = { nextNum, anioF, conceptoPSI, conceptoLOG };
+  BLOQUE._cfg = { nextNum, anioF, conceptoPSI, conceptoLOG, conceptoAltaCap };
 
   document.getElementById('blq-config-overlay').remove();
 
   const previews = list.map((c, i) => {
     const esp = c.especialidad || 'PSI';
-    const concepto = esp === 'LOG' ? conceptoLOG : conceptoPSI;
+    const esAltaCap = esp === 'PSI' && c.pac.alta_capacidad === 'Si';
+    const concepto = esAltaCap ? conceptoAltaCap : (esp === 'LOG' ? conceptoLOG : conceptoPSI);
     const tit = concepto.split('\n')[0];
     const nf = String(nextNum + i).padStart(3, '0') + '/' + anioF;
     const nom = ((c.pac.nombre || '') + ' ' + (c.pac.apellidos || '')).trim();
-    return { nf, nom, tit, esp };
+    return { nf, nom, tit, esp: esAltaCap ? 'PSI · Alta Cap.' : esp };
   });
 
   const paso2Html = `
@@ -668,7 +682,7 @@ function factBloquePrevisualizarDesdeConfig() {
 async function factBloqueEjecutar() {
   const list = BLOQUE.candidatos.filter(c => c.seleccionado);
   const fecha = document.getElementById('blq-fecha').value;
-  const { nextNum: nextNumInicial, anioF, conceptoPSI, conceptoLOG } = BLOQUE._cfg;
+  const { nextNum: nextNumInicial, anioF, conceptoPSI, conceptoLOG, conceptoAltaCap } = BLOQUE._cfg;
   let nextNum = nextNumInicial;
   const anioEscolar = document.getElementById('blq-anio-escolar').value;
   const btn = document.getElementById('btn-blq-emitir'), pe = document.getElementById('blq-progress'), fe = document.getElementById('blq-progress-fill'), te = document.getElementById('blq-progress-txt');
@@ -679,13 +693,14 @@ async function factBloqueEjecutar() {
     try {
       const nf = String(nextNum).padStart(3, '0') + '/' + anioF; nextNum++;
       const esp = c.especialidad || 'PSI';
-      const conceptoCompleto = esp === 'LOG' ? conceptoLOG : conceptoPSI;
+      const esAltaCap = esp === 'PSI' && c.pac.alta_capacidad === 'Si';
+      const conceptoCompleto = esAltaCap ? conceptoAltaCap : (esp === 'LOG' ? conceptoLOG : conceptoPSI);
       const lineas = [
         { concepto: conceptoCompleto, horas: 20, precio: 45, total: 900 },
-        { concepto: '* Una sesión de repaso' + (esp === 'LOG' ? ' extra' : '') + ' en Junio', horas: 1, precio: 13, total: 13 }
+        { concepto: '* Una sesión de repaso' + (esp === 'LOG' ? ' extra' : '') + ' en Junio', horas: 1, precio: 13, total: 13, ocultar_horas: true }
       ];
       const pac = c.pac;
-      const datos = { id_factura: 'FAC-' + String(Date.now()).slice(-6) + String(i).padStart(2, '0'), numero_factura: nf, fecha, estado: 'Emitida', tipo_factura: 'beca', curso_academico: anioEscolar, id_paciente_v2: c.id_paciente, receptor_nombre: pac.nombre_tutor1, receptor_dni: pac.dni_tutor1, receptor_direccion: pac.direccion_tutor1 || pac.direccion || null, receptor_cp: pac.codigo_postal || null, receptor_municipio: pac.municipio || 'Las Gabias', lineas, base_imponible: 913, iva_pct: 0, iva_importe: 0, irpf_pct: 0, irpf_importe: 0, total: 913, notas: FACT.emisor?.texto_exencion || null };
+      const datos = { id_factura: 'FAC-' + String(Date.now()).slice(-6) + String(i).padStart(2, '0'), numero_factura: nf, fecha, estado: 'Emitida', tipo_factura: 'beca', curso_academico: anioEscolar, id_paciente_v2: c.id_paciente, id_bono: c.id, receptor_nombre: pac.nombre_tutor1, receptor_dni: pac.dni_tutor1, receptor_direccion: pac.direccion_tutor1 || pac.direccion || null, receptor_cp: pac.codigo_postal || null, receptor_municipio: pac.municipio || 'Las Gabias', lineas, base_imponible: 913, iva_pct: 0, iva_importe: 0, irpf_pct: 0, irpf_importe: 0, total: 913, notas: FACT.emisor?.texto_exencion || null };
       await sp('facturas', datos); FACT.facturas.unshift({ ...datos });
       factGenerarPDF({ ...datos, _pac_nombre: ((pac.nombre || '') + ' ' + (pac.apellidos || '')).trim(), _especialidad: esp, _anio_escolar: anioEscolar }, true);
       emitidas++; await new Promise(r => setTimeout(r, 300));

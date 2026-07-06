@@ -794,7 +794,7 @@ td.muted{color:var(--ink-muted);font-size:12px}
 
 /* Líneas */
 .fact-lineas-hdr{display:grid;grid-template-columns:1fr 80px 90px 90px 28px;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-muted);margin-bottom:6px}
-.fact-linea{display:grid;grid-template-columns:1fr 80px 90px 90px 28px;gap:8px;align-items:center;margin-bottom:6px}
+.fact-linea{display:grid;grid-template-columns:1fr 80px 90px 90px 60px 28px;gap:8px;align-items:center;margin-bottom:6px}
 .fact-linea input{padding:6px 8px;border:1px solid var(--border);border-radius:6px;font-family:inherit;font-size:13px;color:var(--ink);outline:none;width:100%;background:var(--white)}
 .fact-linea input:focus{border-color:var(--azul)}
 .fact-linea input[type=number]{text-align:right}
@@ -1195,6 +1195,10 @@ td.muted{color:var(--ink-muted);font-size:12px}
             <div class="card">
               <div class="card-title">Historial de cobros</div>
               <div id="p360-eco-cobros"><div class="loading-row"><span class="spinner"></span></div></div>
+            </div>
+            <div class="card">
+              <div class="card-title">Facturas</div>
+              <div id="p360-eco-facturas"><div class="loading-row"><span class="spinner"></span></div></div>
             </div>
           </div>
 
@@ -2745,6 +2749,12 @@ td.muted{color:var(--ink-muted);font-size:12px}
           <input class="form-input" id="ed-diagnostico" type="text" placeholder="Diagnóstico o motivo de consulta">
         </div>
       </div>
+      <div class="pac-form-full">
+        <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink);cursor:pointer">
+          <input type="checkbox" id="ed-alta-capacidad" style="accent-color:var(--azul);width:15px;height:15px">
+          Alta Capacidad (afecta al concepto de la beca NEAE en factura)
+        </label>
+      </div>
       <div class="pac-form-full" style="margin-bottom:0">
         <div class="form-group" style="margin:0">
           <label>Notas internas</label>
@@ -3393,6 +3403,7 @@ function renderP360Clinica(p) {
       campo('Diagnóstico', p.diagnostico),
       campo('Ámbito', ambitoLabel),
       campo('Derivación', derivLabel),
+      campo('Alta Capacidad', p.alta_capacidad === 'Si' ? 'Sí' : 'No'),
       campo('Alergias', p.alergias),
     ].join('')}</div>
     <div>${campo('Notas generales', p.notas)}</div>`;
@@ -3407,18 +3418,21 @@ function nomPro(id) {
 async function cargarDatosAsync(idPaciente) {
   try {
     const hoy = new Date().toISOString().split('T')[0];
-    const [citas, bonos, cobros] = await Promise.all([
+    const [citas, bonos, cobros, facturas] = await Promise.all([
       sg(`citas_v2?id_paciente=eq.${idPaciente}&order=fecha.desc&limit=500&select=*`),
       sg(`bonos_becas?id_paciente=eq.${encodeURIComponent(idPaciente)}&order=fecha_creacion.desc&limit=50&select=*`),
-      G.esAdmin ? sg(`cobros_v2?id_paciente=eq.${encodeURIComponent(idPaciente)}&order=fecha.desc&limit=100&select=*`) : Promise.resolve([])
+      G.esAdmin ? sg(`cobros_v2?id_paciente=eq.${encodeURIComponent(idPaciente)}&order=fecha.desc&limit=100&select=*`) : Promise.resolve([]),
+      G.esAdmin ? sg(`facturas?id_paciente_v2=eq.${encodeURIComponent(idPaciente)}&order=fecha.desc&limit=100&select=*`) : Promise.resolve([])
     ]);
     G.citasPac   = citas;
     G.bonosPac   = bonos;
     G.cobrosPac  = cobros;
+    G.facturasPac = facturas;
 
     renderResumen(hoy, citas, bonos, cobros);
     renderHistorial(hoy, citas);
     if (G.esAdmin) renderEconomico(citas, bonos, cobros);
+    if (G.esAdmin) renderFacturasPac(facturas);
 
     // Actualizar primera sesión en clínica
     const primera = [...citas].filter(s => s.estado === 'Hecha').sort((a, b) => a.fecha.localeCompare(b.fecha))[0];
@@ -3595,6 +3609,41 @@ function renderEconomico(citas, bonos, cobros) {
       </div>`).join('');
   } else {
     cobrosEl.innerHTML = `<div style="font-size:12px;color:var(--ink-muted);padding:4px 0">Sin cobros registrados</div>`;
+  }
+}
+
+function renderFacturasPac(facturas) {
+  const el = document.getElementById('p360-eco-facturas');
+  if (!el) return;
+  if (!facturas.length) {
+    el.innerHTML = `<div style="font-size:12px;color:var(--ink-muted);padding:4px 0">Sin facturas emitidas</div>`;
+    return;
+  }
+  el.innerHTML = facturas.map((f, i) => `
+    <div class="cobro-r">
+      <div>
+        <div class="cobro-lbl">${f.numero_factura || f.id_factura} · ${f.estado || ''}</div>
+        <div class="cobro-meta">${fmtFecha(f.fecha)} · ${fmtEur(parseFloat(f.total) || 0)}</div>
+      </div>
+      <button class="btn btn-sec" style="font-size:11px;padding:4px 10px" onclick="verFacturaPac(${i})">Ver PDF</button>
+    </div>`).join('');
+}
+
+async function verFacturaPac(i) {
+  const f = (G.facturasPac || [])[i];
+  if (!f) return;
+  const p = G.pacActual;
+  try {
+    await factCargarEmisor();
+    const pdfDatos = {
+      ...f,
+      _pac_nombre: f.tipo_factura === 'beca' ? ((p.nombre || '') + ' ' + (p.apellidos || '')).trim() : null,
+      _especialidad: f.tipo_factura === 'beca' ? 'PSI' : null,
+      _anio_escolar: f.curso_academico || ''
+    };
+    factGenerarPDF(pdfDatos, false);
+  } catch (e) {
+    toast('Error al generar el PDF: ' + e.message, true);
   }
 }
 
@@ -3823,6 +3872,7 @@ function _recogerFormPac() {
     ambito:            document.getElementById('ed-ambito').value || null,
     derivacion:        document.getElementById('ed-derivacion').value || null,
     diagnostico:       document.getElementById('ed-diagnostico').value.trim() || null,
+    alta_capacidad:    document.getElementById('ed-alta-capacidad').checked ? 'Si' : 'No',
     alergias:          document.getElementById('ed-alergias').value.trim() || null,
     notas:             document.getElementById('ed-notas').value.trim() || null,
   };
@@ -3862,6 +3912,7 @@ function _rellenarFormPac(p) {
   document.getElementById('ed-ambito').value       = p.ambito || '';
   document.getElementById('ed-derivacion').value   = p.derivacion === true ? 'Si' : p.derivacion === false ? 'No' : p.derivacion || '';
   document.getElementById('ed-diagnostico').value  = p.diagnostico || '';
+  document.getElementById('ed-alta-capacidad').checked = p.alta_capacidad === 'Si';
   document.getElementById('ed-alergias').value     = p.alergias || '';
   document.getElementById('ed-notas').value        = p.notas || '';
 }
@@ -3886,6 +3937,7 @@ function _limpiarFormPac() {
   document.getElementById('ed-consentimiento').value = 'No';
   document.getElementById('ed-ambito').value = '';
   document.getElementById('ed-derivacion').value = '';
+  document.getElementById('ed-alta-capacidad').checked = false;
   document.getElementById('ed-tiene-tutor').checked = false;
   document.getElementById('ed-tutor1-fields').style.display = 'none';
   document.getElementById('ed-tiene-tutor2').checked = false;
