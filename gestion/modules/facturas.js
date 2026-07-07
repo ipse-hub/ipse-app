@@ -431,7 +431,7 @@ function factGenerarPDF(f, descargar = true) {
   doc.setFont('helvetica','bold');doc.setFontSize(10);doc.text('Nº FACTURA:',exl,78);
   doc.setFontSize(12);doc.text('  '+(f.numero_factura||'—'),exl+30,78);
   let y=88;
-  doc.setFillColor(...RED);doc.rect(M,y,W-M*2,7,'F');doc.setFont('helvetica','bold');doc.setFontSize(9);doc.setTextColor(255,255,255);doc.text('CLIENTE',M+3,y+5);y+=7;
+  doc.setFillColor(...RED);doc.rect(M,y,W-M*2,7,'F');doc.setFont('helvetica','bold');doc.setFontSize(9);doc.setTextColor(...DARK);doc.text('CLIENTE',M+3,y+5);y+=7;
   const esBeca=!!(f._pac_nombre&&f._especialidad);
   if(esBeca){
     const pN=(f._pac_nombre||'').toUpperCase(),tN=(f.receptor_nombre||'').toUpperCase();
@@ -441,7 +441,7 @@ function factGenerarPDF(f, descargar = true) {
   }else{
     doc.setDrawColor(...BORDR);doc.setLineWidth(0.3);doc.rect(M,y,W-M*2,28);doc.setFont('helvetica','bold');doc.setFontSize(9.5);doc.setTextColor(...DARK);doc.text((f.receptor_nombre||'').toUpperCase(),M+4,y+7);doc.setFont('helvetica','normal');doc.setFontSize(9);[f.receptor_dni?'D.N.I.: '+f.receptor_dni:'',f.receptor_direccion||'',[f.receptor_cp?'C.P./'+f.receptor_cp:'',f.receptor_municipio||''].filter(Boolean).join('  ')+(f.receptor_municipio?'\nGranada':'')].filter(Boolean).forEach((l,i)=>doc.text(l,M+4,y+13+i*5));y+=34;
   }
-  y+=4;doc.setFillColor(...RED);doc.rect(M,y,W-M*2,8,'F');doc.setFont('helvetica','bold');doc.setFontSize(8.5);doc.setTextColor(255,255,255);
+  y+=4;doc.setFillColor(...RED);doc.rect(M,y,W-M*2,8,'F');doc.setFont('helvetica','bold');doc.setFontSize(8.5);doc.setTextColor(...DARK);
   const C1=M+3,C2=128,C3=153,C4=W-M-3;
   doc.text('CONCEPTO',C1,y+3);doc.text('Nº DE HORAS',C2,y+3,{align:'center'});doc.text('TOTALES',C2,y+7,{align:'center'});doc.text('PRECIO HORA',C3,y+5.5,{align:'center'});doc.text('PRECIO TOTAL',C4,y+5.5,{align:'right'});y+=8;
   const lineas=Array.isArray(f.lineas)?f.lineas:(typeof f.lineas==='string'?JSON.parse(f.lineas||'[]'):[]);
@@ -465,7 +465,7 @@ function factGenerarPDF(f, descargar = true) {
     });
   }
   doc.setFillColor(...CREAM);doc.rect(M,y,W-M*2,8,'F');doc.setFont('helvetica','bold');doc.setFontSize(9.5);doc.setTextColor(...DARK);doc.text('TOTAL',C4-25,y+5.5,{align:'right'});doc.text(fmtI(f.base_imponible)+' €',C4,y+5.5,{align:'right'});y+=10;
-  doc.setFillColor(...RED);doc.rect(M,y,W-M*2,7,'F');doc.setFont('helvetica','bold');doc.setFontSize(9);doc.setTextColor(255,255,255);doc.text('IMPORTE',M+3,y+5);y+=6;
+  doc.setFillColor(...RED);doc.rect(M,y,W-M*2,7,'F');doc.setFont('helvetica','bold');doc.setFontSize(9);doc.setTextColor(...DARK);doc.text('IMPORTE',M+3,y+5);y+=6;
   [['Base imponible',fmtI(f.base_imponible)+' €',false],['I.V.A.',fmtI(f.iva_importe||0)+' €',true],['Retención Aplicable I.R.P.F',fmtI(f.irpf_importe||0)+' €',true]].forEach(([label,val,italic],i)=>{const rh=6.5;doc.setFillColor(i%2===0?255:248,i%2===0?255:248,i%2===0?255:248);doc.rect(M,y,W-M*2,rh,'F');doc.setDrawColor(...BORDR);doc.setLineWidth(0.2);doc.line(M,y+rh,W-M,y+rh);doc.setFont('helvetica',italic?'bolditalic':'bold');doc.setFontSize(9);doc.setTextColor(...DARK);doc.text(label,M+4,y+4.7);doc.setFont('helvetica',italic?'italic':'normal');doc.text(val,W-M-4,y+4.7,{align:'right'});y+=rh;});
   doc.setFillColor(255,255,255);doc.rect(M,y,W-M*2,9,'F');doc.setDrawColor(...BORDR);doc.rect(M,y,W-M*2,9);doc.setFont('helvetica','bold');doc.setFontSize(10);doc.setTextColor(...DARK);doc.text('TOTAL FACTURA',M+4,y+6.2);doc.text(fmtI(f.total)+' €',W-M-4,y+6.2,{align:'right'});y+=9;
   const iban=em.iban||'ES65 0182 1294 1002 0192 9436';const nota=f.notas||em.texto_exencion||'Factura exenta de IVA según Artículo 20.1.3 Ley 37/1992 de 28 de Diciembre.';
