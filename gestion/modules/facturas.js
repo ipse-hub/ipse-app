@@ -103,14 +103,11 @@ async function factNuevaFactura(prefill) {
 
   // Generar número siguiente
   try {
-    const last = await sg('facturas?order=numero_factura.desc&limit=5&select=numero_factura');
     const anio = new Date().getFullYear();
+    const last = await sg(`facturas?numero_factura=like.${encodeURIComponent('*/'+anio)}&select=numero_factura&limit=1000`);
     let nextNum = 1;
-    const thisYear = last.filter(f => (f.numero_factura||'').includes(String(anio)));
-    if (thisYear.length) {
-      const nums = thisYear.map(f => parseInt((f.numero_factura||'').split('/')[0])).filter(n => !isNaN(n));
-      if (nums.length) nextNum = Math.max(...nums) + 1;
-    }
+    const nums = last.map(f => parseInt((f.numero_factura||'').split('/')[0])).filter(n => !isNaN(n));
+    if (nums.length) nextNum = Math.max(...nums) + 1;
     document.getElementById('fact-numero').value = `${String(nextNum).padStart(3,'0')}/${anio}`;
   } catch { document.getElementById('fact-numero').value = ''; }
 
@@ -544,10 +541,9 @@ async function factBloqueCargar() {
     const campoNum = document.getElementById('blq-num-inicio');
     if (!campoNum.value) {
       try {
-        const last = await sg('facturas?order=numero_factura.desc&limit=5&select=numero_factura');
         const anio = new Date(document.getElementById('blq-fecha').value || Date.now()).getFullYear();
-        const ty = last.filter(f => (f.numero_factura || '').includes(String(anio)));
-        let nx = 1; if (ty.length) { const ns = ty.map(f => parseInt((f.numero_factura || '').split('/')[0])).filter(n => !isNaN(n)); if (ns.length) nx = Math.max(...ns) + 1; }
+        const last = await sg(`facturas?numero_factura=like.${encodeURIComponent('*/'+anio)}&select=numero_factura&limit=1000`);
+        let nx = 1; const ns = last.map(f => parseInt((f.numero_factura || '').split('/')[0])).filter(n => !isNaN(n)); if (ns.length) nx = Math.max(...ns) + 1;
         campoNum.value = String(nx).padStart(3, '0') + '/' + anio;
       } catch { }
     }
@@ -589,9 +585,9 @@ async function factBloqueEmitir() {
     nextNum = parseInt(m[1]);
   } else {
     try {
-      const last = await sg('facturas?order=numero_factura.desc&limit=5&select=numero_factura');
-      const ty = last.filter(f => (f.numero_factura || '').includes(String(anioF)));
-      if (ty.length) { const ns = ty.map(f => parseInt((f.numero_factura || '').split('/')[0])).filter(n => !isNaN(n)); if (ns.length) nextNum = Math.max(...ns) + 1; }
+      const last = await sg(`facturas?numero_factura=like.${encodeURIComponent('*/'+anioF)}&select=numero_factura&limit=1000`);
+      const ns = last.map(f => parseInt((f.numero_factura || '').split('/')[0])).filter(n => !isNaN(n));
+      if (ns.length) nextNum = Math.max(...ns) + 1;
     } catch { }
   }
 
