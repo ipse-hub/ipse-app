@@ -1016,6 +1016,11 @@ td.muted{color:var(--ink-muted);font-size:12px}
                 <option value="">Completos e incompletos</option>
                 <option value="incompleto">Ficha incompleta</option>
               </select>
+              <select class="filter-select" id="pac-filtro-altacap" onchange="filtrarPacientes()" style="padding:7px 10px;font-size:13px">
+                <option value="">Alta Capacidad: todos</option>
+                <option value="Si">Alta Capacidad: Sí</option>
+                <option value="No">Alta Capacidad: No</option>
+              </select>
             </div>
             <div style="height:1px;background:var(--border);margin-bottom:10px"></div>
             <div style="display:flex;align-items:center;justify-content:space-between">
@@ -3130,6 +3135,7 @@ function limpiarBuscador() {
   document.getElementById('pac-search').value = '';
   document.getElementById('pac-filtro-estado').value = '';
   document.getElementById('pac-filtro-incompleto').value = '';
+  document.getElementById('pac-filtro-altacap').value = '';
   filtrarPacientes();
 }
 
@@ -3137,14 +3143,16 @@ function filtrarPacientes() {
   const q   = document.getElementById('pac-search').value.trim().toLowerCase();
   const est = document.getElementById('pac-filtro-estado').value;
   const inc = document.getElementById('pac-filtro-incompleto').value;
+  const altacap = document.getElementById('pac-filtro-altacap').value;
 
-  const hayFiltro = q || est || inc;
+  const hayFiltro = q || est || inc || altacap;
 
   G.filtrados = G.pacientes.filter(p => {
     const texto = `${p.nombre||''} ${p.apellidos||''} ${p.alias||''} ${p.id||''}`.toLowerCase();
     if (q && !texto.includes(q)) return false;
     if (est && p.activo !== est) return false;
     if (inc === 'incompleto' && !fichaIncompleta(p)) return false;
+    if (altacap && (p.alta_capacidad || 'No') !== altacap) return false;
     return true;
   });
 
