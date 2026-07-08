@@ -3364,7 +3364,7 @@ function renderP360Datos(p) {
     campo('DNI / NIE', p.dni_tutor1),
     campoA('Teléfono', p.telefono, `tel:${p.telefono}`),
     campoA('Email', p.tutor1_email || p.email, `mailto:${p.tutor1_email || p.email}`),
-    campo('Dirección', p.direccion_tutor1 || [p.direccion, p.codigo_postal, p.municipio].filter(Boolean).join(', ')),
+    campo('Dirección', [p.direccion_tutor1, p.codigo_postal, p.municipio].filter(Boolean).join(', ')),
   ].join('');
 
   // Tutor 2
@@ -3378,7 +3378,7 @@ function renderP360Datos(p) {
       campo('DNI / NIE', p.dni_tutor2),
       campoA('Teléfono', p.telefono_tutor2, `tel:${p.telefono_tutor2}`),
       campoA('Email', p.email_tutor2, `mailto:${p.email_tutor2}`),
-      campo('Dirección', p.direccion_tutor2),
+      campo('Dirección', [p.direccion_tutor2, p.codigo_postal, p.municipio].filter(Boolean).join(', ')),
     ].join('');
   } else {
     t2card.style.display = 'none';
