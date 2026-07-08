@@ -3348,7 +3348,7 @@ function renderP360Datos(p) {
     campo('Fecha de nacimiento', fnacFmt),
     campo('DNI / NIE', p.dni_paciente),
     campo('Fecha de alta', fmtFecha(p.fecha_alta)),
-    campo('Dirección', [p.direccion, p.codigo_postal, p.municipio].filter(Boolean).join(', ')),
+    campo('Dirección', [p.direccion || p.direccion_tutor1, p.codigo_postal, p.municipio].filter(Boolean).join(', ')),
     campo('Estado', p.activo !== 'No' ? 'Activo' : 'Baja'),
   ].join('');
 
