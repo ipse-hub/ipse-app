@@ -239,14 +239,14 @@ function factRenderLineas() {
   const wrap = document.getElementById('fact-lineas-wrap');
   wrap.innerHTML = FACT.lineas.map((l, i) => `
     <div class="fact-linea" id="fact-linea-${i}">
-      <input type="text" value="${escHtml(l.concepto||'')}" placeholder="Descripción del servicio"
-        oninput="FACT.lineas[${i}].concepto=this.value">
-      <input type="number" value="${l.horas||1}" min="0" step="0.5"
-        oninput="FACT.lineas[${i}].horas=parseFloat(this.value)||0;factRecalcularLinea(${i})">
-      <input type="number" value="${l.precio||45}" min="0" step="0.01"
-        oninput="FACT.lineas[${i}].precio=parseFloat(this.value)||0;factRecalcularLinea(${i})">
-      <input type="number" value="${l.total||0}" min="0" step="0.01" readonly
-        style="background:var(--cream);color:var(--azul);font-weight:600">
+      <textarea rows="2" placeholder="Descripción del servicio"
+        oninput="FACT.lineas[${i}].concepto=this.value">${escHtml(l.concepto||'')}</textarea>
+      <input type="text" inputmode="decimal" value="${l.horas!=null?l.horas:1}" placeholder="1"
+        oninput="FACT.lineas[${i}].horas=parseDecimalES(this.value);factRecalcularLinea(${i})">
+      <input type="text" inputmode="decimal" value="${l.precio!=null?l.precio:45}" placeholder="45"
+        oninput="FACT.lineas[${i}].precio=parseDecimalES(this.value);factRecalcularLinea(${i})">
+      <input type="text" value="${l.total||0}" readonly
+        style="background:var(--cream);color:var(--azul);font-weight:600;text-align:right">
       <label style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--ink-muted);white-space:nowrap" title="No mostrar 'h' ni €/h en el PDF (el total se mantiene)">
         <input type="checkbox" ${l.ocultar_horas?'checked':''} onchange="FACT.lineas[${i}].ocultar_horas=this.checked" style="width:13px;height:13px">
         Ocultar h

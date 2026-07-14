@@ -671,8 +671,8 @@ function bbAbrirModalParcial(idBonoBeca) {
 }
 
 function bbParcialRecalcular() {
-  const sesiones = parseFloat(document.getElementById('bb-parcial-sesiones').value) || 0;
-  const precio   = parseFloat(document.getElementById('bb-parcial-precio').value) || 0;
+  const sesiones = parseDecimalES(document.getElementById('bb-parcial-sesiones').value);
+  const precio   = parseDecimalES(document.getElementById('bb-parcial-precio').value);
   const total = Math.round(sesiones * precio * 100) / 100;
   document.getElementById('bb-parcial-total').textContent = bbEur(total);
 }
@@ -685,8 +685,8 @@ function bbCerrarModalParcial() {
 async function bbConfirmarFacturaParcial() {
   const r = BB_PARCIAL;
   if (!r) return;
-  const sesiones = parseFloat(document.getElementById('bb-parcial-sesiones').value);
-  const precio   = parseFloat(document.getElementById('bb-parcial-precio').value);
+  const sesiones = parseDecimalES(document.getElementById('bb-parcial-sesiones').value);
+  const precio   = parseDecimalES(document.getElementById('bb-parcial-precio').value);
   const concepto = document.getElementById('bb-parcial-concepto').value.trim();
 
   if (!sesiones || sesiones <= 0) { bbToast('Indica un número de sesiones válido', 'error'); return; }

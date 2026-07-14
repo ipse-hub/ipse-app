@@ -794,10 +794,11 @@ td.muted{color:var(--ink-muted);font-size:12px}
 
 /* Líneas */
 .fact-lineas-hdr{display:grid;grid-template-columns:1fr 80px 90px 90px 28px;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-muted);margin-bottom:6px}
-.fact-linea{display:grid;grid-template-columns:1fr 80px 90px 90px 60px 28px;gap:8px;align-items:center;margin-bottom:6px}
-.fact-linea input{padding:6px 8px;border:1px solid var(--border);border-radius:6px;font-family:inherit;font-size:13px;color:var(--ink);outline:none;width:100%;background:var(--white)}
-.fact-linea input:focus{border-color:var(--azul)}
-.fact-linea input[type=number]{text-align:right}
+.fact-linea{display:grid;grid-template-columns:1fr 80px 90px 90px 60px 28px;gap:8px;align-items:start;margin-bottom:6px}
+.fact-linea input,.fact-linea textarea{padding:6px 8px;border:1px solid var(--border);border-radius:6px;font-family:inherit;font-size:13px;color:var(--ink);outline:none;width:100%;background:var(--white)}
+.fact-linea input:focus,.fact-linea textarea:focus{border-color:var(--azul)}
+.fact-linea input[type=number],.fact-linea input[inputmode=decimal]{text-align:right}
+.fact-linea textarea{resize:vertical;min-height:34px;line-height:1.35}
 .fact-linea-del{background:none;border:none;color:var(--ink-muted);cursor:pointer;font-size:16px;padding:0;line-height:1;transition:color .15s;text-align:center}
 .fact-linea-del:hover{color:var(--rojo)}
 .btn-add-linea{background:none;border:1px dashed var(--border);border-radius:6px;color:var(--ink-muted);font-size:12px;font-family:inherit;cursor:pointer;padding:6px 12px;width:100%;transition:all .15s;margin-top:4px}
@@ -2423,11 +2424,11 @@ td.muted{color:var(--ink-muted);font-size:12px}
       <div class="bb-form-row">
         <div class="bb-form-group">
           <label class="bb-form-label">Sesiones realizadas</label>
-          <input type="number" class="bb-form-input" id="bb-parcial-sesiones" min="1" step="1" oninput="bbParcialRecalcular()">
+          <input type="text" inputmode="decimal" class="bb-form-input" id="bb-parcial-sesiones" placeholder="11" oninput="bbParcialRecalcular()">
         </div>
         <div class="bb-form-group">
           <label class="bb-form-label">Precio por sesión (€)</label>
-          <input type="number" class="bb-form-input" id="bb-parcial-precio" min="0" step="0.01" oninput="bbParcialRecalcular()">
+          <input type="text" inputmode="decimal" class="bb-form-input" id="bb-parcial-precio" placeholder="45,65" oninput="bbParcialRecalcular()">
         </div>
       </div>
       <div class="bb-form-group">
@@ -2912,6 +2913,14 @@ async function sp(table, body) {
   });
   if (!r.ok) { const t = await r.text(); throw new Error(t); }
   return r.json();
+}
+// Acepta tanto "45,65" (coma decimal española) como "45.65" — <input type="number">
+// nativo del navegador rechaza la coma al escribir, obligando a usar las flechas.
+// Los campos de precio/sesiones que necesitan decimales usan type="text" + este parser.
+function parseDecimalES(v) {
+  if (v === null || v === undefined || v === '') return 0;
+  const n = parseFloat(String(v).trim().replace(',', '.'));
+  return isNaN(n) ? 0 : n;
 }
 async function spatch(table, id, body, pkCol = 'id') {
   const r = await fetch(`${SUPA_URL}/rest/v1/${table}?${pkCol}=eq.${encodeURIComponent(id)}`, {
