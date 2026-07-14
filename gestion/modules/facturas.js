@@ -161,11 +161,30 @@ async function factNuevaFactura(prefill) {
   document.getElementById('overlay-factura').classList.add('open');
 }
 
+// Reconstruye _pac_nombre/_especialidad/_anio_escolar para una factura de beca ya guardada.
+// Sin esto, reabrir una factura de beca para editarla o solo previsualizarla pierde el
+// bloque "BENEFICIARIO/A BECA NEAE..." porque esos 3 campos solo viven en memoria
+// (FACT._beca_meta) durante la sesión en la que se generó, no en la tabla `facturas`.
+async function factRecuperarBecaMeta(f) {
+  if (!f || f.tipo_factura !== 'beca') return null;
+  const pac = (G.pacientes || []).find(p => p.id === f.id_paciente_v2);
+  const pac_nombre = `${pac?.nombre || ''} ${pac?.apellidos || ''}`.trim();
+  let especialidad = 'PSI';
+  if (f.id_bono) {
+    try {
+      const bb = await sg(`bonos_becas?id=eq.${encodeURIComponent(f.id_bono)}&select=especialidad&limit=1`);
+      if (bb?.[0]?.especialidad) especialidad = bb[0].especialidad;
+    } catch(e) { console.warn('No se pudo recuperar especialidad de la beca:', e); }
+  }
+  return { pac_nombre, especialidad, anio_escolar: f.curso_academico || '' };
+}
+
 async function factEditarFactura(id) {
   const f = FACT.facturas.find(x => x.id_factura === id);
   if (!f) return;
   FACT.editandoId = id;
   FACT.lineas = Array.isArray(f.lineas) ? [...f.lineas] : (typeof f.lineas === 'string' ? JSON.parse(f.lineas) : []);
+  FACT._beca_meta = await factRecuperarBecaMeta(f);
 
   document.getElementById('fact-modal-title').textContent = `Factura ${f.numero_factura || id}`;
   document.getElementById('fact-numero').value  = f.numero_factura || '';
@@ -372,9 +391,9 @@ async function factDescargarPDF(id) {
   if (!f) return;
   await factCargarEmisor();
   let pdfDatos = f;
-  if (f.tipo_factura === 'beca' && !f._pac_nombre) {
-    const pac = (G.pacientes || []).find(p => p.id === f.id_paciente_v2);
-    if (pac) pdfDatos = { ...f, _pac_nombre: `${pac.nombre || ''} ${pac.apellidos || ''}`.trim() };
+  if (f.tipo_factura === 'beca' && (!f._pac_nombre || !f._especialidad)) {
+    const meta = await factRecuperarBecaMeta(f);
+    if (meta) pdfDatos = { ...f, _pac_nombre: meta.pac_nombre, _especialidad: meta.especialidad, _anio_escolar: meta.anio_escolar };
   }
   factGenerarPDF(pdfDatos, true);
 }
@@ -383,6 +402,11 @@ async function factPrevisualizar() {
   await factCargarEmisor();
   const datos = factRecogerDatos();
   datos.id_factura = FACT.editandoId || 'BORRADOR';
+  if (FACT._beca_meta) {
+    datos._pac_nombre = FACT._beca_meta.pac_nombre;
+    datos._especialidad = FACT._beca_meta.especialidad;
+    datos._anio_escolar = FACT._beca_meta.anio_escolar;
+  }
   factGenerarPDF(datos, false);
 }
 
