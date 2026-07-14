@@ -2408,6 +2408,45 @@ td.muted{color:var(--ink-muted);font-size:12px}
 </div>
 <!-- ── /MODAL BONOS/BECAS ── -->
 
+<!-- ── MODAL FACTURA PARCIAL (BECA NO COMPLETADA) ── -->
+<div class="bb-modal-overlay" id="bb-parcial-overlay" onclick="if(event.target===this)bbCerrarModalParcial()">
+  <div class="bb-modal" style="width:min(560px,96vw)">
+    <div class="bb-modal-hdr">
+      <span class="bb-modal-titulo">Factura parcial — beca no completada</span>
+      <button class="bb-modal-close" onclick="bbCerrarModalParcial()">×</button>
+    </div>
+    <div class="bb-modal-body">
+      <div id="bb-parcial-info" style="font-size:13px;font-weight:600;color:var(--azul)">—</div>
+      <div style="font-size:12px;color:var(--ink-muted);line-height:1.4">
+        Para becas que no llegan a completarse (p. ej. baja antes de las 20 sesiones). Se genera con el mismo emisor, receptor y formato que una factura de beca normal — solo cambian las sesiones, el precio y el concepto, que puedes volver a ajustar en la factura antes de guardarla.
+      </div>
+      <div class="bb-form-row">
+        <div class="bb-form-group">
+          <label class="bb-form-label">Sesiones realizadas</label>
+          <input type="number" class="bb-form-input" id="bb-parcial-sesiones" min="1" step="1" oninput="bbParcialRecalcular()">
+        </div>
+        <div class="bb-form-group">
+          <label class="bb-form-label">Precio por sesión (€)</label>
+          <input type="number" class="bb-form-input" id="bb-parcial-precio" min="0" step="0.01" oninput="bbParcialRecalcular()">
+        </div>
+      </div>
+      <div class="bb-form-group">
+        <label class="bb-form-label">Concepto de la factura</label>
+        <textarea class="bb-form-input" id="bb-parcial-concepto" rows="3" style="resize:vertical;min-height:70px;font-family:inherit"></textarea>
+      </div>
+      <div class="bb-form-group">
+        <label class="bb-form-label">Total</label>
+        <div class="bb-form-input" id="bb-parcial-total" style="background:var(--cream);color:var(--azul);font-weight:700">0,00 €</div>
+      </div>
+    </div>
+    <div class="bb-modal-footer">
+      <button class="bb-btn-cancel" onclick="bbCerrarModalParcial()">Cancelar</button>
+      <button class="bb-btn-save" onclick="bbConfirmarFacturaParcial()">Continuar a factura</button>
+    </div>
+  </div>
+</div>
+<!-- ── /MODAL FACTURA PARCIAL ── -->
+
 <!-- ── MODAL PROFESIONALES ── -->
 <div class="pro-modal-overlay" id="pro-modal-overlay" onclick="if(event.target===this)proCerrarModal()">
   <div class="pro-modal">

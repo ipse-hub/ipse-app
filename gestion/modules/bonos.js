@@ -358,6 +358,10 @@ async function bbSeleccionar(id) {
       <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/></svg>
       Generar factura
     </button>`;
+    acciones += `<button class="bb-panel-btn" onclick="bbAbrirModalParcial('${r.id}')">
+      <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="15" x2="12" y2="15"/></svg>
+      Factura parcial (beca no completada)
+    </button>`;
   }
   if (esAdminBtn && r.tipo === 'BONO' && r.anticipo_recibido === 'Si') {
     // Verificar si el cobro fue bancario — necesitaríamos cobros, por ahora mostramos siempre para bonos con anticipo
@@ -582,11 +586,13 @@ async function bbGenerarFactura(idBonoBeca) {
     const anioEscolar = r.anio_escolar || '';
     const anioFin = parseInt((anioEscolar||'2025/2026').split('/')[1]||'2026');
 
-    // Guard: comprobar si ya existe factura activa para este paciente+curso
+    // Guard: comprobar si ya existe factura activa para ESTA beca en concreto (id_bono es único
+    // por especialidad — antes se comprobaba solo por paciente+curso, lo que bloqueaba
+    // erróneamente la segunda beca de un paciente con PSI y LOG el mismo curso).
     try {
-      const existe = await sg(`facturas?tipo_factura=eq.beca&curso_academico=eq.${encodeURIComponent(anioEscolar)}&id_paciente_v2=eq.${r.id_paciente}&estado=neq.Anulada&select=numero_factura&limit=1`);
+      const existe = await sg(`facturas?tipo_factura=eq.beca&id_bono=eq.${encodeURIComponent(r.id)}&estado=neq.Anulada&select=numero_factura&limit=1`);
       if (existe && existe.length > 0) {
-        bbToast(`Ya existe la factura ${existe[0].numero_factura} para este paciente y curso. Anúlala primero si necesitas volver a facturar.`, 'error');
+        bbToast(`Ya existe la factura ${existe[0].numero_factura} para esta beca. Anúlala primero si necesitas volver a facturar.`, 'error');
         return;
       }
     } catch(e) { console.warn('Guard beca:', e); }
@@ -597,6 +603,7 @@ async function bbGenerarFactura(idBonoBeca) {
       id_paciente_v2:     r.id_paciente,
       tipo_factura:       'beca',
       curso_academico:    anioEscolar,
+      id_bono:            r.id,
       receptor_nombre:    pac.nombre_tutor1 || null,
       receptor_dni:       pac.dni_tutor1 || null,
       receptor_direccion: pac.direccion_tutor1 || pac.direccion || null,
@@ -634,6 +641,97 @@ async function bbGenerarFactura(idBonoBeca) {
   navTo('facturas');
   await new Promise(r => setTimeout(r, 350));
   factNuevaFactura(prefill);
+}
+
+/* ── Factura parcial (beca no completada) ──
+   Caso: la beca no llega a las 20 sesiones (baja, fin de curso anticipado, etc.).
+   Abraham introduce directamente el nº de sesiones reales y el precio/sesión;
+   el resto (emisor, receptor, formato, PDF) se genera igual que una factura de beca normal. */
+let BB_PARCIAL = null;
+
+function bbParcialTextoDefecto(esp, anioEscolar, sesiones) {
+  const tipoTexto = esp === 'LOG' ? 'reeducación del lenguaje' : 'reeducación psicopedagógica';
+  const titulo = '"BECA DE '+(esp==='LOG'?'REEDUCACIÓN DEL LENGUAJE':'REEDUCACIÓN PSICOPEDAGÓGICA')+'. CURSO '+(anioEscolar||'')+'"';
+  return titulo+'\n* '+sesiones+' sesiones de '+tipoTexto+' realizadas durante el curso '+(anioEscolar||'')+' (beca no completada).';
+}
+
+function bbAbrirModalParcial(idBonoBeca) {
+  const r = BB.todos.find(x => x.id === idBonoBeca);
+  if (!r) return;
+  BB_PARCIAL = r;
+  document.getElementById('bb-parcial-info').textContent =
+    `${bbNombrePaciente(r.id_paciente)} · ${r.especialidad||'PSI'} · ${r.anio_escolar||'—'}`;
+  const sesionesDefecto = r.sesiones_consumidas > 0 ? r.sesiones_consumidas : '';
+  document.getElementById('bb-parcial-sesiones').value = sesionesDefecto;
+  document.getElementById('bb-parcial-precio').value = '45';
+  document.getElementById('bb-parcial-concepto').value =
+    bbParcialTextoDefecto(r.especialidad||'PSI', r.anio_escolar||'', sesionesDefecto || 'N');
+  bbParcialRecalcular();
+  document.getElementById('bb-parcial-overlay').classList.add('open');
+}
+
+function bbParcialRecalcular() {
+  const sesiones = parseFloat(document.getElementById('bb-parcial-sesiones').value) || 0;
+  const precio   = parseFloat(document.getElementById('bb-parcial-precio').value) || 0;
+  const total = Math.round(sesiones * precio * 100) / 100;
+  document.getElementById('bb-parcial-total').textContent = bbEur(total);
+}
+
+function bbCerrarModalParcial() {
+  BB_PARCIAL = null;
+  document.getElementById('bb-parcial-overlay').classList.remove('open');
+}
+
+async function bbConfirmarFacturaParcial() {
+  const r = BB_PARCIAL;
+  if (!r) return;
+  const sesiones = parseFloat(document.getElementById('bb-parcial-sesiones').value);
+  const precio   = parseFloat(document.getElementById('bb-parcial-precio').value);
+  const concepto = document.getElementById('bb-parcial-concepto').value.trim();
+
+  if (!sesiones || sesiones <= 0) { bbToast('Indica un número de sesiones válido', 'error'); return; }
+  if (!precio || precio <= 0)     { bbToast('Indica un precio por sesión válido', 'error'); return; }
+  if (!concepto)                  { bbToast('El concepto no puede estar vacío', 'error'); return; }
+
+  const pac = (G.pacientes||[]).find(p => p.id === r.id_paciente) || {};
+  const anioEscolar = r.anio_escolar || '';
+  const total = Math.round(sesiones * precio * 100) / 100;
+
+  // Mismo guard que la factura completa: una única factura de beca activa por id_bono
+  // (id_bono identifica la beca concreta, así que PSI y LOG del mismo paciente/curso no chocan)
+  try {
+    const existe = await sg(`facturas?tipo_factura=eq.beca&id_bono=eq.${encodeURIComponent(r.id)}&estado=neq.Anulada&select=numero_factura&limit=1`);
+    if (existe && existe.length > 0) {
+      bbToast(`Ya existe la factura ${existe[0].numero_factura} para esta beca. Anúlala primero si necesitas volver a facturar.`, 'error');
+      return;
+    }
+  } catch(e) { console.warn('Guard beca parcial:', e); }
+
+  const prefill = {
+    id_paciente_v2:     r.id_paciente,
+    tipo_factura:       'beca',
+    curso_academico:    anioEscolar,
+    id_bono:            r.id,
+    receptor_nombre:    pac.nombre_tutor1 || null,
+    receptor_dni:       pac.dni_tutor1 || null,
+    receptor_direccion: pac.direccion_tutor1 || pac.direccion || null,
+    receptor_cp:        null,
+    receptor_municipio: pac.municipio || null,
+    lineas: [
+      { concepto, horas: sesiones, precio, total }
+    ],
+    _beca_meta: {
+      pac_nombre: ((pac.nombre||'')+' '+(pac.apellidos||'')).trim(),
+      especialidad: r.especialidad || 'PSI',
+      anio_escolar: anioEscolar,
+    }
+  };
+
+  bbCerrarModalParcial();
+  navTo('facturas');
+  await new Promise(res => setTimeout(res, 350));
+  factNuevaFactura(prefill);
+  bbToast('Factura precargada. Revisa y guarda en el módulo de Facturas — luego actualiza sesiones_consumidas/notas de esta beca en Bonos y Becas.', 'ok');
 }
 
 /* ── Toast ── */
