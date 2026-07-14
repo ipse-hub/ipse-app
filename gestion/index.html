@@ -2913,8 +2913,8 @@ async function sp(table, body) {
   if (!r.ok) { const t = await r.text(); throw new Error(t); }
   return r.json();
 }
-async function spatch(table, id, body) {
-  const r = await fetch(`${SUPA_URL}/rest/v1/${table}?id=eq.${encodeURIComponent(id)}`, {
+async function spatch(table, id, body, pkCol = 'id') {
+  const r = await fetch(`${SUPA_URL}/rest/v1/${table}?${pkCol}=eq.${encodeURIComponent(id)}`, {
     method: 'PATCH',
     headers: { 'apikey': SUPA_KEY, 'Authorization': `Bearer ${G.sesion.access_token}`,
                'Content-Type': 'application/json', 'Prefer': 'return=representation' },

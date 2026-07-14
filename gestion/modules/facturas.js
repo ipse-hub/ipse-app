@@ -328,7 +328,7 @@ async function factGuardar(yDescargar = false) {
   try {
     let factura;
     if (FACT.editandoId) {
-      const res = await spatch('facturas', FACT.editandoId, datos);
+      const res = await spatch('facturas', FACT.editandoId, datos, 'id_factura');
       factura = Array.isArray(res) ? res[0] : res;
       const idx = FACT.facturas.findIndex(f => f.id_factura === FACT.editandoId);
       if (idx >= 0) FACT.facturas[idx] = { ...FACT.facturas[idx], ...datos };
