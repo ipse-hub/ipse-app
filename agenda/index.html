@@ -297,6 +297,23 @@ select.fc{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.o
 .cita[draggable="true"],.dia-cita[draggable="true"],.mes-pill[draggable="true"]{cursor:grab}
 .cita.dragging,.dia-cita.dragging,.mes-pill.dragging{opacity:.35}
 .day-slot.drop-hover,.dia-slot.drop-hover{background:rgba(0,181,226,.14);box-shadow:inset 0 0 0 1px var(--cyan)}
+
+/* cortar / pegar cita */
+.cita-cortar-btn{position:absolute;top:2px;right:2px;width:16px;height:16px;border:none;border-radius:4px;background:rgba(255,255,255,.25);color:#fff;font-size:10px;line-height:1;cursor:pointer;opacity:0;transition:opacity .15s,background .15s;display:flex;align-items:center;justify-content:center;padding:0;z-index:3}
+.cita:hover .cita-cortar-btn,.dia-cita:hover .cita-cortar-btn{opacity:1}
+.cita-cortar-btn:hover{background:rgba(255,255,255,.45)}
+.cita.cortada,.dia-cita.cortada,.mes-pill.cortada{opacity:.5;outline:2px dashed #fff;outline-offset:-2px}
+
+.context-menu{position:fixed;background:var(--surface);border:1.5px solid var(--border);border-radius:8px;box-shadow:0 4px 20px rgba(0,0,0,.15);z-index:9998;display:none;overflow:hidden;min-width:150px}
+.context-menu-item{padding:9px 14px;font-size:13px;cursor:pointer;color:var(--text);display:flex;align-items:center;gap:8px}
+.context-menu-item:hover{background:var(--bg)}
+.context-menu-item.disabled{color:var(--muted);cursor:not-allowed}
+.context-menu-item.disabled:hover{background:none}
+
+.pegar-banner{position:fixed;top:70px;left:50%;transform:translateX(-50%);background:var(--azul);color:#fff;border-radius:10px;padding:10px 16px;font-size:13px;font-weight:500;z-index:9997;display:none;align-items:center;gap:14px;box-shadow:0 4px 20px rgba(0,0,0,.2);white-space:nowrap}
+.pegar-banner.show{display:flex}
+.pegar-banner button{background:rgba(255,255,255,.18);color:#fff;border:none;border-radius:6px;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer;flex-shrink:0}
+.pegar-banner button:hover{background:rgba(255,255,255,.3)}
 .mes-dia.drop-hover{background:rgba(0,181,226,.1);box-shadow:inset 0 0 0 1px var(--cyan)}
 
 /* notas */
@@ -788,6 +805,8 @@ select.fc{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.o
 
 <div id="toast"></div>
 <div id="toast-undo"></div>
+<div id="pegar-banner" class="pegar-banner"></div>
+<div id="cita-context-menu" class="context-menu"></div>
 
 <script>
 /* ═══════════════════════════════════════════
@@ -1161,7 +1180,7 @@ function renderSemana(citas, pacMap) {
       const s = document.createElement('div');
       s.className = 'day-slot';
       const horaSlot = `${String(h).padStart(2,'0')}:00`;
-      s.onclick = () => abrirModalNueva(fechaISO, horaSlot);
+      s.onclick = () => { if (G.citaCortada) pegarCita(fechaISO, horaSlot); else abrirModalNueva(fechaISO, horaSlot); };
       s.addEventListener('dragover', e => {
         if (!G.dragCita) return;
         e.preventDefault();
@@ -1185,15 +1204,22 @@ function renderSemana(citas, pacMap) {
       const nombre = pac ? `${pac.nombre} ${pac.apellidos || ''}`.trim() : cita.id_paciente;
       const color  = COLORES_PRO[cita.id_profesional] || '#10069F';
       const espLabel = ESPECIALIDADES[cita.especialidad] || cita.especialidad || '';
+      const cortada = G.citaCortada && G.citaCortada.id === cita.id;
 
       const el = document.createElement('div');
-      el.className = `cita estado-${(cita.estado||'Programada').replace(' ','')}`;
+      el.className = `cita estado-${(cita.estado||'Programada').replace(' ','')}${cortada?' cortada':''}`;
       el.dataset.pro = cita.id_profesional;
       el.style.cssText = `top:${top}px;height:${SLOT_H - 3}px;background:${color}`;
       el.innerHTML = `
         <div class="cita-nombre">${nombre}</div>
-        <div class="cita-info">${espLabel}${cita.estado && cita.estado!=='Programada'?' · '+cita.estado:''}</div>`;
+        <div class="cita-info">${espLabel}${cita.estado && cita.estado!=='Programada'?' · '+cita.estado:''}</div>
+        ${cita.estado === 'Programada' ? '<button class="cita-cortar-btn" type="button" title="Cortar cita">✂</button>' : ''}`;
       el.onclick = e => { e.stopPropagation(); abrirModalEditar(cita, pac); };
+      el.addEventListener('contextmenu', e => {
+        e.preventDefault();
+        e.stopPropagation();
+        mostrarMenuContextual(e.clientX, e.clientY, cita);
+      });
       if (cita.estado === 'Programada') {
         el.draggable = true;
         el.addEventListener('dragstart', e => {
@@ -1205,6 +1231,11 @@ function renderSemana(citas, pacMap) {
         el.addEventListener('dragend', () => {
           el.classList.remove('dragging');
           G.dragCita = null;
+        });
+        const btnCortar = el.querySelector('.cita-cortar-btn');
+        btnCortar.addEventListener('click', e => {
+          e.stopPropagation();
+          cortarCita(cita);
         });
       }
       if (!G.terFiltro.has(cita.id_profesional)) el.style.display = 'none';
@@ -1252,7 +1283,7 @@ function renderDia(citas, pacMap) {
     const s = document.createElement('div');
     s.className = 'dia-slot';
     const horaSlot = `${String(h).padStart(2,'0')}:00`;
-    s.onclick = () => abrirModalNueva(fechaISO, horaSlot);
+    s.onclick = () => { if (G.citaCortada) pegarCita(fechaISO, horaSlot); else abrirModalNueva(fechaISO, horaSlot); };
     s.addEventListener('dragover', e => {
       if (!G.dragCita) return;
       e.preventDefault();
@@ -1278,15 +1309,22 @@ function renderDia(citas, pacMap) {
     const espLabel = ESPECIALIDADES[cita.especialidad] || cita.especialidad || '';
     const terNombre = G.profesionales.find(p => p.id === cita.id_profesional);
     const terLabel  = terNombre ? terNombre.nombre : cita.id_profesional;
+    const cortada   = G.citaCortada && G.citaCortada.id === cita.id;
 
     const el = document.createElement('div');
-    el.className = 'dia-cita';
+    el.className = `dia-cita${cortada?' cortada':''}`;
     el.style.cssText = `position:absolute;left:4px;right:4px;top:${top}px;min-height:${SLOT_H - 4}px;background:${color}`;
     el.innerHTML = `
       <div class="dia-cita-nombre">${nombre}</div>
       <div class="dia-cita-meta">${espLabel} · ${terLabel} · ${cita.hora?.substring(0,5)}</div>
-      ${cita.estado && cita.estado !== 'Programada' ? `<div class="dia-cita-estado">${cita.estado}</div>` : ''}`;
+      ${cita.estado && cita.estado !== 'Programada' ? `<div class="dia-cita-estado">${cita.estado}</div>` : ''}
+      ${cita.estado === 'Programada' ? '<button class="cita-cortar-btn" type="button" title="Cortar cita">✂</button>' : ''}`;
     el.onclick = () => abrirModalEditar(cita, pac);
+    el.addEventListener('contextmenu', e => {
+      e.preventDefault();
+      e.stopPropagation();
+      mostrarMenuContextual(e.clientX, e.clientY, cita);
+    });
     if (cita.estado === 'Programada') {
       el.draggable = true;
       el.addEventListener('dragstart', e => {
@@ -1298,6 +1336,11 @@ function renderDia(citas, pacMap) {
       el.addEventListener('dragend', () => {
         el.classList.remove('dragging');
         G.dragCita = null;
+      });
+      const btnCortar = el.querySelector('.cita-cortar-btn');
+      btnCortar.addEventListener('click', e => {
+        e.stopPropagation();
+        cortarCita(cita);
       });
     }
     col.appendChild(el);
@@ -1331,7 +1374,7 @@ function renderMes(citas, pacMap) {
 
     const celda = document.createElement('div');
     celda.className = `mes-dia${!esMesActual?' otro-mes':''}${esHoy?' hoy-mes':''}`;
-    celda.onclick = () => irADia(fechaISO);
+    celda.onclick = () => { if (G.citaCortada) pegarCita(fechaISO, G.citaCortada.hora); else irADia(fechaISO); };
     celda.addEventListener('dragover', e => {
       if (!G.dragCita) return;
       e.preventDefault();
@@ -1360,11 +1403,17 @@ function renderMes(citas, pacMap) {
       const pac    = pacMap[cita.id_paciente];
       const nombre = pac ? `${pac.nombre} ${pac.apellidos || ''}`.trim() : cita.id_paciente;
       const color  = COLORES_PRO[cita.id_profesional] || '#10069F';
+      const cortada = G.citaCortada && G.citaCortada.id === cita.id;
       const pill   = document.createElement('div');
-      pill.className = 'mes-pill';
+      pill.className = `mes-pill${cortada?' cortada':''}`;
       pill.style.background = color;
       pill.textContent = `${cita.hora?.substring(0,5)} ${nombre}`;
       pill.onclick = e => { e.stopPropagation(); abrirModalEditar(cita, pac); };
+      pill.addEventListener('contextmenu', e => {
+        e.preventDefault();
+        e.stopPropagation();
+        mostrarMenuContextual(e.clientX, e.clientY, cita);
+      });
       if (cita.estado === 'Programada') {
         pill.draggable = true;
         pill.addEventListener('dragstart', e => {
@@ -1806,6 +1855,74 @@ document.addEventListener('click', e => {
   if (dropdown && !dropdown.contains(e.target) && e.target !== input) {
     dropdown.classList.remove('visible');
   }
+});
+
+/* ═══════════════════════════════════════════
+   CORTAR / PEGAR CITA
+═══════════════════════════════════════════ */
+function cortarCita(cita) {
+  if (cita.estado !== 'Programada') {
+    toast('Solo se pueden cortar citas en estado Programada', true);
+    return;
+  }
+  G.citaCortada = cita;
+  mostrarBannerPegar(cita);
+  cargarCitas();
+}
+
+function cancelarCorte() {
+  G.citaCortada = null;
+  ocultarBannerPegar();
+  cargarCitas();
+}
+
+function pegarCita(fechaISO, horaSlot) {
+  if (!G.citaCortada) return;
+  const cita = G.citaCortada;
+  G.citaCortada = null;
+  ocultarBannerPegar();
+  intentarMoverCita(cita, fechaISO, horaSlot);
+}
+
+function mostrarBannerPegar(cita) {
+  const banner = document.getElementById('pegar-banner');
+  const pac = (G.todosPacientes || []).find(p => p.id === cita.id_paciente);
+  const nombre = pac ? `${pac.nombre} ${pac.apellidos || ''}`.trim() : cita.id_paciente;
+  banner.innerHTML = `<span>✂ Cita de <strong>${nombre}</strong> cortada — ve al destino y haz clic en un hueco para pegar</span><button id="btn-cancelar-corte">Cancelar</button>`;
+  banner.classList.add('show');
+  document.getElementById('btn-cancelar-corte').onclick = cancelarCorte;
+}
+
+function ocultarBannerPegar() {
+  document.getElementById('pegar-banner').classList.remove('show');
+}
+
+function mostrarMenuContextual(x, y, cita) {
+  const menu = document.getElementById('cita-context-menu');
+  const puedeCortar = cita.estado === 'Programada';
+  menu.innerHTML = `<div class="context-menu-item${puedeCortar?'':' disabled'}" id="ctx-cortar">✂ Cortar cita</div>`;
+  menu.style.display = 'block';
+  const menuW = menu.offsetWidth, menuH = menu.offsetHeight;
+  menu.style.left = Math.min(x, window.innerWidth - menuW - 8) + 'px';
+  menu.style.top  = Math.min(y, window.innerHeight - menuH - 8) + 'px';
+  document.getElementById('ctx-cortar').onclick = e => {
+    e.stopPropagation();
+    menu.style.display = 'none';
+    if (puedeCortar) cortarCita(cita);
+    else toast('Solo se pueden cortar citas en estado Programada', true);
+  };
+}
+
+document.addEventListener('click', () => {
+  const menu = document.getElementById('cita-context-menu');
+  if (menu) menu.style.display = 'none';
+});
+document.addEventListener('scroll', () => {
+  const menu = document.getElementById('cita-context-menu');
+  if (menu) menu.style.display = 'none';
+}, true);
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && G.citaCortada) cancelarCorte();
 });
 
 /* ═══════════════════════════════════════════
