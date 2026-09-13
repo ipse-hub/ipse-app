@@ -217,11 +217,11 @@ function factCerrarModal() {
 
 /* ── Búsqueda paciente en modal ── */
 function factBuscarPaciente() {
-  const q = document.getElementById('fact-pac-search').value.trim().toLowerCase();
+  const q = ipseNormaliza(document.getElementById('fact-pac-search').value);
   const drop = document.getElementById('fact-pac-drop');
   if (!q) { drop.style.display = 'none'; return; }
   const res = G.pacientes.filter(p => {
-    const txt = `${p.nombre||''} ${p.apellidos||''} ${p.id||''}`.toLowerCase();
+    const txt = ipseNormaliza(`${p.nombre||''} ${p.apellidos||''} ${p.id||''}`);
     return txt.includes(q);
   }).slice(0, 8);
   if (!res.length) { drop.style.display = 'none'; return; }

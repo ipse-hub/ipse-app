@@ -176,6 +176,11 @@ select.fc{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.o
 .pac-option-nombre{font-size:13px;font-weight:600;color:var(--text)}
 .pac-option-meta{font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;margin-top:1px}
 .pac-seleccionado{background:var(--bg);border:1.5px solid var(--verde);border-radius:8px;padding:9px 13px;margin-top:6px;display:none}
+
+/* búsqueda citas por paciente (cabecera agenda) */
+.citas-search-input{width:250px;border:1.5px solid var(--border);border-radius:6px;padding:6px 12px;font-family:inherit;font-size:13px;color:var(--text);background:var(--bg);outline:none;transition:border-color .15s}
+.citas-search-input:focus{border-color:var(--azul);background:#fff}
+.citas-search-fecha{font-size:11px;font-weight:600;color:var(--azul);font-family:'DM Mono',monospace}
 .pac-seleccionado.visible{display:block}
 .pac-sel-nombre{font-size:14px;font-weight:600;color:var(--text);margin-bottom:2px}
 .pac-sel-meta{font-size:11px;color:var(--muted);font-family:'DM Mono',monospace}
@@ -352,6 +357,13 @@ select.fc{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.o
         <button class="nav-btn" onclick="navSiguiente()">Siguiente →</button>
       </div>
       <span class="week-label" id="week-label"></span>
+      <div style="position:relative">
+        <input class="citas-search-input" id="citas-search-input" type="text" autocomplete="off"
+          placeholder="Buscar citas de un paciente…"
+          oninput="buscarCitasPaciente(this.value)"
+          onfocus="if(this.value.trim().length>=2) buscarCitasPaciente(this.value)">
+        <div class="pac-dropdown" id="citas-search-dropdown" style="width:320px;right:0;left:auto"></div>
+      </div>
       <div class="view-toggle">
         <button class="view-btn" id="vbtn-dia" onclick="cambiarVista('dia')">Día</button>
         <button class="view-btn active" id="vbtn-semana" onclick="cambiarVista('semana')">Semana</button>
@@ -495,6 +507,7 @@ select.fc{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.o
             <option value="40">40 € / sesión</option>
             <option value="35">35 € / sesión</option>
             <option value="30">30 € / sesión</option>
+            <option value="0">0 € / sesión</option>
           </select>
         </div>
 
@@ -1155,7 +1168,7 @@ function renderSemana(citas, pacMap) {
       const [hh, mm] = cita.hora.split(':').map(Number);
       const top    = ((hh - TOP_HORA) + mm/60) * SLOT_H;
       const pac    = pacMap[cita.id_paciente];
-      const nombre = pac ? (pac.alias || `${pac.nombre} ${pac.apellidos || ''}`.trim()) : cita.id_paciente;
+      const nombre = pac ? `${pac.nombre} ${pac.apellidos || ''}`.trim() : cita.id_paciente;
       const color  = COLORES_PRO[cita.id_profesional] || '#10069F';
       const espLabel = ESPECIALIDADES[cita.especialidad] || cita.especialidad || '';
 
@@ -1246,7 +1259,7 @@ function renderDia(citas, pacMap) {
     const [hh, mm] = cita.hora.split(':').map(Number);
     const top      = ((hh - TOP_HORA) + mm/60) * SLOT_H;
     const pac      = pacMap[cita.id_paciente];
-    const nombre   = pac ? (pac.alias || `${pac.nombre} ${pac.apellidos || ''}`.trim()) : cita.id_paciente;
+    const nombre   = pac ? `${pac.nombre} ${pac.apellidos || ''}`.trim() : cita.id_paciente;
     const color    = COLORES_PRO[cita.id_profesional] || '#10069F';
     const espLabel = ESPECIALIDADES[cita.especialidad] || cita.especialidad || '';
     const terNombre = G.profesionales.find(p => p.id === cita.id_profesional);
@@ -1331,7 +1344,7 @@ function renderMes(citas, pacMap) {
     const MAX_PILLS = 3;
     citasDia.slice(0, MAX_PILLS).forEach(cita => {
       const pac    = pacMap[cita.id_paciente];
-      const nombre = pac ? (pac.alias || pac.nombre) : cita.id_paciente;
+      const nombre = pac ? `${pac.nombre} ${pac.apellidos || ''}`.trim() : cita.id_paciente;
       const color  = COLORES_PRO[cita.id_profesional] || '#10069F';
       const pill   = document.createElement('div');
       pill.className = 'mes-pill';
@@ -1703,7 +1716,7 @@ function seleccionarPaciente(pac) {
 }
 
 function mostrarPacienteSeleccionado(pac) {
-  const nombre = pac.alias || `${pac.nombre} ${pac.apellidos || ''}`.trim();
+  const nombre = `${pac.nombre} ${pac.apellidos || ''}`.trim();
   const edad   = pac.fecha_nacimiento ? calcularEdad(pac.fecha_nacimiento) + ' años' : '';
   document.getElementById('pac-sel-nombre').textContent = nombre;
   document.getElementById('pac-sel-meta').textContent   = `${pac.id}${edad?' · '+edad:''}`;
@@ -1719,6 +1732,67 @@ function limpiarPaciente() {
   cerrarNuevaBeca();
   ocultarAvisoBonoBeca();
 }
+
+/* ═══════════════════════════════════════════
+   BÚSQUEDA DE CITAS POR PACIENTE (cabecera)
+═══════════════════════════════════════════ */
+function buscarCitasPaciente(val) {
+  clearTimeout(G.citasBusquedaTimer);
+  const dropdown = document.getElementById('citas-search-dropdown');
+  const q = val.trim();
+  if (q.length < 2) { dropdown.classList.remove('visible'); return; }
+  G.citasBusquedaTimer = setTimeout(async () => {
+    try {
+      const qEnc = encodeURIComponent(q);
+      const pacs = await supaGet(`pacientes_v2?or=(nombre.ilike.*${qEnc}*,apellidos.ilike.*${qEnc}*)&select=id,nombre,apellidos&limit=6`);
+      if (!pacs.length) {
+        dropdown.innerHTML = `<div class="pac-option"><div class="pac-option-nombre" style="color:var(--muted)">Sin resultados</div></div>`;
+        dropdown.classList.add('visible');
+        return;
+      }
+      const ids = pacs.map(p => p.id).join(',');
+      const citas = await supaGet(`citas_v2?id_paciente=in.(${ids})&select=id,fecha,hora,estado,especialidad,id_paciente&order=fecha.desc&limit=40`);
+      const pacMap = {};
+      pacs.forEach(p => pacMap[p.id] = p);
+
+      if (!citas.length) {
+        dropdown.innerHTML = pacs.map(p => `
+          <div class="pac-option">
+            <div class="pac-option-nombre">${p.nombre} ${p.apellidos||''}</div>
+            <div class="pac-option-meta">Sin citas registradas</div>
+          </div>`).join('');
+        dropdown.classList.add('visible');
+        return;
+      }
+
+      dropdown.innerHTML = citas.map(c => {
+        const p = pacMap[c.id_paciente];
+        const nombre = p ? `${p.nombre} ${p.apellidos||''}`.trim() : c.id_paciente;
+        const espLabel = ESPECIALIDADES[c.especialidad] || c.especialidad || '';
+        const [y,m,d] = c.fecha.split('-');
+        return `<div class="pac-option" onclick="irACitaBuscada('${c.fecha}')">
+          <div class="pac-option-nombre">${nombre}</div>
+          <div class="pac-option-meta"><span class="citas-search-fecha">${d}/${m}/${y} · ${c.hora?.slice(0,5)||''}</span> · ${espLabel}${c.estado && c.estado!=='Programada' ? ' · '+c.estado : ''}</div>
+        </div>`;
+      }).join('');
+      dropdown.classList.add('visible');
+    } catch { dropdown.classList.remove('visible'); }
+  }, 300);
+}
+
+function irACitaBuscada(fechaISO) {
+  document.getElementById('citas-search-dropdown').classList.remove('visible');
+  document.getElementById('citas-search-input').value = '';
+  irADia(fechaISO);
+}
+
+document.addEventListener('click', e => {
+  const dropdown = document.getElementById('citas-search-dropdown');
+  const input = document.getElementById('citas-search-input');
+  if (dropdown && !dropdown.contains(e.target) && e.target !== input) {
+    dropdown.classList.remove('visible');
+  }
+});
 
 /* ═══════════════════════════════════════════
    BONO / BECA ACTIVO

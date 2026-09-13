@@ -468,12 +468,12 @@ function bbCerrarModal() {
 
 /* ── Buscador paciente en modal ── */
 function bbBuscarPaciente() {
-  const q = document.getElementById('bb-pac-search').value.trim().toLowerCase();
+  const q = ipseNormaliza(document.getElementById('bb-pac-search').value);
   const dropdown = document.getElementById('bb-pac-dropdown');
   const lista = document.getElementById('bb-pac-lista');
   if (q.length < 2) { dropdown.style.display = 'none'; return; }
   const res = (G.pacientes||[]).filter(p => {
-    const texto = `${p.nombre} ${p.apellidos||''} ${p.id}`.toLowerCase();
+    const texto = ipseNormaliza(`${p.nombre} ${p.apellidos||''} ${p.id}`);
     return texto.includes(q);
   }).slice(0, 8);
   if (res.length === 0) { dropdown.style.display = 'none'; return; }

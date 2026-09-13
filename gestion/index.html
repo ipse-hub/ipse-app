@@ -2878,6 +2878,16 @@ const SUPA_KEY = 'sb_publishable_Qt604gEH_lfx89HkPElvcA_OGwbKeDO';
 const ESP_LABEL = { PSI:'Psicología', LOG:'Logopedia', TO:'Ter. Ocupacional', PDG:'Pedagogía' };
 const MESES_CORTO = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
 
+// Normaliza texto para búsquedas: minúsculas, sin acentos, espacios colapsados.
+// Uso compartido por todos los buscadores de paciente (pacientes 360, bonos/becas, facturas).
+function ipseNormaliza(str) {
+  return (str || '')
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .toLowerCase();
+}
+
 /* ═══════════════════════════════════════════
    ESTADO GLOBAL
 ═══════════════════════════════════════════ */
@@ -3188,7 +3198,7 @@ function limpiarBuscador() {
 }
 
 function filtrarPacientes() {
-  const q   = document.getElementById('pac-search').value.trim().toLowerCase();
+  const q   = ipseNormaliza(document.getElementById('pac-search').value);
   const est = document.getElementById('pac-filtro-estado').value;
   const inc = document.getElementById('pac-filtro-incompleto').value;
   const altacap = document.getElementById('pac-filtro-altacap').value;
@@ -3196,7 +3206,7 @@ function filtrarPacientes() {
   const hayFiltro = q || est || inc || altacap;
 
   G.filtrados = G.pacientes.filter(p => {
-    const texto = `${p.nombre||''} ${p.apellidos||''} ${p.alias||''} ${p.id||''}`.toLowerCase();
+    const texto = ipseNormaliza(`${p.nombre||''} ${p.apellidos||''} ${p.alias||''} ${p.id||''}`);
     if (q && !texto.includes(q)) return false;
     if (est && p.activo !== est) return false;
     if (inc === 'incompleto' && !fichaIncompleta(p)) return false;
