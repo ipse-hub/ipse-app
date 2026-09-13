@@ -797,6 +797,15 @@ const SUPA_URL = 'https://vlplebjqhufbzfncrawf.supabase.co';
 const SUPA_KEY = 'sb_publishable_Qt604gEH_lfx89HkPElvcA_OGwbKeDO';
 
 const ESPECIALIDADES = { PSI:'Psicología', LOG:'Logopedia', TO:'Ter. Ocupacional', PDG:'Pedagogía' };
+
+// Normaliza texto para búsquedas: minúsculas, sin acentos, espacios colapsados.
+function ipseNormaliza(str) {
+  return (str || '')
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .toLowerCase();
+}
 const PRECIOS_MOD    = { BECA:45, BONO:45, PRIVADO_SU:50, ADECCO:50 };
 const COLORES_PRO    = {};
 const PALETA = ['#10069F','#00B5E2','#97D700','#F59E0B','#DA291C','#7C3AED'];
@@ -942,6 +951,11 @@ async function init() {
   } else {
     selEsp.innerHTML = esps.map(e => `<option value="${e}">${ESPECIALIDADES[e] || e}</option>`).join('');
   }
+
+  // Cache local de pacientes para búsquedas normalizadas (acentos/espacios)
+  try {
+    G.todosPacientes = await supaGet(`pacientes_v2?select=id,nombre,apellidos,alias,fecha_nacimiento&activo=eq.Si&order=apellidos.asc,nombre.asc&limit=2000`);
+  } catch { G.todosPacientes = []; }
 
   // Arranque en vista semana
   const hoy = new Date();
@@ -1674,28 +1688,26 @@ async function crearNuevoPaciente() {
    BÚSQUEDA DE PACIENTE
 ═══════════════════════════════════════════ */
 function buscarPaciente(val) {
-  clearTimeout(G.busquedaTimer);
   const dropdown = document.getElementById('pac-dropdown');
-  if (val.length < 2) { dropdown.classList.remove('visible'); return; }
-  G.busquedaTimer = setTimeout(async () => {
-    try {
-      const q   = encodeURIComponent(val);
-      const res = await supaGet(`pacientes_v2?or=(nombre.ilike.*${q}*,apellidos.ilike.*${q}*,id.ilike.*${q}*)&activo=eq.Si&select=id,nombre,apellidos,alias,fecha_nacimiento&limit=20`);
-      if (!res.length) {
-        dropdown.innerHTML = `<div class="pac-option"><div class="pac-option-nombre" style="color:var(--muted)">Sin resultados</div></div>`;
-      } else {
-        dropdown.innerHTML = res.map(p => {
-          const edad   = p.fecha_nacimiento ? calcularEdad(p.fecha_nacimiento) + ' años' : '';
-          const nombre = `${p.nombre} ${p.apellidos || ''}`.trim();
-          return `<div class="pac-option" onclick="seleccionarPaciente(${JSON.stringify(p).replace(/"/g,'&quot;')})">
-            <div class="pac-option-nombre">${nombre}</div>
-            <div class="pac-option-meta">${p.id}${edad?' · '+edad:''}</div>
-          </div>`;
-        }).join('');
-      }
-      dropdown.classList.add('visible');
-    } catch { dropdown.classList.remove('visible'); }
-  }, 300);
+  if (val.trim().length < 2) { dropdown.classList.remove('visible'); return; }
+  const q   = ipseNormaliza(val);
+  const res = (G.todosPacientes || []).filter(p => {
+    const texto = ipseNormaliza(`${p.nombre||''} ${p.apellidos||''} ${p.alias||''} ${p.id||''}`);
+    return texto.includes(q);
+  }).slice(0, 20);
+  if (!res.length) {
+    dropdown.innerHTML = `<div class="pac-option"><div class="pac-option-nombre" style="color:var(--muted)">Sin resultados</div></div>`;
+  } else {
+    dropdown.innerHTML = res.map(p => {
+      const edad   = p.fecha_nacimiento ? calcularEdad(p.fecha_nacimiento) + ' años' : '';
+      const nombre = `${p.nombre} ${p.apellidos || ''}`.trim();
+      return `<div class="pac-option" onclick="seleccionarPaciente(${JSON.stringify(p).replace(/"/g,'&quot;')})">
+        <div class="pac-option-nombre">${nombre}</div>
+        <div class="pac-option-meta">${p.id}${edad?' · '+edad:''}</div>
+      </div>`;
+    }).join('');
+  }
+  dropdown.classList.add('visible');
 }
 
 function calcularEdad(fechaNac) {
@@ -1739,17 +1751,19 @@ function limpiarPaciente() {
 function buscarCitasPaciente(val) {
   clearTimeout(G.citasBusquedaTimer);
   const dropdown = document.getElementById('citas-search-dropdown');
-  const q = val.trim();
+  const q = ipseNormaliza(val);
   if (q.length < 2) { dropdown.classList.remove('visible'); return; }
+  const pacs = (G.todosPacientes || []).filter(p => {
+    const texto = ipseNormaliza(`${p.nombre||''} ${p.apellidos||''}`);
+    return texto.includes(q);
+  }).slice(0, 6);
+  if (!pacs.length) {
+    dropdown.innerHTML = `<div class="pac-option"><div class="pac-option-nombre" style="color:var(--muted)">Sin resultados</div></div>`;
+    dropdown.classList.add('visible');
+    return;
+  }
   G.citasBusquedaTimer = setTimeout(async () => {
     try {
-      const qEnc = encodeURIComponent(q);
-      const pacs = await supaGet(`pacientes_v2?or=(nombre.ilike.*${qEnc}*,apellidos.ilike.*${qEnc}*)&select=id,nombre,apellidos&limit=6`);
-      if (!pacs.length) {
-        dropdown.innerHTML = `<div class="pac-option"><div class="pac-option-nombre" style="color:var(--muted)">Sin resultados</div></div>`;
-        dropdown.classList.add('visible');
-        return;
-      }
       const ids = pacs.map(p => p.id).join(',');
       const citas = await supaGet(`citas_v2?id_paciente=in.(${ids})&select=id,fecha,hora,estado,especialidad,id_paciente&order=fecha.desc&limit=40`);
       const pacMap = {};
