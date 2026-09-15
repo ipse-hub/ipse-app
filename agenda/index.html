@@ -897,6 +897,19 @@ async function supaDelete(table, id) {
   });
   if (!res.ok) { const t = await res.text(); throw new Error(t); }
 }
+async function supaRpc(fn, args = {}) {
+  const res = await fetch(`${SUPA_URL}/rest/v1/rpc/${fn}`, {
+    method: 'POST',
+    headers: {
+      'apikey': SUPA_KEY,
+      'Authorization': `Bearer ${G.sesion.access_token}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(args)
+  });
+  if (!res.ok) { const t = await res.text(); throw new Error(t); }
+  return res.json();
+}
 
 /* ═══════════════════════════════════════════
    AUTENTICACIÓN
@@ -2054,10 +2067,9 @@ async function crearNuevoBono() {
 
     // Si se indica forma de cobro (no Pendiente), crear registro en cobros_v2
     if (formaCobro !== 'Pendiente') {
-      const cobCount = await supaGet('cobros_v2?select=id&order=id.desc&limit=1');
-      const cobUlt   = cobCount[0]?.id || 'COB-000';
-      const cobNum   = parseInt(cobUlt.split('-')[1] || '0') + 1;
-      idCobro = `COB-${String(cobNum).padStart(3,'0')}`;
+      // ID vía RPC (no lectura directa de la tabla — cobros_v2 solo permite
+      // INSERT a no-admin; el SELECT del contador está restringido a admin por RLS)
+      idCobro = await supaRpc('siguiente_id_cobro');
       await supaPost('cobros_v2', {
         id:           idCobro,
         id_paciente:  G.modalPacId,
@@ -2229,11 +2241,8 @@ async function registrarCobroBono() {
   btn.textContent = 'Guardando...';
 
   try {
-    // 1. Generar ID correlativo para cobros_v2
-    const cobCount = await supaGet('cobros_v2?select=id&order=id.desc&limit=1');
-    const cobUlt   = cobCount[0]?.id || 'COB-000';
-    const cobNum   = parseInt(cobUlt.split('-')[1] || '0') + 1;
-    const idCobro  = `COB-${String(cobNum).padStart(3, '0')}`;
+    // 1. Generar ID correlativo para cobros_v2 vía RPC (ver nota más arriba)
+    const idCobro = await supaRpc('siguiente_id_cobro');
 
     // 2. Crear registro en cobros_v2
     await supaPost('cobros_v2', {
@@ -2586,11 +2595,9 @@ async function guardarCita() {
 
       // Cobro automático si Hecha
       if (G.modalEstado === 'Hecha' && formaCobro && formaCobro !== 'No pagado') {
-        const cobCount = await supaGet('cobros_v2?select=id&order=id.desc&limit=1');
-        const cobUlt   = cobCount[0]?.id || 'COB-000';
-        const cobNum   = parseInt(cobUlt.split('-')[1] || '0') + 1;
+        const idCobroAuto = await supaRpc('siguiente_id_cobro');
         await supaPost('cobros_v2', {
-          id:           `COB-${String(cobNum).padStart(3,'0')}`,
+          id:           idCobroAuto,
           id_cita:      payload.id,
           id_paciente:  G.modalPacId,
           id_bono_beca: idBonoBeca,

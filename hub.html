@@ -204,6 +204,11 @@ body::before {
 }
 .app-card-icon.gestion svg { stroke: #b45309; }
 
+.app-card-icon.pacientes {
+  background: #f2faea;
+}
+.app-card-icon.pacientes svg { stroke: #5a8f00; }
+
 .app-card-titulo {
   font-size: 18px;
   font-weight: 700;
@@ -233,6 +238,11 @@ body::before {
 .app-card.gestion-card .app-card-cta { color: #b45309; }
 .app-card.gestion-card::before { background: #b45309; }
 .app-card.gestion-card:hover { border-color: #b45309; }
+
+/* Card Pacientes 360° — acceso directo, visible para todas */
+.app-card.pacientes-card .app-card-cta { color: #5a8f00; }
+.app-card.pacientes-card::before { background: #5a8f00; }
+.app-card.pacientes-card:hover { border-color: #5a8f00; }
 
 /* ── Estado de carga ── */
 .loading-wrap {
@@ -321,6 +331,26 @@ body::before {
       <div class="app-card-desc">Gestiona citas, pacientes y sesiones del día a día.</div>
       <div class="app-card-cta">
         Abrir agenda
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <polyline points="9 18 15 12 9 6"/>
+        </svg>
+      </div>
+    </a>
+
+    <!-- Pacientes 360° — acceso directo, visible para todas -->
+    <a class="app-card pacientes-card" href="gestion/index.html?modo=pacientes360">
+      <div class="app-card-icon pacientes">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+          <circle cx="9" cy="7" r="4"/>
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+          <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+        </svg>
+      </div>
+      <div class="app-card-titulo">Pacientes 360°</div>
+      <div class="app-card-desc">Consulta la ficha de cualquier paciente: datos, historial clínico y sesiones.</div>
+      <div class="app-card-cta">
+        Abrir Pacientes 360°
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
           <polyline points="9 18 15 12 9 6"/>
         </svg>

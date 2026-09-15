@@ -838,17 +838,28 @@ td.muted{color:var(--ink-muted);font-size:12px}
 .ind-modal-close:hover{color:var(--ink)}
 .ind-modal-body{padding:18px;overflow-y:auto}
 </style>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script src="modules/cobros.js"></script>
-<script src="modules/fiscalidad.js"></script>
-<script src="modules/produccion.js"></script>
-<script src="modules/agenda.js"></script>
-<script src="modules/facturas.js"></script>
-<script src="modules/profesionales.js"></script>
-<script src="modules/pf360.js"></script>
-<script src="modules/bonos.js"></script>
-<script src="modules/indicadores.js"></script>
+<script>
+/* Modo restringido: acceso directo a Pacientes 360° desde el hub (?modo=pacientes360).
+   En este modo no se cargan los módulos de gestión económica/administrativa —
+   ni siquiera queda su código en memoria — porque Pacientes 360° no los necesita.
+   G.modoRestringido (definido más abajo, tras conocer si el usuario es admin)
+   añade además la restricción de que cualquier no-admin queda en este modo
+   aunque acceda sin el parámetro. */
+var IPSE_MODO_RESTRINGIDO = new URLSearchParams(location.search).get('modo') === 'pacientes360';
+if (!IPSE_MODO_RESTRINGIDO) {
+  document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"><\/script>');
+  document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"><\/script>');
+  document.write('<script src="modules/cobros.js"><\/script>');
+  document.write('<script src="modules/fiscalidad.js"><\/script>');
+  document.write('<script src="modules/produccion.js"><\/script>');
+  document.write('<script src="modules/agenda.js"><\/script>');
+  document.write('<script src="modules/facturas.js"><\/script>');
+  document.write('<script src="modules/profesionales.js"><\/script>');
+  document.write('<script src="modules/pf360.js"><\/script>');
+  document.write('<script src="modules/bonos.js"><\/script>');
+  document.write('<script src="modules/indicadores.js"><\/script>');
+}
+</script>
 </head>
 <body>
 
@@ -2895,6 +2906,7 @@ let G = {
   sesion:      null,
   profesional: null,
   esAdmin:     false,
+  modoRestringido: false,
   pacientes:   [],
   profesionales: [],
   filtrados:   [],
@@ -2988,6 +3000,11 @@ async function init() {
     return;
   }
 
+  // Modo restringido: por parámetro (?modo=pacientes360) o, siempre, si no es admin —
+  // así un no-admin queda restringido aunque entre por URL directa sin el parámetro.
+  G.modoRestringido = IPSE_MODO_RESTRINGIDO || !G.esAdmin;
+  if (G.modoRestringido) aplicarModoRestringido();
+
   // Topbar
   const ini = (G.profesional.nombre?.[0] || '') + (G.profesional.apellidos?.[0] || '');
   document.getElementById('topbar-nombre').textContent = `${G.profesional.nombre} ${G.profesional.apellidos}`.trim();
@@ -3000,7 +3017,34 @@ async function init() {
 
   // Carga en paralelo: pacientes primero (dashboard los necesita para nombres)
   await cargarPacientes();
-  await cargarDashboard();
+  if (G.modoRestringido) {
+    navTo('pacientes');
+  } else {
+    await cargarDashboard();
+  }
+}
+
+/* ═══════════════════════════════════════════
+   MODO RESTRINGIDO (acceso directo a Pacientes 360°)
+═══════════════════════════════════════════ */
+function aplicarModoRestringido() {
+  // Ocultar del sidebar todo lo que no sea Pacientes 360°
+  ['nav-dashboard','nav-agenda','nav-produccion','nav-indicadores','nav-bonos',
+   'nav-cobros','nav-facturas','nav-fiscalidad','nav-profesionales','nav-config']
+    .forEach(id => { const el = document.getElementById(id); if (el) el.style.display = 'none'; });
+
+  // Ocultar secciones enteras del sidebar salvo "Clínica" (que ya se queda solo con Pacientes 360°)
+  document.querySelectorAll('.sidebar-section-title').forEach(t => {
+    if (t.textContent.trim() !== 'Clínica') {
+      const seccion = t.closest('.sidebar-section');
+      if (seccion) seccion.style.display = 'none';
+    }
+  });
+  document.querySelectorAll('.sidebar-divider').forEach(d => d.style.display = 'none');
+
+  // Etiqueta de la app en el topbar
+  const appLabel = document.querySelector('.topbar-app');
+  if (appLabel) appLabel.textContent = 'Pacientes 360°';
 }
 
 /* ═══════════════════════════════════════════
