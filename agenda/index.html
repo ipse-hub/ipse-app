@@ -363,6 +363,13 @@ select.fc{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.o
       <div class="sidebar-section-title">Terapeutas</div>
       <div id="ter-lista"></div>
     </div>
+    <hr class="sidebar-divider">
+    <div class="sidebar-section" style="padding-top:6px">
+      <label class="ter-row">
+        <input type="checkbox" id="chk-ver-canceladas" onchange="toggleCanceladas(this.checked)">
+        Ver canceladas
+      </label>
+    </div>
   </div>
 
   <!-- ÁREA AGENDA -->
@@ -839,7 +846,9 @@ let G = {
   pacientes:     [],
   bonosBecas:    [],
   citas:         [],
+  pacMap:        {},
   terFiltro:     new Set(),
+  verCanceladas: false,      // toggle "Ver canceladas" — oculta Cancelada por defecto
   vista:         'semana',  // 'dia' | 'semana' | 'mes'
   semanaIni:     null,
   diaActual:     null,
@@ -1018,10 +1027,20 @@ function toggleTerapeuta(id, checked) {
   aplicarFiltro();
 }
 
+function toggleCanceladas(checked) {
+  G.verCanceladas = checked;
+  aplicarFiltro();
+}
+
+// Único punto de filtrado: re-renderiza la vista activa contra los datos ya
+// cacheados en memoria (G.citas/G.pacMap), sin volver a pedirlos a Supabase.
+// Sustituye al toggle de display por CSS que antes solo cubría día/semana
+// (y dejaba mes sin reaccionar — bug detectado 15-09).
 function aplicarFiltro() {
-  document.querySelectorAll('.cita[data-pro]').forEach(el => {
-    el.style.display = G.terFiltro.has(el.dataset.pro) ? '' : 'none';
-  });
+  if (!G.citas) return;
+  if (G.vista === 'semana')      renderSemana(G.citas, G.pacMap);
+  else if (G.vista === 'dia')    renderDia(G.citas, G.pacMap);
+  else                            renderMes(G.citas, G.pacMap);
 }
 
 /* ═══════════════════════════════════════════
@@ -1150,6 +1169,7 @@ async function cargarCitas() {
       const pacs = await supaGet(`pacientes_v2?id=in.(${ids.join(',')})&select=id,nombre,apellidos,alias&limit=500`);
       pacs.forEach(p => { pacMap[p.id] = p; });
     }
+    G.pacMap = pacMap; // cache para re-render local sin ir a red (filtros de terapeuta/canceladas)
 
     if (G.vista === 'semana') renderSemana(citas, pacMap);
     else if (G.vista === 'dia') renderDia(citas, pacMap);
@@ -1158,6 +1178,51 @@ async function cargarCitas() {
     console.error('Error cargando citas:', err);
     toast('Error al cargar citas', true);
   }
+}
+
+/* ═══════════════════════════════════════════
+   CARRILES — layout de citas solapadas (día/semana)
+═══════════════════════════════════════════ */
+// Recibe las citas YA filtradas de una sola columna (un día concreto) y
+// devuelve un Map id_cita → {carril, totalCarriles} para repartir el ancho
+// entre las que coinciden en el tiempo. La sesión ocupa siempre 1h de rejilla
+// (regla de negocio, dure 30/45/60 min), así que dos citas solapan si sus
+// franjas de 1h se cruzan — no hace falta mirar duracion_min real.
+function calcularCarriles(citasDia) {
+  const eventos = citasDia
+    .map(c => {
+      const [hh, mm] = c.hora.split(':').map(Number);
+      const inicio = hh * 60 + mm;
+      return { cita: c, inicio, fin: inicio + 60, carril: 0 };
+    })
+    .sort((a, b) => a.inicio - b.inicio || a.cita.id.localeCompare(b.cita.id));
+
+  const layout = new Map();
+  let activos = [];   // eventos que siguen "vivos" en el barrido
+  let cluster = [];   // eventos del grupo de solape que se está cerrando
+
+  function cerrarCluster() {
+    if (!cluster.length) return;
+    const totalCarriles = Math.max(...cluster.map(e => e.carril)) + 1;
+    cluster.forEach(e => layout.set(e.cita.id, { carril: e.carril, totalCarriles }));
+    cluster = [];
+  }
+
+  eventos.forEach(ev => {
+    activos = activos.filter(a => a.fin > ev.inicio);
+    if (activos.length === 0) cerrarCluster();
+
+    const carrilesOcupados = new Set(activos.map(a => a.carril));
+    let carril = 0;
+    while (carrilesOcupados.has(carril)) carril++;
+    ev.carril = carril;
+
+    activos.push(ev);
+    cluster.push(ev);
+  });
+  cerrarCluster();
+
+  return layout;
 }
 
 /* ═══════════════════════════════════════════
@@ -1210,7 +1275,11 @@ function renderSemana(citas, pacMap) {
       col.appendChild(s);
     });
 
-    citas.filter(c => c.fecha === fechaISO && c.estado !== 'Reprogramada').forEach(cita => {
+    const citasDia = citas.filter(c => c.fecha === fechaISO && G.terFiltro.has(c.id_profesional) &&
+      c.estado !== 'Reprogramada' && (G.verCanceladas || c.estado !== 'Cancelada'));
+    const carriles = calcularCarriles(citasDia);
+
+    citasDia.forEach(cita => {
       const [hh, mm] = cita.hora.split(':').map(Number);
       const top    = ((hh - TOP_HORA) + mm/60) * SLOT_H;
       const pac    = pacMap[cita.id_paciente];
@@ -1218,11 +1287,15 @@ function renderSemana(citas, pacMap) {
       const color  = COLORES_PRO[cita.id_profesional] || '#10069F';
       const espLabel = ESPECIALIDADES[cita.especialidad] || cita.especialidad || '';
       const cortada = G.citaCortada && G.citaCortada.id === cita.id;
+      const { carril, totalCarriles } = carriles.get(cita.id) || { carril: 0, totalCarriles: 1 };
+      const anchoPct = 100 / totalCarriles;
+      const leftPct  = carril * anchoPct;
 
       const el = document.createElement('div');
       el.className = `cita estado-${(cita.estado||'Programada').replace(' ','')}${cortada?' cortada':''}`;
       el.dataset.pro = cita.id_profesional;
-      el.style.cssText = `top:${top}px;height:${SLOT_H - 3}px;background:${color}`;
+      el.style.cssText = `top:${top}px;height:${SLOT_H - 3}px;background:${color};` +
+        `left:calc(${leftPct}% + 2px);right:auto;width:calc(${anchoPct}% - 4px)`;
       el.innerHTML = `
         <div class="cita-nombre">${nombre}</div>
         <div class="cita-info">${espLabel}${cita.estado && cita.estado!=='Programada'?' · '+cita.estado:''}</div>
@@ -1251,7 +1324,6 @@ function renderSemana(citas, pacMap) {
           cortarCita(cita);
         });
       }
-      if (!G.terFiltro.has(cita.id_profesional)) el.style.display = 'none';
       col.appendChild(el);
     });
 
@@ -1313,7 +1385,11 @@ function renderDia(citas, pacMap) {
     col.appendChild(s);
   });
 
-  citas.filter(c => c.fecha === fechaISO && G.terFiltro.has(c.id_profesional) && c.estado !== 'Reprogramada').forEach(cita => {
+  const citasDia = citas.filter(c => c.fecha === fechaISO && G.terFiltro.has(c.id_profesional) &&
+    c.estado !== 'Reprogramada' && (G.verCanceladas || c.estado !== 'Cancelada'));
+  const carriles = calcularCarriles(citasDia);
+
+  citasDia.forEach(cita => {
     const [hh, mm] = cita.hora.split(':').map(Number);
     const top      = ((hh - TOP_HORA) + mm/60) * SLOT_H;
     const pac      = pacMap[cita.id_paciente];
@@ -1323,10 +1399,14 @@ function renderDia(citas, pacMap) {
     const terNombre = G.profesionales.find(p => p.id === cita.id_profesional);
     const terLabel  = terNombre ? terNombre.nombre : cita.id_profesional;
     const cortada   = G.citaCortada && G.citaCortada.id === cita.id;
+    const { carril, totalCarriles } = carriles.get(cita.id) || { carril: 0, totalCarriles: 1 };
+    const anchoPct = 100 / totalCarriles;
+    const leftPct  = carril * anchoPct;
 
     const el = document.createElement('div');
     el.className = `dia-cita${cortada?' cortada':''}`;
-    el.style.cssText = `position:absolute;left:4px;right:4px;top:${top}px;min-height:${SLOT_H - 4}px;background:${color}`;
+    el.style.cssText = `position:absolute;top:${top}px;min-height:${SLOT_H - 4}px;background:${color};` +
+      `left:calc(${leftPct}% + 4px);right:auto;width:calc(${anchoPct}% - 8px)`;
     el.innerHTML = `
       <div class="dia-cita-nombre">${nombre}</div>
       <div class="dia-cita-meta">${espLabel} · ${terLabel} · ${cita.hora?.substring(0,5)}</div>
@@ -1408,7 +1488,8 @@ function renderMes(citas, pacMap) {
     celda.appendChild(numEl);
 
     const citasDia = citas
-      .filter(c => c.fecha === fechaISO && G.terFiltro.has(c.id_profesional) && c.estado !== 'Reprogramada')
+      .filter(c => c.fecha === fechaISO && G.terFiltro.has(c.id_profesional) &&
+        c.estado !== 'Reprogramada' && (G.verCanceladas || c.estado !== 'Cancelada'))
       .sort((a, b) => a.hora.localeCompare(b.hora));
 
     const MAX_PILLS = 3;
