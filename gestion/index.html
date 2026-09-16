@@ -1205,6 +1205,7 @@ if (!IPSE_MODO_RESTRINGIDO) {
               <div class="kpi green"><div class="kpi-l">Cobrado</div><div class="kpi-v" id="ekpi-cob" style="font-size:16px;font-weight:500;padding-top:4px">—</div></div>
               <div class="kpi red"><div class="kpi-l">Pendiente</div><div class="kpi-v" id="ekpi-pend" style="font-size:16px;font-weight:500;padding-top:4px">—</div></div>
             </div>
+            <div id="ekpi-sinconciliar" style="display:none;font-size:11px;color:var(--ink-muted);margin:-8px 0 12px 2px"></div>
             <div class="card">
               <div class="card-title">Bonos y becas</div>
               <div id="p360-eco-bonos"><div class="loading-row"><span class="spinner"></span></div></div>
@@ -3607,14 +3608,23 @@ function renderResumen(hoy, citas, bonos, cobros) {
   }
 
   // Saldo (solo admin)
+  // NOTA (2026-09-16): "Cobrado" = todo lo declarado en cobros_v2, sin filtrar
+  // por conciliado. "Conciliado" es una verificación posterior contra el
+  // extracto bancario (solo tiene sentido para Transferencia/Bizum; el
+  // efectivo no tiene extracto contra el que conciliar) y se muestra aparte,
+  // como aviso, nunca como condición para que el cobro cuente.
   if (G.esAdmin) {
-    const devengo   = hechas.reduce((s, x) => s + (parseFloat(x.precio) || 0), 0);
-    const cobrado   = cobros.filter(c => c.conciliado === 'Si').reduce((s, x) => s + (parseFloat(x.importe) || 0), 0);
-    const pendiente = Math.max(0, devengo - cobrado);
+    const devengo    = hechas.reduce((s, x) => s + (parseFloat(x.precio) || 0), 0);
+    const cobrado    = cobros.reduce((s, x) => s + (parseFloat(x.importe) || 0), 0);
+    const pendiente  = Math.max(0, devengo - cobrado);
+    const sinConciliar = cobros
+      .filter(c => ['Transferencia', 'Bizum'].includes(c.metodo) && c.conciliado !== 'Si')
+      .reduce((s, x) => s + (parseFloat(x.importe) || 0), 0);
     document.getElementById('p360-saldo-body').innerHTML = `
       <div class="fin-row"><span class="fin-lbl">Total devengado</span><span class="fin-val">${fmtEur(devengo)}</span></div>
       <div class="fin-row"><span class="fin-lbl">Cobrado</span><span class="fin-val ok">${fmtEur(cobrado)}</span></div>
-      <div class="fin-row"><span class="fin-lbl">Pendiente</span><span class="fin-val ${pendiente > 0 ? 'warn' : 'ok'}">${fmtEur(pendiente)}</span></div>`;
+      <div class="fin-row"><span class="fin-lbl">Pendiente</span><span class="fin-val ${pendiente > 0 ? 'warn' : 'ok'}">${fmtEur(pendiente)}</span></div>
+      ${sinConciliar > 0 ? `<div class="fin-row" style="font-size:11px;color:var(--ink-muted)"><span class="fin-lbl">Sin conciliar (transf./Bizum)</span><span class="fin-val">${fmtEur(sinConciliar)}</span></div>` : ''}`;
   }
 
   // Próximas citas
@@ -3672,12 +3682,23 @@ function renderHistorial(hoy, citas) {
 function renderEconomico(citas, bonos, cobros) {
   const hechas    = citas.filter(s => s.estado === 'Hecha');
   const devengo   = hechas.reduce((s, x) => s + (parseFloat(x.precio) || 0), 0);
-  const cobrado   = cobros.filter(c => c.conciliado === 'Si').reduce((s, x) => s + (parseFloat(x.importe) || 0), 0);
+  // Cobrado = todo lo declarado en cobros_v2 (ver nota en renderResumen).
+  const cobrado   = cobros.reduce((s, x) => s + (parseFloat(x.importe) || 0), 0);
   const pendiente = Math.max(0, devengo - cobrado);
+  const sinConciliar = cobros
+    .filter(c => ['Transferencia', 'Bizum'].includes(c.metodo) && c.conciliado !== 'Si')
+    .reduce((s, x) => s + (parseFloat(x.importe) || 0), 0);
 
   document.getElementById('ekpi-dev').textContent  = fmtEur(devengo);
   document.getElementById('ekpi-cob').textContent  = fmtEur(cobrado);
   document.getElementById('ekpi-pend').textContent = fmtEur(pendiente);
+  const sinConciliarEl = document.getElementById('ekpi-sinconciliar');
+  if (sinConciliar > 0) {
+    sinConciliarEl.style.display = '';
+    sinConciliarEl.textContent = `${fmtEur(sinConciliar)} sin conciliar (transferencia/Bizum)`;
+  } else {
+    sinConciliarEl.style.display = 'none';
+  }
 
   // Todos los bonos/becas
   const bonosEl = document.getElementById('p360-eco-bonos');
