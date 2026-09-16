@@ -988,7 +988,12 @@ async function init() {
   const selEsp = document.getElementById('sel-especialidad');
   const esps = G.profesional.especialidades || [];
   if (esps.length === 0) {
-    selEsp.innerHTML = '<option value="">Sin especialidad asignada</option>';
+    // Admin (o cualquier profesional sin especialidades propias): mostrar las 4
+    // para poder ver/editar la especialidad real de cualquier cita — si no,
+    // al reabrir una cita el <select> no tiene ninguna opción que coincida con
+    // cita.especialidad y el guardado siguiente viola citas_v2_especialidad_check.
+    selEsp.innerHTML = Object.entries(ESPECIALIDADES)
+      .map(([k, v]) => `<option value="${k}">${v}</option>`).join('');
   } else {
     selEsp.innerHTML = esps.map(e => `<option value="${e}">${ESPECIALIDADES[e] || e}</option>`).join('');
   }
