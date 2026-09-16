@@ -1164,7 +1164,7 @@ async function cargarCitas() {
 
   try {
     const citas = await supaGet(
-      `citas_v2?fecha=gte.${desde}&fecha=lte.${hasta}&select=id,id_paciente,id_profesional,especialidad,fecha,hora,duracion_min,modalidad_pago,precio,estado,notas&order=hora.asc&limit=500`
+      `citas_v2?fecha=gte.${desde}&fecha=lte.${hasta}&select=id,id_paciente,id_profesional,especialidad,fecha,hora,duracion_min,modalidad_pago,precio,estado,notas,cobrado,forma_cobro,id_bono_beca&order=hora.asc&limit=500`
     );
     G.citas = citas;
 
@@ -2583,9 +2583,26 @@ async function guardarCita() {
     idBonoBeca = match.id;
   }
 
+  // Si se revierte una cita de Hecha a otro estado y ya tenía un cobro asociado,
+  // avisar antes de guardar — el cobro NO se toca automáticamente, se gestiona
+  // a mano desde Gestión > Cobros.
+  if (G.modalCitaId && G.modalEstadoPrevio === 'Hecha' && G.modalEstado !== 'Hecha') {
+    try {
+      const existentes = await supaRpc('cobro_de_cita', { p_id_cita: G.modalCitaId });
+      if (existentes?.length) {
+        const cob = existentes[0];
+        const seguir = confirm(
+          `Esta cita ya tiene un cobro registrado (${cob.metodo} · ${cob.importe} €).\n` +
+          `Cambiar el estado no elimina ni modifica ese cobro — si ya no corresponde, ` +
+          `tendrás que revisarlo manualmente desde Gestión > Cobros.\n\n¿Continuar de todos modos?`
+        );
+        if (!seguir) return;
+      }
+    } catch { /* si falla la comprobación, no bloqueamos el guardado por esto */ }
+  }
+
   const payload = {
     id_paciente:    G.modalPacId,
-    id_profesional: G.profesional.id,
     especialidad,
     fecha, hora,
     duracion_min:   parseInt(document.getElementById('sel-duracion').value),
@@ -2597,6 +2614,9 @@ async function guardarCita() {
     cobrado:        formaCobro && formaCobro !== 'No pagado' ? 'Si' : 'No',
     notas:          document.getElementById('inp-notas').value.trim() || null
   };
+  // id_profesional solo se fija al crear una cita nueva — al editar una cita
+  // existente se conserva el profesional ya asignado (no se pisa con quien la edita).
+  if (!G.modalCitaId) payload.id_profesional = G.profesional.id;
 
   const btn = document.getElementById('btn-guardar');
   btn.disabled = true;
@@ -2605,6 +2625,26 @@ async function guardarCita() {
   try {
     if (G.modalCitaId) {
       await supaPatch('citas_v2', G.modalCitaId, payload);
+
+      // Cobro: si la cita queda Hecha con forma de cobro válida, crear o
+      // actualizar (si ya existía) el registro en cobros_v2 vía RPC — el
+      // guardado normal de una cita ya existente nunca tocaba esta tabla.
+      if (G.modalEstado === 'Hecha' && formaCobro && formaCobro !== 'No pagado') {
+        try {
+          await supaRpc('upsert_cobro_cita', {
+            p_id_cita:      G.modalCitaId,
+            p_id_paciente:  G.modalPacId,
+            p_id_bono_beca: idBonoBeca,
+            p_fecha:        fecha,
+            p_importe:      precio,
+            p_metodo:       formaCobro,
+            p_concepto:     `Sesión ${especialidad} — ${fecha}`
+          });
+        } catch (err) {
+          console.error('Error registrando cobro:', err);
+          toast('Cita guardada, pero hubo un problema registrando el cobro — revísalo en Cobros', true);
+        }
+      }
 
       // Incrementar sesiones_consumidas si se pasa a Hecha o No show (y antes no lo era)
       const estadosQueConsumen = ['Hecha', 'No show'];
@@ -2635,11 +2675,14 @@ async function guardarCita() {
         const count  = await supaGet('citas_v2?select=id&order=id.desc&limit=1');
         const ultimo = count[0]?.id || 'CIT-000';
         const num    = parseInt(ultimo.split('-')[1] || '0') + 1;
-        // La cita_origen es la raíz: si la cita actual ya tiene origen, heredamos ese; si no, es ella misma
-        const citaActual = await supaGet(`citas_v2?id=eq.${G.modalCitaId}&select=id_cita_origen&limit=1`);
-        const origenRaiz = citaActual[0]?.id_cita_origen || G.modalCitaId;
+        // La cita_origen es la raíz: si la cita actual ya tiene origen, heredamos ese; si no, es ella misma.
+        // También leemos el id_profesional real, porque el payload ya no lo trae al editar.
+        const citaActual = await supaGet(`citas_v2?id=eq.${G.modalCitaId}&select=id_cita_origen,id_profesional&limit=1`);
+        const origenRaiz    = citaActual[0]?.id_cita_origen || G.modalCitaId;
+        const profOriginal  = citaActual[0]?.id_profesional || G.profesional.id;
         await supaPost('citas_v2', {
           ...payload,
+          id_profesional: profOriginal,
           id:             `CIT-${String(num).padStart(3,'0')}`,
           fecha:          reproFecha,
           hora:           reproHora,
