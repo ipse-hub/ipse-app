@@ -46,6 +46,12 @@ function bbNombrePaciente(id) {
   if (!p) return id;
   return `${p.nombre || ''} ${p.apellidos || ''}`.trim();
 }
+function bbCompartidoTexto(r) {
+  if (!r.compartido_con) return '';
+  const otro = BB.todos.find(x => x.id === r.compartido_con);
+  if (!otro) return '';
+  return bbNombrePaciente(otro.id_paciente);
+}
 
 function bbPoblarAnios() {
   const sel = document.getElementById('bb-f-anio');
@@ -221,6 +227,7 @@ function bbRenderTabla() {
           <span class="bb-ses-resto ${restoClass}">${restantes}</span>
         </div>
         <div style="font-size:11px;color:var(--ink-muted);margin-top:2px">${r.sesiones_consumidas}/${r.sesiones_total} consumidas</div>
+        ${r.compartido_con ? `<div style="font-size:11px;color:var(--azul);margin-top:2px">🔗 Compartido con ${bbCompartidoTexto(r)}</div>` : ''}
       </td>
       <td style="font-size:12px">${vencStr}</td>
       <td style="font-size:12px">${(() => {
@@ -270,7 +277,7 @@ async function bbSeleccionar(id) {
   const nombrePac = bbNombrePaciente(r.id_paciente);
   document.getElementById('bb-panel-nombre').textContent = nombrePac;
   document.getElementById('bb-panel-sub').textContent =
-    `${r.tipo} · ${r.especialidad} · ${r.id}`;
+    `${r.tipo} · ${r.especialidad} · ${r.id}${r.compartido_con ? ` · 🔗 Compartido con ${bbCompartidoTexto(r)}` : ''}`;
 
   // Progreso grande
   const restantes = r.sesiones_total - r.sesiones_consumidas;

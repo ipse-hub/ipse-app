@@ -535,6 +535,11 @@ select.fc{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.o
           </select>
         </div>
 
+        <!-- AVISO bono/beca compartido -->
+        <div id="bb-compartido-wrap" style="display:none;margin-top:8px;background:#e0f2fe;border:1px solid #0369a1;color:#0c4a6e;padding:7px 10px;border-radius:8px;font-size:12px;align-items:center;gap:6px">
+          <span>🔗</span><span id="bb-compartido-texto"></span>
+        </div>
+
         <!-- AVISO bono pendiente de cobro -->
         <div id="bono-pendiente-wrap" style="display:none;margin-top:8px">
           <!-- Aviso amarillo (pendiente) -->
@@ -2031,9 +2036,22 @@ async function cargarBonoBeca(idPaciente) {
   try {
     const hoy = fmtISO(new Date());
     const bb  = await supaGet(
-      `bonos_becas?id_paciente=eq.${idPaciente}&fecha_vencimiento=gte.${hoy}&select=id,tipo,especialidad,sesiones_total,sesiones_consumidas,fecha_inicio,fecha_vencimiento,importe_total,anticipo_recibido,forma_cobro_bono&order=fecha_vencimiento.asc&limit=20`
+      `bonos_becas?id_paciente=eq.${idPaciente}&fecha_vencimiento=gte.${hoy}&select=id,tipo,especialidad,sesiones_total,sesiones_consumidas,fecha_inicio,fecha_vencimiento,importe_total,anticipo_recibido,forma_cobro_bono,compartido_con&order=fecha_vencimiento.asc&limit=20`
     );
     G.bonosBecas = bb;
+
+    // Si algún bono/beca está compartido, resolver el nombre del paciente vinculado
+    G.bbCompartidoNombres = {};
+    const idsVinculados = bb.filter(b => b.compartido_con).map(b => b.compartido_con);
+    if (idsVinculados.length) {
+      const vinculados = await supaGet(
+        `bonos_becas?id=in.(${idsVinculados.join(',')})&select=id,id_paciente`
+      );
+      vinculados.forEach(v => {
+        const pac = (G.todosPacientes || []).find(p => p.id === v.id_paciente);
+        G.bbCompartidoNombres[v.id] = pac ? `${pac.nombre} ${pac.apellidos || ''}`.trim() : v.id_paciente;
+      });
+    }
     // Si el modal ya tiene BONO seleccionado, refrescar el aviso con datos reales
     if (G.modalMod === 'BONO') mostrarAvisoBonoPendiente();
   } catch (e) { console.error('cargarBonoBeca:', e); }
@@ -2370,14 +2388,25 @@ function selPill(el, mod, precio, skipFocus) {
     if (!match) {
       mostrarAvisoBonoBeca(mod);
       document.getElementById('bono-pendiente-wrap').style.display = 'none';
+      document.getElementById('bb-compartido-wrap').style.display = 'none';
       return; // no seleccionar la pill hasta que haya activo
     }
     ocultarAvisoBonoBeca();
     if (mod === 'BONO') mostrarAvisoBonoPendiente();
     else document.getElementById('bono-pendiente-wrap').style.display = 'none';
+
+    const compartidoWrap = document.getElementById('bb-compartido-wrap');
+    const nombreCompartido = match.compartido_con ? G.bbCompartidoNombres?.[match.compartido_con] : null;
+    if (nombreCompartido) {
+      document.getElementById('bb-compartido-texto').textContent = `Compartido con ${nombreCompartido}`;
+      compartidoWrap.style.display = 'flex';
+    } else {
+      compartidoWrap.style.display = 'none';
+    }
   } else {
     ocultarAvisoBonoBeca();
     document.getElementById('bono-pendiente-wrap').style.display = 'none';
+    document.getElementById('bb-compartido-wrap').style.display = 'none';
   }
 
   document.querySelectorAll('.pill').forEach(p => p.classList.remove('sel','sel-beca','sel-otros'));
@@ -2548,6 +2577,13 @@ function calcRecur() {
 /* ═══════════════════════════════════════════
    GUARDAR CITA
 ═══════════════════════════════════════════ */
+function textoSesionesRestantes(bb) {
+  if (!bb) return '';
+  const restantes = (bb.sesiones_total || 0) - (bb.sesiones_consumidas || 0);
+  const tipoTxt = bb.tipo === 'BECA' ? 'beca' : 'bono';
+  return ` · quedan ${restantes} de ${bb.sesiones_total} sesiones del ${tipoTxt}`;
+}
+
 async function guardarCita() {
   if (!G.modalPacId) { toast('Selecciona un paciente', true); return; }
   if (!G.modalMod)   { toast('Selecciona el tipo de sesión', true); return; }
@@ -2650,12 +2686,14 @@ async function guardarCita() {
       const estadosQueConsumen = ['Hecha', 'No show'];
       const estadoPrevioConsumia = estadosQueConsumen.includes(G.modalEstadoPrevio);
       const estadoNuevoConsume   = estadosQueConsumen.includes(G.modalEstado);
+      let avisoSesiones = '';
       if (estadoNuevoConsume && !estadoPrevioConsumia && idBonoBeca) {
         const bbActual = G.bonosBecas?.find(b => b.id === idBonoBeca);
         if (bbActual) {
           const nuevasConsumidas = (bbActual.sesiones_consumidas || 0) + 1;
           await supaPatch('bonos_becas', idBonoBeca, { sesiones_consumidas: nuevasConsumidas });
           bbActual.sesiones_consumidas = nuevasConsumidas; // actualizar en memoria
+          avisoSesiones = textoSesionesRestantes(bbActual);
         }
       }
       // Si se revierte de Hecha/No show a otro estado, decrementar
@@ -2693,7 +2731,7 @@ async function guardarCita() {
         });
         toast('Cita reprogramada — nueva cita creada', false, true);
       } else {
-        toast('Cita actualizada', false, true);
+        toast(`Cita actualizada${avisoSesiones}`, false, true);
       }
     } else {
       const count  = await supaGet('citas_v2?select=id&order=id.desc&limit=1');
@@ -2702,10 +2740,10 @@ async function guardarCita() {
       payload.id   = `CIT-${String(num).padStart(3,'0')}`;
 
       const repet = document.getElementById('chk-recur').checked;
+      let lote = [];
       if (repet) {
         const dias = parseInt(document.getElementById('recur-frec').value);
         const n    = parseInt(document.getElementById('recur-dur').value);
-        const lote = [];
         for (let i = 0; i < n; i++) {
           const f = new Date(fecha + 'T12:00:00');
           f.setDate(f.getDate() + i * dias);
@@ -2716,10 +2754,30 @@ async function guardarCita() {
           lote.push(citaRep);
         }
         await supaPost('citas_v2', lote);
-        toast(`${lote.length} citas creadas`, false, true);
       } else {
         await supaPost('citas_v2', payload);
-        toast('Cita guardada', false, true);
+      }
+
+      // Incrementar sesiones_consumidas si la cita se crea ya como Hecha/No show
+      // (antes solo se descontaba al editar una cita existente — bug real: crear
+      // una cita directamente en Hecha/No show nunca tocaba bonos_becas)
+      const estadosQueConsumenAlCrear = ['Hecha', 'No show'];
+      let avisoSesionesCreacion = '';
+      if (estadosQueConsumenAlCrear.includes(G.modalEstado) && idBonoBeca) {
+        const numCitasCreadas = repet ? lote.length : 1;
+        const bbActual = G.bonosBecas?.find(b => b.id === idBonoBeca);
+        if (bbActual && numCitasCreadas > 0) {
+          const nuevasConsumidas = (bbActual.sesiones_consumidas || 0) + numCitasCreadas;
+          await supaPatch('bonos_becas', idBonoBeca, { sesiones_consumidas: nuevasConsumidas });
+          bbActual.sesiones_consumidas = nuevasConsumidas;
+          avisoSesionesCreacion = textoSesionesRestantes(bbActual);
+        }
+      }
+
+      if (repet) {
+        toast(`${lote.length} citas creadas${avisoSesionesCreacion}`, false, true);
+      } else {
+        toast(`Cita guardada${avisoSesionesCreacion}`, false, true);
       }
 
       // Cobro automático si Hecha
