@@ -738,6 +738,21 @@ select.fc{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.o
         </div>
       </div>
 
+      <!-- SERIE: OTRAS CITAS RELACIONADAS -->
+      <div class="section" id="sec-serie" style="display:none">
+        <div class="sec-label">Aplicar también a otras citas</div>
+        <div class="alert alert-info" style="margin-bottom:8px">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;flex-shrink:0;margin-top:1px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          <span>Mismo paciente, profesional y hora, aún sin resolver. Desmarca las que no quieras tocar. Al <strong>guardar</strong>, se les aplica el mismo cambio de día/hora que a esta cita.</span>
+        </div>
+        <div class="check-row" id="serie-lista"></div>
+        <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+          <button type="button" class="btn btn-secondary" style="font-size:12px;padding:6px 12px" onclick="marcarTodasSerie(true)">Marcar todas</button>
+          <button type="button" class="btn btn-secondary" style="font-size:12px;padding:6px 12px" onclick="marcarTodasSerie(false)">Desmarcar todas</button>
+          <button type="button" class="btn btn-danger" style="font-size:12px;padding:6px 12px;margin-left:auto" id="btn-eliminar-serie" onclick="eliminarSeleccionadasSerie()">Eliminar marcadas</button>
+        </div>
+      </div>
+
       <!-- REPETIR -->
       <div class="section" id="sec-repetir">
         <div class="sec-label">Repetir cita</div>
@@ -1558,6 +1573,7 @@ function abrirModalNueva(fecha, hora) {
     Nueva cita`;
   document.getElementById('btn-eliminar').style.display = 'none';
   document.getElementById('sec-repetir').style.display = '';
+  document.getElementById('sec-serie').style.display = 'none';
   // En modo creación: estado y cobro no tienen sentido — la cita aún no ha ocurrido
   document.getElementById('sec-estado').style.display = 'none';
   document.getElementById('pago-section').style.display = 'none';
@@ -1575,6 +1591,10 @@ function abrirModalEditar(cita, pac) {
   resetModal();
   G.modalCitaId     = cita.id;
   G.modalEstadoPrevio = cita.estado || 'Programada'; // para detectar cambio de estado
+  G.modalFechaOriginal = cita.fecha;
+  G.modalHoraOriginal  = (cita.hora || '').substring(0, 5);
+  G.modalCitaRef = { id: cita.id, id_paciente: cita.id_paciente, id_profesional: cita.id_profesional, hora: cita.hora };
+  cargarCandidatasSerie(G.modalCitaRef);
 
   document.getElementById('modal-title').innerHTML = `
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
@@ -1649,6 +1669,12 @@ function resetModal() {
   G.modalMod    = null;
   G.modalEstado = 'Programada';
   G.modalEstadoPrevio = null;
+  G.modalFechaOriginal = null;
+  G.modalHoraOriginal  = null;
+  G.modalCitaRef = null;
+  G.serieCandidatas = [];
+  document.getElementById('sec-serie').style.display = 'none';
+  document.getElementById('serie-lista').innerHTML = '';
 
   document.getElementById('pac-input').value = '';
   document.getElementById('pac-dropdown').classList.remove('visible');
@@ -2575,6 +2601,76 @@ function calcRecur() {
 }
 
 /* ═══════════════════════════════════════════
+   SERIE — CITAS RELACIONADAS (mismo paciente,
+   profesional y hora, aún Programadas)
+   No existe vínculo real en BD (id_serie no se
+   rellena al crear el lote) — se detectan por
+   coincidencia de paciente + profesional + hora.
+═══════════════════════════════════════════ */
+async function cargarCandidatasSerie(citaRef) {
+  const cont = document.getElementById('serie-lista');
+  const sec  = document.getElementById('sec-serie');
+  cont.innerHTML = '';
+  sec.style.display = 'none';
+  G.serieCandidatas = [];
+  if (!citaRef?.id_paciente || !citaRef?.id_profesional || !citaRef?.hora) return;
+
+  try {
+    const hoy  = fmtISO(new Date());
+    const rows = await supaGet(
+      `citas_v2?id_paciente=eq.${citaRef.id_paciente}&id_profesional=eq.${citaRef.id_profesional}` +
+      `&estado=eq.Programada&fecha=gte.${hoy}&id=neq.${citaRef.id}` +
+      `&select=id,fecha,hora,estado&order=fecha.asc`
+    );
+    const horaRef = citaRef.hora.substring(0, 5);
+    G.serieCandidatas = rows.filter(r => (r.hora || '').substring(0, 5) === horaRef);
+    if (!G.serieCandidatas.length) return;
+
+    G.serieCandidatas.forEach(c => {
+      const lbl = document.createElement('label');
+      lbl.className = 'check-item';
+      const fechaTxt = new Date(c.fecha + 'T12:00:00')
+        .toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short' });
+      lbl.innerHTML = `<input type="checkbox" class="serie-chk" value="${c.id}" checked> ${fechaTxt}`;
+      cont.appendChild(lbl);
+    });
+    sec.style.display = '';
+  } catch (err) {
+    console.error('Error cargando citas relacionadas:', err);
+  }
+}
+
+function marcarTodasSerie(valor) {
+  document.querySelectorAll('.serie-chk').forEach(cb => cb.checked = valor);
+}
+
+function serieSeleccionadas() {
+  return [...document.querySelectorAll('.serie-chk:checked')].map(cb => cb.value);
+}
+
+async function eliminarSeleccionadasSerie() {
+  const ids = serieSeleccionadas();
+  if (!ids.length) { toast('No hay ninguna cita marcada', true); return; }
+  if (!confirm(`¿Eliminar ${ids.length} cita${ids.length !== 1 ? 's' : ''} de la serie? Esta acción no se puede deshacer.`)) return;
+
+  const btn = document.getElementById('btn-eliminar-serie');
+  btn.disabled = true;
+  let ok = 0, fail = 0;
+  for (const id of ids) {
+    try { await supaDelete('citas_v2', id); ok++; }
+    catch (err) { console.error(`Error eliminando cita ${id}:`, err); fail++; }
+  }
+  btn.disabled = false;
+
+  toast(
+    `${ok} cita${ok !== 1 ? 's' : ''} eliminada${ok !== 1 ? 's' : ''}${fail ? ` — ${fail} con error` : ''}`,
+    fail > 0 && ok === 0, fail === 0
+  );
+  if (G.modalCitaRef) await cargarCandidatasSerie(G.modalCitaRef);
+  await cargarCitas();
+}
+
+/* ═══════════════════════════════════════════
    GUARDAR CITA
 ═══════════════════════════════════════════ */
 function textoSesionesRestantes(bb) {
@@ -2731,7 +2827,33 @@ async function guardarCita() {
         });
         toast('Cita reprogramada — nueva cita creada', false, true);
       } else {
-        toast(`Cita actualizada${avisoSesiones}`, false, true);
+        // Aplicar el mismo cambio de fecha/hora a las citas marcadas de la serie
+        // (mismo delta de días respecto a la fecha original de esta cita; hora igual para todas)
+        const idsSerie = serieSeleccionadas();
+        if (idsSerie.length) {
+          const deltaDias = Math.round(
+            (new Date(fecha + 'T12:00:00') - new Date(G.modalFechaOriginal + 'T12:00:00')) / 86400000
+          );
+          const horaCambio = hora !== G.modalHoraOriginal;
+          if (deltaDias !== 0 || horaCambio) {
+            let ok = 0, fail = 0;
+            for (const id of idsSerie) {
+              const c = G.serieCandidatas.find(x => x.id === id);
+              if (!c) continue;
+              const nuevaFecha = fmtISO(addDias(new Date(c.fecha + 'T12:00:00'), deltaDias));
+              try { await supaPatch('citas_v2', id, { fecha: nuevaFecha, hora }); ok++; }
+              catch (err) { console.error(`Error actualizando cita ${id} de la serie:`, err); fail++; }
+            }
+            toast(
+              `Cita actualizada${avisoSesiones} y ${ok} más de la serie${fail ? ` (${fail} con error)` : ''}`,
+              fail > 0 && ok === 0, fail === 0 || ok > 0
+            );
+          } else {
+            toast(`Cita actualizada${avisoSesiones}`, false, true);
+          }
+        } else {
+          toast(`Cita actualizada${avisoSesiones}`, false, true);
+        }
       }
     } else {
       const count  = await supaGet('citas_v2?select=id&order=id.desc&limit=1');
