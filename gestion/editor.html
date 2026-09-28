@@ -283,9 +283,9 @@ const TABLAS = {
           { id:'fecha_baja',    label:'F. Baja',          type:'date' },
           { id:'activo',        label:'Activo',           type:'select', options:['Si','No'] },
           { id:'tiene_tutor',   label:'Tiene tutor',      type:'select', options:['No','Si'] },
-          { id:'consentimiento',label:'Consentimiento',   type:'select', options:['','Pendiente','Firmado','Digital'] },
+          { id:'consentimiento',label:'Consentimiento',   type:'select', options:['No','Si'] },
           { id:'id_profesional',label:'Profesional asignado', type:'select', options:['','PRO-001','PRO-002','PRO-003','PRO-004','PRO-005'] },
-          { id:'modalidad_principal', label:'Modalidad principal', type:'select', options:['','BECA','BONO','PRIVADO_SU','ADECCO','OTROS'] },
+          { id:'modalidad_principal', label:'Modalidad principal', type:'select', options:['','Beca','Bono','Privado','Adecco','Otros'] },
         ]
       },
       {
@@ -325,7 +325,7 @@ const TABLAS = {
         title: 'Clínico / escolar',
         fields: [
           { id:'diagnostico',    label:'Diagnóstico',    type:'text', span2:true },
-          { id:'ambito',         label:'Ámbito',         type:'select', options:['','salud_mental','educativo','otro'] },
+          { id:'ambito',         label:'Ámbito',         type:'select', options:['','Escolar','Clínico','Mixto'] },
           { id:'derivacion',     label:'Derivación',     type:'text' },
           { id:'alergias',       label:'Alergias',       type:'text' },
           { id:'centro_escolar', label:'Centro escolar', type:'text', span2:true },
@@ -929,7 +929,10 @@ function buildForm(registro) {
       const spanCls = f.span2 ? ' span2' : '';
       let input;
       if (f.type === 'select') {
-        const opts = f.options.map(o => `<option value="${o}"${String(o)===String(val)?' selected':''}>${o||'—'}</option>`).join('');
+        // Si el valor guardado no está entre las opciones, se conserva como opción extra
+        // para que un guardado no lo borre (ni lo convierta en null) sin querer.
+        const lista = (val !== '' && !f.options.map(String).includes(String(val))) ? [...f.options, val] : f.options;
+        const opts = lista.map(o => `<option value="${o}"${String(o)===String(val)?' selected':''}>${o||'—'}</option>`).join('');
         input = `<select class="form-control ${f.cls||''}" id="field-${f.id}">${opts}</select>`;
       } else if (f.type === 'textarea') {
         input = `<textarea class="form-control" id="field-${f.id}" rows="3">${val}</textarea>`;
