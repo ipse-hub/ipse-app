@@ -265,13 +265,9 @@ const TABLAS = {
     tabla: 'pacientes_v2',
     idField: 'id',
     orderBy: 'apellidos.asc,nombre.asc',
-    cascade: [
-      { tabla: 'citas_v2',    col: 'id_paciente' },
-      { tabla: 'bonos_becas', col: 'id_paciente' },
-      { tabla: 'cobros_v2',   col: 'id_paciente' },
-      { tabla: 'series_citas',col: 'id_paciente' },
-      { tabla: 'facturas',    col: 'id_paciente_v2' },
-    ],
+    // La propagación del ID la hace Postgres (FK con ON UPDATE CASCADE en citas_v2,
+    // bonos_becas, cobros_v2, series_citas y facturas.id_paciente_v2). No hay cascada de cliente.
+    cascade: [],
     cols: ['id','nombre','apellidos','alias','fecha_nacimiento','activo','tiene_tutor'],
     colLabels: ['ID','Nombre','Apellidos','Alias','F. Nacimiento','Activo','Tutor'],
     sections: [
@@ -1022,6 +1018,9 @@ async function guardar() {
       renderTabla();
     } else {
       const idOriginal = G.editando[cfg.idField];
+      if (cfg.tabla === 'pacientes_v2' && nuevoId !== idOriginal) {
+        if (!confirm(`Cambiar el expediente:\n\n${idOriginal}  →  ${nuevoId}\n\nSe actualizarán citas, bonos/becas, cobros, series y facturas del paciente. No se puede deshacer.`)) return;
+      }
       if (nuevoId !== idOriginal && cfg.cascade.length > 0) {
         cerrarModal();
         abrirCascade(idOriginal, nuevoId, datos);
