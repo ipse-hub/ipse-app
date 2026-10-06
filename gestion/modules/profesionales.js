@@ -206,6 +206,7 @@ async function proGuardar() {
   let pdfRuta = PRO._certRuta; // mantener ruta existente por defecto
   if (PRO._certArchivo) {
     // Hay archivo nuevo — subirlo a Storage
+    try {
     const idPro = esAlta ? id : PRO.editando.id;
     const ext = PRO._certArchivo.name.split('.').pop();
     const rutaStorage = `${idPro}/delitos_sexuales.${ext}`;
@@ -227,6 +228,10 @@ async function proGuardar() {
       throw new Error('Error subiendo el certificado: ' + (err.message || uploadRes.status));
     }
     pdfRuta = rutaStorage;
+    } catch(e) {
+      toast('Error: ' + e.message, true);
+      return;
+    }
   }
 
   const payload = {
@@ -246,8 +251,9 @@ async function proGuardar() {
       const existe = await sg(`profesionales?id=eq.${encodeURIComponent(id)}&select=id&limit=1`);
       if (existe.length) { toast('Ese ID ya existe', true); return; }
 
-      // 2. Invitar via Supabase Auth (el usuario recibirá email para activar)
-      const inviteRes = await fetch(`${SUPA_URL}/auth/v1/invite`, {
+      // 2. Invitar vía Edge Function (la service_role solo existe en el servidor;
+      //    /auth/v1/invite desde el navegador devuelve 403 "User not allowed")
+      const inviteRes = await fetch(`${SUPA_URL}/functions/v1/invitar-profesional`, {
         method: 'POST',
         headers: {
           'apikey': SUPA_KEY,
@@ -256,20 +262,23 @@ async function proGuardar() {
         },
         body: JSON.stringify({ email })
       });
-      if (!inviteRes.ok) {
+      let yaTeniaCuenta = false;
+      if (inviteRes.status === 409) {
+        // Ya existe en Auth: se continúa con el alta, sin nueva invitación
+        yaTeniaCuenta = true;
+      } else if (!inviteRes.ok) {
         const err = await inviteRes.json().catch(() => ({}));
-        // Si ya existe en Auth, continuamos igualmente (puede que ya tuviera cuenta)
-        if (!err.msg?.includes('already registered') && inviteRes.status !== 422) {
-          throw new Error(err.msg || `Error en invite: ${inviteRes.status}`);
-        }
+        throw new Error(err.error || `Error en la invitación: ${inviteRes.status}`);
       }
 
       // 3. Insertar en profesionales (auth_user_id queda null hasta primer login)
       await sp('profesionales', { id, auth_user_id: null, ...payload });
-      toast(`Profesional creado. Se ha enviado invitación a ${email}`);
+      toast(yaTeniaCuenta
+        ? `Profesional creado. ${email} ya tenía cuenta de acceso: no se ha enviado nueva invitación`
+        : `Profesional creado. Se ha enviado invitación a ${email}`);
     } else {
       // Edición
-      await fetch(`${SUPA_URL}/rest/v1/profesionales?id=eq.${encodeURIComponent(PRO.editando.id)}`, {
+      const patchRes = await fetch(`${SUPA_URL}/rest/v1/profesionales?id=eq.${encodeURIComponent(PRO.editando.id)}`, {
         method: 'PATCH',
         headers: {
           'apikey': SUPA_KEY,
@@ -279,6 +288,10 @@ async function proGuardar() {
         },
         body: JSON.stringify(payload)
       });
+      if (!patchRes.ok) {
+        const err = await patchRes.json().catch(() => ({}));
+        throw new Error(err.message || `Error al actualizar: ${patchRes.status}`);
+      }
       toast('Profesional actualizado');
     }
     proCerrarModal();
