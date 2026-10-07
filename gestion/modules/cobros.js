@@ -36,10 +36,42 @@ function cobBadge(cat) {
     'Gasto clinica':    ['cob-badge-pend','Gasto clínica'],
     'Personal':         ['cob-badge-pers','Personal'],
     'Sin clasificar':   ['cob-badge-desc','Sin clasificar'],
+    'Traspaso efectivo':['cob-badge-rev','Traspaso efectivo'],
+    'Arqueo':           ['cob-badge-ok','Arqueo'],
   };
   const [cls, lbl] = map[cat] || ['cob-badge-desc', cat || 'Sin clasificar'];
   return `<span class="cob-badge ${cls}">${lbl}</span>`;
 }
+/* PATCH real (sp() es solo POST). Devuelve true si OK, null si falla. */
+async function cobPatch(path, body) {
+  try {
+    const res = await fetch(`${SUPA_URL}/rest/v1/${path}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPA_KEY,
+        'Authorization': `Bearer ${G.sesion.access_token}`,
+        'Prefer': 'return=representation'
+      },
+      body: JSON.stringify(body)
+    });
+    if (!res.ok) {
+      const t = await res.text().catch(() => '');
+      toast('Error al guardar: ' + (t || res.status), true);
+      return null;
+    }
+    const rows = await res.json().catch(() => []);
+    if (Array.isArray(rows) && rows.length === 0) {
+      toast('No se actualizó ninguna fila (¿permisos?)', true);
+      return null;
+    }
+    return true;
+  } catch (e) {
+    toast('Error de red al guardar', true);
+    return null;
+  }
+}
+
 function cobBadgeEstado(estado) {
   if (estado === 'Conciliado') return `<span class="cob-badge cob-badge-ok">Conciliado</span>`;
   if (estado === 'Clasificado') return `<span class="cob-badge cob-badge-rev">Clasificado</span>`;
@@ -53,6 +85,7 @@ function cobSwitchTab(tab) {
   document.querySelectorAll('.cob-tab-panel').forEach(p => p.classList.remove('active'));
   document.getElementById('cob-tab-' + tab).classList.add('active');
   document.getElementById('cob-panel-' + tab).classList.add('active');
+  if (tab === 'caja' && typeof cobRenderPanelCaja === 'function') cobRenderPanelCaja();
 }
 
 /* ══════════════════════════════════════════
@@ -65,6 +98,7 @@ async function cobCargarBanco() {
   cobPoblarFiltroMes();
   cobFiltrarBanco();
   cobRenderPendientes();
+  if (typeof cobRenderPanelCaja === 'function') cobRenderPanelCaja();
 }
 
 function cobActualizarKpisBanco() {
@@ -177,8 +211,8 @@ function cobRenderPendientes() {
       ? `<span class="cob-pos">+${cobFmt(imp)}</span>`
       : `<span class="cob-neg">${cobFmt(imp)}</span>`;
     const cats = imp > 0
-      ? ['Cobro paciente', 'Personal']
-      : ['Gasto clinica', 'Pago profesional', 'Personal'];
+      ? ['Cobro paciente', 'Traspaso efectivo', 'Personal']
+      : ['Gasto clinica', 'Pago profesional', 'Traspaso efectivo', 'Personal'];
     const catBtns = cats.map(c =>
       `<span class="cob-match-cat" onclick="cobClasificar('${m.id}','${c}',this)">${c === 'Gasto clinica' ? 'Gasto clínica' : c}</span>`
     ).join('');
@@ -215,7 +249,7 @@ async function cobClasificar(id, cat, el) {
 async function cobGuardarClasificacion(id) {
   const m = COB.movimientos.find(x => x.id === id);
   if (!m || !m._catPendiente) { toast('Selecciona una categoría primero', true); return; }
-  const ok = await sp(`movimientos_banco?id=eq.${id}`, { categoria: m._catPendiente }, 'PATCH');
+  const ok = await cobPatch(`movimientos_banco?id=eq.${id}`, { categoria: m._catPendiente });
   if (ok !== null) {
     m.categoria = m._catPendiente;
     delete m._catPendiente;
@@ -230,7 +264,7 @@ async function cobIgnorar(id) {
   const m = COB.movimientos.find(x => x.id === id);
   if (!m) return;
   // Marcar como Personal por defecto (queda registrado pero no afecta a clínica)
-  await sp(`movimientos_banco?id=eq.${id}`, { categoria: 'Personal' }, 'PATCH');
+  await cobPatch(`movimientos_banco?id=eq.${id}`, { categoria: 'Personal' });
   m.categoria = 'Personal';
   cobRenderPendientes();
   cobFiltrarBanco();
@@ -246,7 +280,7 @@ function cobEditarMovimiento(id) {
 
 function cobAbrirModalClasificar(m) {
   const imp = Number(m.importe);
-  const cats = ['Cobro paciente', 'Pago profesional', 'Gasto clinica', 'Personal', 'Sin clasificar'];
+  const cats = ['Cobro paciente', 'Pago profesional', 'Gasto clinica', 'Traspaso efectivo', 'Personal', 'Sin clasificar'];
   const catOpts = cats.map(c =>
     `<option value="${c}" ${m.categoria === c ? 'selected' : ''}>${c === 'Gasto clinica' ? 'Gasto clínica' : c}</option>`
   ).join('');
@@ -273,7 +307,7 @@ function cobAbrirModalClasificar(m) {
 async function cobGuardarModalClasif(id) {
   const cat = document.getElementById('cob-modal-cat').value;
   const notas = document.getElementById('cob-modal-notas').value;
-  const ok = await sp(`movimientos_banco?id=eq.${id}`, { categoria: cat, notas }, 'PATCH');
+  const ok = await cobPatch(`movimientos_banco?id=eq.${id}`, { categoria: cat, notas });
   if (ok !== null) {
     const m = COB.movimientos.find(x => x.id === id);
     if (m) { m.categoria = cat; m.notas = notas; }
@@ -291,21 +325,41 @@ function cobAutoClasificar(concepto, movimiento, importe) {
   const c = (concepto + ' ' + movimiento).toLowerCase();
   const imp = Number(importe);
 
+  // Efectivo ↔ banco (cajero / ingreso en ventanilla): no es ingreso ni gasto, es traspaso con la caja
+  if (c.includes('ret. efectivo') || c.includes('reintegro') && c.includes('cajero') ||
+      c.includes('ingreso en efectivo') || c.includes('ingreso efectivo') || c.includes('ing. efectivo') ||
+      c.includes('ingreso cajero')) {
+    return 'Traspaso efectivo';
+  }
+  // Bizum recibido que NO es de paciente (casting, matrícula…) → personal
+  if (c.includes('bizum') && imp > 0 && (c.includes('casting') || c.includes('matricula') || c.includes('matrícula'))) {
+    return 'Personal';
+  }
   // Cobros de pacientes — Bizum recibido
-  if (c.includes('bizum') && (c.includes('recibido') || imp > 0 && c.includes('bizum'))) {
+  if (c.includes('bizum') && (c.includes('recibido') || imp > 0)) {
     if (!c.includes('enviado')) return 'Cobro paciente';
   }
-  // Pagos a profesionales — transferencias con keywords de liquidación
+  // Transferencia recibida citando nº de factura (061/2026, 062 2026…) → cobro de factura
+  if (imp > 0 && c.includes('transferencia recibida') && /\b\d{3}\s*\/?\s*20\d{2}\b/.test(c)) {
+    return 'Cobro paciente';
+  }
+  // Pagos a profesionales — keywords de liquidación y traspasos a cuenta "Bono …"
   if ((c.includes('pago psico') || c.includes('pago logo') || c.includes('pago logp') ||
        c.includes('pago pedago') || c.includes('pago to ') || c.includes('pago nomina') ||
-       c.includes('liquidacion') || c.includes('liquidación'))) {
+       c.includes('liquidacion') || c.includes('liquidación') ||
+       c.includes('pago mensualidad') && (c.includes('psicolog') || c.includes('pedagog') || c.includes('logoped') || c.includes('terapia')))) {
     return 'Pago profesional';
   }
-  // Gastos fijos de clínica
+  if (imp < 0 && c.includes('traspaso a cuenta') && /\bbonos?\b/.test(c)) {
+    return 'Pago profesional';
+  }
+  // Gastos de clínica
   if (c.includes('seguridad social') || c.includes('tgss') || c.includes('autónomo') ||
       c.includes('autonomo') || c.includes('emasagra') || c.includes('repsol') ||
       c.includes('o2 fibra') || c.includes('o2 movil') || c.includes('telefonica') ||
-      c.includes('alquiler') || c.includes('mutua') || c.includes('colegial')) {
+      c.includes('alquiler') || c.includes('mutua') || c.includes('colegial') ||
+      c.includes('securitas') || c.includes('neuronup') || c.includes('proteccion de datos') ||
+      c.includes('protección de datos') || c.includes('prestamo clinica') || c.includes('préstamo clínica')) {
     return 'Gasto clinica';
   }
   // Impuestos y modelos — gasto clínica
@@ -317,7 +371,7 @@ function cobAutoClasificar(concepto, movimiento, importe) {
   if ((c.includes('bizum') && c.includes('enviado')) || c.includes('pago con tarjeta')) {
     return 'Personal';
   }
-  // Traspaso entre cuentas → personal
+  // Traspasos desde/hacia la cuenta personal → personal
   if (c.includes('traspaso') || c.includes('de casa a') || c.includes('a casa')) {
     return 'Personal';
   }
@@ -339,7 +393,7 @@ async function cobReclasificarTodo() {
   for (const m of sinClasif) {
     const cat = cobAutoClasificar(m.concepto || '', m.movimiento || '', m.importe);
     if (cat !== 'Sin clasificar') {
-      const ok = await sp(`movimientos_banco?id=eq.${m.id}`, { categoria: cat }, 'PATCH');
+      const ok = await cobPatch(`movimientos_banco?id=eq.${m.id}`, { categoria: cat });
       if (ok !== null) { m.categoria = cat; actualizados++; }
     }
   }
@@ -432,32 +486,45 @@ async function cobProcesarExtracto(file) {
         String(nuevos.length + 1).padStart(4,'0') + '-' +
         Math.random().toString(36).slice(2, 6).toUpperCase();
 
+      // Clave determinista: evita duplicados al reimportar extractos solapados
+      const clave = [fecha, importe.toFixed(2), saldo != null && !isNaN(saldo) ? saldo.toFixed(2) : '',
+                     movimiento.toLowerCase()].join('|');
+
       const categoria = cobAutoClasificar(concepto, movimiento, importe);
-      nuevos.push({ id, fecha, concepto, movimiento, importe, saldo, categoria, origen: 'Importado' });
+      nuevos.push({ id, fecha, concepto, movimiento, importe, saldo, categoria, origen: 'Importado', clave });
     }
 
     if (!nuevos.length) { toast('No se encontraron movimientos válidos', true); return; }
 
-    let insertados = 0;
+    let insertados = 0, fallidos = 0;
     const CHUNK = 50;
     for (let i = 0; i < nuevos.length; i += CHUNK) {
       const chunk = nuevos.slice(i, i + CHUNK);
-      const res = await fetch(`${SUPA_URL}/rest/v1/movimientos_banco`, {
+      const res = await fetch(`${SUPA_URL}/rest/v1/movimientos_banco?on_conflict=clave&select=id`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'apikey': SUPA_KEY,
           'Authorization': `Bearer ${G.sesion.access_token}`,
-          'Prefer': 'resolution=ignore-duplicates,return=minimal'
+          // ignore-duplicates + representation: devuelve solo las filas realmente insertadas
+          'Prefer': 'resolution=ignore-duplicates,return=representation'
         },
         body: JSON.stringify(chunk)
       });
-      if (res.ok) insertados += chunk.length;
+      if (res.ok) {
+        const ins = await res.json().catch(() => []);
+        insertados += Array.isArray(ins) ? ins.length : 0;
+      } else {
+        fallidos += chunk.length;
+      }
     }
+    const duplicados = nuevos.length - insertados - fallidos;
 
     document.getElementById('cob-upload-hint').textContent =
-      `Último importado: ${new Date().toLocaleDateString('es-ES')} — ${nuevos.length} movimientos procesados`;
-    toast(`Extracto importado: ${insertados} movimientos`, false, true);
+      `Último importado: ${new Date().toLocaleDateString('es-ES')} — ${insertados} nuevos, ${duplicados} ya existentes` +
+      (fallidos ? `, ${fallidos} con error` : '');
+    toast(`Extracto: ${insertados} nuevos, ${duplicados} duplicados omitidos` + (fallidos ? `, ${fallidos} con error` : ''),
+          fallidos > 0, fallidos === 0);
     await cobCargarBanco();
   } catch(e) {
     console.error(e);
@@ -468,30 +535,68 @@ async function cobProcesarExtracto(file) {
 /* ══════════════════════════════════════════
    PESTAÑA CAJA
 ══════════════════════════════════════════ */
+/* Utilidades caja */
+function cobHoy() {
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+function cobEsc(v) {
+  return String(v == null ? '' : v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+function cobIdCaja() {
+  return 'CAJ-' + Date.now().toString(36).toUpperCase() + Math.random().toString(36).slice(2, 4).toUpperCase();
+}
+const COB_CAJA_CATS = ['Cobro paciente', 'Pago profesional', 'Gasto clinica', 'Traspaso efectivo', 'Arqueo', 'Personal', 'Sin clasificar'];
+const COB_CAJA_INPUT = 'width:100%;margin-top:4px;font-size:13px;padding:7px 10px;border:1px solid var(--border);border-radius:8px';
+const COB_CAJA_LBL = 'font-size:12px;font-weight:600;color:var(--ink-muted)';
+
+function cobCajaOrdenKey(m) { return (m.fecha || '') + '|' + (m.created_at || '') + '|' + (m.id || ''); }
+
 async function cobCargarCaja() {
   const res = await sg('movimientos_caja?select=*&order=fecha.desc&limit=2000');
   COB.cajaMov = res || [];
   cobActualizarSaldoCaja();
   cobPoblarFiltroMesCaja();
+  cobPoblarFiltroCatCaja();
   cobFiltrarCaja();
+  cobRenderPanelCaja();
+}
+
+function cobSaldoCajaA(fechaMax) {
+  return COB.cajaMov
+    .filter(m => !fechaMax || (m.fecha || '') <= fechaMax)
+    .reduce((s, m) => s + Number(m.importe), 0);
 }
 
 function cobActualizarSaldoCaja() {
   const saldo = COB.cajaMov.reduce((s, m) => s + Number(m.importe), 0);
   const el = document.getElementById('cob-caja-saldo');
+  if (!el) return;
   el.textContent = cobFmt(saldo);
-  el.className = 'cob-saldo-val ' + (saldo >= 0 ? 'green' : 'red');
+  el.className = 'cob-saldo-val ' + (saldo >= -0.005 ? 'green' : 'red');
 }
 
 function cobPoblarFiltroMesCaja() {
   const meses = [...new Set(COB.cajaMov.map(m => m.fecha ? m.fecha.slice(0,7) : null).filter(Boolean))].sort().reverse();
   const sel = document.getElementById('cob-caja-filtro-mes');
+  if (!sel) return;
+  const actual = sel.value;
   sel.innerHTML = '<option value="">Todos los meses</option>' +
     meses.map(m => {
       const [y, mo] = m.split('-');
       const label = new Date(y, mo - 1, 1).toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
       return `<option value="${m}">${label}</option>`;
     }).join('');
+  if (actual) sel.value = actual;
+}
+
+function cobPoblarFiltroCatCaja() {
+  const sel = document.getElementById('cob-caja-filtro-cat');
+  if (!sel) return;
+  const actual = sel.value;
+  sel.innerHTML = '<option value="">Todas las categorías</option>' +
+    COB_CAJA_CATS.map(c => `<option value="${c}">${c === 'Gasto clinica' ? 'Gasto clínica' : c}</option>`).join('');
+  if (actual) sel.value = actual;
 }
 
 function cobFiltrarCaja() {
@@ -508,61 +613,119 @@ function cobFiltrarCaja() {
 function cobRenderTablaCaja(movs) {
   const tbody = document.getElementById('cob-caja-tbody');
   const empty = document.getElementById('cob-caja-empty');
+  if (!tbody || !empty) return;
   if (!movs.length) {
     tbody.innerHTML = '';
     empty.style.display = 'block';
     return;
   }
   empty.style.display = 'none';
-  // Calcular saldo acumulado (orden inverso = más antiguo primero)
-  const ordenados = [...movs].reverse();
-  let saldoAcum = 0;
-  const conSaldo = ordenados.map(m => {
-    saldoAcum += Number(m.importe);
-    return { ...m, saldoAcum };
-  }).reverse();
+  // Saldo acumulado sobre TODOS los movimientos (no solo los filtrados)
+  const asc = [...COB.cajaMov].sort((a, b) => cobCajaOrdenKey(a).localeCompare(cobCajaOrdenKey(b)));
+  const saldoPorId = {};
+  let acum = 0;
+  asc.forEach(m => { acum += Number(m.importe); saldoPorId[m.id] = acum; });
+  const ordenados = [...movs].sort((a, b) => cobCajaOrdenKey(b).localeCompare(cobCajaOrdenKey(a)));
 
-  tbody.innerHTML = conSaldo.map(m => {
+  tbody.innerHTML = ordenados.map(m => {
     const imp = Number(m.importe);
     const impHtml = imp >= 0
       ? `<span class="cob-pos">+${cobFmt(imp)}</span>`
       : `<span class="cob-neg">${cobFmt(imp)}</span>`;
+    const ref = m.id_cobro || m.id_liquidacion || '—';
     return `<tr>
       <td>${cobFmtFecha(m.fecha)}</td>
-      <td>${m.concepto || '—'}</td>
+      <td>${cobEsc(m.concepto) || '—'}</td>
       <td>${cobBadge(m.categoria || 'Sin clasificar')}</td>
-      <td style="color:var(--ink-muted);font-size:12px">${m.id_paciente || m.id_profesional || '—'}</td>
+      <td style="color:var(--ink-muted);font-size:12px">${cobEsc(ref)}</td>
       <td style="text-align:right">${impHtml}</td>
-      <td style="text-align:right;color:var(--ink-muted)">${cobFmt(m.saldoAcum)}</td>
+      <td style="text-align:right;color:var(--ink-muted)">${cobFmt(saldoPorId[m.id])}</td>
       <td><button class="btn-icon" onclick="cobEditarCaja('${m.id}')" title="Editar"><svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button></td>
     </tr>`;
   }).join('');
 }
 
+/* ── Panel de control de caja: saldo, arqueo, alertas, acciones ── */
+function cobRenderPanelCaja() {
+  const tbody = document.getElementById('cob-caja-tbody');
+  if (!tbody) return;
+  let panel = document.getElementById('cob-caja-panel');
+  if (!panel) {
+    panel = document.createElement('div');
+    panel.id = 'cob-caja-panel';
+    panel.style.cssText = 'margin:0 0 14px 0';
+    const tabla = tbody.closest('table') || tbody;
+    tabla.parentNode.insertBefore(panel, tabla);
+  }
+
+  const saldo = cobSaldoCajaA(null);
+  const arqueos = COB.cajaMov.filter(m => m.categoria === 'Arqueo').map(m => m.fecha).sort();
+  const ultArq = arqueos.length ? arqueos[arqueos.length - 1] : null;
+  const dias = ultArq ? Math.floor((new Date(cobHoy() + 'T00:00:00') - new Date(ultArq + 'T00:00:00')) / 86400000) : null;
+
+  const alertas = [];
+  if (saldo < -0.005) alertas.push(['err', `Saldo teórico negativo (${cobFmt(saldo)}): falta registrar una entrada (retirada de banco, cobro) o hay una salida errónea.`]);
+  if (ultArq == null) alertas.push(['warn', 'Todavía no hay ningún arqueo. Cuenta el efectivo y regístralo para fijar el saldo real.']);
+  else if (dias > 7) alertas.push(['warn', `Último arqueo hace ${dias} días (${cobFmtFecha(ultArq)}). El control es semanal.`]);
+  const sinClas = COB.cajaMov.filter(m => (m.categoria || 'Sin clasificar') === 'Sin clasificar').length;
+  if (sinClas) alertas.push(['warn', `${sinClas} movimiento(s) de caja sin clasificar.`]);
+  // Traspasos efectivo ↔ banco sin pareja
+  const cajaTrasSinBanco = COB.cajaMov.filter(m => m.categoria === 'Traspaso efectivo' && !/Banco:\s*MOV-/.test(m.notas || ''));
+  if (cajaTrasSinBanco.length) alertas.push(['info', `${cajaTrasSinBanco.length} traspaso(s) en caja aún sin movimiento de banco vinculado (¿extracto pendiente de importar?).`]);
+  const bancoTrasSinCaja = (COB.movimientos || []).filter(m => m.categoria === 'Traspaso efectivo' && !/Caja:\s*CAJ-/.test(m.notas || ''));
+  if (bancoTrasSinCaja.length) {
+    const tot = bancoTrasSinCaja.map(m => `${cobFmtFecha(m.fecha)} ${cobFmt(m.importe)}`).join(' · ');
+    alertas.push(['err', `${bancoTrasSinCaja.length} movimiento(s) de banco de efectivo sin registrar en caja: ${tot}. Regístralos con "Ingreso en banco" / "Retirada de banco".`]);
+  }
+
+  const color = { err: '#b3261e', warn: '#8a5a00', info: 'var(--ink-muted)' };
+  const alertasHtml = alertas.map(([t, msg]) =>
+    `<div style="font-size:12px;color:${color[t]};margin-top:6px">${t === 'info' ? 'ℹ' : '⚠'} ${cobEsc(msg)}</div>`).join('');
+
+  panel.innerHTML = `<div style="border:1px solid var(--border);border-radius:10px;padding:12px 14px;background:var(--cream)">
+    <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between">
+      <div style="font-size:12px;color:var(--ink-muted)">
+        Saldo teórico: <b style="color:var(--ink)">${cobFmt(saldo)}</b> ·
+        Último arqueo: <b style="color:var(--ink)">${ultArq ? cobFmtFecha(ultArq) + ' (hace ' + dias + ' d)' : 'ninguno'}</b>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px">
+        <button class="btn-sec" onclick="cobTraspasoModal('retirada')">Retirada de banco</button>
+        <button class="btn-sec" onclick="cobTraspasoModal('ingreso')">Ingreso en banco</button>
+        <button class="btn-primary" onclick="cobArqueoModal()">Arqueo</button>
+      </div>
+    </div>${alertasHtml}</div>`;
+}
+
+/* ── Entrada / salida manual ── */
 function cobCajaModal(tipo) {
   const esEntrada = tipo === 'entrada';
+  const opts = esEntrada
+    ? ['Personal']
+    : ['Pago profesional', 'Gasto clinica', 'Personal'];
   const html = `<div style="padding:20px">
-    <div style="font-size:15px;font-weight:600;margin-bottom:14px">${esEntrada ? 'Entrada de efectivo' : 'Salida de efectivo'}</div>
+    <div style="font-size:15px;font-weight:600;margin-bottom:6px">${esEntrada ? 'Entrada de efectivo' : 'Salida de efectivo'}</div>
+    <div style="font-size:12px;color:var(--ink-muted);margin-bottom:12px">${esEntrada
+      ? 'Los cobros a pacientes en efectivo entran solos al registrarlos en Cobros. Las retiradas de banco y los arqueos tienen su botón propio.'
+      : 'Los pagos de liquidaciones en efectivo salen solos al confirmarlos. Ingresos en banco y arqueos tienen su botón propio.'}</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
       <div>
-        <label style="font-size:12px;font-weight:600;color:var(--ink-muted)">FECHA</label>
-        <input type="date" id="cob-caja-fecha" value="${new Date().toISOString().slice(0,10)}" style="width:100%;margin-top:4px;font-size:13px;padding:7px 10px;border:1px solid var(--border);border-radius:8px">
+        <label style="${COB_CAJA_LBL}">FECHA</label>
+        <input type="date" id="cob-caja-fecha" value="${cobHoy()}" style="${COB_CAJA_INPUT}">
       </div>
       <div>
-        <label style="font-size:12px;font-weight:600;color:var(--ink-muted)">IMPORTE (€)</label>
-        <input type="number" id="cob-caja-importe" min="0.01" step="0.01" placeholder="0,00" style="width:100%;margin-top:4px;font-size:13px;padding:7px 10px;border:1px solid var(--border);border-radius:8px">
+        <label style="${COB_CAJA_LBL}">IMPORTE (€)</label>
+        <input type="number" id="cob-caja-importe" min="0.01" step="0.01" placeholder="0,00" style="${COB_CAJA_INPUT}">
       </div>
     </div>
     <div style="margin-bottom:10px">
-      <label style="font-size:12px;font-weight:600;color:var(--ink-muted)">CONCEPTO</label>
-      <input type="text" id="cob-caja-concepto" placeholder="Describe el movimiento…" style="width:100%;margin-top:4px;font-size:13px;padding:7px 10px;border:1px solid var(--border);border-radius:8px">
+      <label style="${COB_CAJA_LBL}">CONCEPTO</label>
+      <input type="text" id="cob-caja-concepto" placeholder="Describe el movimiento…" style="${COB_CAJA_INPUT}">
     </div>
     <div style="margin-bottom:14px">
-      <label style="font-size:12px;font-weight:600;color:var(--ink-muted)">CATEGORÍA</label>
-      <select id="cob-caja-cat" style="width:100%;margin-top:4px;font-size:13px;padding:7px 10px;border:1px solid var(--border);border-radius:8px">
-        ${esEntrada
-          ? '<option value="Cobro paciente">Cobro paciente</option><option value="Personal">Personal</option>'
-          : '<option value="Pago profesional">Pago profesional</option><option value="Personal">Personal</option>'}
+      <label style="${COB_CAJA_LBL}">CATEGORÍA (obligatoria)</label>
+      <select id="cob-caja-cat" style="${COB_CAJA_INPUT}">
+        <option value="">Elige categoría…</option>
+        ${opts.map(c => `<option value="${c}">${c === 'Gasto clinica' ? 'Gasto clínica' : c}</option>`).join('')}
       </select>
     </div>
     <div style="display:flex;justify-content:flex-end;gap:8px">
@@ -580,10 +743,11 @@ async function cobGuardarCaja(tipo) {
   const cat      = document.getElementById('cob-caja-cat').value;
 
   if (!fecha || isNaN(importeV) || importeV <= 0) { toast('Completa fecha e importe', true); return; }
+  if (!cat) { toast('Elige una categoría', true); return; }
+  if (!concepto) { toast('Indica un concepto', true); return; }
 
   const importe = tipo === 'salida' ? -Math.abs(importeV) : Math.abs(importeV);
-  const id = 'CAJ-' + Date.now().toString(36).toUpperCase();
-  const payload = { id, fecha, concepto, importe, categoria: cat };
+  const payload = { id: cobIdCaja(), fecha, concepto, importe, categoria: cat };
 
   const ok = await sp('movimientos_caja', payload, 'POST');
   if (ok !== null) {
@@ -593,31 +757,184 @@ async function cobGuardarCaja(tipo) {
   }
 }
 
+/* ── Traspaso efectivo ↔ banco ── */
+function cobTraspasoCandidatos(tipo) {
+  // retirada: el banco muestra una salida (importe < 0); ingreso: una entrada (importe > 0)
+  return (COB.movimientos || []).filter(m => {
+    if (/Caja:\s*CAJ-/.test(m.notas || '')) return false;
+    const imp = Number(m.importe);
+    if (tipo === 'retirada' ? imp >= 0 : imp <= 0) return false;
+    return m.categoria === 'Traspaso efectivo' || m.categoria === 'Sin clasificar';
+  }).sort((a, b) => (b.fecha || '').localeCompare(a.fecha || ''));
+}
+
+function cobTraspasoModal(tipo) {
+  const esRet = tipo === 'retirada';
+  const cands = cobTraspasoCandidatos(tipo);
+  const optsMov = cands.map(m =>
+    `<option value="${m.id}">${cobFmtFecha(m.fecha)} · ${cobFmt(m.importe)} · ${cobEsc((m.concepto || '').slice(0, 45))}</option>`).join('');
+  const html = `<div style="padding:20px">
+    <div style="font-size:15px;font-weight:600;margin-bottom:6px">${esRet ? 'Retirada de banco (cajero → caja)' : 'Ingreso en banco (caja → banco)'}</div>
+    <div style="font-size:12px;color:var(--ink-muted);margin-bottom:12px">${esRet ? 'El efectivo entra en la caja.' : 'El efectivo sale de la caja.'} Vincúlalo al movimiento del extracto para que ambos lados cuadren.</div>
+    <div style="margin-bottom:10px">
+      <label style="${COB_CAJA_LBL}">MOVIMIENTO DEL EXTRACTO</label>
+      <select id="cob-tras-mov" onchange="cobTraspasoElegir()" style="${COB_CAJA_INPUT}">
+        <option value="">Sin vincular (el extracto aún no está importado)</option>${optsMov}
+      </select>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+      <div>
+        <label style="${COB_CAJA_LBL}">FECHA</label>
+        <input type="date" id="cob-tras-fecha" value="${cobHoy()}" style="${COB_CAJA_INPUT}">
+      </div>
+      <div>
+        <label style="${COB_CAJA_LBL}">IMPORTE (€)</label>
+        <input type="number" id="cob-tras-importe" min="0.01" step="0.01" placeholder="0,00" style="${COB_CAJA_INPUT}">
+      </div>
+    </div>
+    <div style="margin-bottom:14px">
+      <label style="${COB_CAJA_LBL}">CONCEPTO</label>
+      <input type="text" id="cob-tras-concepto" value="${esRet ? 'Retirada de efectivo en cajero' : 'Ingreso de efectivo en banco'}" style="${COB_CAJA_INPUT}">
+    </div>
+    <div style="display:flex;justify-content:flex-end;gap:8px">
+      <button class="btn-sec" onclick="cerrarModal()">Cancelar</button>
+      <button class="btn-primary" onclick="cobGuardarTraspaso('${tipo}')">Guardar</button>
+    </div>
+  </div>`;
+  abrirModal(html);
+}
+
+function cobTraspasoElegir() {
+  const id = document.getElementById('cob-tras-mov').value;
+  const m = (COB.movimientos || []).find(x => x.id === id);
+  if (!m) return;
+  document.getElementById('cob-tras-fecha').value = m.fecha;
+  document.getElementById('cob-tras-importe').value = Math.abs(Number(m.importe)).toFixed(2);
+}
+
+async function cobGuardarTraspaso(tipo) {
+  const idMov    = document.getElementById('cob-tras-mov').value;
+  const fecha    = document.getElementById('cob-tras-fecha').value;
+  const importeV = parseFloat(document.getElementById('cob-tras-importe').value);
+  const concepto = document.getElementById('cob-tras-concepto').value.trim() || 'Traspaso de efectivo';
+  if (!fecha || isNaN(importeV) || importeV <= 0) { toast('Completa fecha e importe', true); return; }
+
+  const mov = idMov ? (COB.movimientos || []).find(x => x.id === idMov) : null;
+  if (mov && Math.abs(Math.abs(Number(mov.importe)) - importeV) > 0.005) {
+    toast('El importe no coincide con el movimiento del extracto', true); return;
+  }
+  const id = cobIdCaja();
+  const importe = tipo === 'retirada' ? Math.abs(importeV) : -Math.abs(importeV);
+  const payload = { id, fecha, concepto, importe, categoria: 'Traspaso efectivo', notas: mov ? `Banco: ${mov.id}` : null };
+
+  const ok = await sp('movimientos_caja', payload, 'POST');
+  if (ok === null) return;
+  if (mov) {
+    const prev = mov.notas ? mov.notas + ' · ' : '';
+    const ok2 = await cobPatch(`movimientos_banco?id=eq.${mov.id}`, { categoria: 'Traspaso efectivo', notas: `${prev}Caja: ${id}` });
+    if (ok2 === null) toast('Caja registrada, pero no se pudo vincular el movimiento de banco', true);
+    else { mov.categoria = 'Traspaso efectivo'; mov.notas = `${prev}Caja: ${id}`; }
+  }
+  cerrarModal();
+  toast('Traspaso registrado', false, true);
+  await cobCargarCaja();
+  if (typeof cobFiltrarBanco === 'function') { cobFiltrarBanco(); cobActualizarKpisBanco(); cobRenderPendientes(); }
+}
+
+/* ── Arqueo semanal ── */
+function cobArqueoModal() {
+  const hoy = cobHoy();
+  const html = `<div style="padding:20px">
+    <div style="font-size:15px;font-weight:600;margin-bottom:6px">Arqueo de caja</div>
+    <div style="font-size:12px;color:var(--ink-muted);margin-bottom:12px">Cuenta el efectivo físico. Si no coincide con el saldo teórico, se registra el ajuste con su motivo.</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+      <div>
+        <label style="${COB_CAJA_LBL}">FECHA DEL RECUENTO</label>
+        <input type="date" id="cob-arq-fecha" value="${hoy}" oninput="cobArqueoCalc()" style="${COB_CAJA_INPUT}">
+      </div>
+      <div>
+        <label style="${COB_CAJA_LBL}">EFECTIVO CONTADO (€)</label>
+        <input type="number" id="cob-arq-contado" min="0" step="0.01" placeholder="0,00" oninput="cobArqueoCalc()" style="${COB_CAJA_INPUT}">
+      </div>
+    </div>
+    <div id="cob-arq-resumen" style="background:var(--cream);border-radius:8px;padding:10px 12px;margin-bottom:10px;font-size:13px"></div>
+    <div style="margin-bottom:14px">
+      <label style="${COB_CAJA_LBL}">MOTIVO DE LA DIFERENCIA (obligatorio si no cuadra)</label>
+      <input type="text" id="cob-arq-motivo" placeholder="Ej.: cambio devuelto, pago no apuntado…" style="${COB_CAJA_INPUT}">
+    </div>
+    <div style="display:flex;justify-content:flex-end;gap:8px">
+      <button class="btn-sec" onclick="cerrarModal()">Cancelar</button>
+      <button class="btn-primary" onclick="cobGuardarArqueo()">Registrar arqueo</button>
+    </div>
+  </div>`;
+  abrirModal(html);
+  cobArqueoCalc();
+}
+
+function cobArqueoCalc() {
+  const fecha = document.getElementById('cob-arq-fecha')?.value;
+  const contado = parseFloat(document.getElementById('cob-arq-contado')?.value);
+  const el = document.getElementById('cob-arq-resumen');
+  if (!el) return;
+  const teorico = cobSaldoCajaA(fecha || null);
+  let dif = '';
+  if (!isNaN(contado)) {
+    const d = Math.round((contado - teorico) * 100) / 100;
+    dif = `<div>Diferencia: <b style="color:${Math.abs(d) < 0.005 ? '#1e7e34' : '#b3261e'}">${d > 0 ? '+' : ''}${cobFmt(d)}</b></div>`;
+  }
+  el.innerHTML = `<div>Saldo teórico a ${cobFmtFecha(fecha)}: <b>${cobFmt(teorico)}</b></div>${dif}`;
+}
+
+async function cobGuardarArqueo() {
+  const fecha = document.getElementById('cob-arq-fecha').value;
+  const contado = parseFloat(document.getElementById('cob-arq-contado').value);
+  const motivo = document.getElementById('cob-arq-motivo').value.trim();
+  if (!fecha || isNaN(contado) || contado < 0) { toast('Indica fecha y efectivo contado', true); return; }
+  const teorico = cobSaldoCajaA(fecha);
+  const dif = Math.round((contado - teorico) * 100) / 100;
+  if (Math.abs(dif) >= 0.005 && !motivo) { toast('Indica el motivo de la diferencia', true); return; }
+
+  const concepto = `Arqueo ${cobFmtFecha(fecha)}: contado ${cobFmt(contado)} · teórico ${cobFmt(teorico)}` + (motivo ? ` · ${motivo}` : '');
+  const payload = { id: cobIdCaja(), fecha, concepto, importe: dif, categoria: 'Arqueo' };
+  const ok = await sp('movimientos_caja', payload, 'POST');
+  if (ok !== null) {
+    cerrarModal();
+    toast(Math.abs(dif) < 0.005 ? 'Arqueo registrado: cuadra' : `Arqueo registrado con ajuste de ${cobFmt(dif)}`, false, true);
+    await cobCargarCaja();
+  }
+}
+
+/* ── Edición ── */
 function cobEditarCaja(id) {
   const m = COB.cajaMov.find(x => x.id === id);
   if (!m) return;
+  if (m.categoria === 'Arqueo') { toast('Los arqueos no se editan: registra un nuevo arqueo', true); return; }
+  const bloqueado = !!m.id_cobro;   // viene de un cobro: fecha e importe se editan en el cobro
   const imp = Math.abs(Number(m.importe));
-  const cats = ['Cobro paciente', 'Pago profesional', 'Personal'];
-  const catOpts = cats.map(c => `<option value="${c}" ${m.categoria===c?'selected':''}>${c}</option>`).join('');
+  const cats = bloqueado ? [m.categoria] : ['Pago profesional', 'Gasto clinica', 'Traspaso efectivo', 'Personal'];
+  if (!cats.includes(m.categoria)) cats.unshift(m.categoria);
+  const catOpts = cats.map(c => `<option value="${c}" ${m.categoria===c?'selected':''}>${c === 'Gasto clinica' ? 'Gasto clínica' : c}</option>`).join('');
+  const dis = bloqueado ? 'disabled' : '';
   const html = `<div style="padding:20px">
-    <div style="font-size:15px;font-weight:600;margin-bottom:14px">Editar movimiento de caja</div>
+    <div style="font-size:15px;font-weight:600;margin-bottom:6px">Editar movimiento de caja</div>
+    ${bloqueado ? `<div style="font-size:12px;color:var(--ink-muted);margin-bottom:10px">Generado desde el cobro ${cobEsc(m.id_cobro)}: fecha, importe y categoría se cambian en el cobro.</div>` : ''}
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
       <div>
-        <label style="font-size:12px;font-weight:600;color:var(--ink-muted)">FECHA</label>
-        <input type="date" id="cob-edit-fecha" value="${m.fecha}" style="width:100%;margin-top:4px;font-size:13px;padding:7px 10px;border:1px solid var(--border);border-radius:8px">
+        <label style="${COB_CAJA_LBL}">FECHA</label>
+        <input type="date" id="cob-edit-fecha" value="${m.fecha}" ${dis} style="${COB_CAJA_INPUT}">
       </div>
       <div>
-        <label style="font-size:12px;font-weight:600;color:var(--ink-muted)">IMPORTE (€)</label>
-        <input type="number" id="cob-edit-importe" value="${imp}" min="0.01" step="0.01" style="width:100%;margin-top:4px;font-size:13px;padding:7px 10px;border:1px solid var(--border);border-radius:8px">
+        <label style="${COB_CAJA_LBL}">IMPORTE (€)</label>
+        <input type="number" id="cob-edit-importe" value="${imp}" min="0.01" step="0.01" ${dis} style="${COB_CAJA_INPUT}">
       </div>
     </div>
     <div style="margin-bottom:10px">
-      <label style="font-size:12px;font-weight:600;color:var(--ink-muted)">CONCEPTO</label>
-      <input type="text" id="cob-edit-concepto" value="${m.concepto||''}" style="width:100%;margin-top:4px;font-size:13px;padding:7px 10px;border:1px solid var(--border);border-radius:8px">
+      <label style="${COB_CAJA_LBL}">CONCEPTO</label>
+      <input type="text" id="cob-edit-concepto" value="${cobEsc(m.concepto)}" style="${COB_CAJA_INPUT}">
     </div>
     <div style="margin-bottom:14px">
-      <label style="font-size:12px;font-weight:600;color:var(--ink-muted)">CATEGORÍA</label>
-      <select id="cob-edit-cat" style="width:100%;margin-top:4px;font-size:13px;padding:7px 10px;border:1px solid var(--border);border-radius:8px">${catOpts}</select>
+      <label style="${COB_CAJA_LBL}">CATEGORÍA</label>
+      <select id="cob-edit-cat" ${dis} style="${COB_CAJA_INPUT}">${catOpts}</select>
     </div>
     <div style="display:flex;justify-content:flex-end;gap:8px">
       <button class="btn-sec" onclick="cerrarModal()">Cancelar</button>
@@ -628,13 +945,20 @@ function cobEditarCaja(id) {
 }
 
 async function cobGuardarEditCaja(id, signo) {
-  const fecha    = document.getElementById('cob-edit-fecha').value;
-  const importeV = parseFloat(document.getElementById('cob-edit-importe').value);
+  const m = COB.cajaMov.find(x => x.id === id);
+  if (!m) return;
   const concepto = document.getElementById('cob-edit-concepto').value.trim();
-  const cat      = document.getElementById('cob-edit-cat').value;
-  if (!fecha || isNaN(importeV)) { toast('Datos incompletos', true); return; }
-  const importe = signo * Math.abs(importeV);
-  const ok = await sp(`movimientos_caja?id=eq.${id}`, { fecha, importe, concepto, categoria: cat }, 'PATCH');
+  let patch;
+  if (m.id_cobro) {
+    patch = { concepto };   // fecha/importe/categoría los gobierna el cobro
+  } else {
+    const fecha    = document.getElementById('cob-edit-fecha').value;
+    const importeV = parseFloat(document.getElementById('cob-edit-importe').value);
+    const cat      = document.getElementById('cob-edit-cat').value;
+    if (!fecha || isNaN(importeV) || importeV <= 0) { toast('Datos incompletos', true); return; }
+    patch = { fecha, importe: signo * Math.abs(importeV), concepto, categoria: cat };
+  }
+  const ok = await cobPatch(`movimientos_caja?id=eq.${id}`, patch);
   if (ok !== null) {
     cerrarModal();
     toast('Actualizado', false, true);
@@ -867,15 +1191,15 @@ async function cobLiqConfirmarPago(id) {
     medio_pago: medio,
     fecha_pago: fecha
   };
-  const ok = await sp(`liquidaciones_profesionales?id=eq.${id}`, payload, 'PATCH');
+  const ok = await cobPatch(`liquidaciones_profesionales?id=eq.${id}`, payload);
   if (ok !== null) {
     // Si es efectivo, registrar salida en caja automáticamente
-    if (medio === 'Efectivo') {
+    if (medio === 'Efectivo' && !COB.cajaMov.some(m => m.id_liquidacion === id)) {
       const liq = COB.liquidaciones.find(l => l.id === id);
       const pro = liq?.profesionales || {};
       const nombre = `${pro.nombre || ''} ${pro.apellidos || ''}`.trim() || liq?.id_profesional || '';
       const cajaPay = {
-        id: 'CAJ-' + Date.now().toString(36).toUpperCase(),
+        id: cobIdCaja(),
         fecha,
         concepto: `Liquidación ${nombre} — ${cobFmtFecha(liq?.periodo_desde)} a ${cobFmtFecha(liq?.periodo_hasta)}`,
         importe: -Math.abs(importe),
