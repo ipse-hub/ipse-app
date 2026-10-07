@@ -5,6 +5,8 @@ const COB = {
   movFiltrados: [],      // tras aplicar filtros
   movPagina: 1,
   movPorPagina: 25,
+  cuentaSel: '',            // '' = todas
+  _pareDescartado: new Set(),
   // caja
   cajaMov: [],
   // liquidaciones
@@ -37,6 +39,7 @@ function cobBadge(cat) {
     'Personal':         ['cob-badge-pers','Personal'],
     'Sin clasificar':   ['cob-badge-desc','Sin clasificar'],
     'Traspaso efectivo':['cob-badge-tras','Traspaso efectivo'],
+    'Traspaso entre cuentas':['cob-badge-ent','Entre cuentas'],
     'Arqueo':           ['cob-badge-ok','Arqueo'],
   };
   const [cls, lbl] = map[cat] || ['cob-badge-desc', cat || 'Sin clasificar'];
@@ -92,17 +95,43 @@ function cobCerrarModal() {
   if (ov) ov.classList.remove('open');
 }
 
+const COB_CUENTAS = ['BBVA Corriente', 'BBVA Ahorro'];
 const COB_CAT_META = {
   'Cobro paciente':    { lbl: 'Cobro paciente',    color: '#5b21b6' },
   'Pago profesional':  { lbl: 'Pago profesional',  color: '#1e40af' },
   'Gasto clinica':     { lbl: 'Gasto clínica',     color: '#b45309' },
   'Personal':          { lbl: 'Personal',          color: '#9d174d' },
   'Traspaso efectivo': { lbl: 'Traspaso efectivo', color: '#0f766e' },
+  'Traspaso entre cuentas': { lbl: 'Entre cuentas', color: '#475569' },
   'Sin clasificar':    { lbl: 'Sin clasificar',    color: '#6B7490' },
 };
 function cobEsc(v) {
   return String(v == null ? '' : v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
+/* movimientos de la cuenta seleccionada ('' = todas) */
+function cobMovs() {
+  return COB.cuentaSel ? COB.movimientos.filter(m => m.cuenta === COB.cuentaSel) : COB.movimientos;
+}
+function cobCuentaCorta(c) { return String(c || '').replace(/^BBVA\s+/, ''); }
+function cobSetCuenta(v) {
+  COB.cuentaSel = v || '';
+  try { localStorage.setItem('cob_cuenta_sel', COB.cuentaSel); } catch (e) {}
+  COB.triIdx = 0;
+  const sel = document.getElementById('cob-filtro-cat'); if (sel) sel.value = '';
+  cobRefrescarBanco();
+}
+function cobRenderCuentas() {
+  const cont = document.getElementById('cob-cuentas');
+  if (!cont) return;
+  const defs = [['', 'Todas las cuentas'], ...COB_CUENTAS.map(c => [c, c])];
+  cont.innerHTML = defs.map(([v, lbl]) => {
+    const lista = v ? COB.movimientos.filter(m => m.cuenta === v) : COB.movimientos;
+    const hasta = lista.length ? lista.reduce((mx, m) => (m.fecha > mx ? m.fecha : mx), '') : null;
+    const sub = v ? (hasta ? `hasta ${cobFmtFecha(hasta)} · ${lista.length} mov.` : 'sin extractos') : `${COB.movimientos.length} mov.`;
+    return `<button class="cobx-acct ${COB.cuentaSel === v ? 'on' : ''} ${v && !lista.length ? 'vacia' : ''}" onclick="cobSetCuenta('${v}')"><b>${lbl}</b><small>${sub}</small></button>`;
+  }).join('');
+}
+
 /* orden estable de movimientos: fecha desc y, dentro del día, el orden del extracto (más reciente primero) */
 function cobSeq(m) { const r = /-(\d{4})-/.exec(m.id || ''); return r ? Number(r[1]) : 0; }
 function cobOrdenBanco(a, b) {
@@ -132,41 +161,63 @@ function cobSwitchTab(tab) {
 async function cobCargarBanco() {
   const res = await sg('movimientos_banco?select=*&order=fecha.desc&limit=2000');
   COB.movimientos = (res || []).sort(cobOrdenBanco);
+  if (!COB._cuentaCargada) {
+    COB._cuentaCargada = true;
+    try { const v = localStorage.getItem('cob_cuenta_sel'); if (v !== null && (v === '' || COB_CUENTAS.includes(v))) COB.cuentaSel = v; } catch (e) {}
+  }
   cobPoblarFiltroMes();
   cobRefrescarBanco();
 }
 
 /* Repinta todo lo que depende de los movimientos de banco */
 function cobRefrescarBanco() {
+  cobRenderCuentas();
   cobActualizarKpisBanco();
+  cobRenderPares();
   cobRenderChipsBanco();
   cobFiltrarBanco();
   cobRenderPendientes();
   if (typeof cobRenderPanelCaja === 'function') cobRenderPanelCaja();
 }
 
-/* Cabecera: saldo + evolución + resumen del mes */
+/* Cabecera: saldo + evolución + resumen del mes (por cuenta o consolidado) */
 function cobActualizarKpisBanco() {
   const hero = document.getElementById('cob-hero');
   const mesCard = document.getElementById('cob-mes-card');
   if (!hero || !mesCard) return;
-  const movs = [...COB.movimientos].sort(cobOrdenBanco);
-  if (!movs.length) {
-    hero.innerHTML = '<div class="cobx-empty">Importa un extracto para ver el saldo y su evolución.</div>';
+  const enAlcance = cobMovs();
+  const titulo = COB.cuentaSel || 'Todas las cuentas';
+  if (!enAlcance.length) {
+    hero.innerHTML = `<div class="cobx-lbl">${cobEsc(titulo)}</div><div class="cobx-empty">Sin movimientos. Importa el extracto de esta cuenta para ver el saldo y su evolución.</div>`;
     mesCard.innerHTML = '';
     return;
   }
-  const ult = movs[0];
-  const saldo = Number(ult.saldo);
 
-  // cierre diario: el primer movimiento de cada día (orden desc) lleva el saldo de cierre
-  const cierre = {};
-  movs.forEach(m => { if (m.saldo != null && !(m.fecha in cierre)) cierre[m.fecha] = Number(m.saldo); });
-  const dias = Object.keys(cierre).sort().slice(-45);
-  const pts = dias.map(d => ({ d, v: cierre[d] }));
+  // serie por cuenta: cierre diario + saldo previo al primer movimiento
+  const cuentas = COB.cuentaSel ? [COB.cuentaSel] : COB_CUENTAS;
+  const series = [];
+  cuentas.forEach(c => {
+    const movs = COB.movimientos.filter(m => m.cuenta === c && m.saldo != null).sort(cobOrdenBanco);
+    if (!movs.length) return;
+    const cierre = {};
+    movs.forEach(m => { if (!(m.fecha in cierre)) cierre[m.fecha] = Number(m.saldo); });
+    const asc = [...movs].reverse();                    // más antiguo primero (orden del extracto invertido)
+    const primero = asc.filter(m => m.fecha === asc[0].fecha).sort((x, y) => cobSeq(y) - cobSeq(x))[0];
+    series.push({ c, cierre, apertura: Number(primero.saldo) - Number(primero.importe), ultimo: Number(movs[0].saldo), fecha: movs[0].fecha });
+  });
+  const saldo = series.reduce((s, x) => s + x.ultimo, 0);
+  const dias = [...new Set(series.flatMap(x => Object.keys(x.cierre)))].sort().slice(-45);
+  const pts = dias.map(d => {
+    let v = 0;
+    series.forEach(x => {
+      // último cierre conocido a esa fecha; antes del primer movimiento, el saldo de apertura
+      const previos = Object.keys(x.cierre).filter(k => k <= d).sort();
+      v += previos.length ? x.cierre[previos[previos.length - 1]] : x.apertura;
+    });
+    return { d, v };
+  });
 
-  let spark = '';
-  let delta = '';
+  let spark = '', delta = '';
   if (pts.length >= 2) {
     const t0 = new Date(pts[0].d + 'T00:00:00').getTime();
     const t1 = new Date(pts[pts.length - 1].d + 'T00:00:00').getTime();
@@ -175,7 +226,6 @@ function cobActualizarKpisBanco() {
     const W = 600, H = 72, pad = 6;
     const X = p => (t1 === t0 ? 0 : ((new Date(p.d + 'T00:00:00').getTime() - t0) / (t1 - t0)) * W);
     const Y = v => (vmax === vmin ? H / 2 : H - pad - ((v - vmin) / (vmax - vmin)) * (H - 2 * pad));
-    // línea en escalón: el saldo se mantiene hasta el siguiente movimiento
     let path = `M${X(pts[0]).toFixed(1)},${Y(pts[0].v).toFixed(1)}`;
     for (let i = 1; i < pts.length; i++) {
       path += ` L${X(pts[i]).toFixed(1)},${Y(pts[i - 1].v).toFixed(1)} L${X(pts[i]).toFixed(1)},${Y(pts[i].v).toFixed(1)}`;
@@ -194,54 +244,58 @@ function cobActualizarKpisBanco() {
     const d = saldo - pts[0].v;
     delta = `<div class="cobx-delta ${d >= 0 ? 'pos' : 'neg'}">${d >= 0 ? '▲ +' : '▼ '}${cobFmt(d)} desde el ${cobFmtFecha(pts[0].d)}</div>`;
   }
+  const desglose = (!COB.cuentaSel && series.length > 1)
+    ? `<div class="cobx-delta" style="color:var(--ink-muted);font-weight:500">${series.map(x => `${cobEsc(cobCuentaCorta(x.c))} ${cobFmt(x.ultimo)}`).join(' · ')}</div>` : '';
 
+  const movsOrd = [...enAlcance].sort(cobOrdenBanco);
+  const ult = movsOrd[0];
   const mes = ult.fecha.slice(0, 7);
-  const delMes = movs.filter(m => (m.fecha || '').startsWith(mes));
+  const delMes = enAlcance.filter(m => (m.fecha || '').startsWith(mes));
   const cobrado = delMes.filter(m => m.categoria === 'Cobro paciente' && Number(m.importe) > 0)
     .reduce((s, m) => s + Number(m.importe), 0);
-  const sinClas = movs.filter(m => (m.categoria || 'Sin clasificar') === 'Sin clasificar').length;
+  const sinClas = enAlcance.filter(m => (m.categoria || 'Sin clasificar') === 'Sin clasificar').length;
 
   hero.innerHTML = `<div class="cobx-hero-row">
-      <div><div class="cobx-lbl">Saldo cuenta</div><div class="cobx-saldo">${cobFmt(saldo)}</div>${delta}</div>
+      <div><div class="cobx-lbl">Saldo · ${cobEsc(titulo)}</div><div class="cobx-saldo">${cobFmt(saldo)}</div>${delta}${desglose}</div>
       <div class="cobx-kpis">
         <div>Cobrado en el mes<b class="pos">${cobFmt(cobrado)}</b></div>
         <div>Sin clasificar<b ${sinClas ? 'style="color:#b45309"' : ''}>${sinClas}</b></div>
         <div>Último movimiento<b>${cobFmtFecha(ult.fecha)}</b></div>
       </div></div>${spark}`;
 
-  // resumen del mes (mes del último movimiento): actividad de la clínica separada de personal/traspasos
-  const NO_CLINICA = ['Personal', 'Traspaso efectivo'];
+  // resumen del mes: actividad de la clínica (sin personal, traspasos de efectivo ni entre cuentas)
+  const NO_CLINICA = ['Personal', 'Traspaso efectivo', 'Traspaso entre cuentas'];
   const porCat = (signo, filtro) => {
     const acc = {};
     delMes.filter(m => Math.sign(Number(m.importe)) === signo && filtro(m.categoria || 'Sin clasificar')).forEach(m => {
       const c = m.categoria || 'Sin clasificar';
       acc[c] = (acc[c] || 0) + Math.abs(Number(m.importe));
     });
-    return Object.entries(acc).sort((a, b) => b[1] - a[1]);
+    return Object.entries(acc).sort((x, y) => y[1] - x[1]);
   };
   const suma = l => l.reduce((s, [, v]) => s + v, 0);
-  const bloque = (titulo, lista, clsTotal) => {
+  const meta = c => COB_CAT_META[c] || COB_CAT_META['Sin clasificar'];
+  const bloque = (tit, lista, clsTotal) => {
     const total = suma(lista);
-    if (!total) return `<div class="cobx-mes-row"><div class="t"><span>${titulo}</span><b>${cobFmt(0)}</b></div><div class="cobx-bar"></div></div>`;
-    const meta = c => COB_CAT_META[c] || COB_CAT_META['Sin clasificar'];
+    if (!total) return `<div class="cobx-mes-row"><div class="t"><span>${tit}</span><b>${cobFmt(0)}</b></div><div class="cobx-bar"></div></div>`;
     const bar = lista.map(([c, v]) => `<i style="width:${(v / total * 100).toFixed(1)}%;background:${meta(c).color}" title="${meta(c).lbl}: ${cobFmt(v)}"></i>`).join('');
     const leg = lista.map(([c, v]) => `<span><em style="background:${meta(c).color}"></em>${meta(c).lbl} ${cobFmt(v)}</span>`).join('');
-    return `<div class="cobx-mes-row"><div class="t"><span>${titulo}</span><b class="${clsTotal}">${cobFmt(total)}</b></div><div class="cobx-bar">${bar}</div><div class="cobx-leg">${leg}</div></div>`;
+    return `<div class="cobx-mes-row"><div class="t"><span>${tit}</span><b class="${clsTotal}">${cobFmt(total)}</b></div><div class="cobx-bar">${bar}</div><div class="cobx-leg">${leg}</div></div>`;
   };
   const esClinica = c => !NO_CLINICA.includes(c);
   const ent = porCat(1, esClinica), sal = porCat(-1, esClinica);
   const neto = suma(ent) - suma(sal);
-  const persEnt = suma(porCat(1, c => NO_CLINICA.includes(c)));
-  const persSal = suma(porCat(-1, c => NO_CLINICA.includes(c)));
+  const persEnt = suma(porCat(1, c => c === 'Personal')), persSal = suma(porCat(-1, c => c === 'Personal'));
+  const entre = suma(porCat(1, c => c === 'Traspaso entre cuentas'));
   const [y, mo] = mes.split('-');
   const etiqueta = new Date(y, mo - 1, 1).toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
   mesCard.innerHTML = `<div class="cobx-mes-head"><span class="cobx-lbl">Clínica · ${etiqueta}</span><span style="font-size:11px;color:var(--ink-muted)">${delMes.length} mov.</span></div>
     ${bloque('Entradas', ent, 'cob-pos')}${bloque('Salidas', sal, 'cob-neg')}
     <div class="cobx-neto"><span>Neto clínica</span><b class="${neto >= 0 ? 'cob-pos' : 'cob-neg'}">${neto >= 0 ? '+' : ''}${cobFmt(neto)}</b></div>
-    <div style="font-size:11px;color:var(--ink-muted);margin-top:6px">Personal y traspasos (fuera de la clínica): +${cobFmt(persEnt)} / −${cobFmt(persSal)}</div>`;
+    <div style="font-size:11px;color:var(--ink-muted);margin-top:6px">Personal: +${cobFmt(persEnt)} / −${cobFmt(persSal)}${entre ? ` · Traspasos entre cuentas: ${cobFmt(entre)}` : ''}</div>`;
 
   const hint = document.getElementById('cob-upload-hint');
-  if (hint) hint.textContent = (COB._ultImport ? COB._ultImport + ' · ' : '') + `${movs.length} movimientos · hasta ${cobFmtFecha(ult.fecha)}`;
+  if (hint) hint.textContent = (COB._ultImport ? COB._ultImport + ' · ' : '') + `${COB.movimientos.length} movimientos en total`;
 }
 
 function cobPoblarFiltroMes() {
@@ -262,9 +316,10 @@ function cobRenderChipsBanco() {
   const activa = sel ? sel.value : '';
   const defs = [['', 'Todos'], ['Cobro paciente', 'Cobros'], ['Gasto clinica', 'Gasto clínica'],
                 ['Pago profesional', 'Profesionales'], ['Personal', 'Personal'],
-                ['Traspaso efectivo', 'Traspasos'], ['Sin clasificar', 'Sin clasificar']];
+                ['Traspaso efectivo', 'Efectivo'], ['Traspaso entre cuentas', 'Entre cuentas'], ['Sin clasificar', 'Sin clasificar']];
   cont.innerHTML = defs.map(([v, lbl]) => {
-    const n = v ? COB.movimientos.filter(m => (m.categoria || 'Sin clasificar') === v).length : COB.movimientos.length;
+    const base = cobMovs();
+    const n = v ? base.filter(m => (m.categoria || 'Sin clasificar') === v).length : base.length;
     if (v && !n && v !== activa) return '';
     return `<button class="cobx-fc ${v === activa ? 'on' : ''}" onclick="cobSetCatBanco('${v}')">${lbl}<small>${n}</small></button>`;
   }).join('');
@@ -280,7 +335,7 @@ function cobFiltrarBanco() {
   const q = (document.getElementById('cob-buscador-banco')?.value || '').toLowerCase();
   const cat = document.getElementById('cob-filtro-cat')?.value || '';
   const mes = document.getElementById('cob-filtro-mes')?.value || '';
-  COB.movFiltrados = COB.movimientos.filter(m => {
+  COB.movFiltrados = cobMovs().filter(m => {
     const concepto = ((m.concepto || '') + ' ' + (m.movimiento || '')).toLowerCase();
     if (q && !concepto.includes(q)) return false;
     if (cat && m.categoria !== cat) return false;
@@ -310,7 +365,7 @@ function cobRenderTablaBanco() {
       const estado = m.id_cobro ? 'Conciliado' : (cat !== 'Sin clasificar' ? 'Clasificado' : 'Sin clasificar');
       return `<tr>
         <td>${cobFmtFecha(m.fecha)}</td>
-        <td style="max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${cobEsc((m.concepto||'')+' '+(m.movimiento||''))}">${cobEsc(m.concepto) || '—'}<br><span style="font-size:11px;color:var(--ink-muted)">${cobEsc(m.movimiento)}</span></td>
+        <td style="max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${cobEsc((m.concepto||'')+' '+(m.movimiento||''))}">${cobEsc(m.concepto) || '—'}<br><span style="font-size:11px;color:var(--ink-muted)">${COB.cuentaSel ? '' : `<span class="cobx-tag">${cobEsc(cobCuentaCorta(m.cuenta))}</span> `}${cobEsc(m.movimiento)}${m.id_par ? ' ⇄' : ''}</span></td>
         <td class="cobx-row-click" onclick="cobEditarMovimiento('${m.id}')" title="Cambiar categoría">${cobBadge(cat)}</td>
         <td style="text-align:right">${impHtml}</td>
         <td style="text-align:right;color:var(--ink-muted)">${m.saldo != null ? cobFmt(m.saldo) : '—'}</td>
@@ -335,7 +390,7 @@ function cobRenderPagBanco(pages) {
 }
 
 function cobPendientesBanco() {
-  return COB.movimientos.filter(m => (m.categoria || 'Sin clasificar') === 'Sin clasificar').sort(cobOrdenBanco);
+  return cobMovs().filter(m => (m.categoria || 'Sin clasificar') === 'Sin clasificar').sort(cobOrdenBanco);
 }
 
 function cobRenderPendientes() {
@@ -347,7 +402,7 @@ function cobRenderPendientes() {
   if (!pend.length) {
     COB._triTotal = 0;
     COB.triIdx = 0;
-    if (!COB.movimientos.length) { section.style.display = 'none'; return; }
+    if (!cobMovs().length) { section.style.display = 'none'; return; }
     section.style.display = 'block';
     document.getElementById('cob-sinconc-count').textContent = '';
     lista.innerHTML = `<div class="cobx-ok">✓ Todo clasificado${COB._ultimo ? ` <button class="cobx-undo" onclick="cobTriDeshacer()">Deshacer el último</button>` : ''}</div>`;
@@ -449,6 +504,10 @@ function cobEditarMovimiento(id) {
 function cobAbrirModalClasificar(m) {
   const imp = Number(m.importe);
   const cats = ['Cobro paciente', 'Pago profesional', 'Gasto clinica', 'Traspaso efectivo', 'Personal', 'Sin clasificar'];
+  if (m.categoria === 'Traspaso entre cuentas') cats.push('Traspaso entre cuentas');
+  const par = m.id_par ? COB.movimientos.find(x => x.id === m.id_par) : null;
+  const parHtml = m.id_par ? `<div style="background:var(--cream);border-radius:8px;padding:8px 12px;margin-bottom:12px;font-size:12px">⇄ Emparejado con ${par ? `${cobEsc(cobCuentaCorta(par.cuenta))} · ${cobFmtFecha(par.fecha)} · ${cobFmt(par.importe)}` : 'otro movimiento'}
+      <button class="cobx-undo" style="margin-left:8px" onclick="cobDesvincular('${m.id}')">Desvincular</button></div>` : '';
   const catOpts = cats.map(c =>
     `<option value="${c}" ${m.categoria === c ? 'selected' : ''}>${c === 'Gasto clinica' ? 'Gasto clínica' : c}</option>`
   ).join('');
@@ -460,8 +519,9 @@ function cobAbrirModalClasificar(m) {
       <div style="color:var(--ink-muted)">${cobEsc(m.movimiento)}</div>
       <div style="font-weight:700;margin-top:4px;font-size:15px">${imp >= 0 ? '<span class="cob-pos">+' + cobFmt(imp) + '</span>' : '<span class="cob-neg">' + cobFmt(imp) + '</span>'}</div>
     </div>
+    ${parHtml}
     <label style="font-size:12px;font-weight:600;color:var(--ink-muted)">CATEGORÍA</label>
-    <select id="cob-modal-cat" style="width:100%;margin-top:4px;margin-bottom:12px;font-size:13px;padding:7px 10px;border:1px solid var(--border);border-radius:8px">${catOpts}</select>
+    <select id="cob-modal-cat" ${m.id_par ? 'disabled' : ''} style="width:100%;margin-top:4px;margin-bottom:12px;font-size:13px;padding:7px 10px;border:1px solid var(--border);border-radius:8px">${catOpts}</select>
     <label style="font-size:12px;font-weight:600;color:var(--ink-muted)">NOTAS (opcional)</label>
     <input id="cob-modal-notas" type="text" value="${cobEsc(m.notas)}" style="width:100%;margin-top:4px;font-size:13px;padding:7px 10px;border:1px solid var(--border);border-radius:8px">
     <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px">
@@ -475,7 +535,8 @@ function cobAbrirModalClasificar(m) {
 async function cobGuardarModalClasif(id) {
   const cat = document.getElementById('cob-modal-cat').value;
   const notas = document.getElementById('cob-modal-notas').value;
-  const ok = await cobPatch(`movimientos_banco?id=eq.${id}`, { categoria: cat, notas });
+  const mm = COB.movimientos.find(x => x.id === id);
+  const ok = await cobPatch(`movimientos_banco?id=eq.${id}`, mm && mm.id_par ? { notas } : { categoria: cat, notas });
   if (ok !== null) {
     const m = COB.movimientos.find(x => x.id === id);
     if (m) { m.categoria = cat; m.notas = notas; }
@@ -582,7 +643,9 @@ function cobImportarExtracto(input) {
 }
 
 async function cobProcesarExtracto(file) {
-  toast('Procesando extracto…');
+  const cuenta = (document.getElementById('cob-import-cuenta') || {}).value || '';
+  if (!COB_CUENTAS.includes(cuenta)) { toast('Elige la cuenta del extracto antes de importar', true); return; }
+  toast(`Procesando extracto de ${cuenta}…`);
   try {
     const data = await file.arrayBuffer();
     const XLSX = window.XLSX;
@@ -651,11 +714,12 @@ async function cobProcesarExtracto(file) {
         Math.random().toString(36).slice(2, 6).toUpperCase();
 
       // Clave determinista: evita duplicados al reimportar extractos solapados
-      const clave = [fecha, importe.toFixed(2), saldo != null && !isNaN(saldo) ? saldo.toFixed(2) : '',
+      const clave = [cuenta, fecha, importe.toFixed(2), saldo != null && !isNaN(saldo) ? saldo.toFixed(2) : '',
                      movimiento.toLowerCase()].join('|');
 
-      const categoria = cobAutoClasificar(concepto, movimiento, importe);
-      nuevos.push({ id, fecha, concepto, movimiento, importe, saldo, categoria, origen: 'Importado', clave });
+      // En Ahorro (becas, traspasos) no se adivina: se clasifica a mano o por emparejado
+      const categoria = cuenta === 'BBVA Corriente' ? cobAutoClasificar(concepto, movimiento, importe) : 'Sin clasificar';
+      nuevos.push({ id, fecha, concepto, movimiento, importe, saldo, categoria, origen: 'Importado', clave, cuenta });
     }
 
     if (!nuevos.length) { toast('No se encontraron movimientos válidos', true); return; }
@@ -684,7 +748,7 @@ async function cobProcesarExtracto(file) {
     }
     const duplicados = nuevos.length - insertados - fallidos;
 
-    COB._ultImport = `Importado ${new Date().toLocaleDateString('es-ES')}: ${insertados} nuevos, ${duplicados} ya existentes` +
+    COB._ultImport = `${cuenta} · ${new Date().toLocaleDateString('es-ES')}: ${insertados} nuevos, ${duplicados} ya existentes` +
       (fallidos ? `, ${fallidos} con error` : '');
     toast(`Extracto: ${insertados} nuevos, ${duplicados} duplicados omitidos` + (fallidos ? `, ${fallidos} con error` : ''),
           fallidos > 0, fallidos === 0);
@@ -834,6 +898,131 @@ function cobRenderPanelCaja() {
     alertas.push(['err', `${bancoTrasSinCaja.length} movimiento(s) de banco de efectivo sin registrar en caja: ${tot}. Regístralos con «Retirada de banco» / «Ingreso en banco».`]);
   }
   box.innerHTML = alertas.map(([t, msg]) => `<div class="cobx-al ${t}"><span>${t === 'info' ? 'ℹ' : '⚠'}</span><span>${cobEsc(msg)}</span></div>`).join('');
+}
+
+
+/* ══════════════════════════════════════════
+   TRASPASOS ENTRE CUENTAS (emparejamiento)
+══════════════════════════════════════════ */
+function cobDiasEntre(f1, f2) {
+  return Math.round((new Date(f1 + 'T00:00:00') - new Date(f2 + 'T00:00:00')) / 86400000);
+}
+function cobEsTraspasoTxt(m) { return /traspaso|transferencia/i.test((m.concepto || '') + ' ' + (m.movimiento || '')); }
+
+/* Parejas candidatas: importe opuesto exacto, una en cada cuenta, ≤3 días, y al menos una con texto de traspaso */
+function cobParesPropuestos() {
+  const libres = COB.movimientos.filter(m => !m.id_par && Number(m.importe) !== 0);
+  const A = libres.filter(m => m.cuenta === COB_CUENTAS[0]).sort((x, y) => x.fecha.localeCompare(y.fecha));
+  const B = libres.filter(m => m.cuenta === COB_CUENTAS[1]);
+  const cand = (a) => B.filter(b => Math.abs(Number(a.importe) + Number(b.importe)) < 0.005
+    && Math.abs(cobDiasEntre(a.fecha, b.fecha)) <= 3 && (cobEsTraspasoTxt(a) || cobEsTraspasoTxt(b)));
+  const usados = new Set();
+  const pares = [];
+  A.forEach(a => {
+    const cs = cand(a).filter(b => !usados.has(b.id))
+      .sort((p, q) => Math.abs(cobDiasEntre(a.fecha, p.fecha)) - Math.abs(cobDiasEntre(a.fecha, q.fecha)) || cobSeq(p) - cobSeq(q));
+    if (!cs.length) return;
+    const b = cs[0];
+    usados.add(b.id);
+    const inversos = A.filter(x => Math.abs(Number(x.importe) + Number(b.importe)) < 0.005 && Math.abs(cobDiasEntre(x.fecha, b.fecha)) <= 3).length;
+    pares.push({ a, b, exacta: cs.length === 1 && inversos === 1 && a.fecha === b.fecha });
+  });
+  return pares.filter(p => !COB._pareDescartado.has(p.a.id + '|' + p.b.id));
+}
+
+/* Traspasos "propios" sin pareja cuyo día cae dentro del rango importado de la otra cuenta */
+function cobTraspasosSinPareja() {
+  const rango = {};
+  COB_CUENTAS.forEach(c => {
+    const l = COB.movimientos.filter(m => m.cuenta === c).map(m => m.fecha).sort();
+    if (l.length) rango[c] = [l[0], l[l.length - 1]];
+  });
+  const enPropuesta = new Set();
+  cobParesPropuestos().forEach(p => { enPropuesta.add(p.a.id); enPropuesta.add(p.b.id); });
+  return COB.movimientos.filter(m => {
+    if (m.id_par || enPropuesta.has(m.id) || !/traspaso (a|desde) cuenta/i.test(m.concepto || '')) return false;
+    if (!['Personal', 'Sin clasificar'].includes(m.categoria || 'Sin clasificar')) return false;
+    const otra = COB_CUENTAS.find(c => c !== m.cuenta);
+    const r = rango[otra];
+    return !!r && m.fecha >= r[0] && m.fecha <= r[1];
+  });
+}
+
+function cobRenderPares() {
+  const cont = document.getElementById('cob-pares');
+  if (!cont) return;
+  const tieneAmbas = COB_CUENTAS.every(c => COB.movimientos.some(m => m.cuenta === c));
+  if (!tieneAmbas) {
+    const falta = COB_CUENTAS.filter(c => !COB.movimientos.some(m => m.cuenta === c));
+    cont.innerHTML = COB.movimientos.length && falta.length
+      ? `<div class="cobx-al info"><span>ℹ</span><span>Falta importar el extracto de <b>${cobEsc(falta.join(', '))}</b>: hasta entonces los traspasos entre cuentas aparecen sin contrapartida.</span></div>` : '';
+    return;
+  }
+  const pares = cobParesPropuestos();
+  const sueltos = cobTraspasosSinPareja();
+  let h = '';
+  if (pares.length) {
+    const exactas = pares.filter(p => p.exacta);
+    const fila = p => `<div class="cobx-par">
+        <div><small>${cobEsc(cobCuentaCorta(p.a.cuenta))} · ${cobFmtFecha(p.a.fecha)}</small><b class="${Number(p.a.importe) >= 0 ? 'cob-pos' : 'cob-neg'}">${cobFmt(p.a.importe)}</b><span>${cobEsc(p.a.movimiento || p.a.concepto)}</span></div>
+        <div class="cobx-par-x">⇄</div>
+        <div><small>${cobEsc(cobCuentaCorta(p.b.cuenta))} · ${cobFmtFecha(p.b.fecha)}</small><b class="${Number(p.b.importe) >= 0 ? 'cob-pos' : 'cob-neg'}">${cobFmt(p.b.importe)}</b><span>${cobEsc(p.b.movimiento || p.b.concepto)}</span></div>
+        <div class="cobx-par-btns"><button class="btn btn-pri" onclick="cobVincularPar('${p.a.id}','${p.b.id}')">Vincular</button>
+          <button class="btn btn-sec" onclick="cobDescartarPar('${p.a.id}','${p.b.id}')" title="No es una pareja">✕</button></div>
+      </div>`;
+    h += `<div class="cobx-card cobx-pares">
+      <div class="cobx-tri-head"><div><span class="cobx-tri-title">Traspasos entre cuentas</span><span class="cobx-tri-count">${pares.length} posible${pares.length === 1 ? '' : 's'} pareja${pares.length === 1 ? '' : 's'}</span></div>
+        ${exactas.length > 1 ? `<button class="btn btn-sec" onclick="cobVincularExactas()">Vincular las ${exactas.length} exactas (mismo día e importe)</button>` : ''}</div>
+      ${pares.slice(0, 8).map(fila).join('')}
+      ${pares.length > 8 ? `<div style="font-size:11px;color:var(--ink-muted);margin-top:6px">y ${pares.length - 8} más tras vincular estas</div>` : ''}
+    </div>`;
+  }
+  if (sueltos.length) {
+    h += `<div class="cobx-al warn"><span>⚠</span><span>${sueltos.length} traspaso(s) sin pareja en la otra cuenta aunque su extracto cubre esa fecha: ${cobEsc(sueltos.slice(0, 4).map(m => `${cobFmtFecha(m.fecha)} ${cobFmt(m.importe)} «${(m.movimiento || '').slice(0, 24)}»`).join(' · '))}${sueltos.length > 4 ? '…' : ''}. Pueden ser pagos a terceros: clasifícalos a mano.</span></div>`;
+  }
+  cont.innerHTML = h;
+}
+
+async function cobVincularPar(idA, idB, silencioso) {
+  const a = COB.movimientos.find(x => x.id === idA), b = COB.movimientos.find(x => x.id === idB);
+  if (!a || !b) return false;
+  const prevA = a.categoria || 'Sin clasificar', prevB = b.categoria || 'Sin clasificar';
+  const okA = await cobPatch(`movimientos_banco?id=eq.${idA}`, { id_par: idB, categoria: 'Traspaso entre cuentas' });
+  if (okA === null) return false;
+  const okB = await cobPatch(`movimientos_banco?id=eq.${idB}`, { id_par: idA, categoria: 'Traspaso entre cuentas' });
+  if (okB === null) {   // revertir el primero: nunca dejar una pareja a medias
+    await cobPatch(`movimientos_banco?id=eq.${idA}`, { id_par: null, categoria: prevA });
+    toast('No se pudo vincular la pareja; se ha revertido', true);
+    return false;
+  }
+  a.id_par = idB; a.categoria = 'Traspaso entre cuentas';
+  b.id_par = idA; b.categoria = 'Traspaso entre cuentas';
+  if (!silencioso) { toast('Traspaso vinculado', false, true); cobRefrescarBanco(); }
+  return true;
+}
+function cobDescartarPar(idA, idB) {
+  COB._pareDescartado.add(idA + '|' + idB);
+  cobRenderPares();
+}
+async function cobVincularExactas() {
+  const exactas = cobParesPropuestos().filter(p => p.exacta);
+  let n = 0;
+  for (const p of exactas) { if (await cobVincularPar(p.a.id, p.b.id, true)) n++; }
+  toast(`${n} traspasos vinculados`, n !== exactas.length, n === exactas.length);
+  cobRefrescarBanco();
+}
+async function cobDesvincular(id) {
+  const m = COB.movimientos.find(x => x.id === id);
+  if (!m || !m.id_par) return;
+  const p = COB.movimientos.find(x => x.id === m.id_par);
+  const ok1 = await cobPatch(`movimientos_banco?id=eq.${id}`, { id_par: null, categoria: 'Sin clasificar' });
+  if (ok1 === null) return;
+  if (p) await cobPatch(`movimientos_banco?id=eq.${p.id}`, { id_par: null, categoria: 'Sin clasificar' });
+  m.id_par = null; m.categoria = 'Sin clasificar';
+  if (p) { p.id_par = null; p.categoria = 'Sin clasificar'; }
+  cobCerrarModal();
+  toast('Pareja desvinculada: vuelven a pendientes de clasificar', false, true);
+  cobRefrescarBanco();
 }
 
 /* ── Entrada / salida manual ── */

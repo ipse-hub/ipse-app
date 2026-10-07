@@ -685,6 +685,25 @@ td.muted{color:var(--ink-muted);font-size:12px}
 .cob-empty svg{width:36px;height:36px;stroke:var(--border);fill:none;stroke-width:1.5;margin-bottom:8px}
 /* ── COBROS · banco/caja visual ── */
 .cob-badge-tras{background:#ccfbf1;color:#0f766e}
+.cob-badge-ent{background:#e2e8f0;color:#475569}
+.cobx-seg{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+.cobx-acct{flex:1 1 180px;text-align:left;background:var(--white);border:1px solid var(--border);border-radius:10px;padding:8px 14px;cursor:pointer;font-family:inherit;color:var(--ink);display:flex;flex-direction:column;gap:1px}
+.cobx-acct b{font-size:13px}
+.cobx-acct small{font-size:11px;color:var(--ink-muted)}
+.cobx-acct:hover{border-color:var(--ink-muted)}
+.cobx-acct.on{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink);background:var(--cream)}
+.cobx-acct.vacia small{color:#8a5a00}
+.cobx-al.info{background:var(--cream);color:var(--ink-muted)}
+.cobx-tag{display:inline-block;font-size:10px;font-weight:600;background:var(--cream);color:var(--ink-muted);border-radius:4px;padding:0 5px;margin-right:2px}
+.cobx-pares{margin-bottom:12px;border-left:4px solid #475569}
+.cobx-par{display:grid;grid-template-columns:minmax(0,1fr) 28px minmax(0,1fr) auto;gap:10px;align-items:center;padding:8px 0;border-top:1px solid var(--border)}
+.cobx-par>div:not(.cobx-par-x):not(.cobx-par-btns){display:flex;flex-direction:column;min-width:0}
+.cobx-par small{font-size:11px;color:var(--ink-muted)}
+.cobx-par b{font-size:14px}
+.cobx-par span{font-size:11px;color:var(--ink-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cobx-par-x{text-align:center;font-size:18px;color:var(--ink-muted)}
+.cobx-par-btns{display:flex;gap:6px}
+@media (max-width:760px){.cobx-par{grid-template-columns:1fr;gap:4px}.cobx-par-x{display:none}}
 .cobx-card{background:var(--white);border:1px solid var(--border);border-radius:12px;padding:14px 16px;box-shadow:var(--shadow)}
 .cobx-top{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:12px;margin-bottom:12px}
 @media (max-width:980px){.cobx-top{grid-template-columns:1fr}}
@@ -2218,6 +2237,7 @@ if (!IPSE_MODO_RESTRINGIDO) {
 
       <!-- ── PESTAÑA BANCO ── -->
       <div class="cob-tab-panel active" id="cob-panel-banco">
+        <div class="cobx-seg" id="cob-cuentas"></div>
         <div class="cobx-top">
           <div class="cobx-card" id="cob-hero"><div class="cobx-empty">Cargando…</div></div>
           <div class="cobx-card" id="cob-mes-card"></div>
@@ -2228,9 +2248,11 @@ if (!IPSE_MODO_RESTRINGIDO) {
         <div class="cob-upload cobx-import" id="cob-upload-zone" onclick="document.getElementById('cob-file-input').click()" ondragover="cobDragOver(event)" ondragleave="cobDragLeave(event)" ondrop="cobDrop(event)">
           <input type="file" id="cob-file-input" accept=".xlsx,.xls" style="display:none" onchange="cobImportarExtracto(this)">
           <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-          <span class="cobx-imp-t"><strong>Importar extracto BBVA</strong>arrastra el .xlsx aquí o haz clic · los duplicados se omiten solos</span>
+          <span class="cobx-imp-t"><strong>Importar extracto BBVA</strong>cuenta: <select id="cob-import-cuenta" onclick="event.stopPropagation()" style="margin:0 6px;font-size:12px"><option value="">— elegir —</option><option value="BBVA Corriente">BBVA Corriente</option><option value="BBVA Ahorro">BBVA Ahorro</option></select>arrastra el .xlsx o haz clic · los duplicados se omiten solos</span>
           <span class="cob-upload-hint" id="cob-upload-hint"></span>
         </div>
+
+        <div id="cob-pares"></div>
 
         <div id="cob-sin-conciliar-section" class="cobx-card cobx-triage" style="display:none">
           <div class="cobx-tri-head">
@@ -2257,6 +2279,7 @@ if (!IPSE_MODO_RESTRINGIDO) {
               <option value="Pago profesional">Pago profesional</option>
               <option value="Gasto clinica">Gasto clínica</option>
               <option value="Traspaso efectivo">Traspaso efectivo</option>
+              <option value="Traspaso entre cuentas">Traspaso entre cuentas</option>
               <option value="Personal">Personal</option>
               <option value="Sin clasificar">Sin clasificar</option>
             </select>
