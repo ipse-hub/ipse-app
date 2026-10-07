@@ -133,7 +133,7 @@ function bbAplicarFiltros() {
     if (antic  && r.anticipo_recibido !== antic) return false;
     if (q) {
       const pac = (G.pacientes||[]).find(p => p.id === r.id_paciente);
-      const texto = `${pac?.nombre||''} ${pac?.apellidos||''} ${r.id_paciente}`.toLowerCase();
+      const texto = `${r.id} ${pac?.nombre||''} ${pac?.apellidos||''} ${r.id_paciente}`.toLowerCase();
       if (!texto.includes(q)) return false;
     }
     return true;
@@ -218,7 +218,7 @@ function bbRenderTabla() {
     return `<tr class="bb-row${BB.seleccionado===r.id?' selected':''}" onclick="bbSeleccionar('${r.id}')">
       <td>
         <div style="font-weight:600;font-size:13px">${nombrePac}</div>
-        <div style="font-size:11px;color:var(--ink-muted);font-family:'DM Mono',monospace">${r.id_paciente}</div>
+        <div style="font-size:11px;color:var(--ink-muted);font-family:'DM Mono',monospace">${r.id_paciente} · <b>${r.id}</b></div>
       </td>
       <td><span class="bb-badge ${espLow}">${r.especialidad||'—'}</span></td>
       <td>
