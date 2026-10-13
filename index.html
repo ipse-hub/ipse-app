@@ -7,243 +7,290 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-:root {
-  --azul:   #10069F;
-  --cyan:   #00B5E2;
-  --rojo:   #DA291C;
-  --verde:  #97D700;
-  --amber:  #F59E0B;
-  --bg:     #F4F5F9;
-  --surface:#FFFFFF;
-  --border: #E2E4EE;
-  --text:   #1A1B2E;
-  --muted:  #6B7280;
-  --shadow: 0 2px 8px rgba(16,6,159,.08);
-  --radius: 12px;
-}
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body {
-  font-family: 'DM Sans', sans-serif;
-  background: var(--bg);
-  color: var(--text);
-  font-size: 14px;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-}
+  :root {
+    --azul:   #10069F;
+    --cyan:   #00B5E2;
+    --rojo:   #DA291C;
+    --verde:  #97D700;
+    --amber:  #F59E0B;
+    --bg:     #F4F5F9;
+    --surface:#FFFFFF;
+    --border: #E2E4EE;
+    --text:   #1A1B2E;
+    --muted:  #6B7280;
+    --shadow: 0 2px 8px rgba(16,6,159,.08);
+    --radius: 12px;
+  }
 
-/* ── Fondo decorativo ── */
-body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  background:
-    radial-gradient(ellipse 70% 50% at 20% 10%, rgba(16,6,159,.08) 0%, transparent 60%),
-    radial-gradient(ellipse 50% 60% at 80% 90%, rgba(0,181,226,.07) 0%, transparent 60%);
-  pointer-events: none;
-  z-index: 0;
-}
+  * { box-sizing: border-box; margin: 0; padding: 0; }
 
-/* ── Card central ── */
-.login-card {
-  position: relative;
-  z-index: 1;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 20px;
-  box-shadow:
-    0 4px 24px rgba(16,6,159,.10),
-    0 1px 4px rgba(0,0,0,.04);
-  width: 100%;
-  max-width: 420px;
-  padding: 44px 40px 36px;
-  margin: 24px;
-}
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 14px;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
 
-/* ── Logo ── */
-.logo-wrap {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin-bottom: 32px;
-  gap: 10px;
-}
-.logo-mark {
-  width: 52px;
-  height: 52px;
-  background: var(--azul);
-  border-radius: 14px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 4px 16px rgba(16,6,159,.3);
-}
-.logo-mark svg {
-  width: 28px;
-  height: 28px;
-  stroke: #fff;
-}
-.logo-text {
-  font-size: 22px;
-  font-weight: 700;
-  color: var(--azul);
-  letter-spacing: -.5px;
-}
-.logo-text span {
-  color: var(--cyan);
-}
-.logo-sub {
-  font-size: 12px;
-  color: var(--muted);
-  font-weight: 500;
-  letter-spacing: .01em;
-}
+  /* ── Fondo decorativo ── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 70% 50% at 20% 10%, rgba(16,6,159,.08) 0%, transparent 60%),
+      radial-gradient(ellipse 50% 60% at 80% 90%, rgba(0,181,226,.07) 0%, transparent 60%);
+    pointer-events: none;
+    z-index: 0;
+  }
 
-/* ── Formulario ── */
-.form-group {
-  margin-bottom: 16px;
-}
-.form-label {
-  display: block;
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--muted);
-  text-transform: uppercase;
-  letter-spacing: .06em;
-  margin-bottom: 6px;
-}
-.input-wrap {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-/* Icono decorativo izquierdo */
-.input-wrap .ico-left {
-  position: absolute;
-  left: 13px;
-  width: 16px;
-  height: 16px;
-  stroke: var(--muted);
-  pointer-events: none;
-  transition: stroke .15s;
-  flex-shrink: 0;
-}
-.input-wrap:focus-within .ico-left {
-  stroke: var(--azul);
-}
-.form-control {
-  width: 100%;
-  border: 1.5px solid var(--border);
-  border-radius: 9px;
-  padding: 11px 14px 11px 40px;
-  font-family: inherit;
-  font-size: 14px;
-  color: var(--text);
-  background: var(--bg);
-  outline: none;
-  transition: border-color .15s, background .15s, box-shadow .15s;
-  appearance: none;
-}
-.form-control:focus {
-  border-color: var(--azul);
-  background: #fff;
-  box-shadow: 0 0 0 3px rgba(16,6,159,.09);
-}
-/* Input contraseña: reservar espacio a la derecha para el ojo */
-#password { padding-right: 44px; }
+  /* ── Card central ── */
+  .login-card {
+    position: relative;
+    z-index: 1;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    box-shadow:
+      0 4px 24px rgba(16,6,159,.10),
+      0 1px 4px rgba(0,0,0,.04);
+    width: 100%;
+    max-width: 420px;
+    padding: 44px 40px 36px;
+    margin: 24px;
+  }
 
-/* Toggle contraseña — posicionado dentro del wrap */
-.toggle-pwd {
-  position: absolute;
-  right: 10px;
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 5px;
-  color: var(--muted);
-  display: flex;
-  align-items: center;
-  transition: color .15s;
-  line-height: 0;
-}
-.toggle-pwd:hover { color: var(--azul); }
-.toggle-pwd svg { width: 16px; height: 16px; display: block; }
+  /* ── Logo ── */
+  .logo-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 32px;
+    gap: 10px;
+  }
+  .logo-mark {
+    width: 52px;
+    height: 52px;
+    background: var(--azul);
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 16px rgba(16,6,159,.3);
+  }
+  .logo-mark svg {
+    width: 28px;
+    height: 28px;
+    stroke: #fff;
+  }
+  .logo-text {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--azul);
+    letter-spacing: -.5px;
+  }
+  .logo-text span {
+    color: var(--cyan);
+  }
+  .logo-sub {
+    font-size: 12px;
+    color: var(--muted);
+    font-weight: 500;
+    letter-spacing: .01em;
+  }
 
-/* ── Error ── */
-.error-msg {
-  display: none;
-  background: #FEF2F2;
-  border: 1px solid #FECACA;
-  border-radius: 8px;
-  padding: 10px 13px;
-  font-size: 13px;
-  color: var(--rojo);
-  margin-bottom: 16px;
-  align-items: center;
-  gap: 8px;
-}
-.error-msg.visible { display: flex; }
-.error-msg svg { width: 15px; height: 15px; flex-shrink: 0; }
+  /* ── Formulario ── */
+  .form-group {
+    margin-bottom: 16px;
+  }
+  .form-label {
+    display: block;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    margin-bottom: 6px;
+  }
+  .input-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+  /* Icono decorativo izquierdo */
+  .input-wrap .ico-left {
+    position: absolute;
+    left: 13px;
+    width: 16px;
+    height: 16px;
+    stroke: var(--muted);
+    pointer-events: none;
+    transition: stroke .15s;
+    flex-shrink: 0;
+  }
+  .input-wrap:focus-within .ico-left {
+    stroke: var(--azul);
+  }
+  .form-control {
+    width: 100%;
+    border: 1.5px solid var(--border);
+    border-radius: 9px;
+    padding: 11px 14px 11px 40px;
+    font-family: inherit;
+    font-size: 14px;
+    color: var(--text);
+    background: var(--bg);
+    outline: none;
+    transition: border-color .15s, background .15s, box-shadow .15s;
+    appearance: none;
+  }
+  .form-control:focus {
+    border-color: var(--azul);
+    background: #fff;
+    box-shadow: 0 0 0 3px rgba(16,6,159,.09);
+  }
+  /* Input contraseña: reservar espacio a la derecha para el ojo */
+  #password { padding-right: 44px; }
 
-/* ── Botón ── */
-.btn-login {
-  width: 100%;
-  background: var(--azul);
-  color: #fff;
-  border: none;
-  border-radius: 9px;
-  padding: 13px 20px;
-  font-family: inherit;
-  font-size: 15px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background .15s, transform .1s, box-shadow .15s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  box-shadow: 0 2px 12px rgba(16,6,159,.25);
-  margin-top: 4px;
-}
-.btn-login:hover {
-  background: #0b0580;
-  box-shadow: 0 4px 18px rgba(16,6,159,.35);
-}
-.btn-login:active { transform: scale(.99); }
-.btn-login:disabled {
-  background: var(--muted);
-  cursor: not-allowed;
-  box-shadow: none;
-  transform: none;
-}
-.btn-login svg { width: 17px; height: 17px; }
+  /* Toggle contraseña — posicionado dentro del wrap */
+  .toggle-pwd {
+    position: absolute;
+    right: 10px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 5px;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    transition: color .15s;
+    line-height: 0;
+  }
+  .toggle-pwd:hover { color: var(--azul); }
+  .toggle-pwd svg { width: 16px; height: 16px; display: block; }
 
-/* ── Spinner ── */
-.spinner {
-  width: 17px; height: 17px;
-  border: 2.5px solid rgba(255,255,255,.35);
-  border-top-color: #fff;
-  border-radius: 50%;
-  animation: spin .65s linear infinite;
-  flex-shrink: 0;
-}
-@keyframes spin { to { transform: rotate(360deg); } }
+  /* ── Error ── */
+  .error-msg {
+    display: none;
+    background: #FEF2F2;
+    border: 1px solid #FECACA;
+    border-radius: 8px;
+    padding: 10px 13px;
+    font-size: 13px;
+    color: var(--rojo);
+    margin-bottom: 16px;
+    align-items: center;
+    gap: 8px;
+  }
+  .error-msg.visible { display: flex; }
+  .error-msg svg { width: 15px; height: 15px; flex-shrink: 0; }
 
-/* ── Footer ── */
-.login-footer {
-  text-align: center;
-  margin-top: 24px;
-  font-size: 11px;
-  color: var(--muted);
-  font-family: 'DM Mono', monospace;
-}
+  /* ── Aviso informativo ── */
+  .info-msg {
+    display: none;
+    background: #F0F9FF;
+    border: 1px solid #BAE6FD;
+    border-radius: 8px;
+    padding: 10px 13px;
+    font-size: 13px;
+    line-height: 1.45;
+    color: #075985;
+    margin-bottom: 16px;
+  }
+  .info-msg.visible { display: block; }
 
-/* ── Responsive ── */
-@media (max-width: 480px) {
-  .login-card { padding: 36px 24px 28px; }
-}
+  /* ── Botón ── */
+  .btn-login {
+    width: 100%;
+    background: var(--azul);
+    color: #fff;
+    border: none;
+    border-radius: 9px;
+    padding: 13px 20px;
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background .15s, transform .1s, box-shadow .15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    box-shadow: 0 2px 12px rgba(16,6,159,.25);
+    margin-top: 4px;
+  }
+  .btn-login:hover {
+    background: #0b0580;
+    box-shadow: 0 4px 18px rgba(16,6,159,.35);
+  }
+  .btn-login:active { transform: scale(.99); }
+  .btn-login:disabled {
+    background: var(--muted);
+    cursor: not-allowed;
+    box-shadow: none;
+    transform: none;
+  }
+  .btn-login svg { width: 17px; height: 17px; }
+
+  /* ── Vistas (login / recuperar / elegir contraseña) ── */
+  .vista { display: none; }
+  .vista.activa { display: block; }
+  .vista-titulo {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+  .vista-texto {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.45;
+    margin-bottom: 18px;
+  }
+  .link-row {
+    text-align: center;
+    margin-top: 16px;
+  }
+  .link-btn {
+    background: none;
+    border: none;
+    color: var(--azul);
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    padding: 4px 0;
+    text-decoration: underline;
+  }
+  .link-btn:hover { color: #0b0580; }
+
+  /* ── Spinner ── */
+  .spinner {
+    width: 17px; height: 17px;
+    border: 2.5px solid rgba(255,255,255,.35);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin .65s linear infinite;
+    flex-shrink: 0;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── Footer ── */
+  .login-footer {
+    text-align: center;
+    margin-top: 24px;
+    font-size: 11px;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+  }
+
+  /* ── Responsive ── */
+  @media (max-width: 480px) {
+    .login-card { padding: 36px 24px 28px; }
+  }
 </style>
 </head>
 <body>
@@ -275,62 +322,155 @@ body::before {
     <span id="error-txt">Email o contraseña incorrectos.</span>
   </div>
 
-  <!-- Formulario -->
-  <form id="login-form" onsubmit="handleLogin(event)" novalidate>
+  <!-- Aviso informativo -->
+  <div class="info-msg" id="info-msg"></div>
 
-    <div class="form-group">
-      <label class="form-label" for="email">Email</label>
-      <div class="input-wrap">
-        <input
-          type="email"
-          id="email"
-          class="form-control"
-          placeholder="tu@email.com"
-          autocomplete="email"
-          required
-          inputmode="email"
-        >
-        <svg class="ico-left" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
-          <polyline points="22,6 12,13 2,6"/>
-        </svg>
-      </div>
-    </div>
+  <!-- ═══ Vista: iniciar sesión ═══ -->
+  <div class="vista activa" id="vista-login">
+    <form id="login-form" onsubmit="handleLogin(event)" novalidate>
 
-    <div class="form-group">
-      <label class="form-label" for="password">Contraseña</label>
-      <div class="input-wrap">
-        <input
-          type="password"
-          id="password"
-          class="form-control"
-          placeholder="••••••••"
-          autocomplete="current-password"
-          required
-        >
-        <svg class="ico-left" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-          <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-        </svg>
-        <button type="button" class="toggle-pwd" id="toggle-pwd" onclick="togglePwd()" aria-label="Mostrar / ocultar contraseña">
-          <svg id="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-            <circle cx="12" cy="12" r="3"/>
+      <div class="form-group">
+        <label class="form-label" for="email">Email</label>
+        <div class="input-wrap">
+          <input
+            type="email"
+            id="email"
+            class="form-control"
+            placeholder="tu@email.com"
+            autocomplete="email"
+            required
+            inputmode="email"
+          >
+          <svg class="ico-left" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+            <polyline points="22,6 12,13 2,6"/>
           </svg>
-        </button>
+        </div>
       </div>
+
+      <div class="form-group">
+        <label class="form-label" for="password">Contraseña</label>
+        <div class="input-wrap">
+          <input
+            type="password"
+            id="password"
+            class="form-control"
+            placeholder="••••••••"
+            autocomplete="current-password"
+            required
+          >
+          <svg class="ico-left" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+          </svg>
+          <button type="button" class="toggle-pwd" id="toggle-pwd" onclick="togglePwd()" aria-label="Mostrar / ocultar contraseña">
+            <svg id="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+              <circle cx="12" cy="12" r="3"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <button type="submit" class="btn-login" id="btn-login">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+          <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
+          <polyline points="10 17 15 12 10 7"/>
+          <line x1="15" y1="12" x2="3" y2="12"/>
+        </svg>
+        Entrar
+      </button>
+
+    </form>
+
+    <div class="link-row">
+      <button type="button" class="link-btn" onclick="irARecuperar()">
+        ¿Primera vez o has olvidado tu contraseña?
+      </button>
     </div>
+  </div>
 
-    <button type="submit" class="btn-login" id="btn-login">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-        <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
-        <polyline points="10 17 15 12 10 7"/>
-        <line x1="15" y1="12" x2="3" y2="12"/>
-      </svg>
-      Entrar
-    </button>
+  <!-- ═══ Vista: pedir enlace por correo ═══ -->
+  <div class="vista" id="vista-recover">
+    <div class="vista-titulo">Elige o recupera tu contraseña</div>
+    <div class="vista-texto">
+      Escribe tu email y te enviamos un correo con un botón para elegir tu contraseña.
+    </div>
+    <form id="recover-form" onsubmit="pedirEnlace(event)" novalidate>
+      <div class="form-group">
+        <label class="form-label" for="rec-email">Email</label>
+        <div class="input-wrap">
+          <input
+            type="email"
+            id="rec-email"
+            class="form-control"
+            placeholder="tu@email.com"
+            autocomplete="email"
+            required
+            inputmode="email"
+          >
+          <svg class="ico-left" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+            <polyline points="22,6 12,13 2,6"/>
+          </svg>
+        </div>
+      </div>
+      <button type="submit" class="btn-login" id="btn-recover">Enviarme el enlace</button>
+    </form>
+    <div class="link-row">
+      <button type="button" class="link-btn" onclick="mostrarVista('login')">Volver a iniciar sesión</button>
+    </div>
+  </div>
 
-  </form>
+  <!-- ═══ Vista: elegir contraseña (llegando desde el correo) ═══ -->
+  <div class="vista" id="vista-setpwd">
+    <div class="vista-titulo">Elige tu contraseña</div>
+    <div class="vista-texto">
+      Mínimo 8 caracteres. Con ella entrarás siempre a IPSE junto con tu email.
+    </div>
+    <form id="setpwd-form" onsubmit="guardarNuevaPassword(event)" novalidate>
+      <div class="form-group">
+        <label class="form-label" for="new-password">Nueva contraseña</label>
+        <div class="input-wrap">
+          <input
+            type="password"
+            id="new-password"
+            class="form-control"
+            placeholder="••••••••"
+            autocomplete="new-password"
+            required
+          >
+          <svg class="ico-left" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+          </svg>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="new-password2">Repite la contraseña</label>
+        <div class="input-wrap">
+          <input
+            type="password"
+            id="new-password2"
+            class="form-control"
+            placeholder="••••••••"
+            autocomplete="new-password"
+            required
+          >
+          <svg class="ico-left" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+          </svg>
+        </div>
+      </div>
+      <button type="submit" class="btn-login" id="btn-setpwd">Guardar y entrar</button>
+    </form>
+  </div>
+
+  <!-- ═══ Vista: comprobando enlace ═══ -->
+  <div class="vista" id="vista-verificando">
+    <div class="vista-texto" style="margin-bottom:0;text-align:center;">Comprobando tu enlace…</div>
+  </div>
 
   <div class="login-footer">
     IPSE · Sistema de gestión v2
@@ -344,6 +484,16 @@ body::before {
 ───────────────────────────────────────── */
 const SUPA_URL = 'https://vlplebjqhufbzfncrawf.supabase.co';
 const SUPA_KEY = 'sb_publishable_Qt604gEH_lfx89HkPElvcA_OGwbKeDO';
+
+/* URL de esta página sin "index.html" (destino de los enlaces de correo).
+   Debe estar en Auth → URL Configuration → Redirect URLs. */
+const URL_BASE = location.origin + location.pathname.replace(/index\.html$/, '');
+
+/* Tipos de enlace de correo que llevan a "elegir contraseña" */
+const TIPOS_ENLACE = ['recovery', 'invite', 'signup', 'email'];
+
+/* Tokens recibidos desde el enlace del correo (solo en memoria) */
+let tokensEnlace = null;
 
 /* ─────────────────────────────────────────
    Toggle contraseña visible / oculta
@@ -365,7 +515,7 @@ function togglePwd() {
 }
 
 /* ─────────────────────────────────────────
-   Mostrar / ocultar error
+   Mostrar / ocultar mensajes
 ───────────────────────────────────────── */
 function mostrarError(msg) {
   const el = document.getElementById('error-msg');
@@ -375,9 +525,36 @@ function mostrarError(msg) {
 function ocultarError() {
   document.getElementById('error-msg').classList.remove('visible');
 }
+function mostrarInfo(msg) {
+  const el = document.getElementById('info-msg');
+  el.textContent = msg;
+  el.classList.add('visible');
+}
+function ocultarInfo() {
+  document.getElementById('info-msg').classList.remove('visible');
+}
 
 /* ─────────────────────────────────────────
-   Estado botón: cargando / normal
+   Cambio de vista
+───────────────────────────────────────── */
+function mostrarVista(nombre) {
+  ocultarError();
+  ocultarInfo();
+  document.querySelectorAll('.vista').forEach(v => {
+    v.classList.toggle('activa', v.id === 'vista-' + nombre);
+  });
+  const foco = { login: 'email', recover: 'rec-email', setpwd: 'new-password' }[nombre];
+  if (foco) document.getElementById(foco).focus();
+}
+
+function irARecuperar() {
+  const emailLogin = document.getElementById('email').value.trim();
+  mostrarVista('recover');
+  if (emailLogin) document.getElementById('rec-email').value = emailLogin;
+}
+
+/* ─────────────────────────────────────────
+   Estado botón de login: cargando / normal
 ───────────────────────────────────────── */
 function setBtnCargando(cargando) {
   const btn = document.getElementById('btn-login');
@@ -394,6 +571,20 @@ function setBtnCargando(cargando) {
       </svg>
       Entrar`;
   }
+}
+
+/* ─────────────────────────────────────────
+   Guardar sesión (mismo formato que usa hub.html)
+───────────────────────────────────────── */
+function guardarSesion(tokens, user) {
+  const sesion = {
+    access_token:  tokens.access_token,
+    refresh_token: tokens.refresh_token,
+    expires_at:    Date.now() + (Number(tokens.expires_in) || 3600) * 1000,
+    user_id:       user.id,
+    email:         user.email
+  };
+  localStorage.setItem('ipse_sesion', JSON.stringify(sesion));
 }
 
 /* ─────────────────────────────────────────
@@ -436,14 +627,7 @@ async function handleLogin(e) {
     }
 
     /* 2. Guardar sesión en localStorage */
-    const sesion = {
-      access_token:  data.access_token,
-      refresh_token: data.refresh_token,
-      expires_at:    Date.now() + data.expires_in * 1000,
-      user_id:       data.user.id,
-      email:         data.user.email
-    };
-    localStorage.setItem('ipse_sesion', JSON.stringify(sesion));
+    guardarSesion(data, data.user);
 
     /* 3. Ir a hub.html */
     window.location.href = 'hub.html';
@@ -456,25 +640,209 @@ async function handleLogin(e) {
 }
 
 /* ─────────────────────────────────────────
+   Pedir enlace por correo (primera vez / olvidé contraseña)
+───────────────────────────────────────── */
+async function pedirEnlace(e) {
+  e.preventDefault();
+  ocultarError();
+  ocultarInfo();
+
+  const email = document.getElementById('rec-email').value.trim();
+  if (!email || !email.includes('@')) {
+    mostrarError('Escribe tu email.');
+    return;
+  }
+
+  const btn = document.getElementById('btn-recover');
+  btn.disabled = true;
+  btn.textContent = 'Enviando…';
+
+  try {
+    const res = await fetch(
+      `${SUPA_URL}/auth/v1/recover?redirect_to=${encodeURIComponent(URL_BASE)}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'apikey': SUPA_KEY },
+        body: JSON.stringify({ email })
+      }
+    );
+
+    if (res.status === 429) {
+      mostrarError('Acabas de pedir un correo. Espera un minuto y vuelve a intentarlo.');
+    } else if (!res.ok) {
+      mostrarError('No se ha podido enviar el correo. Inténtalo de nuevo en unos minutos.');
+    } else {
+      // Mensaje neutro: no revela si el email existe o no
+      mostrarInfo('Si ese email está dado de alta en IPSE, te hemos enviado un correo. Ábrelo y pulsa el botón para elegir tu contraseña. Si no lo ves, mira en la carpeta de spam.');
+    }
+  } catch (err) {
+    console.error('Error de red:', err);
+    mostrarError('Error de conexión. Comprueba tu internet e inténtalo de nuevo.');
+  }
+
+  btn.disabled = false;
+  btn.textContent = 'Enviarme el enlace';
+}
+
+/* ─────────────────────────────────────────
+   Llegada desde el enlace del correo
+   (hash con tokens, o ?token_hash=… si la plantilla lo usa)
+───────────────────────────────────────── */
+function limpiarUrl() {
+  history.replaceState(null, '', location.pathname);
+}
+
+function enlaceInvalido() {
+  mostrarVista('recover');
+  mostrarError('El enlace ha caducado o ya se ha usado. Escribe tu email y te enviamos uno nuevo.');
+}
+
+async function verificarTokenHash(token_hash, type) {
+  mostrarVista('verificando');
+  try {
+    const res = await fetch(`${SUPA_URL}/auth/v1/verify`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'apikey': SUPA_KEY },
+      body: JSON.stringify({ type, token_hash })
+    });
+    const data = await res.json();
+    limpiarUrl();
+    if (!res.ok || !data.access_token) {
+      enlaceInvalido();
+      return;
+    }
+    tokensEnlace = {
+      access_token:  data.access_token,
+      refresh_token: data.refresh_token,
+      expires_in:    data.expires_in
+    };
+    mostrarVista('setpwd');
+  } catch (err) {
+    console.error('Error de red:', err);
+    limpiarUrl();
+    enlaceInvalido();
+  }
+}
+
+/* Devuelve true si la página se ha abierto desde un enlace de correo */
+function procesarEnlace() {
+  const h = new URLSearchParams(location.hash.replace(/^#/, ''));
+  const q = new URLSearchParams(location.search);
+
+  // Enlace caducado / ya usado
+  if (h.get('error') || h.get('error_code')) {
+    limpiarUrl();
+    enlaceInvalido();
+    return true;
+  }
+
+  // Enlace estándar de Supabase: tokens en el hash
+  if (h.get('access_token') && TIPOS_ENLACE.includes(h.get('type'))) {
+    tokensEnlace = {
+      access_token:  h.get('access_token'),
+      refresh_token: h.get('refresh_token'),
+      expires_in:    h.get('expires_in')
+    };
+    limpiarUrl();
+    mostrarVista('setpwd');
+    return true;
+  }
+
+  // Enlace con token_hash (plantilla personalizada, resistente a escáneres de correo)
+  if (q.get('token_hash') && TIPOS_ENLACE.includes(q.get('type'))) {
+    verificarTokenHash(q.get('token_hash'), q.get('type'));
+    return true;
+  }
+
+  return false;
+}
+
+/* ─────────────────────────────────────────
+   Guardar la contraseña elegida
+───────────────────────────────────────── */
+async function guardarNuevaPassword(e) {
+  e.preventDefault();
+  ocultarError();
+
+  const p1 = document.getElementById('new-password').value;
+  const p2 = document.getElementById('new-password2').value;
+
+  if (p1.length < 8) {
+    mostrarError('La contraseña debe tener al menos 8 caracteres.');
+    return;
+  }
+  if (p1 !== p2) {
+    mostrarError('Las contraseñas no coinciden.');
+    return;
+  }
+  if (!tokensEnlace) {
+    enlaceInvalido();
+    return;
+  }
+
+  const btn = document.getElementById('btn-setpwd');
+  btn.disabled = true;
+  btn.textContent = 'Guardando…';
+
+  try {
+    const res = await fetch(`${SUPA_URL}/auth/v1/user`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPA_KEY,
+        'Authorization': `Bearer ${tokensEnlace.access_token}`
+      },
+      body: JSON.stringify({ password: p1 })
+    });
+    const data = await res.json();
+
+    if (!res.ok) {
+      mostrarError(traducirError(
+        data.msg || data.message || data.error_description || '',
+        'No se ha podido guardar la contraseña. Pide un enlace nuevo e inténtalo de nuevo.'
+      ));
+      btn.disabled = false;
+      btn.textContent = 'Guardar y entrar';
+      return;
+    }
+
+    guardarSesion(tokensEnlace, data);
+    tokensEnlace = null;
+    window.location.href = 'hub.html';
+
+  } catch (err) {
+    console.error('Error de red:', err);
+    mostrarError('Error de conexión. Comprueba tu internet e inténtalo de nuevo.');
+    btn.disabled = false;
+    btn.textContent = 'Guardar y entrar';
+  }
+}
+
+/* ─────────────────────────────────────────
    Traducciones de errores Supabase → ES
 ───────────────────────────────────────── */
-function traducirError(msg) {
-  const m = msg.toLowerCase();
+function traducirError(msg, fallback) {
+  const m = (msg || '').toLowerCase();
   if (m.includes('invalid login') || m.includes('invalid credentials'))
     return 'Email o contraseña incorrectos.';
   if (m.includes('email not confirmed'))
-    return 'Cuenta no confirmada. Contacta con Abraham.';
+    return 'Aún no has elegido tu contraseña. Pulsa «¿Primera vez o has olvidado tu contraseña?» y te enviamos un correo.';
   if (m.includes('too many requests'))
     return 'Demasiados intentos. Espera unos minutos e inténtalo de nuevo.';
   if (m.includes('user not found'))
     return 'No existe una cuenta con ese email.';
-  return 'Error al iniciar sesión. Inténtalo de nuevo.';
+  if (m.includes('different from the old password'))
+    return 'La nueva contraseña debe ser distinta de la anterior.';
+  if (m.includes('at least') || m.includes('weak'))
+    return 'La contraseña es demasiado débil. Usa al menos 8 caracteres, mejor con letras y números.';
+  return fallback || 'Error al iniciar sesión. Inténtalo de nuevo.';
 }
 
 /* ─────────────────────────────────────────
-   Al cargar: si ya hay sesión válida, ir a hub
+   Al cargar: enlace de correo → elegir contraseña;
+   si no, y ya hay sesión válida, ir a hub
 ───────────────────────────────────────── */
-(function comprobarSesion() {
+function comprobarSesion() {
   try {
     const raw = localStorage.getItem('ipse_sesion');
     if (!raw) return;
@@ -484,7 +852,9 @@ function traducirError(msg) {
       window.location.href = 'hub.html';
     }
   } catch { /* sesión corrupta — la ignoramos */ }
-})();
+}
+
+if (!procesarEnlace()) comprobarSesion();
 
 /* ─────────────────────────────────────────
    Enter en cualquier campo envía el form
