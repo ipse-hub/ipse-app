@@ -1568,6 +1568,7 @@ function renderMes(citas, pacMap) {
 function abrirModalNueva(fecha, hora) {
   resetModal();
   G.modalCitaId = null;
+  G.modalBonoCita = null;
   document.getElementById('modal-title').innerHTML = `
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
     Nueva cita`;
@@ -1590,6 +1591,7 @@ function abrirModalNueva(fecha, hora) {
 function abrirModalEditar(cita, pac) {
   resetModal();
   G.modalCitaId     = cita.id;
+  G.modalBonoCita   = cita.id_bono_beca || null;
   G.modalEstadoPrevio = cita.estado || 'Programada'; // para detectar cambio de estado
   G.modalFechaOriginal = cita.fecha;
   G.modalHoraOriginal  = (cita.hora || '').substring(0, 5);
@@ -2083,6 +2085,17 @@ async function cargarBonoBeca(idPaciente) {
   } catch (e) { console.error('cargarBonoBeca:', e); }
 }
 
+/* Bono/beca "activo" de un tipo: el que aún tiene sesiones por consumir.
+   En edición de una cita, su propio bono (aunque esté agotado) tiene prioridad
+   para no reasignarla a otro. Un bono agotado, aunque no haya vencido,
+   no cuenta como vigente: permite dar de alta el siguiente. */
+function bonoActivo(tipo) {
+  const lista = (G.bonosBecas || []).filter(b => b.tipo === tipo);
+  const propio = G.modalBonoCita ? lista.find(b => b.id === G.modalBonoCita) : null;
+  if (propio) return propio;
+  return lista.find(b => (b.sesiones_total || 0) - (b.sesiones_consumidas || 0) > 0) || null;
+}
+
 /* Muestra aviso en col derecha + abre panel en col izquierda */
 function mostrarAvisoBonoBeca(tipo) {
   const wrap  = document.getElementById('bb-aviso-wrap');
@@ -2175,9 +2188,11 @@ async function crearNuevoBono() {
 
   // Verificar que no hay otro bono vigente del mismo paciente + especialidad
   const hoy = fmtISO(new Date());
-  const duplicado = await supaGet(
-    `bonos_becas?id_paciente=eq.${G.modalPacId}&tipo=eq.BONO&especialidad=eq.${espBono}&fecha_vencimiento=gte.${hoy}&select=id&limit=1`
+  const vigentes = await supaGet(
+    `bonos_becas?id_paciente=eq.${G.modalPacId}&tipo=eq.BONO&especialidad=eq.${espBono}&fecha_vencimiento=gte.${hoy}&select=id,sesiones_total,sesiones_consumidas`
   );
+  // Vigente = no vencido y con sesiones por consumir (un bono agotado no bloquea el siguiente)
+  const duplicado = vigentes.filter(b => (b.sesiones_total || 0) - (b.sesiones_consumidas || 0) > 0);
   if (duplicado.length) {
     toast(`Ya existe un bono de ${espBono} vigente para este paciente`, true);
     return;
@@ -2320,7 +2335,7 @@ async function crearNuevaBeca() {
    MODALIDAD PAGO / PRECIO
 ═══════════════════════════════════════════ */
 function mostrarAvisoBonoPendiente() {
-  const bono   = G.bonosBecas?.find(b => b.tipo === 'BONO');
+  const bono   = bonoActivo('BONO');
   const wrap   = document.getElementById('bono-pendiente-wrap');
   const alerta = document.getElementById('bono-pendiente-alerta');
   const texto  = document.getElementById('bono-pendiente-texto');
@@ -2359,7 +2374,7 @@ function mostrarAvisoBonoPendiente() {
 }
 
 async function registrarCobroBono() {
-  const bono = G.bonosBecas?.find(b => b.tipo === 'BONO');
+  const bono = bonoActivo('BONO');
   if (!bono) return;
 
   const forma = document.querySelector('input[name="bono-cobro-forma"]:checked')?.value;
@@ -2410,7 +2425,7 @@ async function registrarCobroBono() {
 function selPill(el, mod, precio, skipFocus) {
   // Para Bono/Beca: verificar si hay activo antes de seleccionar
   if (['BECA','BONO'].includes(mod)) {
-    const match = G.bonosBecas?.find(b => b.tipo === mod);
+    const match = bonoActivo(mod);
     if (!match) {
       mostrarAvisoBonoBeca(mod);
       document.getElementById('bono-pendiente-wrap').style.display = 'none';
@@ -2464,8 +2479,9 @@ function selPill(el, mod, precio, skipFocus) {
   // Sección cobro: oculta para BONO siempre; oculta para BECA con anticipo
   const esBB = ['BONO','BECA'].includes(mod);
   const becaSinAnticipo = mod === 'BECA' &&
-    G.bonosBecas?.find(b => b.tipo === 'BECA')?.anticipo_recibido === 'No';
-  const mostrarCobro = !esBB || becaSinAnticipo;
+    bonoActivo('BECA')?.anticipo_recibido === 'No';
+  // Adecco se factura: nunca se cobra la sesión (ni efectivo ni nada)
+  const mostrarCobro = (!esBB && mod !== 'ADECCO') || becaSinAnticipo;
   const pagoSection = document.getElementById('pago-section');
   if (!mostrarCobro) {
     pagoSection.classList.add('oculto-bb');
@@ -2514,8 +2530,8 @@ function selEstado(btn, tipo) {
   // Sección cobro: oculta para BONO siempre; oculta para BECA con anticipo
   const esBB = ['BONO','BECA'].includes(G.modalMod);
   const becaSinAnticipo = G.modalMod === 'BECA' &&
-    G.bonosBecas?.find(b => b.tipo === 'BECA')?.anticipo_recibido === 'No';
-  const mostrarCobro = !esBB || becaSinAnticipo;
+    bonoActivo('BECA')?.anticipo_recibido === 'No';
+  const mostrarCobro = (!esBB && G.modalMod !== 'ADECCO') || becaSinAnticipo;
 
   const pagoSection = document.getElementById('pago-section');
   if (!mostrarCobro) {
@@ -2551,7 +2567,7 @@ function ajustarOpcionesRecur() {
   ];
   let maxOpc = 999;
   if (['BONO','BECA'].includes(G.modalMod)) {
-    const bb = G.bonosBecas?.find(b => b.tipo === G.modalMod);
+    const bb = bonoActivo(G.modalMod);
     if (bb) maxOpc = (bb.sesiones_total || 0) - (bb.sesiones_consumidas || 0);
   }
   const valorActual = sel.value;
@@ -2583,7 +2599,7 @@ function calcRecur() {
 
   let avisoSesiones = '';
   if (['BONO','BECA'].includes(G.modalMod)) {
-    const bb = G.bonosBecas?.find(b => b.tipo === G.modalMod);
+    const bb = bonoActivo(G.modalMod);
     if (bb) {
       const restantes = (bb.sesiones_total || 0) - (bb.sesiones_consumidas || 0);
       // Esta cita (la principal) + las repetidas = n total
@@ -2706,11 +2722,12 @@ async function guardarCita() {
     if (isNaN(precio)) { toast('El precio no es válido', true); return; }
   }
 
-  const formaCobro  = document.querySelector('input[name="forma-cobro"]:checked')?.value || null;
+  let formaCobro  = document.querySelector('input[name="forma-cobro"]:checked')?.value || null;
+  if (G.modalMod === 'ADECCO') formaCobro = null; // Adecco se factura: no hay cobro de sesión
   const especialidad = document.getElementById('sel-especialidad').value;
   let idBonoBeca = null;
   if (['BECA','BONO'].includes(G.modalMod)) {
-    const match = G.bonosBecas?.find(b => b.tipo === G.modalMod);
+    const match = bonoActivo(G.modalMod);
     if (!match) { toast(`Crea un ${G.modalMod === 'BECA' ? 'beca' : 'bono'} activo antes de guardar`, true); return; }
     idBonoBeca = match.id;
   }
