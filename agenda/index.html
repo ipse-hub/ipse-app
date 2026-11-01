@@ -652,6 +652,27 @@ select.fc{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.o
         </div>
       </div>
 
+      <!-- CEDER CITA (solo al editar una cita Programada) -->
+      <div class="section" id="sec-ceder" style="display:none">
+        <div class="sec-label">Ceder cita</div>
+        <div class="check-row">
+          <label class="check-item"><input type="radio" name="ceder-cita" value="No" checked onchange="toggleCeder()"> No</label>
+          <label class="check-item"><input type="radio" name="ceder-cita" value="Si" onchange="toggleCeder()"> Sí</label>
+        </div>
+        <div class="alert alert-info" id="ceder-origen" style="display:none;margin-top:8px;margin-bottom:0">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;flex-shrink:0;margin-top:1px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          <span id="ceder-origen-txt"></span>
+        </div>
+        <div id="ceder-panel" style="display:none;margin-top:10px">
+          <label class="fl">Reasignar a</label>
+          <select class="fc" id="sel-ceder-prof"></select>
+          <div class="alert alert-info" style="margin-top:8px;margin-bottom:0">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;flex-shrink:0;margin-top:1px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            <span>Al guardar, la cita pasa a la profesional elegida y toma su color. Queda registrado quién la cedía, a quién y cuándo.</span>
+          </div>
+        </div>
+      </div>
+
     </div><!-- /col izq -->
 
     <!-- ══ COL DERECHA: Estado + Cobro + Repetir + Notas + Recordatorio ══ -->
@@ -722,27 +743,6 @@ select.fc{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.o
           <div class="alert alert-info" style="margin-top:8px;margin-bottom:0">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;flex-shrink:0;margin-top:1px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
             <span>Esta cita quedará como <strong>Reprogramada</strong>. Se creará una nueva cita en la fecha indicada con los mismos datos, vinculada a ésta para trazabilidad.</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- CEDER CITA (solo al editar una cita Programada) -->
-      <div class="section" id="sec-ceder" style="display:none">
-        <div class="sec-label">Ceder cita</div>
-        <div class="check-row">
-          <label class="check-item"><input type="radio" name="ceder-cita" value="No" checked onchange="toggleCeder()"> No</label>
-          <label class="check-item"><input type="radio" name="ceder-cita" value="Si" onchange="toggleCeder()"> Sí</label>
-        </div>
-        <div class="alert alert-info" id="ceder-origen" style="display:none;margin-top:8px;margin-bottom:0">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;flex-shrink:0;margin-top:1px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-          <span id="ceder-origen-txt"></span>
-        </div>
-        <div id="ceder-panel" style="display:none;margin-top:10px">
-          <label class="fl">Reasignar a</label>
-          <select class="fc" id="sel-ceder-prof"></select>
-          <div class="alert alert-info" style="margin-top:8px;margin-bottom:0">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;flex-shrink:0;margin-top:1px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-            <span>Al guardar, la cita pasa a la profesional elegida y toma su color. Queda registrado quién la cedía, a quién y cuándo.</span>
           </div>
         </div>
       </div>
