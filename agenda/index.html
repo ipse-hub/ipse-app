@@ -54,6 +54,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);fon
 .ter-row:hover{background:var(--bg)}
 .ter-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
 .ter-row input[type=checkbox]{accent-color:var(--azul);width:13px;height:13px;cursor:pointer;flex-shrink:0}
+.btn-ter-todas{display:block;width:calc(100% - 12px);margin:0 6px 6px;background:rgba(16,6,159,.07);color:var(--azul);border:1.5px solid rgba(16,6,159,.18);border-radius:8px;padding:5px 10px;font-family:inherit;font-size:11px;font-weight:600;cursor:pointer;transition:all .15s}
+.btn-ter-todas:hover{background:rgba(16,6,159,.14);border-color:var(--azul)}
 
 /* ── ÁREA AGENDA ── */
 .main{flex:1;min-width:0;display:flex;flex-direction:column;padding:12px 16px 0;overflow:hidden}
@@ -361,6 +363,7 @@ select.fc{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.o
     <hr class="sidebar-divider">
     <div class="sidebar-section" style="padding-top:6px">
       <div class="sidebar-section-title">Terapeutas</div>
+      <button type="button" class="btn-ter-todas" id="btn-ter-todas" onclick="toggleTodasTerapeutas()">Deseleccionar todas</button>
       <div id="ter-lista"></div>
     </div>
     <hr class="sidebar-divider">
@@ -723,6 +726,27 @@ select.fc{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.o
         </div>
       </div>
 
+      <!-- CEDER CITA (solo al editar una cita Programada) -->
+      <div class="section" id="sec-ceder" style="display:none">
+        <div class="sec-label">Ceder cita</div>
+        <div class="check-row">
+          <label class="check-item"><input type="radio" name="ceder-cita" value="No" checked onchange="toggleCeder()"> No</label>
+          <label class="check-item"><input type="radio" name="ceder-cita" value="Si" onchange="toggleCeder()"> Sí</label>
+        </div>
+        <div class="alert alert-info" id="ceder-origen" style="display:none;margin-top:8px;margin-bottom:0">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;flex-shrink:0;margin-top:1px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          <span id="ceder-origen-txt"></span>
+        </div>
+        <div id="ceder-panel" style="display:none;margin-top:10px">
+          <label class="fl">Reasignar a</label>
+          <select class="fc" id="sel-ceder-prof"></select>
+          <div class="alert alert-info" style="margin-top:8px;margin-bottom:0">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;flex-shrink:0;margin-top:1px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            <span>Al guardar, la cita pasa a la profesional elegida y toma su color. Queda registrado quién la cedía, a quién y cuándo.</span>
+          </div>
+        </div>
+      </div>
+
       <!-- FORMA COBRO -->
       <div class="section pago-section locked" id="pago-section">
         <div class="sec-label">Forma de cobro</div>
@@ -995,7 +1019,7 @@ async function init() {
 
   // Sidebar terapeutas
   try {
-    const pros = await supaGet(`profesionales?activa=eq.Si&select=id,nombre,apellidos,color_agenda&order=nombre.asc&limit=50`);
+    const pros = await supaGet(`profesionales?activa=eq.Si&select=id,nombre,apellidos,color_agenda,especialidades&order=nombre.asc&limit=50`);
     G.profesionales = pros;
     pros.forEach((p, i) => {
       COLORES_PRO[p.id] = p.color_agenda || PALETA[i % PALETA.length];
@@ -1044,12 +1068,32 @@ function renderSidebar() {
       ${p.nombre} ${p.apellidos || ''}
     </label>
   `).join('');
+  actualizarBotonTodasTerapeutas();
 }
 
 function toggleTerapeuta(id, checked) {
   if (checked) G.terFiltro.add(id);
   else         G.terFiltro.delete(id);
+  actualizarBotonTodasTerapeutas();
   aplicarFiltro();
+}
+
+// Botón único "Seleccionar todas / Deseleccionar todas": si ya están todas
+// marcadas las desmarca; en cualquier otro caso (ninguna o algunas) marca todas.
+function toggleTodasTerapeutas() {
+  const todas = G.profesionales.length > 0 && G.profesionales.every(p => G.terFiltro.has(p.id));
+  G.terFiltro.clear();
+  if (!todas) G.profesionales.forEach(p => G.terFiltro.add(p.id));
+  document.querySelectorAll('#ter-lista input[type=checkbox]').forEach(cb => { cb.checked = !todas; });
+  actualizarBotonTodasTerapeutas();
+  aplicarFiltro();
+}
+
+function actualizarBotonTodasTerapeutas() {
+  const btn = document.getElementById('btn-ter-todas');
+  if (!btn) return;
+  const todas = G.profesionales.length > 0 && G.profesionales.every(p => G.terFiltro.has(p.id));
+  btn.textContent = todas ? 'Deseleccionar todas' : 'Seleccionar todas';
 }
 
 function toggleCanceladas(checked) {
@@ -1184,7 +1228,7 @@ async function cargarCitas() {
 
   try {
     const citas = await supaGet(
-      `citas_v2?fecha=gte.${desde}&fecha=lte.${hasta}&select=id,id_paciente,id_profesional,especialidad,fecha,hora,duracion_min,modalidad_pago,precio,estado,notas,cobrado,forma_cobro,id_bono_beca&order=hora.asc&limit=500`
+      `citas_v2?fecha=gte.${desde}&fecha=lte.${hasta}&select=id,id_paciente,id_profesional,especialidad,fecha,hora,duracion_min,modalidad_pago,precio,estado,notas,cobrado,forma_cobro,id_bono_beca,id_profesional_origen&order=hora.asc&limit=500`
     );
     G.citas = citas;
 
@@ -1649,6 +1693,9 @@ function abrirModalEditar(cita, pac) {
 
   if (pac) cargarBonoBeca(pac.id);
 
+  actualizarSeccionCeder();
+  mostrarOrigenCesion(cita);
+
   abrirOverlay();
 }
 
@@ -1677,6 +1724,10 @@ function resetModal() {
   G.serieCandidatas = [];
   document.getElementById('sec-serie').style.display = 'none';
   document.getElementById('serie-lista').innerHTML = '';
+  document.getElementById('sec-ceder').style.display = 'none';
+  document.getElementById('ceder-origen').style.display = 'none';
+  document.querySelector('input[name="ceder-cita"][value="No"]').checked = true;
+  document.getElementById('ceder-panel').style.display = 'none';
 
   document.getElementById('pac-input').value = '';
   document.getElementById('pac-dropdown').classList.remove('visible');
@@ -2507,10 +2558,12 @@ function selEstado(btn, tipo) {
     document.getElementById('pago-hint').style.display = '';
     document.getElementById('noshow-hint').style.display = 'none';
     document.getElementById('repro-panel').style.display = 'none';
+    actualizarSeccionCeder();
     return;
   }
 
   G.modalEstado = tipo;
+  actualizarSeccionCeder();
   btn.classList.add('sel-' + tipo.replace(' ',''));
 
   // Panel reprogramación
@@ -2617,6 +2670,59 @@ function calcRecur() {
 }
 
 /* ═══════════════════════════════════════════
+   CEDER CITA
+   Solo citas Programadas, solo en edición. Cambia id_profesional (y por
+   tanto el color) y deja rastro: id_profesional_origen en la cita (se fija
+   en la primera cesión) + una línea por cesión en citas_cesiones.
+═══════════════════════════════════════════ */
+function nombreProfesional(id) {
+  const p = G.profesionales.find(x => x.id === id);
+  return p ? `${p.nombre} ${p.apellidos || ''}`.trim() : id;
+}
+
+function cederActivo() {
+  const sec = document.getElementById('sec-ceder');
+  return !!G.modalCitaId && sec.style.display !== 'none' &&
+    document.querySelector('input[name="ceder-cita"]:checked')?.value === 'Si';
+}
+
+function actualizarSeccionCeder() {
+  const sec = document.getElementById('sec-ceder');
+  const visible = !!G.modalCitaId && G.modalEstadoPrevio === 'Programada' && G.modalEstado === 'Programada';
+  sec.style.display = visible ? '' : 'none';
+  if (!visible) {
+    document.querySelector('input[name="ceder-cita"][value="No"]').checked = true;
+    toggleCeder();
+  }
+}
+
+function toggleCeder() {
+  const si = document.querySelector('input[name="ceder-cita"]:checked')?.value === 'Si';
+  document.getElementById('ceder-panel').style.display = si ? '' : 'none';
+  if (si) {
+    const actual = G.modalCitaRef?.id_profesional;
+    const sel = document.getElementById('sel-ceder-prof');
+    sel.innerHTML = '<option value="">— Elige profesional —</option>' + G.profesionales
+      .filter(p => p.id !== actual)
+      .map(p => {
+        const esp = (p.especialidades || []).map(e => ESPECIALIDADES[e] || e).join(', ');
+        return `<option value="${p.id}">${p.nombre} ${p.apellidos || ''}${esp ? ' · ' + esp : ''}</option>`;
+      }).join('');
+  }
+}
+
+function mostrarOrigenCesion(cita) {
+  const box = document.getElementById('ceder-origen');
+  if (cita.id_profesional_origen && cita.id_profesional_origen !== cita.id_profesional) {
+    document.getElementById('ceder-origen-txt').innerHTML =
+      `Cita cedida. Profesional original: <strong>${nombreProfesional(cita.id_profesional_origen)}</strong>.`;
+    box.style.display = '';
+  } else {
+    box.style.display = 'none';
+  }
+}
+
+/* ═══════════════════════════════════════════
    SERIE — CITAS RELACIONADAS (mismo paciente,
    profesional y hora, aún Programadas)
    No existe vínculo real en BD (id_serie no se
@@ -2636,7 +2742,7 @@ async function cargarCandidatasSerie(citaRef) {
     const rows = await supaGet(
       `citas_v2?id_paciente=eq.${citaRef.id_paciente}&id_profesional=eq.${citaRef.id_profesional}` +
       `&estado=eq.Programada&fecha=gte.${hoy}&id=neq.${citaRef.id}` +
-      `&select=id,fecha,hora,estado&order=fecha.asc`
+      `&select=id,fecha,hora,estado,id_profesional_origen&order=fecha.asc`
     );
     const horaRef = citaRef.hora.substring(0, 5);
     G.serieCandidatas = rows.filter(r => (r.hora || '').substring(0, 5) === horaRef);
@@ -2750,6 +2856,65 @@ async function guardarCita() {
     } catch { /* si falla la comprobación, no bloqueamos el guardado por esto */ }
   }
 
+  // ── Cesión de cita (solo Programada, solo edición) ──
+  let cesion = null; // { destId, destNombre, origenRaiz }
+  if (cederActivo()) {
+    const destId = document.getElementById('sel-ceder-prof').value;
+    if (!destId) { toast('Elige a qué profesional se cede la cita', true); return; }
+    const dest = G.profesionales.find(p => p.id === destId);
+    try {
+      // Registro real desde BD: evita ceder con datos obsoletos del modal
+      const act = (await supaGet(`citas_v2?id=eq.${G.modalCitaId}&select=id_profesional,id_profesional_origen,estado&limit=1`))[0];
+      if (!act) { toast('No se ha podido leer la cita', true); return; }
+      if (act.estado !== 'Programada') { toast('Solo se pueden ceder citas Programadas', true); return; }
+      if (act.id_profesional === destId) { toast('La cita ya es de esa profesional', true); return; }
+      cesion = { destId, destNombre: nombreProfesional(destId), origenRaiz: act.id_profesional_origen || act.id_profesional, desdeId: act.id_profesional };
+    } catch (err) {
+      console.error('Error leyendo cita para ceder:', err);
+      toast('No se ha podido comprobar la cita antes de ceder', true); return;
+    }
+
+    // Choque de horario de la destinataria: esta cita + las de la serie marcadas
+    const ya = G.serieCandidatas || [];
+    const idsSerieCes = serieSeleccionadas();
+    const deltaCes = Math.round((new Date(fecha + 'T12:00:00') - new Date(G.modalFechaOriginal + 'T12:00:00')) / 86400000);
+    const slots = [{ id: G.modalCitaId, fecha, hora }];
+    idsSerieCes.forEach(id => {
+      const c = ya.find(x => x.id === id);
+      if (c) slots.push({ id, fecha: fmtISO(addDias(new Date(c.fecha + 'T12:00:00'), deltaCes)), hora });
+    });
+    try {
+      const choques = [];
+      for (const sl of slots) {
+        const r = await supaGet(
+          `citas_v2?id_profesional=eq.${destId}&fecha=eq.${sl.fecha}&hora=eq.${sl.hora}&estado=not.in.(Reprogramada,Cancelada)&id=neq.${sl.id}&select=id&limit=1`
+        );
+        if (r.length) choques.push(sl.fecha);
+      }
+      if (choques.length) {
+        toast(`${cesion.destNombre} ya tiene cita a esa hora: ${choques.map(f => f.split('-').reverse().join('/')).join(', ')}`, true);
+        return;
+      }
+    } catch (err) {
+      console.error('Error comprobando choques al ceder:', err);
+      toast('No se ha podido comprobar la disponibilidad de la profesional', true); return;
+    }
+
+    // Aviso + confirmación si la especialidad de la cita no es de la destinataria
+    const espsDest = dest?.especialidades || [];
+    if (!espsDest.includes(especialidad)) {
+      const espTxt = ESPECIALIDADES[especialidad] || especialidad;
+      const detalle = espsDest.length
+        ? `solo tiene ${espsDest.map(e => ESPECIALIDADES[e] || e).join(', ')}`
+        : 'no tiene especialidades asignadas';
+      const seguir = confirm(
+        `La cita es de ${espTxt} y ${cesion.destNombre} ${detalle}.\n` +
+        `La especialidad de la cita no se modifica.\n\n¿Ceder la cita de todos modos?`
+      );
+      if (!seguir) return;
+    }
+  }
+
   const payload = {
     id_paciente:    G.modalPacId,
     especialidad,
@@ -2766,6 +2931,11 @@ async function guardarCita() {
   // id_profesional solo se fija al crear una cita nueva — al editar una cita
   // existente se conserva el profesional ya asignado (no se pisa con quien la edita).
   if (!G.modalCitaId) payload.id_profesional = G.profesional.id;
+  // Excepción explícita: la cesión sí reasigna la profesional (y deja la original anotada).
+  if (cesion) {
+    payload.id_profesional        = cesion.destId;
+    payload.id_profesional_origen = cesion.origenRaiz;
+  }
 
   const btn = document.getElementById('btn-guardar');
   btn.disabled = true;
@@ -2774,6 +2944,24 @@ async function guardarCita() {
   try {
     if (G.modalCitaId) {
       await supaPatch('citas_v2', G.modalCitaId, payload);
+
+      // Registro de la cesión (libro append-only). Si falla, la cita ya está cedida:
+      // se avisa para que quede constancia manual.
+      let avisoCesion = '';
+      if (cesion) {
+        avisoCesion = ` · cedida a ${cesion.destNombre}`;
+        try {
+          await supaPost('citas_cesiones', {
+            id_cita:         G.modalCitaId,
+            id_prof_origen:  cesion.desdeId,
+            id_prof_destino: cesion.destId,
+            cedida_por:      G.profesional.id
+          });
+        } catch (err) {
+          console.error('Error registrando la cesión:', err);
+          toast('Cita cedida, pero no se pudo registrar en el historial de cesiones — avisa a Abraham', true);
+        }
+      }
 
       // Cobro: si la cita queda Hecha con forma de cobro válida, crear o
       // actualizar (si ya existía) el registro en cobros_v2 vía RPC — el
@@ -2828,12 +3016,13 @@ async function guardarCita() {
         const num    = parseInt(ultimo.split('-')[1] || '0') + 1;
         // La cita_origen es la raíz: si la cita actual ya tiene origen, heredamos ese; si no, es ella misma.
         // También leemos el id_profesional real, porque el payload ya no lo trae al editar.
-        const citaActual = await supaGet(`citas_v2?id=eq.${G.modalCitaId}&select=id_cita_origen,id_profesional&limit=1`);
+        const citaActual = await supaGet(`citas_v2?id=eq.${G.modalCitaId}&select=id_cita_origen,id_profesional,id_profesional_origen&limit=1`);
         const origenRaiz    = citaActual[0]?.id_cita_origen || G.modalCitaId;
         const profOriginal  = citaActual[0]?.id_profesional || G.profesional.id;
         await supaPost('citas_v2', {
           ...payload,
           id_profesional: profOriginal,
+          id_profesional_origen: citaActual[0]?.id_profesional_origen || null,
           id:             `CIT-${String(num).padStart(3,'0')}`,
           fecha:          reproFecha,
           hora:           reproHora,
@@ -2852,24 +3041,43 @@ async function guardarCita() {
             (new Date(fecha + 'T12:00:00') - new Date(G.modalFechaOriginal + 'T12:00:00')) / 86400000
           );
           const horaCambio = hora !== G.modalHoraOriginal;
-          if (deltaDias !== 0 || horaCambio) {
+          if (deltaDias !== 0 || horaCambio || cesion) {
             let ok = 0, fail = 0;
             for (const id of idsSerie) {
               const c = G.serieCandidatas.find(x => x.id === id);
               if (!c) continue;
-              const nuevaFecha = fmtISO(addDias(new Date(c.fecha + 'T12:00:00'), deltaDias));
-              try { await supaPatch('citas_v2', id, { fecha: nuevaFecha, hora }); ok++; }
+              const cambios = {};
+              if (deltaDias !== 0 || horaCambio) {
+                cambios.fecha = fmtISO(addDias(new Date(c.fecha + 'T12:00:00'), deltaDias));
+                cambios.hora  = hora;
+              }
+              if (cesion) {
+                cambios.id_profesional        = cesion.destId;
+                cambios.id_profesional_origen = c.id_profesional_origen || cesion.desdeId;
+              }
+              try {
+                await supaPatch('citas_v2', id, cambios);
+                ok++;
+                if (cesion) {
+                  try {
+                    await supaPost('citas_cesiones', {
+                      id_cita: id, id_prof_origen: cesion.desdeId,
+                      id_prof_destino: cesion.destId, cedida_por: G.profesional.id
+                    });
+                  } catch (e2) { console.error(`Error registrando cesión de ${id}:`, e2); fail++; }
+                }
+              }
               catch (err) { console.error(`Error actualizando cita ${id} de la serie:`, err); fail++; }
             }
             toast(
-              `Cita actualizada${avisoSesiones} y ${ok} más de la serie${fail ? ` (${fail} con error)` : ''}`,
+              `Cita actualizada${avisoSesiones}${avisoCesion} y ${ok} más de la serie${fail ? ` (${fail} con error)` : ''}`,
               fail > 0 && ok === 0, fail === 0 || ok > 0
             );
           } else {
             toast(`Cita actualizada${avisoSesiones}`, false, true);
           }
         } else {
-          toast(`Cita actualizada${avisoSesiones}`, false, true);
+          toast(`Cita actualizada${avisoSesiones}${avisoCesion}`, false, true);
         }
       }
     } else {
@@ -3026,6 +3234,7 @@ async function intentarMoverCita(cita, nuevaFecha, nuevaHora) {
       id:             nuevoId,
       id_paciente:    citaFull.id_paciente,
       id_profesional: citaFull.id_profesional,
+      id_profesional_origen: citaFull.id_profesional_origen || null,
       especialidad:   citaFull.especialidad,
       fecha:          nuevaFecha,
       hora:           nuevaHora,
