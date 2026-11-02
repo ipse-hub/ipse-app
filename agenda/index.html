@@ -662,6 +662,10 @@ select.fc{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.o
       <!-- SESIÓN -->
       <div class="section">
         <div class="sec-label">Sesión</div>
+        <div class="fg" id="fg-agenda-de" style="display:none">
+          <label class="fl">Agenda de</label>
+          <select class="fc" id="sel-agenda-de" onchange="cambiarAgendaDe()"></select>
+        </div>
         <div class="fg">
           <label class="fl">Especialidad</label>
           <select class="fc" id="sel-especialidad"></select>
@@ -1038,18 +1042,7 @@ async function init() {
   } catch { /* sidebar sin filtro */ }
 
   // Especialidades en el modal
-  const selEsp = document.getElementById('sel-especialidad');
-  const esps = G.profesional.especialidades || [];
-  if (esps.length === 0) {
-    // Admin (o cualquier profesional sin especialidades propias): mostrar las 4
-    // para poder ver/editar la especialidad real de cualquier cita — si no,
-    // al reabrir una cita el <select> no tiene ninguna opción que coincida con
-    // cita.especialidad y el guardado siguiente viola citas_v2_especialidad_check.
-    selEsp.innerHTML = Object.entries(ESPECIALIDADES)
-      .map(([k, v]) => `<option value="${k}">${v}</option>`).join('');
-  } else {
-    selEsp.innerHTML = esps.map(e => `<option value="${e}">${ESPECIALIDADES[e] || e}</option>`).join('');
-  }
+  poblarEspecialidades(especialidadesModal());
 
   // Cache local de pacientes para búsquedas normalizadas (acentos/espacios)
   try {
@@ -1620,6 +1613,7 @@ function renderMes(citas, pacMap) {
 ═══════════════════════════════════════════ */
 function abrirModalNueva(fecha, hora) {
   resetModal();
+  prepararAgendaDe();
   G.modalCitaId = null;
   G.modalBonoCita = null;
   document.getElementById('modal-title').innerHTML = `
@@ -1675,7 +1669,16 @@ function abrirModalEditar(cita, pac) {
     new Date(cita.fecha + 'T12:00:00').toLocaleDateString('es-ES', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
 
   const sel = document.getElementById('sel-especialidad');
-  if (cita.especialidad) sel.value = cita.especialidad;
+  document.getElementById('fg-agenda-de').style.display = 'none';
+  poblarEspecialidades(especialidadesModal());
+  if (cita.especialidad) {
+    // Si la especialidad guardada no está en la lista, se añade: si no, el <select>
+    // queda vacío y el guardado viola citas_v2_especialidad_check.
+    if (![...sel.options].some(o => o.value === cita.especialidad)) {
+      sel.add(new Option(ESPECIALIDADES[cita.especialidad] || cita.especialidad, cita.especialidad));
+    }
+    sel.value = cita.especialidad;
+  }
 
   document.getElementById('sel-duracion').value = cita.duracion_min || '60';
 
@@ -2689,6 +2692,42 @@ function nombreProfesional(id) {
   return p ? `${p.nombre} ${p.apellidos || ''}`.trim() : id;
 }
 
+/* ── Agenda de otra profesional (solo admin) ──
+   Un admin (Inés) gestiona la agenda de las colaboradoras: puede abrir y guardar
+   citas de cualquier especialidad y crear citas en la agenda de otra profesional.
+   El resto de usuarios solo ve sus propias especialidades. */
+function especialidadesModal() {
+  const esps = G.profesional.especialidades || [];
+  return (G.profesional.es_admin === 'Si' || esps.length === 0) ? Object.keys(ESPECIALIDADES) : esps;
+}
+
+function poblarEspecialidades(lista) {
+  const sel = document.getElementById('sel-especialidad');
+  sel.innerHTML = lista.map(e => `<option value="${e}">${ESPECIALIDADES[e] || e}</option>`).join('');
+}
+
+function prepararAgendaDe() {
+  const fg = document.getElementById('fg-agenda-de');
+  if (G.profesional.es_admin !== 'Si') { fg.style.display = 'none'; return; }
+  const sel = document.getElementById('sel-agenda-de');
+  const opts = (G.profesionales || []).filter(p => p.id === G.profesional.id || (p.especialidades || []).length > 0);
+  sel.innerHTML = opts.map(p => `<option value="${p.id}">${nombreProfesional(p.id)}</option>`).join('');
+  sel.value = G.profesional.id;
+  fg.style.display = '';
+  cambiarAgendaDe();
+}
+
+function cambiarAgendaDe() {
+  const p = (G.profesionales || []).find(x => x.id === document.getElementById('sel-agenda-de').value);
+  const esps = p?.especialidades || [];
+  poblarEspecialidades(esps.length ? esps : Object.keys(ESPECIALIDADES));
+}
+
+function agendaDeId() {
+  const visible = document.getElementById('fg-agenda-de').style.display !== 'none';
+  return (visible && document.getElementById('sel-agenda-de').value) || G.profesional.id;
+}
+
 function cederActivo() {
   const sec = document.getElementById('sec-ceder');
   return !!G.modalCitaId && sec.style.display !== 'none' &&
@@ -2939,7 +2978,8 @@ async function guardarCita() {
   };
   // id_profesional solo se fija al crear una cita nueva — al editar una cita
   // existente se conserva el profesional ya asignado (no se pisa con quien la edita).
-  if (!G.modalCitaId) payload.id_profesional = G.profesional.id;
+  // Al crear, un admin puede elegir la agenda de otra profesional (agendaDeId).
+  if (!G.modalCitaId) payload.id_profesional = agendaDeId();
   // Excepción explícita: la cesión sí reasigna la profesional (y deja la original anotada).
   if (cesion) {
     payload.id_profesional        = cesion.destId;
